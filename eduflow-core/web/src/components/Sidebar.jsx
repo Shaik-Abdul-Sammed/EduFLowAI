@@ -99,7 +99,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>
-              EduFlow
+              EduFlow AI
             </span>
           </div>
           <button 

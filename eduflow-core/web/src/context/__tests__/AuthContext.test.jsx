@@ -114,7 +114,7 @@ describe('AuthContext', () => {
     await user.click(loginButton);
 
     await waitFor(() => {
-      const stored = localStorage.getItem('sri-sudha-auth');
+      const stored = localStorage.getItem('eduflow-ai-auth');
       expect(stored).not.toBeNull();
       const auth = JSON.parse(stored);
       expect(auth.token).toBe('mock-token-123');
@@ -126,7 +126,7 @@ describe('AuthContext', () => {
       user: { email: 'restored@example.com', role: 'admin' },
       token: 'restored-token'
     };
-    localStorage.setItem('sri-sudha-auth', JSON.stringify(mockAuth));
+    localStorage.setItem('eduflow-ai-auth', JSON.stringify(mockAuth));
 
     render(
       <AuthProvider>
@@ -144,7 +144,7 @@ describe('AuthContext', () => {
       user: { email: 'test@example.com', role: 'user' },
       token: 'test-token'
     };
-    localStorage.setItem('sri-sudha-auth', JSON.stringify(mockAuth));
+    localStorage.setItem('eduflow-ai-auth', JSON.stringify(mockAuth));
 
     render(
       <AuthProvider>
@@ -152,13 +152,13 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    expect(localStorage.getItem('sri-sudha-auth')).not.toBeNull();
+    expect(localStorage.getItem('eduflow-ai-auth')).not.toBeNull();
 
     const logoutButton = screen.getByRole('button', { name: /logout/i });
     await user.click(logoutButton);
 
     await waitFor(() => {
-      expect(localStorage.getItem('sri-sudha-auth')).toBeNull();
+      expect(localStorage.getItem('eduflow-ai-auth')).toBeNull();
     });
   });
 });

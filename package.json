@@ -1,0 +1,23 @@
+{
+  "name": "eduflow-ai-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EduFlow AI OS — monorepo root. Run `npm run dev` to start backend + frontend together.",
+  "scripts": {
+    "dev": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm --prefix eduflow-backend run dev\" \"npm --prefix eduflow-core/web run dev\"",
+    "start": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm --prefix eduflow-backend start\" \"npm --prefix eduflow-core/web run dev\"",
+    "build": "npm --prefix eduflow-core/web run build",
+    "test": "npm --prefix eduflow-backend test && npm --prefix eduflow-core/web test",
+    "test:backend": "npm --prefix eduflow-backend test",
+    "test:frontend": "npm --prefix eduflow-core/web test",
+    "lint": "npm --prefix eduflow-core/web run lint",
+    "install:all": "npm --prefix eduflow-backend ci && npm --prefix eduflow-core/web ci",
+    "db:migrate": "node eduflow-backend/scripts/seed-demo.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -82,6 +82,18 @@ export function createApp({ db } = {}) {
   app.use('/api/backup', backupRouter)
   app.use('/api/v1/translate', createTranslateRouter())
   app.use('/api/v1/ai', createAIRouter())
+
+  app.use('/api/v1/officers', (req, res, next) => {
+    const start = Date.now()
+    const originalJson = res.json.bind(res)
+    res.json = (body) => {
+      const elapsed = Date.now() - start
+      if (elapsed > 10000) res.set('X-AI-Latency-Warning', 'true')
+      return originalJson(body)
+    }
+    next()
+  })
+
   app.use('/api/v1/officers', createOfficerRouter())
   app.use('/api/v1/admin', createAdminRouter())
   app.use('/api/v1/student', createStudentRouter())

@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { studentDummyIds } from '../../utils/studentCatalog'
 import { useI18n } from '../../i18n'
 
-const instituteName = 'EduFlow'
+const instituteName = 'EduFlow AI'
 
 const roleDefaults = {
   student: { username: studentDummyIds[0].id, password: 'student123' },
@@ -98,7 +98,7 @@ export default function LoginPage() {
               Welcome back to<br />the {info.title} Portal
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6, maxWidth: 320, marginBottom: '2.5rem' }}>
-              {info.desc} and stay connected with the EduFlow core system seamlessly.
+              {info.desc} and stay connected with the EduFlow AI core system seamlessly.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 
 function getAuthToken() {
   try {
-    const storedAuth = localStorage.getItem('sri-sudha-auth')
+    // Try new key first, fall back to legacy for sessions created before rebrand
+    const storedAuth = localStorage.getItem('eduflow-ai-auth') || localStorage.getItem('sri-sudha-auth')
     if (storedAuth) {
       const parsed = JSON.parse(storedAuth)
       if (parsed?.token) return parsed.token

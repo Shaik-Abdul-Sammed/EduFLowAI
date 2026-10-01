@@ -19,17 +19,20 @@ export class InvoiceRepository {
 
   static async create(data) {
     const {
+      leadId = null,
       institutionName,
       contactPerson = '',
       contactEmail,
       address = '',
       gstNumber = '',
       items = [],
+      amount = 0,
       subtotal = 0,
       taxPercent = 18.0,
       taxAmount = 0,
       totalAmount = 0,
       currency = 'INR',
+      description = '',
       bankDetails = process.env.BANK_DETAILS || 'Bank: State Bank of India | IFSC: SBIN0001234 | A/C: 9876543210',
       companyGst = process.env.COMPANY_GST || '36AAACE1234F1Z5',
       notes = '',
@@ -40,27 +43,30 @@ export class InvoiceRepository {
     try {
       const query = `
         INSERT INTO invoices (
-          invoice_number, institution_name, contact_person, contact_email,
-          address, gst_number, items, subtotal, tax_percent, tax_amount,
-          total_amount, currency, status, bank_details, company_gst, notes,
+          invoice_number, lead_id, institution_name, contact_person, contact_email,
+          address, gst_number, items, amount, subtotal, tax_percent, tax_amount,
+          total_amount, currency, description, status, bank_details, company_gst, notes,
           created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'UNPAID', $13, $14, $15, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'UNPAID', $16, $17, $18, NOW(), NOW())
         RETURNING *
       `
       const params = [
         invoiceNumber,
+        leadId,
         institutionName,
         contactPerson,
         contactEmail,
         address,
         gstNumber,
         JSON.stringify(items),
+        amount,
         subtotal,
         taxPercent,
         taxAmount,
         totalAmount,
         currency,
+        description,
         bankDetails,
         companyGst,
         notes,

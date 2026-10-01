@@ -3,6 +3,7 @@ import { LeadRepository } from '../models/LeadRepository.js'
 import { logger } from '../utils/logger.js'
 import { sendEmail } from '../services/email/emailService.js'
 import { getPilotOfferEmailHtml } from '../services/email/templates/pilotOffer.js'
+import { VALID_AUTOMATION_TYPES } from '../config/servicePricing.js'
 
 export const createLeadSchema = z.object({
   collegeName: z.string().min(1, 'College name is required'),
@@ -15,6 +16,7 @@ export const createLeadSchema = z.object({
   naacCycle: z.string().optional(),
   message: z.string().optional(),
   website: z.string().optional(), // Honeypot
+  automationType: z.enum(VALID_AUTOMATION_TYPES).optional().default('accreditation'),
 })
 
 export class LeadController {
@@ -80,8 +82,9 @@ export class LeadController {
       const page = parseInt(req.query.page, 10) || 1
       const limit = parseInt(req.query.limit, 10) || 50
       const status = req.query.status || 'ALL'
+      const automationType = req.query.automationType || 'ALL'
 
-      const result = await LeadRepository.findAll({ page, limit, status })
+      const result = await LeadRepository.findAll({ page, limit, status, automationType })
       return res.json(result)
     } catch (err) {
       logger.error('Error fetching leads:', err)

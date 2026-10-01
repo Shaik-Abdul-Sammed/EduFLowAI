@@ -82,7 +82,7 @@ const I18nContext = createContext(null)
 
 export function I18nProvider({ children }) {
   const [locale, setLocaleState] = useState(() => {
-    const saved = localStorage.getItem('sri-sudha-language')
+    const saved = localStorage.getItem('eduflow-ai-language') || localStorage.getItem('sri-sudha-language')
       // If saved language is no longer supported, default to 'en'
       if (saved && ['en', 'hi', 'te'].includes(saved)) {
       return saved
@@ -91,7 +91,8 @@ export function I18nProvider({ children }) {
   })
 
   useEffect(() => {
-    localStorage.setItem('sri-sudha-language', locale)
+    localStorage.setItem('eduflow-ai-language', locale)
+    localStorage.removeItem('sri-sudha-language')
     document.documentElement.lang = locale
   }, [locale])
 

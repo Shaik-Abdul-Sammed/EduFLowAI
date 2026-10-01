@@ -87,7 +87,7 @@ fi
 # ------------------------------------------------------------------------------
 echo -e "\n${BOLD}4. Checking AI Provider & LLM Engine...${NC}"
 AI_CHAT_PAYLOAD='{"message":"ping"}'
-AI_RESP=$(curl -s -m 10 -X POST "${BACKEND_URL}/api/v1/ai/chat" \
+AI_RESP=$(curl -s -m 30 -X POST "${BACKEND_URL}/api/v1/ai/chat" \
   -H "Content-Type: application/json" \
   -d "$AI_CHAT_PAYLOAD" 2>/dev/null || echo "")
 

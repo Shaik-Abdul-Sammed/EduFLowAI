@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { InvoiceRepository } from '../models/InvoiceRepository.js'
+import { LeadRepository } from '../models/LeadRepository.js'
 import { logger } from '../utils/logger.js'
+import { getServiceDescription, getServicePrice } from '../config/servicePricing.js'
 
 function escapePdfText(str) {
   if (!str) return ''
@@ -134,18 +136,31 @@ const invoiceItemSchema = z.object({
 })
 
 const createInvoiceSchema = z.object({
-  institutionName: z.string().min(1, 'Institution name is required'),
+  leadId: z.union([z.string(), z.number()]).optional(),
+  amount: z.number().nonnegative().optional(),
+  description: z.string().optional(),
+  institutionName: z.string().optional(),
   contactPerson: z.string().optional(),
-  contactEmail: z.string().email('Valid institutional email is required'),
+  contactEmail: z.string().optional(),
   address: z.string().optional(),
   gstNumber: z.string().optional(),
-  items: z.array(invoiceItemSchema).min(1, 'At least one invoice line item is required'),
+  items: z.array(invoiceItemSchema).optional(),
   subtotal: z.number().optional(),
   taxPercent: z.number().optional().default(18.0),
   taxAmount: z.number().optional(),
   totalAmount: z.number().optional(),
   notes: z.string().optional(),
-})
+}).refine(
+  (data) => {
+    if (data.leadId !== undefined && data.leadId !== null && data.leadId !== '') {
+      return true
+    }
+    return Boolean(data.institutionName && data.contactEmail && data.items && data.items.length > 0)
+  },
+  {
+    message: 'Either leadId or (institutionName, contactEmail, items) is required',
+  }
+)
 
 export class InvoiceController {
   static async createInvoice(req, res) {
@@ -155,19 +170,76 @@ export class InvoiceController {
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
       }
 
-      const data = parsed.data
-      const computedSubtotal = data.items.reduce((sum, item) => sum + (item.amount || item.rate * item.quantity), 0)
-      const subtotal = data.subtotal !== undefined ? data.subtotal : computedSubtotal
-      const taxPercent = data.taxPercent !== undefined ? data.taxPercent : 18.0
-      const taxAmount = data.taxAmount !== undefined ? data.taxAmount : (subtotal * taxPercent) / 100
-      const totalAmount = data.totalAmount !== undefined ? data.totalAmount : subtotal + taxAmount
+      let {
+        leadId,
+        amount,
+        description,
+        institutionName,
+        contactPerson = '',
+        contactEmail,
+        address = '',
+        gstNumber = '',
+        items,
+        subtotal,
+        taxPercent = 18.0,
+        taxAmount,
+        totalAmount,
+        notes = '',
+      } = parsed.data
+
+      // If leadId is provided, pull missing fields and default description/amount from referenced lead
+      if (leadId && (!institutionName || !contactEmail || !description || amount === undefined || amount === null)) {
+        const lead = await LeadRepository.findById(leadId)
+        if (lead) {
+          if (!institutionName) institutionName = lead.college_name
+          if (!contactEmail) contactEmail = lead.email
+          if (!contactPerson) contactPerson = lead.contact_name
+          if (!address && lead.city_state) address = lead.city_state
+          const automationType = lead.automation_type || 'accreditation'
+          if (!description) {
+            description = getServiceDescription(automationType, lead.college_name)
+          }
+          if (amount === undefined || amount === null) {
+            amount = getServicePrice(automationType)
+          }
+        }
+      }
+
+      institutionName = institutionName || 'Demo Institution'
+      contactEmail = contactEmail || 'billing@demo.edu'
+
+      // If items is missing, auto-generate a single line item from description and amount
+      if (!items || items.length === 0) {
+        const itemAmount = amount || 0
+        items = [{
+          description: description || 'Educational Consultancy Service',
+          quantity: 1,
+          rate: itemAmount,
+          amount: itemAmount,
+        }]
+      }
+      contactEmail = contactEmail || 'billing@demo.edu'
+
+      const computedSubtotal = items.reduce((sum, item) => sum + (item.amount || item.rate * item.quantity), 0)
+      subtotal = subtotal !== undefined ? subtotal : computedSubtotal
+      taxAmount = taxAmount !== undefined ? taxAmount : (subtotal * taxPercent) / 100
+      totalAmount = totalAmount !== undefined ? totalAmount : subtotal + taxAmount
 
       const invoice = await InvoiceRepository.create({
-        ...data,
+        leadId: leadId ? Number(leadId) : null,
+        institutionName,
+        contactPerson,
+        contactEmail,
+        address,
+        gstNumber,
+        items,
+        amount: amount !== undefined ? amount : subtotal,
         subtotal,
         taxPercent,
         taxAmount,
         totalAmount,
+        description: description || (items[0] && items[0].description) || '',
+        notes,
       })
 
       logger.info({ invoiceId: invoice.id, invoiceNumber: invoice.invoice_number }, 'New invoice generated')

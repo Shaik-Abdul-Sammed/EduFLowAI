@@ -9,6 +9,7 @@ import LoginPage from './pages/public/LoginPage'
 import AboutPage from './pages/public/AboutPage'
 import InstitutionRegister from './pages/public/InstitutionRegister'
 import LeadIntakePage from './pages/public/LeadIntakePage'
+import ServicesPage from './pages/public/ServicesPage'
 import PublicReportViewer from './pages/public/PublicReportViewer'
 import './App.css'
 import Layout from './components/Layout'
@@ -262,6 +263,7 @@ function App() {
             }
           />
           <Route path="/demo/observe" element={<ObservationMode />} />
+          <Route path="/services" element={<ServicesPage />} />
 
           <Route element={<Layout routes={generatedRoutes} />}>
             <Route path="/" element={<RedirectHome />} />

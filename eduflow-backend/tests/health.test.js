@@ -20,7 +20,7 @@ test('health endpoint returns ok', async () => {
 
     assert.equal(response.status, 200)
     assert.equal(body.ok, true)
-    assert.ok(body.service === 'eduflow-backend' || body.service === 'sri-sudha-backend')
+    assert.ok(body.service === 'eduflow-backend')
   } finally {
     server.close()
   }

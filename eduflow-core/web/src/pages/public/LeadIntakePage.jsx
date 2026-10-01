@@ -1,8 +1,22 @@
 import { useState } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
 import { getApiBaseURL } from '../../config/apiConfig'
 import './LeadIntakePage.css'
 
+const SERVICE_OPTIONS = [
+  { id: 'accreditation', label: 'NAAC/NBA Accreditation Report Automation' },
+  { id: 'student-success', label: 'Student Dropout Risk Report' },
+  { id: 'timetable', label: 'Timetable Generator' },
+  { id: 'admissions', label: 'Admission Yield Predictor' },
+  { id: 'finance', label: 'Fee Reconciliation' },
+  { id: 'hostel', label: 'Hostel Occupancy Optimizer (Coming Soon)' },
+  { id: 'placement', label: 'Placement Readiness Report (Coming Soon)' },
+]
+
 export default function LeadIntakePage() {
+  const [searchParams] = useSearchParams()
+  const serviceParam = searchParams.get('service')
+
   const [formData, setFormData] = useState({
     collegeName: '',
     contactName: '',
@@ -12,6 +26,7 @@ export default function LeadIntakePage() {
     cityState: '',
     studentCount: '',
     naacCycle: 'Cycle 1',
+    automationType: serviceParam || 'accreditation',
     message: '',
     website: '', // honeypot
   })
@@ -96,6 +111,7 @@ export default function LeadIntakePage() {
           cityState: formData.cityState.trim(),
           studentCount: Number(formData.studentCount),
           naacCycle: formData.naacCycle,
+          automationType: formData.automationType || 'accreditation',
           message: formData.message.trim(),
           website: formData.website,
         }),
@@ -193,6 +209,29 @@ export default function LeadIntakePage() {
               </div>
 
               <div className="lead-form-grid">
+                <div className="lead-field-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="lead-label" htmlFor="automationType">
+                    Target Automation Service <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <select
+                    id="automationType"
+                    className="lead-input"
+                    name="automationType"
+                    value={formData.automationType}
+                    onChange={handleChange}
+                    style={{ fontWeight: 600, color: '#1e40af' }}
+                  >
+                    {SERVICE_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="small text-muted mt-1">
+                    Looking for a different package? <Link to="/services">View all 7 services & pricing</Link>
+                  </span>
+                </div>
+
                 <div className="lead-field-group">
                   <label className="lead-label" htmlFor="collegeName">
                     College Name <span style={{ color: '#dc2626' }}>*</span>

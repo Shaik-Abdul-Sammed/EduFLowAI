@@ -18,15 +18,16 @@ export class LeadRepository {
       naacCycle = 'Cycle 1',
       message = '',
       source = 'website',
+      automationType = 'accreditation',
     } = data
 
     try {
       const query = `
         INSERT INTO leads (
           college_name, contact_name, designation, email, phone,
-          city_state, student_count, naac_cycle, message, status, source, notes
+          city_state, student_count, naac_cycle, message, status, source, notes, automation_type
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'NEW', $10, '')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'NEW', $10, '', $11)
         RETURNING *
       `
       const params = [
@@ -40,6 +41,7 @@ export class LeadRepository {
         naacCycle,
         message,
         source,
+        automationType,
       ]
 
       const result = await pool.query(query, params)
@@ -60,6 +62,7 @@ export class LeadRepository {
         status: 'NEW',
         source,
         notes: '',
+        automation_type: automationType,
         is_deleted: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -69,7 +72,7 @@ export class LeadRepository {
     }
   }
 
-  static async findAll({ page = 1, limit = 50, status } = {}) {
+  static async findAll({ page = 1, limit = 50, status, automationType } = {}) {
     const offset = (Math.max(1, page) - 1) * limit
 
     try {
@@ -84,6 +87,11 @@ export class LeadRepository {
         query += ` AND status = $${params.length}`
       }
 
+      if (automationType && automationType !== 'ALL') {
+        params.push(automationType)
+        query += ` AND automation_type = $${params.length}`
+      }
+
       query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
       params.push(limit, offset)
 
@@ -94,7 +102,11 @@ export class LeadRepository {
       const countParams = []
       if (status && status !== 'ALL') {
         countParams.push(status)
-        countQuery += ' AND status = $1'
+        countQuery += ` AND status = $${countParams.length}`
+      }
+      if (automationType && automationType !== 'ALL') {
+        countParams.push(automationType)
+        countQuery += ` AND automation_type = $${countParams.length}`
       }
       const countRes = await pool.query(countQuery, countParams)
       const total = parseInt(countRes.rows[0]?.count || '0', 10)
@@ -110,6 +122,9 @@ export class LeadRepository {
       let filtered = memoryLeads.filter((l) => !l.is_deleted)
       if (status && status !== 'ALL') {
         filtered = filtered.filter((l) => l.status === status)
+      }
+      if (automationType && automationType !== 'ALL') {
+        filtered = filtered.filter((l) => l.automation_type === automationType)
       }
       const total = filtered.length
       const paged = filtered.slice(offset, offset + limit)

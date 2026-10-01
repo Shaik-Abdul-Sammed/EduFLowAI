@@ -69,12 +69,12 @@ describe('useDarkMode Hook', () => {
       result.current.toggleDarkMode();
     });
     
-    const stored = localStorage.getItem('sri-sudha-dark-mode');
+    const stored = localStorage.getItem('eduflow-ai-dark-mode');
     expect(stored).not.toBeNull();
   });
 
   it('should restore dark mode from storage', () => {
-    localStorage.setItem('sri-sudha-dark-mode', 'true');
+    localStorage.setItem('eduflow-ai-dark-mode', 'true');
     const { result } = renderHook(() => useDarkMode());
     
     expect(result.current.isDarkMode).toBe(true);
@@ -92,7 +92,7 @@ describe('useDarkMode Hook', () => {
   });
 
   it('should remove dark attribute from document', () => {
-    localStorage.setItem('sri-sudha-dark-mode', 'true');
+    localStorage.setItem('eduflow-ai-dark-mode', 'true');
     const { result } = renderHook(() => useDarkMode());
     
     act(() => {
@@ -110,6 +110,6 @@ describe('useDarkMode Hook', () => {
       result.current.toggleDarkMode();
     });
 
-    expect(localStorage.getItem('sri-sudha-dark-mode')).toBe('true');
+    expect(localStorage.getItem('eduflow-ai-dark-mode')).toBe('true');
   });
 });

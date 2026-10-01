@@ -42,7 +42,7 @@ export function createAuthRouter() {
    */
   router.get('/default-institution', async (req, res) => {
     try {
-      const result = await pool.query('SELECT id, name FROM institutions LIMIT 1')
+      const result = await pool.query('SELECT id, name FROM institutions ORDER BY id ASC LIMIT 1')
       if (result.rows.length === 0) return res.status(404).json({ error: 'No institutions found' })
       res.json({ id: result.rows[0].id, name: result.rows[0].name })
     } catch (err) {

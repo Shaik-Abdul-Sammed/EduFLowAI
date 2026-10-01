@@ -14,12 +14,25 @@ const STATUS_LIST = [
   'LOST',
 ]
 
+const AUTOMATION_TYPES = [
+  { id: 'ALL', label: 'All Services' },
+  { id: 'accreditation', label: 'Accreditation' },
+  { id: 'student-success', label: 'Student Success' },
+  { id: 'timetable', label: 'Timetable' },
+  { id: 'admissions', label: 'Admissions' },
+  { id: 'finance', label: 'Finance' },
+  { id: 'hostel', label: 'Hostel' },
+  { id: 'placement', label: 'Placement' },
+  { id: 'fee-reconciliation', label: 'Fee Reconcile' },
+]
+
 export default function LeadManagementPage() {
   const { user } = useAuth()
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [automationTypeFilter, setAutomationTypeFilter] = useState('ALL')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selectedLead, setSelectedLead] = useState(null)
@@ -40,6 +53,9 @@ export default function LeadManagementPage() {
       if (statusFilter !== 'ALL') {
         url.searchParams.append('status', statusFilter)
       }
+      if (automationTypeFilter !== 'ALL') {
+        url.searchParams.append('automationType', automationTypeFilter)
+      }
       url.searchParams.append('limit', '200')
 
       const res = await fetch(url, {
@@ -59,7 +75,7 @@ export default function LeadManagementPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, automationTypeFilter])
 
   useEffect(() => {
     if (user) {
@@ -273,6 +289,24 @@ export default function LeadManagementPage() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--app-text-muted)' }}>
+              Service:
+            </span>
+            <select
+              className="form-select form-select-sm"
+              value={automationTypeFilter}
+              onChange={(e) => setAutomationTypeFilter(e.target.value)}
+              style={{ width: '170px', fontSize: '0.78rem', fontWeight: 600 }}
+            >
+              {AUTOMATION_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--app-text-muted)' }}>
               Date:
             </span>
             <input
@@ -345,7 +379,7 @@ export default function LeadManagementPage() {
               <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
                 <thead>
                   <tr style={{ background: 'var(--surface-bg)' }}>
-                    {['Date', 'College', 'Contact', 'Email', 'Phone', 'Status', 'Actions'].map(
+                    {['Date', 'College', 'Service', 'Contact', 'Email', 'Phone', 'Status', 'Actions'].map(
                       (h) => (
                         <th
                           key={h}
@@ -366,7 +400,7 @@ export default function LeadManagementPage() {
                 <tbody>
                   {filteredLeads.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                      <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
                         No leads found matching current filter criteria.
                       </td>
                     </tr>
@@ -381,6 +415,11 @@ export default function LeadManagementPage() {
                           <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
                             {lead.city_state}
                           </div>
+                        </td>
+                        <td style={{ fontSize: '0.78rem', padding: '0.75rem 1rem' }}>
+                          <span className="badge rounded-pill bg-light text-primary border" style={{ fontSize: '0.72rem', textTransform: 'capitalize' }}>
+                            {lead.automation_type || 'accreditation'}
+                          </span>
                         </td>
                         <td style={{ fontSize: '0.82rem', padding: '0.75rem 1rem' }}>
                           <div>{lead.contact_name}</div>

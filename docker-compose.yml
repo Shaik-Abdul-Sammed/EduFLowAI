@@ -1,25 +1,25 @@
 services:
   postgres:
     image: postgres:15
-    container_name: sri-sudha-db
+    container_name: eduflow-ai-db
     environment:
-      POSTGRES_USER: sri_sudha
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-sri_sudha_dev_pass}
-      POSTGRES_DB: sri_sudha
+      POSTGRES_USER: eduflow_ai
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-eduflow_ai_dev_pass}
+      POSTGRES_DB: eduflow_ai
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U sri_sudha']
+      test: ['CMD-SHELL', 'pg_isready -U eduflow_ai']
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: sri-sudha-cache
+    container_name: eduflow-ai-cache
     command: ['redis-server', '--save', '60', '1', '--appendonly', 'yes']
     ports:
       - '${REDIS_PORT:-6379}:6379'
@@ -33,12 +33,12 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: sri-sudha-backend
+    container_name: eduflow-ai-backend
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://sri_sudha:${DB_PASSWORD:-sri_sudha_dev_pass}@postgres:5432/sri_sudha
+      DATABASE_URL: postgresql://eduflow_ai:${DB_PASSWORD:-eduflow_ai_dev_pass}@postgres:5432/eduflow_ai
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-sri-sudha-dev-secret}
+      JWT_SECRET: ${JWT_SECRET:-eduflow-ai-dev-secret}
       PORT: 4000
       TOROUTER_API_URL: ${TOROUTER_API_URL:-https://portal.torouter.ai/api/v1/chat/completions}
       TOROUTER_API_KEY: ${TOROUTER_API_KEY:-}
@@ -60,7 +60,7 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: sri-sudha-frontend
+    container_name: eduflow-ai-frontend
     environment:
       VITE_API_BASE_URL: http://localhost:4000/api
     ports:
@@ -75,4 +75,4 @@ volumes:
 
 networks:
   default:
-    name: sri-sudha-network
+    name: eduflow-ai-network
