@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
+    outDir: 'dist',
     // Raise the warning limit slightly to allow larger but intentional chunks
     chunkSizeWarningLimit: 700,
     rollupOptions: {

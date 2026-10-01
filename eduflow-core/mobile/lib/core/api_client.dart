@@ -6,8 +6,14 @@ class ApiClient {
   late Dio dio;
   final storage = const FlutterSecureStorage();
 
-  // Android emulator points to 10.0.2.2 for localhost
-  static const String baseUrl = 'http://10.0.2.2:3001/api/v1';
+  // Base API URL:
+  // - 10.0.2.2 is the Android Emulator alias for host localhost
+  // - Backend runs on port 3000
+  // - Configurable via: flutter run --dart-define=API_BASE_URL=http://<host>:3000/api/v1
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3000/api/v1',
+  );
 
   factory ApiClient() {
     return _instance;

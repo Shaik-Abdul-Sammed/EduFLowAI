@@ -1,4 +1,4 @@
-# EduFlow Colleges - Complete Educational Resource Planning System
+# EduFlow AI — Autonomous AI Operating System for Colleges
 
 ![Tests Passing](https://img.shields.io/badge/tests-26%2F26%20passing-brightgreen)
 ![Code Quality](https://img.shields.io/badge/lint-0%20errors-brightgreen)

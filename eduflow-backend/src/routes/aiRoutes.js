@@ -1,20 +1,25 @@
 import { Router } from 'express'
 import { AIOrchestrator } from '../ai/AIOrchestrator.js'
+import { validateRequest, aiChatSchema } from '../middleware/validateRequest.js'
+import { logger } from '../utils/logger.js'
 
 /** @returns {import('express').Router} */
 export function createAIRouter() {
   const router = Router()
 
   // POST /api/v1/ai/chat
-  router.post('/chat', async (req, res) => {
+  router.post('/chat', validateRequest(aiChatSchema), async (req, res) => {
     try {
-      const { institutionId = 'anonymous', messages = [], digitalTwin = {} } = req.body
+      let { institutionId = 'anonymous', messages = [], digitalTwin = {}, message } = req.body
+      if ((!messages || !messages.length) && message) {
+        messages = [{ role: 'user', content: message }]
+      }
       if (!messages.length) return res.status(400).json({ error: 'messages array is required' })
       const orchestrator = new AIOrchestrator()
       const reply = await orchestrator.chat(institutionId, messages, digitalTwin)
       res.json({ reply, provider: process.env.AI_PROVIDER || 'gemini' })
     } catch (err) {
-      console.error('AI chat error:', err.message)
+      logger.error('AI chat error:', err)
       res.status(500).json({ error: err.message })
     }
   })

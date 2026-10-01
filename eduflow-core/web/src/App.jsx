@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Suspense, lazy } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, NavLink } from 'react-router-dom'
 import { I18nProvider } from './i18n'
 import DashboardHome from './components/DashboardHome'
@@ -8,18 +8,30 @@ import EntryPage from './pages/public/EntryPage'
 import LoginPage from './pages/public/LoginPage'
 import AboutPage from './pages/public/AboutPage'
 import InstitutionRegister from './pages/public/InstitutionRegister'
+import LeadIntakePage from './pages/public/LeadIntakePage'
+import ServicesPage from './pages/public/ServicesPage'
+import PublicReportViewer from './pages/public/PublicReportViewer'
 import './App.css'
 import Layout from './components/Layout'
 import VisitorDashboard from './components/VisitorDashboard'
 import ProfilePage from './pages/common/ProfilePage'
 import { ToastProvider } from './components/ToastProvider'
+import ErrorBoundary from './components/ErrorBoundary'
+import SkeletonLoader from './components/SkeletonLoader'
 import AITerminal from './pages/ai/AITerminal'
 import DigitalTwinManager from './pages/ai/DigitalTwinManager'
 import BuildManager from './pages/ai/BuildManager'
 import OfficersDashboard from './pages/ai/OfficersDashboard'
-import AccreditationOfficer from './pages/ai/officers/AccreditationOfficer'
-import StudentSuccessOfficer from './pages/ai/officers/StudentSuccessOfficer'
-import OfficerPlaceholder from './pages/ai/officers/OfficerPlaceholder'
+import ObservationMode from './pages/demo/ObservationMode'
+import ComingSoon from './components/ComingSoon'
+
+const AccreditationOfficer = lazy(() => import('./pages/ai/officers/AccreditationOfficer'))
+const StudentSuccessOfficer = lazy(() => import('./pages/ai/officers/StudentSuccessOfficer'))
+const TimetableOfficer = lazy(() => import('./pages/ai/officers/TimetableOfficer'))
+const AdmissionOfficer = lazy(() => import('./pages/ai/officers/AdmissionOfficer'))
+const FinanceOfficer = lazy(() => import('./pages/ai/officers/FinanceOfficer'))
+
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
 const instituteName = 'EduFlow'
 
@@ -58,7 +70,10 @@ const generatedRoutes = Object.entries(pageModules)
     }
 
     const [, role, fileName] = match
-    const slug = toKebabCase(fileName)
+    let slug = toKebabCase(fileName)
+    if (fileName === 'LeadManagementPage') slug = 'leads'
+    if (fileName === 'ReportDeliveryPage') slug = 'report-delivery'
+    if (fileName === 'InvoiceGeneratorPage') slug = 'invoices'
     const routePath = `/${role}-dashboard/${slug}`
 
     return {
@@ -197,11 +212,58 @@ function App() {
           <Route path="/digital-twin" element={<DigitalTwinManager />} />
           <Route path="/build-manager" element={<BuildManager />} />
           <Route path="/officers-dashboard" element={<OfficersDashboard />} />
-          <Route path="/officer/accreditation" element={<AccreditationOfficer />} />
-          <Route path="/officer/student-success" element={<StudentSuccessOfficer />} />
-          <Route path="/officer/timetable" element={<OfficerPlaceholder officerName="AI Timetable Officer" icon="📅" color="#2563EB" desc="Conflict-free timetable generation considering faculty workload, room availability, labs, and semester constraints." features={['Faculty workload balancing','Room & lab conflict resolution','Auto-regeneration on changes','Multi-department scheduling','Export to PDF & Excel']} />} />
-          <Route path="/officer/admissions" element={<OfficerPlaceholder officerName="AI Admission Officer" icon="🎓" color="#10B981" desc="End-to-end admissions automation from enquiry to enrollment." features={['WhatsApp query automation','Document verification','Eligibility checking','Counselling scheduling','Conversion prediction']} />} />
-          <Route path="/officer/finance" element={<OfficerPlaceholder officerName="AI Finance Officer" icon="💰" color="#F59E0B" desc="Automated fee reconciliation, UPI matching, and financial reporting." features={['UPI transaction matching','Bank statement reconciliation','Pending fee prediction','Scholarship tracking','Automated receipts']} />} />
+          <Route
+            path="/officer/accreditation"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#030712', padding: '2rem' }}><SkeletonLoader variant="card" /></div>}>
+                  <AccreditationOfficer />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/officer/student-success"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#030712', padding: '2rem' }}><SkeletonLoader variant="card" /></div>}>
+                  <StudentSuccessOfficer />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/officer/timetable"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#030712', padding: '2rem' }}><SkeletonLoader variant="card" /></div>}>
+                  <TimetableOfficer />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/officer/admissions"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#030712', padding: '2rem' }}><SkeletonLoader variant="card" /></div>}>
+                  <AdmissionOfficer />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/officer/finance"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#030712', padding: '2rem' }}><SkeletonLoader variant="card" /></div>}>
+                  <FinanceOfficer />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route path="/demo/observe" element={<ObservationMode />} />
+          <Route path="/services" element={<ServicesPage />} />
 
           <Route element={<Layout routes={generatedRoutes} />}>
             <Route path="/" element={<RedirectHome />} />
@@ -209,6 +271,8 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register-institution" element={<InstitutionRegister />} />
+            <Route path="/for-colleges" element={<LeadIntakePage />} />
+            <Route path="/r/:token" element={<PublicReportViewer />} />
             <Route path="/profile" element={<ProfilePage />} />
 
         <Route element={<ProtectedRoute role="student" />}>
@@ -241,13 +305,25 @@ function App() {
 
           <Route path="/visitor-dashboard" element={<VisitorDashboard />} />
 
-        <Route path="/directory" element={<HomeDirectory />} />
+        <Route path="/directory" element={isDemoMode ? <Navigate to="/admin-dashboard" replace /> : <HomeDirectory />} />
 
-        {generatedRoutes.map((route) => (
-          <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
-            <Route path={route.routePath} element={<route.Component />} />
-          </Route>
-        ))}
+        {generatedRoutes.map((route) => {
+          const isAllowedInDemo = route.slug === 'audit-logs'
+          return (
+            <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
+              <Route
+                path={route.routePath}
+                element={
+                  isDemoMode && !isAllowedInDemo ? (
+                    <ComingSoon moduleName={toTitleCase(route.slug)} />
+                  ) : (
+                    <route.Component />
+                  )
+                }
+              />
+            </Route>
+          )
+        })}
 
             <Route path="*" element={<NotFoundPage />} />
           </Route>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
@@ -16,18 +16,33 @@ export default function InstitutionRegister() {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subdomainLocked, setSubdomainLocked] = useState(false);
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { register } = useAuth();
 
-  const schema = {
-    institutionName: { required: true, minLength: 3 },
-    subdomain: { required: true, minLength: 3, pattern: /^[a-z0-9-]+$/ },
-    adminName: { required: true, minLength: 3 },
+  // All schema values MUST be functions so validateForm can call them
+  const buildSchema = (data) => ({
+    institutionName: (v) => {
+      if (!v || !v.trim()) return 'Institution name is required';
+      if (v.trim().length < 3) return 'Minimum 3 characters required';
+      return null;
+    },
+    subdomain: (v) => {
+      if (!v || !v.trim()) return 'Workspace URL is required';
+      if (v.trim().length < 3) return 'Minimum 3 characters required';
+      if (!/^[a-z0-9-]+$/.test(v)) return 'Only lowercase letters, numbers, and hyphens allowed';
+      return null;
+    },
+    adminName: (v) => {
+      if (!v || !v.trim()) return 'Admin name is required';
+      if (v.trim().length < 3) return 'Minimum 3 characters required';
+      return null;
+    },
     email: validators.email,
     password: validators.password,
-    confirmPassword: validators.match(formData.password)
-  };
+    confirmPassword: validators.match(data.password),
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,29 +50,43 @@ export default function InstitutionRegister() {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
-    
-    // Auto-generate subdomain from institution name
-    if (name === 'institutionName' && !formData.subdomain) {
-      const generated = value.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-      setFormData(prev => ({ ...prev, subdomain: generated }));
+
+    // Auto-generate subdomain from institution name (only while not manually edited)
+    if (name === 'institutionName' && !subdomainLocked) {
+      const generated = value
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      setFormData(prev => ({ ...prev, institutionName: value, subdomain: generated }));
+    }
+
+    // Once user manually touches subdomain, stop auto-generating
+    if (name === 'subdomain') {
+      setSubdomainLocked(true);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const schema = buildSchema(formData);
     const validationErrors = validateForm(formData, schema);
-    
-    if (Object.keys(validationErrors).length > 0) {
+
+    // validateForm returns null when there are no errors
+    if (validationErrors) {
       setErrors(validationErrors);
-      addToast('Please fix the errors in the form.', 'error');
+      addToast('Please fix the highlighted errors before continuing.', 'error');
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await register(formData);
-      addToast(`Successfully registered ${formData.institutionName}! Workspace created at ${formData.subdomain}.eduflow.app`, 'success');
+      addToast(
+        `✅ Workspace created! ${formData.subdomain}.eduflow.app is ready.`,
+        'success'
+      );
       navigate('/admin-dashboard');
     } catch (err) {
       addToast(err.message || 'Registration failed. Please try again.', 'error');
@@ -66,171 +95,241 @@ export default function InstitutionRegister() {
     }
   };
 
+  const passwordStrength = () => {
+    const p = formData.password;
+    if (!p) return null;
+    if (p.length < 8) return { level: 'weak', color: 'danger', width: '33%' };
+    if (p.length < 12 || !/[A-Z]/.test(p) || !/[0-9]/.test(p))
+      return { level: 'fair', color: 'warning', width: '66%' };
+    return { level: 'strong', color: 'success', width: '100%' };
+  };
+  const strength = passwordStrength();
+
   return (
-    <div className="min-vh-100 d-flex flex-column" style={{ background: 'var(--app-bg)' }}>
+    <div className="min-vh-100 d-flex flex-column" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%)' }}>
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 fixed-top shadow-sm">
-        <div className="container">
+        <div className="container-xl">
           <Link className="navbar-brand d-flex align-items-center gap-2" to="/">
             <div className="bg-primary text-white rounded d-flex align-items-center justify-content-center" style={{ width: 36, height: 36 }}>
               <Building size={20} />
             </div>
-            <span className="fw-bold fs-4 text-gradient">EduFlow</span>
+            <span className="fw-bold fs-4" style={{ background: 'linear-gradient(135deg,#2563EB,#7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EduFlow</span>
           </Link>
           <div className="d-flex align-items-center gap-3">
-            <span className="text-muted d-none d-md-block">Already have an institution workspace?</span>
+            <span className="text-muted d-none d-md-block small">Already have a workspace?</span>
             <Link to="/login" className="btn btn-outline-primary rounded-pill px-4">Sign In</Link>
           </div>
         </div>
       </nav>
 
-      <div className="container flex-grow-1 d-flex align-items-center justify-content-center" style={{ marginTop: '80px', padding: '3rem 0' }}>
+      {/* Main content */}
+      <div className="container-xl flex-grow-1 d-flex align-items-start align-items-md-center justify-content-center" style={{ marginTop: '80px', padding: '2rem 1rem 3rem' }}>
         <div className="row w-100 justify-content-center">
-          <div className="col-12 col-md-10 col-lg-8 col-xl-6">
+          <div className="col-12 col-lg-10 col-xl-8">
+
+            {/* Header */}
+            <div className="text-center mb-4">
+              <h1 className="fw-bold fs-3 text-dark mb-1">Create Your Institution Workspace</h1>
+              <p className="text-muted">Get your AI-powered campus management platform running in under 2 minutes.</p>
+            </div>
+
             <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
               <div className="row g-0">
-                {/* Left side branding */}
-                <div className="col-12 col-md-4 d-none d-md-block p-4 text-white d-flex flex-column justify-content-between" style={{ background: 'linear-gradient(135deg, var(--svc-navy) 0%, var(--svc-blue) 100%)' }}>
+
+                {/* Left sidebar */}
+                <div
+                  className="col-12 col-md-4 p-4 text-white d-flex flex-column justify-content-between"
+                  style={{ background: 'linear-gradient(160deg,#1e3a8a 0%,#2563EB 60%,#7C3AED 100%)', minHeight: '460px' }}
+                >
                   <div>
-                    <h3 className="fw-bold mb-3">CampusCore Platform</h3>
-                    <p className="opacity-75 small">Join hundreds of institutions managing their entire campus on EduFlow.</p>
-                  </div>
-                  <div>
-                    <ul className="list-unstyled mb-0 small opacity-75">
-                      <li className="mb-2 d-flex gap-2 align-items-center"><ShieldCheck size={16} /> Enterprise Security</li>
-                      <li className="mb-2 d-flex gap-2 align-items-center"><Globe size={16} /> Custom Subdomain</li>
-                      <li className="d-flex gap-2 align-items-center"><Building size={16} /> Multi-Role ERP</li>
+                    <div className="mb-3">
+                      <span className="badge bg-white bg-opacity-25 text-white rounded-pill px-3 py-2 small fw-semibold">
+                        🎓 Free Forever Plan
+                      </span>
+                    </div>
+                    <h4 className="fw-bold mb-2">Everything you need to run your campus</h4>
+                    <p className="opacity-75 small mb-4">Join institutions already automating NAAC accreditation, timetables, and admissions with AI.</p>
+                    <ul className="list-unstyled mb-0 small">
+                      {[
+                        [<ShieldCheck size={16} key="s" />, 'Enterprise-grade Security'],
+                        [<Globe size={16} key="g" />, 'Custom subdomain (you.eduflow.app)'],
+                        [<Building size={16} key="b" />, '5 AI Officers included'],
+                        [<User size={16} key="u" />, 'Unlimited admin users'],
+                      ].map(([icon, text], i) => (
+                        <li key={i} className="mb-3 d-flex gap-2 align-items-start">
+                          <span className="mt-1 opacity-90">{icon}</span>
+                          <span className="opacity-80">{text}</span>
+                        </li>
+                      ))}
                     </ul>
+                  </div>
+                  <div className="pt-3 border-top border-white border-opacity-25">
+                    <p className="opacity-60 mb-0" style={{ fontSize: '0.75rem' }}>
+                      By registering, you agree to our Terms of Service and Privacy Policy.
+                    </p>
                   </div>
                 </div>
 
                 {/* Right side form */}
-                <div className="col-12 col-md-8 p-4 p-lg-5">
-                  <div className="text-center mb-4">
-                    <h2 className="fw-bold text-dark mb-1">Create Your Workspace</h2>
-                    <p className="text-muted small">Set up EduFlow for your institution in minutes.</p>
-                  </div>
-
+                <div className="col-12 col-md-8 p-4 p-lg-5 bg-white">
                   <form onSubmit={handleSubmit} noValidate>
-                    {/* Institution Name */}
-                    <div className="mb-3">
-                      <label className="form-label small fw-semibold text-muted">Institution Name</label>
-                      <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0"><Building size={18} className="text-muted" /></span>
-                        <input
-                          type="text"
-                          className={`form-control border-start-0 ps-0 ${errors.institutionName ? 'is-invalid' : ''}`}
-                          name="institutionName"
-                          placeholder="e.g. Springfield High School"
-                          value={formData.institutionName}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      {errors.institutionName && <div className="text-danger small mt-1">{errors.institutionName}</div>}
-                    </div>
 
-                    {/* Subdomain */}
-                    <div className="mb-3">
-                      <label className="form-label small fw-semibold text-muted">Workspace URL</label>
-                      <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0"><Globe size={18} className="text-muted" /></span>
-                        <input
-                          type="text"
-                          className={`form-control border-start-0 border-end-0 ps-0 ${errors.subdomain ? 'is-invalid' : ''}`}
-                          name="subdomain"
-                          placeholder="springfield"
-                          value={formData.subdomain}
-                          onChange={handleChange}
-                        />
-                        <span className="input-group-text bg-light text-muted">.eduflow.app</span>
-                      </div>
-                      {errors.subdomain && <div className="text-danger small mt-1">{errors.subdomain}</div>}
-                    </div>
+                    {/* Section 1: Institution */}
+                    <div className="mb-4">
+                      <p className="text-uppercase fw-bold small text-primary mb-3" style={{ letterSpacing: '0.08em' }}>
+                        1 — Institution Details
+                      </p>
 
-                    <hr className="my-4 text-muted" />
-
-                    {/* Admin Name & Email */}
-                    <div className="row g-3 mb-3">
-                      <div className="col-12 col-sm-6">
-                        <label className="form-label small fw-semibold text-muted">Admin Full Name</label>
+                      {/* Institution Name */}
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold text-dark small mb-1">Institution Name</label>
                         <div className="input-group">
-                          <span className="input-group-text bg-light border-end-0"><User size={18} className="text-muted" /></span>
+                          <span className="input-group-text bg-light border-end-0 text-muted"><Building size={17} /></span>
                           <input
                             type="text"
-                            className={`form-control border-start-0 ps-0 ${errors.adminName ? 'is-invalid' : ''}`}
-                            name="adminName"
-                            placeholder="John Doe"
-                            value={formData.adminName}
+                            className={`form-control border-start-0 ${errors.institutionName ? 'is-invalid' : ''}`}
+                            name="institutionName"
+                            placeholder="e.g. Sri Sudha Institute of Technology"
+                            value={formData.institutionName}
                             onChange={handleChange}
+                            autoFocus
                           />
                         </div>
-                        {errors.adminName && <div className="text-danger small mt-1">{errors.adminName}</div>}
+                        {errors.institutionName
+                          ? <div className="text-danger small mt-1">⚠ {errors.institutionName}</div>
+                          : <div className="text-muted small mt-1">Full legal name of your institution.</div>
+                        }
                       </div>
-                      <div className="col-12 col-sm-6">
-                        <label className="form-label small fw-semibold text-muted">Admin Email</label>
+
+                      {/* Subdomain */}
+                      <div className="mb-1">
+                        <label className="form-label fw-semibold text-dark small mb-1">Workspace URL</label>
                         <div className="input-group">
-                          <span className="input-group-text bg-light border-end-0"><Mail size={18} className="text-muted" /></span>
+                          <span className="input-group-text bg-light border-end-0 text-muted"><Globe size={17} /></span>
                           <input
-                            type="email"
-                            className={`form-control border-start-0 ps-0 ${errors.email ? 'is-invalid' : ''}`}
-                            name="email"
-                            placeholder="admin@school.edu"
-                            value={formData.email}
+                            type="text"
+                            className={`form-control border-start-0 border-end-0 font-monospace ${errors.subdomain ? 'is-invalid' : ''}`}
+                            name="subdomain"
+                            placeholder="yourschool"
+                            value={formData.subdomain}
                             onChange={handleChange}
                           />
+                          <span className="input-group-text bg-light text-muted small">.eduflow.app</span>
                         </div>
-                        {errors.email && <div className="text-danger small mt-1">{errors.email}</div>}
+                        {errors.subdomain
+                          ? <div className="text-danger small mt-1">⚠ {errors.subdomain}</div>
+                          : formData.subdomain
+                            ? <div className="text-success small mt-1">✓ Your URL: <strong>{formData.subdomain}.eduflow.app</strong></div>
+                            : <div className="text-muted small mt-1">Auto-generated from your name. Lowercase, numbers, hyphens only.</div>
+                        }
                       </div>
                     </div>
 
-                    {/* Passwords */}
-                    <div className="row g-3 mb-4">
-                      <div className="col-12 col-sm-6">
-                        <label className="form-label small fw-semibold text-muted">Password</label>
-                        <div className="input-group">
-                          <span className="input-group-text bg-light border-end-0"><Lock size={18} className="text-muted" /></span>
-                          <input
-                            type="password"
-                            className={`form-control border-start-0 ps-0 ${errors.password ? 'is-invalid' : ''}`}
-                            name="password"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={handleChange}
-                          />
+                    <hr className="my-4 border-light" />
+
+                    {/* Section 2: Admin Account */}
+                    <div className="mb-4">
+                      <p className="text-uppercase fw-bold small text-primary mb-3" style={{ letterSpacing: '0.08em' }}>
+                        2 — Admin Account
+                      </p>
+
+                      <div className="row g-3 mb-3">
+                        <div className="col-12 col-sm-6">
+                          <label className="form-label fw-semibold text-dark small mb-1">Full Name</label>
+                          <div className="input-group">
+                            <span className="input-group-text bg-light border-end-0 text-muted"><User size={17} /></span>
+                            <input
+                              type="text"
+                              className={`form-control border-start-0 ${errors.adminName ? 'is-invalid' : ''}`}
+                              name="adminName"
+                              placeholder="Dr. Rajesh Kumar"
+                              value={formData.adminName}
+                              onChange={handleChange}
+                            />
+                          </div>
+                          {errors.adminName && <div className="text-danger small mt-1">⚠ {errors.adminName}</div>}
                         </div>
-                        {errors.password && <div className="text-danger small mt-1">{errors.password}</div>}
+                        <div className="col-12 col-sm-6">
+                          <label className="form-label fw-semibold text-dark small mb-1">Email Address</label>
+                          <div className="input-group">
+                            <span className="input-group-text bg-light border-end-0 text-muted"><Mail size={17} /></span>
+                            <input
+                              type="email"
+                              className={`form-control border-start-0 ${errors.email ? 'is-invalid' : ''}`}
+                              name="email"
+                              placeholder="principal@ssit.edu.in"
+                              value={formData.email}
+                              onChange={handleChange}
+                            />
+                          </div>
+                          {errors.email && <div className="text-danger small mt-1">⚠ {errors.email}</div>}
+                        </div>
                       </div>
-                      <div className="col-12 col-sm-6">
-                        <label className="form-label small fw-semibold text-muted">Confirm Password</label>
-                        <div className="input-group">
-                          <span className="input-group-text bg-light border-end-0"><Lock size={18} className="text-muted" /></span>
-                          <input
-                            type="password"
-                            className={`form-control border-start-0 ps-0 ${errors.confirmPassword ? 'is-invalid' : ''}`}
-                            name="confirmPassword"
-                            placeholder="••••••••"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                          />
+
+                      <div className="row g-3">
+                        <div className="col-12 col-sm-6">
+                          <label className="form-label fw-semibold text-dark small mb-1">Password</label>
+                          <div className="input-group">
+                            <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={17} /></span>
+                            <input
+                              type="password"
+                              className={`form-control border-start-0 ${errors.password ? 'is-invalid' : ''}`}
+                              name="password"
+                              placeholder="Min 8 chars, 1 uppercase, 1 number"
+                              value={formData.password}
+                              onChange={handleChange}
+                            />
+                          </div>
+                          {strength && (
+                            <div className="mt-1">
+                              <div className="progress" style={{ height: 4 }}>
+                                <div
+                                  className={`progress-bar bg-${strength.color}`}
+                                  style={{ width: strength.width, transition: 'width 0.3s' }}
+                                />
+                              </div>
+                              <span className={`text-${strength.color} small`}>Password strength: {strength.level}</span>
+                            </div>
+                          )}
+                          {errors.password && <div className="text-danger small mt-1">⚠ {errors.password}</div>}
                         </div>
-                        {errors.confirmPassword && <div className="text-danger small mt-1">{errors.confirmPassword}</div>}
+                        <div className="col-12 col-sm-6">
+                          <label className="form-label fw-semibold text-dark small mb-1">Confirm Password</label>
+                          <div className="input-group">
+                            <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={17} /></span>
+                            <input
+                              type="password"
+                              className={`form-control border-start-0 ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                              name="confirmPassword"
+                              placeholder="Re-enter password"
+                              value={formData.confirmPassword}
+                              onChange={handleChange}
+                            />
+                          </div>
+                          {errors.confirmPassword && <div className="text-danger small mt-1">⚠ {errors.confirmPassword}</div>}
+                          {!errors.confirmPassword && formData.confirmPassword && formData.confirmPassword === formData.password && (
+                            <div className="text-success small mt-1">✓ Passwords match</div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary w-100 rounded-pill py-2 fw-bold"
+                    <button
+                      type="submit"
+                      className="btn btn-primary w-100 rounded-pill py-2 fw-bold fs-6"
                       disabled={isSubmitting}
+                      style={{ background: 'linear-gradient(135deg,#2563EB,#7C3AED)', border: 'none' }}
                     >
                       {isSubmitting ? (
-                        <><span className="spinner-border spinner-border-sm me-2" /> Creating Workspace...</>
+                        <><span className="spinner-border spinner-border-sm me-2" />Setting up your workspace...</>
                       ) : (
-                        'Register Institution'
+                        '🚀 Create My Workspace — Free'
                       )}
                     </button>
-                    
+
                     <p className="text-center text-muted small mt-3 mb-0">
-                      By registering, you agree to EduFlow's Terms of Service and Privacy Policy.
+                      Already registered? <Link to="/login" className="text-primary fw-semibold">Sign in here</Link>
                     </p>
                   </form>
                 </div>

@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react'
 
-const DARK_MODE_KEY = 'sri-sudha-dark-mode'
+const DARK_MODE_KEY = 'eduflow-ai-dark-mode'
+const LEGACY_KEY = 'sri-sudha-dark-mode'
 
 export function useDarkMode() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const stored = localStorage.getItem(DARK_MODE_KEY)
-    if (stored !== null) return stored === 'true'
-    
-    // Check system preference
+    // Migrate from legacy key
+    const stored = localStorage.getItem(DARK_MODE_KEY) ?? localStorage.getItem(LEGACY_KEY)
+    if (stored !== null) {
+      localStorage.setItem(DARK_MODE_KEY, stored)
+      localStorage.removeItem(LEGACY_KEY)
+      return stored === 'true'
+    }
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
 

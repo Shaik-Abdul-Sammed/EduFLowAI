@@ -1,6 +1,9 @@
 import { Router } from 'express'
+import fs from 'node:fs'
+import path from 'node:path'
 import { authMiddleware, requireRole } from '../middleware/auth.js'
 import { pool } from '../db/pool.js'
+import { logger } from '../utils/logger.js'
 
 export function createAdminRouter() {
   const router = Router()
@@ -63,8 +66,45 @@ export function createAdminRouter() {
 
       res.json(logs)
     } catch (err) {
-      console.error('Audit logs error:', err)
+      logger.error('Audit logs error:', err)
       res.status(500).json({ error: 'Failed to fetch audit logs' })
+    }
+  })
+
+  /**
+   * GET /api/v1/admin/backup/status
+   * Retrieve the latest database backup metadata.
+   */
+  router.get('/backup/status', async (_req, res) => {
+    try {
+      const manifestPath = path.resolve(process.cwd(), 'backups/backups-manifest.json')
+      const altManifestPath = path.resolve(process.cwd(), 'backups-manifest.json')
+
+      let manifest = null
+      if (fs.existsSync(manifestPath)) {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+      } else if (fs.existsSync(altManifestPath)) {
+        manifest = JSON.parse(fs.readFileSync(altManifestPath, 'utf-8'))
+      }
+
+      if (!manifest) {
+        return res.json({
+          lastBackupTimestamp: null,
+          lastBackupSize: null,
+          backupCount: 0,
+          storageLocation: 'local',
+        })
+      }
+
+      res.json({
+        lastBackupTimestamp: manifest.lastBackupTimestamp,
+        lastBackupSize: manifest.lastBackupSize,
+        backupCount: manifest.backupCount,
+        storageLocation: manifest.storageLocation || 'local',
+      })
+    } catch (err) {
+      logger.error('Backup status error:', err)
+      res.status(500).json({ error: 'Failed to retrieve backup status' })
     }
   })
 

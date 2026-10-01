@@ -3,6 +3,7 @@ import { UserRepository } from '../repositories/UserRepository.js'
 import { AIService } from '../services/AIService.js'
 import { CacheService } from '../services/CacheService.js'
 import { calculateROI } from '../ai/officers/officerPrompts.js'
+import { logger } from '../utils/logger.js'
 
 export class OfficerController {
   static async generateAccreditation(req, res) {
@@ -32,7 +33,7 @@ export class OfficerController {
         roi
       })
     } catch (err) {
-      console.error('Accreditation generation error:', err.message)
+      logger.error('Accreditation generation error:', err)
       res.status(500).json({ error: 'Failed to generate report' })
     }
   }
@@ -57,7 +58,7 @@ export class OfficerController {
 
       res.json({ success: true, reply, roi })
     } catch (err) {
-      console.error('Risk prediction error:', err.message)
+      logger.error('Risk prediction error:', err)
       res.status(500).json({ error: 'Failed to predict risk' })
     }
   }
@@ -82,7 +83,7 @@ export class OfficerController {
 
       res.json({ success: true, reply, roi })
     } catch (err) {
-      console.error('Timetable generation error:', err.message)
+      logger.error('Timetable generation error:', err)
       res.status(500).json({ error: 'Failed to generate timetable' })
     }
   }
@@ -107,7 +108,7 @@ export class OfficerController {
 
       res.json({ success: true, reply, roi })
     } catch (err) {
-      console.error('Admission yield prediction error:', err.message)
+      logger.error('Admission yield prediction error:', err)
       res.status(500).json({ error: 'Failed to predict admission yield' })
     }
   }
@@ -132,7 +133,7 @@ export class OfficerController {
 
       res.json({ success: true, reply, roi })
     } catch (err) {
-      console.error('Finance reconciliation error:', err.message)
+      logger.error('Finance reconciliation error:', err)
       res.status(500).json({ error: 'Failed to reconcile finances' })
     }
   }
@@ -207,8 +208,136 @@ export class OfficerController {
 
       res.json(summaryData)
     } catch (e) {
-      console.error(e)
+      logger.error('Failed to get ROI summary:', e)
       res.status(500).json({ error: 'Failed to get ROI summary' })
     }
   }
+
+  static async handleStream(req, res, officerType, prompt, actionType, auditAction) {
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+    if (typeof res.flushHeaders === 'function') {
+      res.flushHeaders()
+    }
+
+    const sendEvent = (data) => {
+      res.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
+
+    try {
+      sendEvent({ type: 'thinking', message: `Analyzing institutional data for ${officerType}...` })
+
+      const roi = calculateROI(officerType, actionType)
+      let accumulatedText = ''
+
+      const context = {
+        institutionId: req.user?.institutionId,
+        userRole: req.user?.role,
+      }
+
+      for await (const token of AIService.streamPrompt(officerType, prompt, context)) {
+        accumulatedText += token
+        sendEvent({ type: 'token', text: token })
+      }
+
+      sendEvent({
+        type: 'done',
+        officerType,
+        roi,
+        totalText: accumulatedText,
+      })
+
+      if (req.user?.institutionId) {
+        try {
+          await OfficerRepository.logSession(
+            req.user.institutionId,
+            officerType,
+            [{ role: 'user', content: prompt }],
+            { reply: accumulatedText },
+            roi.hoursSaved,
+            roi.moneySaved
+          )
+
+          await UserRepository.logAudit(
+            req.user.institutionId,
+            req.user.id,
+            auditAction,
+            req.ip,
+            req.get('user-agent'),
+            { prompt, actionType }
+          )
+        } catch (dbErr) {
+          logger.warn(`[Stream] Could not log session/audit for ${officerType}:`, dbErr)
+        }
+      }
+
+      res.end()
+    } catch (err) {
+      logger.error(`Error in officer streaming [${officerType}]:`, err)
+      sendEvent({ type: 'error', message: err.message || 'Stream processing failed' })
+      res.end()
+    }
+  }
+
+  static async streamAccreditation(req, res) {
+    const prompt = req.body?.reportType || req.body?.action || 'Generate NAAC Criteria 3 SSR Analysis for SSIT'
+    return OfficerController.handleStream(
+      req,
+      res,
+      'accreditation',
+      prompt,
+      'generate_naac_report',
+      'ACCREDITATION_REPORT_STREAMED'
+    )
+  }
+
+  static async streamStudentRisk(req, res) {
+    const prompt = req.body?.action || 'Run institutional dropout risk analysis for semester 4'
+    return OfficerController.handleStream(
+      req,
+      res,
+      'student-success',
+      prompt,
+      'risk_analysis',
+      'RISK_PREDICTION_STREAMED'
+    )
+  }
+
+  static async streamTimetable(req, res) {
+    const prompt = req.body?.action || 'Generate conflict-free timetable for CSE Department'
+    return OfficerController.handleStream(
+      req,
+      res,
+      'timetable',
+      prompt,
+      'generate_timetable',
+      'TIMETABLE_STREAMED'
+    )
+  }
+
+  static async streamAdmissions(req, res) {
+    const prompt = req.body?.action || 'Analyze application yield and predict final enrollment'
+    return OfficerController.handleStream(
+      req,
+      res,
+      'admissions',
+      prompt,
+      'process_application',
+      'ADMISSION_YIELD_STREAMED'
+    )
+  }
+
+  static async streamFinance(req, res) {
+    const prompt = req.body?.action || 'Reconcile fee collection against bank deposits for March 2026'
+    return OfficerController.handleStream(
+      req,
+      res,
+      'finance',
+      prompt,
+      'reconcile_fees',
+      'FINANCE_RECONCILED_STREAMED'
+    )
+  }
 }
+

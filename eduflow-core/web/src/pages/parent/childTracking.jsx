@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { io } from 'socket.io-client'
-import { useAuth } from '../../hooks/useAuth'
 
 export default function ChildTracking() {
-  const { user } = useAuth()
   const [childData, setChildData] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
 

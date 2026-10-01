@@ -17,6 +17,19 @@ export class OpenAIProvider extends BaseProvider {
     return res.choices[0].message.content
   }
 
+  async *chatStream(messages, systemPrompt = '') {
+    const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
+    const stream = await this.client.chat.completions.create({
+      model: this.model,
+      messages: allMessages,
+      stream: true,
+    })
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content
+      if (content) yield content
+    }
+  }
+
   async extractStructured(text, schema) {
     const prompt = `Extract structured information and return ONLY valid JSON matching this schema:\n${JSON.stringify(schema)}\n\nText:\n${text}`
     const res = await this.client.chat.completions.create({

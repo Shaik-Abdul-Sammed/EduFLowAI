@@ -13,6 +13,16 @@ class MockProvider extends BaseProvider {
   async chat(messages, systemPrompt) {
     return 'This is a mock response from the fallback chain because all external providers failed or were unreachable.'
   }
+  async *chatStream(messages, systemPrompt) {
+    const reply = await this.chat(messages, systemPrompt)
+    const tokens = reply.split(/(\s+)/)
+    for (const tok of tokens) {
+      if (tok) {
+        yield tok
+        await new Promise(r => setTimeout(r, 25))
+      }
+    }
+  }
   async extractStructured(text, schema) {
     return {}
   }

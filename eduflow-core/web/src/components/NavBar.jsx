@@ -7,14 +7,15 @@ import { useI18n } from '../i18n'
 export default function NavBar({ routes, onMenuClick }) {
   const { user, logout } = useAuth()
   const [langOpen, setLangOpen] = useState(false)
-  const [theme, setTheme] = useState(localStorage.getItem('sri-sudha-theme') || 'light')
+  const [theme, setTheme] = useState(localStorage.getItem('eduflow-ai-theme') || localStorage.getItem('sri-sudha-theme') || 'light')
   const { t, locale, setLanguage } = useI18n()
 
   const langRef = useRef(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('sri-sudha-theme', theme)
+    localStorage.setItem('eduflow-ai-theme', theme)
+    localStorage.removeItem('sri-sudha-theme')
   }, [theme])
 
   useEffect(() => {

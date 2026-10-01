@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { io } from 'socket.io-client';
 import { getApiBaseURL } from '../../config/apiConfig';
@@ -11,6 +11,12 @@ export default function TeacherCommunication() {
   const [inputValue, setInputValue] = useState('');
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
 
   useEffect(() => {
     // Initialize socket connection
@@ -28,12 +34,6 @@ export default function TeacherCommunication() {
       }
     };
   }, []);
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
 
   const handleSend = (e) => {
     e.preventDefault();

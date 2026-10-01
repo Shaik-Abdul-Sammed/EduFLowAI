@@ -18,6 +18,12 @@ import { createUserRouter } from './routes/userRoutes.js'
 import { createInstitutionRouter } from './routes/institutionRoutes.js'
 import { createCareerForgeRouter } from './routes/careerForgeRoutes.js'
 import { createSubscriptionRouter } from './routes/subscriptionRoutes.js'
+import { createLeadRouter } from './routes/leadRoutes.js'
+import { createReportDeliveryRouter } from './routes/reportDeliveryRoutes.js'
+import { ReportDeliveryController } from './controllers/ReportDeliveryController.js'
+import { createInvoiceRouter } from './routes/invoiceRoutes.js'
+import { pool } from './db/pool.js'
+import { httpLogger, productionRateLimiter } from './middleware/productionHardening.js'
 
 // Security headers middleware
 function securityHeadersMiddleware(req, res, next) {
@@ -41,23 +47,31 @@ export function createApp({ db } = {}) {
   const app = express()
   const backupRouter = createBackupRouter(db)
 
-  app.use(cors())
+  const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
+  app.use(cors({ origin: allowedOrigin, credentials: true }))
   app.use(express.json())
   app.use(securityHeadersMiddleware)
-
-  // Global rate limiter
-  // const globalLimiter = rateLimit({
-  //   windowMs: 15 * 60 * 1000, // 15 minutes
-  //   limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  //   standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-  //   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  //   message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
-  // })
-  // app.use('/api', globalLimiter)
+  app.use(httpLogger)
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'eduflow-backend', version: '1.0.0', timestamp: new Date().toISOString() })
   })
+
+  app.get('/api/health/render', (_req, res) => {
+    res.status(200).json({ status: 'ok' })
+  })
+
+  app.get('/api/health/db', async (_req, res) => {
+    try {
+      const health = await pool.getHealth()
+      res.json(health)
+    } catch (err) {
+      res.status(500).json({ error: err.message, mode: 'postgres', persistent: false })
+    }
+  })
+
+  // Apply production rate limiter to all /api/v1/* routes
+  app.use('/api/v1', productionRateLimiter)
 
   // API v1 routes
   app.use('/api/v1/search', createSearchRouter(db))
@@ -68,6 +82,18 @@ export function createApp({ db } = {}) {
   app.use('/api/backup', backupRouter)
   app.use('/api/v1/translate', createTranslateRouter())
   app.use('/api/v1/ai', createAIRouter())
+
+  app.use('/api/v1/officers', (req, res, next) => {
+    const start = Date.now()
+    const originalJson = res.json.bind(res)
+    res.json = (body) => {
+      const elapsed = Date.now() - start
+      if (elapsed > 10000) res.set('X-AI-Latency-Warning', 'true')
+      return originalJson(body)
+    }
+    next()
+  })
+
   app.use('/api/v1/officers', createOfficerRouter())
   app.use('/api/v1/admin', createAdminRouter())
   app.use('/api/v1/student', createStudentRouter())
@@ -80,6 +106,27 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/careerforge', createCareerForgeRouter())
   app.use('/api/v1/subscription', createSubscriptionRouter())
   app.use('/api/v1/ai-officer', createOfficerRouter()) // alias for officers
+  app.use('/api/v1/leads', createLeadRouter())
+  app.use('/api/v1/reports', createReportDeliveryRouter())
+  app.use('/api/v1/invoices', createInvoiceRouter())
+
+  // Public Report Viewer and Download endpoints
+  app.get('/r/:token/pdf', ReportDeliveryController.downloadPublicReportPdf)
+  app.get('/r/:token', ReportDeliveryController.renderPublicReportHtml)
+
+  // Waitlist capture endpoint
+  app.post('/api/v1/waitlist', (req, res) => {
+    const { email, module } = req.body || {}
+    console.log(`[Waitlist] ${email} requested notification for module: ${module}`)
+    res.json({ success: true, message: 'Added to waitlist', email, module })
+  })
+
+  // Client error reporting endpoint
+  app.post('/api/v1/admin/error-report', (req, res) => {
+    const { error, url, timestamp } = req.body || {}
+    console.error(`[Client Error Report] ${timestamp || new Date().toISOString()} on ${url}:`, error)
+    res.json({ success: true, message: 'Error report received' })
+  })
 
   // Serve frontend static build if available (e.g., frontend/dist)
   let servedFrontend = false

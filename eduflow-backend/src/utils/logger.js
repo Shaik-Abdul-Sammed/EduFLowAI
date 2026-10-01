@@ -1,54 +1,60 @@
-// Centralized error logging utility for monitoring and debugging
+import pino from 'pino'
 
-const LOG_LEVELS = {
-  DEBUG: 'DEBUG',
-  INFO: 'INFO',
-  WARN: 'WARN',
-  ERROR: 'ERROR',
-}
+const redactPaths = [
+  'password',
+  '*.password',
+  'token',
+  '*.token',
+  'refreshToken',
+  '*.refreshToken',
+  'authorization',
+  '*.authorization',
+  'apiKey',
+  '*.apiKey',
+  'headers.authorization',
+  'req.headers.authorization',
+]
 
-class Logger {
-  constructor(name) {
-    this.name = name
-  }
+export const pinoInstance = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  redact: {
+    paths: redactPaths,
+    censor: '[REDACTED]',
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
+})
 
-  formatLog(level, message, data) {
-    return {
-      timestamp: new Date().toISOString(),
-      level,
-      logger: this.name,
-      message,
-      ...(data && { data }),
+function adaptMethod(fn, instance) {
+  return (first, second, third) => {
+    if (typeof first === 'string' && second !== undefined) {
+      if (second instanceof Error) {
+        return fn.call(instance, { err: second, ...(third || {}) }, first)
+      }
+      if (typeof second === 'object' && second !== null) {
+        return fn.call(instance, { ...second }, first)
+      }
     }
-  }
-
-  debug(message, data) {
-    const log = this.formatLog(LOG_LEVELS.DEBUG, message, data)
-    console.debug(JSON.stringify(log))
-  }
-
-  info(message, data) {
-    const log = this.formatLog(LOG_LEVELS.INFO, message, data)
-    console.info(JSON.stringify(log))
-  }
-
-  warn(message, data) {
-    const log = this.formatLog(LOG_LEVELS.WARN, message, data)
-    console.warn(JSON.stringify(log))
-  }
-
-  error(message, error, data) {
-    const log = this.formatLog(LOG_LEVELS.ERROR, message, {
-      error: error?.message || error,
-      stack: error?.stack,
-      ...data,
-    })
-    console.error(JSON.stringify(log))
+    return fn.call(instance, first, second)
   }
 }
+
+export function wrapLogger(instance) {
+  return {
+    info: adaptMethod(instance.info, instance),
+    error: adaptMethod(instance.error, instance),
+    warn: adaptMethod(instance.warn, instance),
+    debug: adaptMethod(instance.debug, instance),
+    child(bindings) {
+      return wrapLogger(instance.child(bindings))
+    },
+    raw: instance,
+  }
+}
+
+export const logger = wrapLogger(pinoInstance)
 
 export function createLogger(name) {
-  return new Logger(name)
+  return wrapLogger(pinoInstance.child({ logger: name }))
 }
 
-export default Logger
+export default logger

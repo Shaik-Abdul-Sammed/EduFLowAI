@@ -1,20 +1,72 @@
 import dotenv from 'dotenv'
 import { createApp } from './app.js'
 import { Server } from 'socket.io'
+import { validateEnv } from './utils/validateEnv.js'
+import { logger } from './utils/logger.js'
+import { pool } from './db/pool.js'
+import { disconnectRedis } from './utils/cache.js'
 
 dotenv.config()
+validateEnv()
 
 const app = createApp()
-const BASE_PORT = Number(process.env.PORT || 4000)
+app.set('trust proxy', 1)
+const BASE_PORT = Number(process.env.PORT || 3000)
 
 function listenOnPort(port) {
   return new Promise((resolve, reject) => {
-    const server = app.listen(port, () => resolve(server))
+    const server = app.listen(port, '0.0.0.0', () => resolve(server))
 
     server.on('error', (error) => {
       server.close(() => reject(error))
     })
   })
+}
+
+function setupGracefulShutdown(server) {
+  let isShuttingDown = false
+
+  const shutdown = (signal) => {
+    if (isShuttingDown) return
+    isShuttingDown = true
+
+    logger.info(`Received ${signal}. Shutting down gracefully...`)
+
+    const forceTimer = setTimeout(() => {
+      logger.error('Graceful shutdown timed out after 10s. Forcing exit.')
+      process.exit(1)
+    }, 10000)
+    forceTimer.unref()
+
+    server.close(async (closeErr) => {
+      if (closeErr) {
+        logger.error('Error closing HTTP server:', closeErr)
+      } else {
+        logger.info('HTTP server closed.')
+      }
+
+      try {
+        await pool.end()
+        logger.info('Database pool closed.')
+      } catch (dbErr) {
+        logger.error('Error closing database pool:', dbErr)
+      }
+
+      try {
+        await disconnectRedis()
+        logger.info('Redis client closed.')
+      } catch {
+        // Ignore if redis wasn't connected
+      }
+
+      clearTimeout(forceTimer)
+      logger.info('Graceful shutdown complete.')
+      process.exit(0)
+    })
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
 }
 
 async function startServer() {
@@ -25,6 +77,7 @@ async function startServer() {
 
     try {
       const server = await listenOnPort(port)
+      setupGracefulShutdown(server)
       
       // Initialize Socket.io for Live User GPS tracking
       const io = new Server(server, {

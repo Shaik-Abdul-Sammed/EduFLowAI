@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { courseTracks, studentDummyIds } from '../../utils/studentCatalog'
 
-const instituteName = 'EduFlow'
+const instituteName = 'EduFlow AI'
 
 const roleCards = [
   { role: 'student', title: 'Student Portal', desc: 'Academic progress, assignments, fees, and mentor connect.', icon: '👨‍🎓', color: '#2563EB', lightColor: 'rgba(37,99,235,0.08)', gradClass: 'portal-card-student' },
@@ -110,6 +110,13 @@ export default function EntryPage() {
                 🔓 Access Workspace
               </Link>
               <Link
+                className="btn btn-outline-secondary"
+                to="/services"
+                style={{ padding: '0.8rem 1.5rem', fontSize: '0.95rem' }}
+              >
+                ⚡ Automation Services
+              </Link>
+              <Link
                 className="btn btn-link text-decoration-none"
                 to="/directory"
                 style={{ padding: '0.8rem 1rem', fontSize: '0.95rem' }}
@@ -205,6 +212,26 @@ export default function EntryPage() {
                 <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2563EB' }}>Launch AI Command Center</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--app-text-muted)' }}>See all officers in action →</div>
               </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Automation Services Banner ── */}
+      <div className="mb-5 card border-0 p-4 p-lg-5 rounded-4 shadow-sm" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #eef2ff 100%)', border: '1px solid #e0e7ff', animation: 'fadeInUp 0.7s ease 0.15s both' }}>
+        <div className="row align-items-center g-4">
+          <div className="col-12 col-lg-8">
+            <span className="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2 fw-bold" style={{ fontSize: '0.8rem' }}>
+              🛠️ Standalone Automation Workflows
+            </span>
+            <h2 className="fw-bold fs-2 text-dark mb-2">Buyable AI Services for Every College Need</h2>
+            <p className="text-muted mb-0" style={{ maxWidth: 640 }}>
+              Solve your institution's acute bottlenecks today. From NAAC accreditation packages to conflict-free timetable synthesis and student dropout alerts — buy turnkey automation packages starting at ₹10,000.
+            </p>
+          </div>
+          <div className="col-12 col-lg-4 text-lg-end">
+            <Link to="/services" className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+              Explore All 7 Automation Services →
             </Link>
           </div>
         </div>

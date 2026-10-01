@@ -39,6 +39,35 @@ export class FallbackProvider extends BaseProvider {
     return this._executeWithFallback('chat', [messages, systemPrompt])
   }
 
+  async *chatStream(messages, systemPrompt) {
+    let lastError = null
+    for (const provider of this.providers) {
+      try {
+        if (typeof provider.chatStream === 'function') {
+          for await (const chunk of provider.chatStream(messages, systemPrompt)) {
+            this.lastSuccessfulProviderName = provider.constructor.name
+            yield chunk
+          }
+          return
+        } else if (typeof provider.chat === 'function') {
+          const reply = await provider.chat(messages, systemPrompt)
+          this.lastSuccessfulProviderName = provider.constructor.name
+          const tokens = reply.split(/(\s+)/)
+          for (const tok of tokens) {
+            if (tok) {
+              yield tok
+              await new Promise(r => setTimeout(r, 25))
+            }
+          }
+          return
+        }
+      } catch (err) {
+        lastError = err
+      }
+    }
+    throw lastError || new Error('All fallback providers failed to stream')
+  }
+
   async extractStructured(text, schema) {
     return this._executeWithFallback('extractStructured', [text, schema])
   }

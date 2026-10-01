@@ -9,6 +9,17 @@ export class BaseProvider {
   async extractStructured(text, schema) { throw new Error('Not implemented') }
   /** @param {Object} spec @returns {Promise<Array<{filename:string,content:string}>>} */
   async generateCode(spec) { throw new Error('Not implemented') }
-  /** @param {string} errorLog @param {Array<{filename:string,content:string}>} codeFiles @returns {Promise<Array<{filename:string,content:string}>>} */
   async analyzeAndRepair(errorLog, codeFiles) { throw new Error('Not implemented') }
+  /** @param {Array<{role:string,content:string}>} messages @param {string} systemPrompt @returns {AsyncGenerator<string>} */
+  async *chatStream(messages, systemPrompt) {
+    const full = await this.chat(messages, systemPrompt)
+    const words = full.split(/(\s+)/)
+    for (const word of words) {
+      if (word) {
+        yield word
+        await new Promise(r => setTimeout(r, 25))
+      }
+    }
+  }
 }
+

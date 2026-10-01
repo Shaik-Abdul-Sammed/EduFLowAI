@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { pool } from '../db/pool.js'
 import { UserRepository } from '../repositories/UserRepository.js'
+import { validateRequest, registerInstitutionSchema } from '../middleware/validateRequest.js'
 
 export function createInstitutionRouter() {
   const router = Router()
@@ -27,14 +28,14 @@ export function createInstitutionRouter() {
   /**
    * POST /api/v1/institutions/register
    */
-  router.post('/register', async (req, res) => {
+  router.post('/register', validateRequest(registerInstitutionSchema), async (req, res) => {
     const client = await pool.connect()
     try {
-      const { institutionName, subdomain, adminName, email, password } = req.body
-
-      if (!institutionName || !subdomain || !adminName || !email || !password) {
-        return res.status(400).json({ error: 'All fields are required' })
-      }
+      const institutionName = req.body.institutionName || req.body.name
+      const subdomain = req.body.subdomain
+      const adminName = req.body.adminName || 'Admin'
+      const email = req.body.email || req.body.adminEmail
+      const password = req.body.password || 'Demo@2026'
 
       await client.query('BEGIN')
 

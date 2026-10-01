@@ -4,17 +4,7 @@ import jwt from 'jsonwebtoken'
 import { UserRepository } from '../repositories/UserRepository.js'
 import { pool } from '../db/pool.js'
 import { rateLimit } from 'express-rate-limit'
-import { z } from 'zod'
-
-const loginSchema = z.object({
-  institutionId: z.union([z.string(), z.number()]),
-  email: z.string().optional(),
-  username: z.string().optional(),
-  password: z.string().min(1),
-  role: z.string().optional()
-}).refine(data => data.email || data.username, {
-  message: 'Either email or username is required'
-})
+import { validateRequest, loginSchema, registerUserSchema } from '../middleware/validateRequest.js'
 
 export function createAuthRouter() {
   const router = Router()
@@ -52,7 +42,7 @@ export function createAuthRouter() {
    */
   router.get('/default-institution', async (req, res) => {
     try {
-      const result = await pool.query('SELECT id, name FROM institutions LIMIT 1')
+      const result = await pool.query('SELECT id, name FROM institutions ORDER BY id ASC LIMIT 1')
       if (result.rows.length === 0) return res.status(404).json({ error: 'No institutions found' })
       res.json({ id: result.rows[0].id, name: result.rows[0].name })
     } catch (err) {
@@ -63,14 +53,9 @@ export function createAuthRouter() {
   /**
    * POST /api/v1/auth/login
    */
-  router.post('/login', async (req, res) => {
+  router.post('/login', validateRequest(loginSchema), async (req, res) => {
     try {
-      const parsedBody = loginSchema.safeParse(req.body)
-      if (!parsedBody.success) {
-        return res.status(400).json({ error: 'Validation failed', details: parsedBody.error.errors })
-      }
-      
-      const { institutionId, email, username, password, role } = parsedBody.data
+      const { institutionId, email, username, password, role } = req.body
       const identifier = username || email
 
       // Find user and join with institution
@@ -197,15 +182,13 @@ export function createAuthRouter() {
    * POST /api/v1/auth/register
    * Basic registration endpoint
    */
-  router.post('/register', async (req, res) => {
+  router.post('/register', validateRequest(registerUserSchema), async (req, res) => {
     try {
-      const { institutionId, username, password, name, role } = req.body
-      if (!institutionId || !username || !password || !name || !role) {
-        return res.status(400).json({ error: 'Missing required fields' })
-      }
+      const { institutionId = 1, username, email, password, name, role } = req.body
+      const effectiveUsername = username || email
 
       // Check if user already exists
-      const existing = await UserRepository.findByUsername(institutionId, username)
+      const existing = await UserRepository.findByUsername(institutionId, effectiveUsername)
       if (existing) {
         return res.status(409).json({ error: 'Username already exists' })
       }
@@ -217,7 +200,7 @@ export function createAuthRouter() {
       const user = await UserRepository.createUser({
         institutionId,
         role,
-        username,
+        username: effectiveUsername,
         passwordHash,
         name
       })

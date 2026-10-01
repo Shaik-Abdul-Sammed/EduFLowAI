@@ -14,8 +14,10 @@ const formatSlug = (slug) => {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
+
 export default function Sidebar({ routes, isOpen, setOpen }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   
   if (!user) return null
 
@@ -97,7 +99,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>
-              EduFlow
+              EduFlow AI
             </span>
           </div>
           <button 
@@ -116,11 +118,11 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 800, fontSize: '1rem',
             }}>
-              {user.name.charAt(0)}
+              {user.name?.charAt(0) || 'U'}
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--app-text)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {user.name}
+                {user.name || 'User'}
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--app-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
                 {themeData.icon} {role}
@@ -141,8 +143,8 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               padding: '0.6rem 0.875rem', borderRadius: '0.5rem',
               marginBottom: '1rem', textDecoration: 'none',
               fontSize: '0.875rem', fontWeight: isActive ? 700 : 600,
-                  color: isActive ? themeData.text : 'var(--sidebar-text)',
-                  background: isActive ? themeData.light : 'transparent',
+              color: isActive ? themeData.text : 'var(--sidebar-text)',
+              background: isActive ? themeData.light : 'transparent',
               transition: 'all 0.2s',
             })}
           >
@@ -150,24 +152,32 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
             Dashboard Overview
           </NavLink>
 
-          {Object.entries(groupedRoutes).map(([category, currentRoutes]) => (
-            currentRoutes.length > 0 && (
-              <div key={category} style={{ marginBottom: '1.25rem' }}>
+          {isDemoMode ? (
+            <>
+              {/* Demo Mode Curated AI Officers */}
+              <div style={{ marginBottom: '1.25rem' }}>
                 <div style={{ 
                   fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
                   textTransform: 'uppercase', letterSpacing: '0.05em',
                   marginBottom: '0.5rem', paddingLeft: '0.875rem'
                 }}>
-                  {category}
+                  AI Officers (Live)
                 </div>
-                {currentRoutes.map(route => (
+                {[
+                  { to: '/officer/accreditation', icon: '🏛️', label: 'Accreditation Officer' },
+                  { to: '/officer/student-success', icon: '🎯', label: 'Student Success Officer' },
+                  { to: '/officer/timetable', icon: '📅', label: 'Timetable Officer' },
+                  { to: '/officer/admissions', icon: '🎓', label: 'Admission Officer' },
+                  { to: '/officer/finance', icon: '💰', label: 'Finance Officer' },
+                  { to: '/officers-dashboard', icon: '⚡', label: 'Officers Hub & ROI' },
+                ].map(item => (
                   <NavLink
-                    key={route.routePath}
-                    to={route.routePath}
+                    key={item.to}
+                    to={item.to}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                     style={({ isActive }) => ({
-                      display: 'block',
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
                       padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
                       marginBottom: '0.2rem', textDecoration: 'none',
                       fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
@@ -176,16 +186,84 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
                       transition: 'all 0.2s',
                     })}
                   >
-                    {formatSlug(route.slug)}
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
                   </NavLink>
                 ))}
               </div>
-            )
-          ))}
+
+              {/* Demo Mode System & Core Tools */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ 
+                  fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
+                  textTransform: 'uppercase', letterSpacing: '0.05em',
+                  marginBottom: '0.5rem', paddingLeft: '0.875rem'
+                }}>
+                  System & Intelligence
+                </div>
+                {[
+                  { to: '/ai-terminal', icon: '💻', label: 'AI Terminal' },
+                  { to: '/admin-dashboard/audit-logs', icon: '📋', label: 'Audit Logs' },
+                ].map(item => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                    style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                      marginBottom: '0.2rem', textDecoration: 'none',
+                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                      color: isActive ? themeData.text : 'var(--sidebar-text)',
+                      background: isActive ? themeData.light : 'transparent',
+                      transition: 'all 0.2s',
+                    })}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </>
+          ) : (
+            Object.entries(groupedRoutes).map(([category, currentRoutes]) => (
+              currentRoutes.length > 0 && (
+                <div key={category} style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ 
+                    fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
+                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                    marginBottom: '0.5rem', paddingLeft: '0.875rem'
+                  }}>
+                    {category}
+                  </div>
+                  {currentRoutes.map(route => (
+                    <NavLink
+                      key={route.routePath}
+                      to={route.routePath}
+                      onClick={() => setOpen(false)}
+                      className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                      style={({ isActive }) => ({
+                        display: 'block',
+                        padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                        marginBottom: '0.2rem', textDecoration: 'none',
+                        fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                        color: isActive ? themeData.text : 'var(--sidebar-text)',
+                        background: isActive ? themeData.light : 'transparent',
+                        transition: 'all 0.2s',
+                      })}
+                    >
+                      {formatSlug(route.slug)}
+                    </NavLink>
+                  ))}
+                </div>
+              )
+            ))
+          )}
         </div>
         
         {/* Footer Area */}
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--border-color, #e2e8f0)' }}>
+        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border-color, #e2e8f0)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <NavLink 
             to="/profile"
             onClick={() => setOpen(false)}
@@ -196,8 +274,24 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               fontSize: '0.85rem', fontWeight: 600,
             }}
           >
-            👤 My Profile
+            ⚙️ Institution Settings
           </NavLink>
+          <button 
+            onClick={() => {
+              setOpen(false)
+              logout()
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.6rem',
+              padding: '0.5rem 0.875rem', borderRadius: '0.5rem',
+              border: 'none', background: 'transparent',
+              color: '#EF4444', cursor: 'pointer',
+              fontSize: '0.85rem', fontWeight: 600, textAlign: 'left',
+              width: '100%'
+            }}
+          >
+            🚪 Logout
+          </button>
         </div>
       </aside>
     </>

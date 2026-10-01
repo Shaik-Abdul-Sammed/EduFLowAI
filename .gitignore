@@ -11,7 +11,12 @@ coverage/
 # Environment variables
 .env
 .env.local
+.env.production
 .env.*.local
+backups/
+**/backups/
+*.sql.gz
+*backups-manifest.json
 
 # IDE
 .vscode/
@@ -51,9 +56,10 @@ tmp/
 temp/
 
 # Package managers
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Removed to ensure deterministic builds in production
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
 # Backend build/dist
 backend/dist/

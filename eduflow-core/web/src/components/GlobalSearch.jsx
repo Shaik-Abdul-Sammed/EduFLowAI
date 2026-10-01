@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getRecentSearches, saveRecentSearch } from '../services/searchService'
 import { useI18n } from '../i18n'
 
-const RECENT_KEY = 'sri-sudha-recent-searches'
+const RECENT_KEY = 'eduflow-ai-recent-searches'
 
 function toTitle(value) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())

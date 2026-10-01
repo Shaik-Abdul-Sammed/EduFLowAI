@@ -4,7 +4,9 @@ import { OFFICER_PROMPTS, calculateROI } from '../ai/officers/officerPrompts.js'
 import { authMiddleware, requireRole } from '../middleware/auth.js'
 import { OfficerRepository } from '../repositories/OfficerRepository.js'
 import { OfficerController } from '../controllers/OfficerController.js'
+import { OfficerExportController } from '../controllers/OfficerExportController.js'
 import { UserRepository } from '../repositories/UserRepository.js'
+import { validateRequest, officerPromptSchema } from '../middleware/validateRequest.js'
 
 const VALID_OFFICERS = ['accreditation', 'timetable', 'admissions', 'finance', 'student-success']
 
@@ -19,31 +21,46 @@ export function createOfficerRouter() {
    * POST /api/v1/officers/accreditation/generate
    * Generates a mock accreditation report and stores it in the database.
    */
-  router.post('/accreditation/generate', requireRole(['admin', 'faculty']), OfficerController.generateAccreditation)
+  router.post('/accreditation/generate', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.generateAccreditation)
 
   /**
    * POST /api/v1/officers/student-success/predict-risk
    * Returns a mock risk prediction summary
    */
-  router.post('/student-success/predict-risk', requireRole(['admin', 'faculty']), OfficerController.predictStudentRisk)
+  router.post('/student-success/predict-risk', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.predictStudentRisk)
 
   /**
    * POST /api/v1/officers/timetable/generate
    * Generates conflict-free timetable
    */
-  router.post('/timetable/generate', requireRole(['admin', 'faculty']), OfficerController.generateTimetable)
+  router.post('/timetable/generate', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.generateTimetable)
 
   /**
    * POST /api/v1/officers/admissions/predict-yield
    * Predicts admission conversion and yield rate
    */
-  router.post('/admissions/predict-yield', requireRole(['admin', 'faculty']), OfficerController.predictAdmissionsYield)
+  router.post('/admissions/predict-yield', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.predictAdmissionsYield)
 
   /**
    * POST /api/v1/officers/finance/reconcile
    * Reconciles fee payments against bank statements
    */
-  router.post('/finance/reconcile', requireRole(['admin', 'faculty']), OfficerController.reconcileFinance)
+  router.post('/finance/reconcile', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.reconcileFinance)
+
+  /**
+   * SSE Streaming Endpoints for AI Officers (Task A)
+   */
+  router.post('/accreditation/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamAccreditation)
+  router.post('/student-success/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamStudentRisk)
+  router.post('/timetable/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamTimetable)
+  router.post('/admissions/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamAdmissions)
+  router.post('/finance/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamFinance)
+
+  /**
+   * POST /api/v1/officers/:type/export-pdf
+   * Exports generated officer report text as a branded PDF document.
+   */
+  router.post('/:type/export-pdf', requireRole(['admin', 'faculty']), OfficerExportController.exportPdf)
 
   /**
    * POST /api/v1/officers/:type/chat
