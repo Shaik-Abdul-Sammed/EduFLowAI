@@ -11,7 +11,7 @@ services:
   - type: web
     name: eduflow-backend
     runtime: node
-    plan: starter
+    plan: free
     region: singapore
     rootDir: eduflow-backend
     branch: main
@@ -80,6 +80,7 @@ services:
   - type: web
     name: eduflow-web
     runtime: static
+    plan: free
     rootDir: eduflow-core/web
     branch: main
     buildCommand: npm ci && npm run build
@@ -102,7 +103,7 @@ services:
 # ------------------------------------------------------------------------------
 databases:
   - name: eduflow-postgres
-    plan: starter
+    plan: free
     region: singapore
     databaseName: eduflow
     user: eduflow
