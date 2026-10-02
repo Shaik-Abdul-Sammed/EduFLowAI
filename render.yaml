@@ -102,7 +102,6 @@ services:
 # ------------------------------------------------------------------------------
 databases:
   - name: eduflow-postgres
-    type: postgres
     plan: starter
     region: singapore
     databaseName: eduflow
