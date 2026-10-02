@@ -35,9 +35,8 @@ export class LeadController {
       // Anti-spam honeypot check: reject bots
       if (data.website && data.website.trim() !== '') {
         logger.warn({ ip: req.ip, honeypotValue: data.website }, 'Spam lead submission rejected by honeypot')
-        return res.json({
-          success: true,
-          message: 'Thank you. We will contact you within 24 hours.',
+        return res.status(400).json({
+          error: 'Spam submission detected by honeypot',
         })
       }
 
@@ -110,6 +109,11 @@ export class LeadController {
     try {
       const { id } = req.params
       const { status, notes } = req.body
+
+      const validStatuses = ['NEW', 'CONTACTED', 'PILOT_OFFERED', 'PILOT_DELIVERED', 'WON', 'LOST']
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid lead status', validStatuses })
+      }
 
       const updated = await LeadRepository.update(id, { status, notes })
       if (!updated) {

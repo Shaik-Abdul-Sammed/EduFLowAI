@@ -7,7 +7,7 @@ export class UserRepository {
         `SELECT u.*, i.name as inst_name, i.subscription_tier, i.primary_color, i.secondary_color, i.logo_url 
          FROM users u 
          JOIN institutions i ON u.institution_id = i.id 
-         WHERE u.institution_id = $1 AND (u.username = $2 OR u.email = $2)`,
+         WHERE u.institution_id = $1 AND (LOWER(u.username) = LOWER($2) OR LOWER(u.email) = LOWER($2))`,
         [institutionId, identifier]
       )
       return result.rows[0]
@@ -16,7 +16,7 @@ export class UserRepository {
       `SELECT u.*, i.name as inst_name, i.subscription_tier, i.primary_color, i.secondary_color, i.logo_url 
        FROM users u 
        JOIN institutions i ON u.institution_id = i.id 
-       WHERE (u.username = $1 OR u.email = $1)`,
+       WHERE (LOWER(u.username) = LOWER($1) OR LOWER(u.email) = LOWER($1))`,
       [identifier]
     )
     return result.rows[0]

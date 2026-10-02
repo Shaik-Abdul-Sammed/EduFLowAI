@@ -24,6 +24,8 @@ import { ReportDeliveryController } from './controllers/ReportDeliveryController
 import { createInvoiceRouter } from './routes/invoiceRoutes.js'
 import { pool } from './db/pool.js'
 import { httpLogger, productionRateLimiter } from './middleware/productionHardening.js'
+import helmet from 'helmet'
+import { requestTimeout } from './middleware/timeout.js'
 
 // Security headers middleware
 function securityHeadersMiddleware(req, res, next) {
@@ -45,6 +47,8 @@ function errorHandler(err, req, res, next) {
 
 export function createApp({ db } = {}) {
   const app = express()
+  app.set('trust proxy', 1)
+  app.use(helmet({ contentSecurityPolicy: false }))
   const backupRouter = createBackupRouter(db)
 
   const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
@@ -83,6 +87,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/translate', createTranslateRouter())
   app.use('/api/v1/ai', createAIRouter())
 
+  app.use('/api/v1/officers', requestTimeout(45000))
   app.use('/api/v1/officers', (req, res, next) => {
     const start = Date.now()
     const originalJson = res.json.bind(res)

@@ -137,7 +137,8 @@ const invoiceItemSchema = z.object({
 
 const createInvoiceSchema = z.object({
   leadId: z.union([z.string(), z.number()]).optional(),
-  amount: z.number().nonnegative().optional(),
+  automationType: z.string().optional(),
+  amount: z.number().nonnegative('Amount cannot be negative').optional(),
   description: z.string().optional(),
   institutionName: z.string().optional(),
   contactPerson: z.string().optional(),
@@ -155,10 +156,13 @@ const createInvoiceSchema = z.object({
     if (data.leadId !== undefined && data.leadId !== null && data.leadId !== '') {
       return true
     }
-    return Boolean(data.institutionName && data.contactEmail && data.items && data.items.length > 0)
+    if (data.automationType) {
+      return true
+    }
+    return Boolean(data.institutionName || data.contactEmail || (data.items && data.items.length > 0))
   },
   {
-    message: 'Either leadId or (institutionName, contactEmail, items) is required',
+    message: 'Either leadId, automationType, or institution details are required',
   }
 )
 
@@ -172,6 +176,7 @@ export class InvoiceController {
 
       let {
         leadId,
+        automationType,
         amount,
         description,
         institutionName,
@@ -187,6 +192,16 @@ export class InvoiceController {
         notes = '',
       } = parsed.data
 
+      // If automationType is provided directly, derive description and price
+      if (automationType) {
+        if (!description) {
+          description = getServiceDescription(automationType, institutionName || 'Demo Institution')
+        }
+        if (amount === undefined || amount === null) {
+          amount = getServicePrice(automationType)
+        }
+      }
+
       // If leadId is provided, pull missing fields and default description/amount from referenced lead
       if (leadId && (!institutionName || !contactEmail || !description || amount === undefined || amount === null)) {
         const lead = await LeadRepository.findById(leadId)
@@ -195,12 +210,12 @@ export class InvoiceController {
           if (!contactEmail) contactEmail = lead.email
           if (!contactPerson) contactPerson = lead.contact_name
           if (!address && lead.city_state) address = lead.city_state
-          const automationType = lead.automation_type || 'accreditation'
+          const leadAutomation = lead.automation_type || 'accreditation'
           if (!description) {
-            description = getServiceDescription(automationType, lead.college_name)
+            description = getServiceDescription(leadAutomation, lead.college_name)
           }
           if (amount === undefined || amount === null) {
-            amount = getServicePrice(automationType)
+            amount = getServicePrice(leadAutomation)
           }
         }
       }

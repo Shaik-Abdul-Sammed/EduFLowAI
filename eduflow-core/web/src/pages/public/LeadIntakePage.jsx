@@ -195,7 +195,7 @@ export default function LeadIntakePage() {
               )}
 
               {/* Honeypot field (hidden from real users) */}
-              <div style={{ display: 'none' }}>
+              <div style={{ display: 'none' }} aria-hidden="true" className="lead-honeypot hidden">
                 <label htmlFor="website">Leave this field blank</label>
                 <input
                   id="website"
@@ -204,6 +204,7 @@ export default function LeadIntakePage() {
                   value={formData.website}
                   onChange={handleChange}
                   tabIndex="-1"
+                  aria-hidden="true"
                   autoComplete="off"
                 />
               </div>

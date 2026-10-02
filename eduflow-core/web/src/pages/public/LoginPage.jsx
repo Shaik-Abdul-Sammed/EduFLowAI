@@ -40,6 +40,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('eduflow_remember_me') === 'true'
+  })
+
   function handleRoleChange(nextRole) {
     setRole(nextRole)
     setUsername(roleDefaults[nextRole].username)
@@ -47,15 +51,25 @@ export default function LoginPage() {
     setError('')
   }
 
+  function handleRememberMeChange(e) {
+    const checked = e.target.checked
+    setRememberMe(checked)
+    localStorage.setItem('eduflow_remember_me', String(checked))
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
+    if (!username.trim() || !password.trim()) {
+      setError('Username and password are required')
+      return
+    }
     setLoading(true)
     setError('')
     try {
       await login({ role, username, password })
       navigate(`/${role}-dashboard`, { replace: true })
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Invalid credentials')
     } finally {
       setLoading(false)
     }
@@ -189,9 +203,24 @@ export default function LoginPage() {
               />
             </LazyMotionDiv>
 
+            {/* Remember Me */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={rememberMe}
+                onChange={handleRememberMeChange}
+                style={{ cursor: 'pointer' }}
+              />
+              <label htmlFor="rememberMe" style={{ fontSize: '0.8rem', color: '#64748b', cursor: 'pointer', margin: 0 }}>
+                Remember me
+              </label>
+            </div>
+
             {/* Error */}
             {error && (
-              <div style={{ padding: '0.75rem 1rem', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
+              <div role="alert" className="error-toast" style={{ padding: '0.75rem 1rem', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
                 ⚠️ {error}
               </div>
             )}

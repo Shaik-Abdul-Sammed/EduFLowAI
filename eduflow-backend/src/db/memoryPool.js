@@ -199,10 +199,16 @@ export function createMemoryPool() {
 
       // 5. User lookup by institution & email/username
       if (sql.includes('from users u') && sql.includes('join institutions i')) {
-        const instId = String(params[0] || '')
-        const ident = String(params[1] || '').toLowerCase()
+        let instId = null
+        let ident = ''
+        if (params.length >= 2) {
+          instId = String(params[0] || '')
+          ident = String(params[1] || '').toLowerCase()
+        } else {
+          ident = String(params[0] || '').toLowerCase()
+        }
         const user = state.users.find(
-          u => (String(u.institution_id) === instId || instId === defaultInstId) &&
+          u => (!instId || String(u.institution_id) === instId || instId === defaultInstId) &&
                ((u.username && u.username.toLowerCase() === ident) || (u.email && u.email.toLowerCase() === ident))
         )
         if (user) {
@@ -229,11 +235,20 @@ export function createMemoryPool() {
 
       // 7. Insert user
       if (sql.includes('insert into users')) {
-        const institution_id = params[0]
-        const role = params[1] || 'student'
-        const username = params[2]
-        const password_hash = params[3]
-        const name = params[4]
+        let institution_id, role, username, password_hash, name
+        if (sql.includes("'admin'")) {
+          institution_id = params[0]
+          role = 'admin'
+          username = params[1]
+          password_hash = params[2]
+          name = params[3]
+        } else {
+          institution_id = params[0]
+          role = params[1] || 'student'
+          username = params[2]
+          password_hash = params[3]
+          name = params[4]
+        }
         const newUser = {
           id: `user-${Date.now()}`,
           institution_id,
@@ -262,6 +277,10 @@ export function createMemoryPool() {
 
       if (sql.includes('update refresh_tokens set revoked = true')) {
         return { rows: [], rowCount: 1 }
+      }
+
+      if (sql.includes('leads') || sql.includes('invoices') || sql.includes('delivered_reports')) {
+        throw new Error('Table queries handled by repository in-memory fallback')
       }
 
       // Fallback for mock generic query

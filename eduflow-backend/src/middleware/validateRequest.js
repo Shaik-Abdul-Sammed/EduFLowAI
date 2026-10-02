@@ -28,7 +28,7 @@ export function validateRequest(schema) {
 // Pre-defined schemas for core production endpoints
 export const loginSchema = z.object({
   institutionId: z.union([z.string(), z.number()]).optional(),
-  email: z.string().email('Invalid email address').or(z.string().min(1)).optional(),
+  email: z.string().email('Invalid email address').optional(),
   username: z.string().min(1).optional(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.string().optional(),
@@ -72,7 +72,18 @@ export const officerPromptSchema = z.object({
   actionType: z.string().optional(),
   messages: z.array(z.any()).optional(),
   digitalTwin: z.any().optional(),
-})
+}).refine(
+  (data) => {
+    if ('prompt' in data && (typeof data.prompt !== 'string' || data.prompt.trim() === '')) {
+      return false
+    }
+    return true
+  },
+  {
+    message: 'Prompt cannot be empty',
+    path: ['prompt'],
+  }
+)
 
 export const aiChatSchema = z.object({
   message: z.string().max(5000, 'Message cannot exceed 5000 characters').optional(),
