@@ -79,7 +79,6 @@ services:
   - type: web
     name: eduflow-web
     runtime: static
-    plan: free
     rootDir: eduflow-core/web
     branch: main
     buildCommand: npm ci && npm run build
