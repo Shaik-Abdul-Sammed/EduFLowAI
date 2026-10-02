@@ -16,8 +16,7 @@ services:
     rootDir: eduflow-backend
     branch: main
     buildCommand: npm ci
-    preDeployCommand: bash scripts/migrate-and-seed.sh
-    startCommand: node src/server.js
+    startCommand: bash scripts/migrate-and-seed.sh && node src/server.js
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
