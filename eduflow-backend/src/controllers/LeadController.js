@@ -1,9 +1,10 @@
 import { z } from 'zod'
 import { LeadRepository } from '../models/LeadRepository.js'
+import { InvoiceRepository } from '../models/InvoiceRepository.js'
 import { logger } from '../utils/logger.js'
 import { sendEmail } from '../services/email/emailService.js'
 import { getPilotOfferEmailHtml } from '../services/email/templates/pilotOffer.js'
-import { VALID_AUTOMATION_TYPES } from '../config/servicePricing.js'
+import { VALID_AUTOMATION_TYPES, getServicePrice, getServiceDescription } from '../config/servicePricing.js'
 
 export const createLeadSchema = z.object({
   collegeName: z.string().min(1, 'College name is required'),
@@ -118,6 +119,36 @@ export class LeadController {
       const updated = await LeadRepository.update(id, { status, notes })
       if (!updated) {
         return res.status(404).json({ error: 'Lead not found' })
+      }
+
+      // Automation Trigger: Auto-create draft invoice when lead is WON
+      if (status === 'WON') {
+        try {
+          const autoType = updated.automation_type || 'accreditation'
+          const basePrice = getServicePrice(autoType)
+          const desc = getServiceDescription(autoType, updated.college_name)
+          const taxAmt = Math.round(basePrice * 0.18 * 100) / 100
+          const totalAmt = basePrice + taxAmt
+
+          await InvoiceRepository.create({
+            lead_id: updated.id,
+            institution_name: updated.college_name,
+            contact_person: updated.contact_name,
+            contact_email: updated.email,
+            amount: basePrice,
+            subtotal: basePrice,
+            tax_percent: 18.0,
+            tax_amount: taxAmt,
+            total_amount: totalAmt,
+            currency: 'INR',
+            description: desc,
+            status: 'UNPAID',
+            items: [{ description: desc, quantity: 1, rate: basePrice, amount: basePrice }],
+          })
+          logger.info({ leadId: id, total: totalAmt }, 'Auto-created invoice for won lead')
+        } catch (invErr) {
+          logger.warn({ leadId: id, err: invErr.message }, 'Failed to auto-create invoice on won status')
+        }
       }
 
       logger.info({ leadId: id, status, hasNotes: Boolean(notes) }, 'Lead updated')

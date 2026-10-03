@@ -1,229 +1,147 @@
-# EduFlow AI OS — System Architecture & Workflow Specification
-
-This document provides the definitive operational and technical reference for EduFlow AI OS, detailing user journeys, sequence diagrams, state machines, internal data models, security architectures, and deployment runbooks.
+# EduFlow AI OS — Complete System Architecture & Operational Workflow
 
 ---
 
-## 1. Executive Summary
+## Section 1: What EduFlow AI Does
 
-### What EduFlow AI Is
-EduFlow AI is an autonomous institutional intelligence and administrative operating system engineered specifically for Indian higher education institutions (universities, engineering colleges, polytechnics, and standalone business schools).
+EduFlow AI OS is an administrative AI automation platform engineered specifically for Indian higher education institutions (universities, autonomous colleges, and polytechnics). Instead of replacing faculty with rigid ERPs, EduFlow deploys a specialized virtual administrative workforce composed of five domain-focused AI Officers (Accreditation, Student Retention, Timetable, Admissions, and Finance). These officers ingest complex regulatory constraints, institutional student rosters, and financial ledgers to autonomously synthesize audit-grade documentation—such as NAAC Self Study Reports (SSR), NBA compliance matrices, and conflict-free master timetable schedules—within minutes rather than weeks.
 
-### Target Audience
-- **Chancellors, Principals & Deans:** Looking to automate resource-intensive administrative workflows without deploying cumbersome enterprise ERP suites.
-- **IQAC (Internal Quality Assurance Cell) Coordinators:** Requiring audit-grade SSR documentation aligned with NAAC Revised Accreditation Framework (RAF) and NBA OBE criteria.
-- **Heads of Departments & Registrars:** Managing scheduling clashes, retention interventions, and admissions targeting.
-- **Administrative & Finance Officers:** Reconciling student fee ledgers and institutional accounts.
-
-### Problem Solved
-Traditional higher education operations in India suffer from severe manual friction:
-1. **Accreditation SSR Bottlenecks:** Preparing NAAC/NBA self-study reports currently consumes 3 to 6 months of faculty time, diverting educators from teaching.
-2. **Untracked Student Dropout Risk:** Academic dropouts are detected reactively after final exams rather than during mid-semester warning periods.
-3. **Complex Timetable Scheduling:** Manual timetable scheduling frequently results in room clashes, faculty overload, and suboptimal lab utilization.
-4. **Scattered Fee Defaulter Reconciliation:** Fee accounts remain disconnected across bank statements, manual ledgers, and student registries.
-
-EduFlow AI resolves these challenges through **five autonomous AI Officers** capable of streaming institutional intelligence deliverables in minutes rather than weeks.
+From a business model perspective, EduFlow operates as an **Automation-as-a-Service (AaaS)** turnkey delivery platform. Institutional leaders (principals, deans, and IQAC directors) select pre-packaged service audits—such as a 72-hour NAAC SSR gap analysis for ₹50,000—which are processed by the AI workforce and delivered through cryptographically secured, branded public links accompanied by GST-compliant invoices. This service-first model provides rapid immediate monetization without requiring institutions to endure multi-month software rollouts or complex internal migrations.
 
 ---
 
-## 2. Complete User Journeys
+## Section 2: The 8 Automation Services
 
-### 2.1 College Principal / Dean Journey
-1. **Discovery:** The Principal lands on `/services` or `/for-colleges`, reviewing specialized institutional automation offerings (e.g., NAAC SSR Report Automation or Dropout Risk Assessment).
-2. **Inquiry Submission:** Fills the institutional intake form specifying institution details, student count, NAAC cycle, and target bottleneck. Honeypot anti-spam verifies human submission.
-3. **Review & Proposal:** Receives an institutional pilot proposal and consultation confirmation within 24 hours.
-4. **Secure Report Access:** Receives a secure link (`/r/{token}`) containing the generated deliverable. The Principal can view the live branded report on mobile or desktop without creating an account.
-5. **Executive Review:** Inspects criterion scores, quantitative gap analyses, and immediate IQAC action items.
-6. **PDF Download:** Clicks "Download Official PDF" to obtain an audit-compliant `%PDF-1.4` document ready for committee distribution.
-
-### 2.2 Administrator Journey
-1. **Secure Login:** Authenticates at `/login` as `admin@demo.edu` using bcrypt-verified credentials.
-2. **Lead Triage (`/admin-dashboard/leads`):** Reviews inbound inquiries from prospective institutions. Changes status from `NEW` to `CONTACTED` or `PILOT_OFFERED`. Adds internal notes with automatic autosave.
-3. **Triggering Deliverables:** Accesses AI Officer consoles to execute custom reports for the client institution, streaming LLM outputs in real time.
-4. **Delivering the Report:** Clicks "Deliver to Client", which persists the report in `delivered_reports` and generates an unguessable 32-character hexadecimal token.
-5. **Invoicing (`/admin-dashboard/invoices`):** Generates a GST-compliant invoice auto-numbered as `EDU-YYYY-XXXX`, with an automatically derived fee based on the service type.
-6. **Payment Reconciliation:** Upon receiving payment, marks the invoice as `PAID`, timestamping the audit trail.
-
-### 2.3 Demo Presenter Journey
-1. **Pre-Flight Validation:** Runs `bash scripts/demo-check.sh` to confirm backend health, database mode, and AI connectivity.
-2. **Observation Mode Launch:** Opens `/demo/observe?observe=true&host=true` on the presentation projector.
-3. **Autonomous Streaming:** Lets the system run through all 5 AI Officers sequentially:
-   - Step 1: Accreditation Officer (NAAC Criteria SSR generation)
-   - Step 2: Student Success Officer (Dropout risk prediction matrix)
-   - Step 3: Timetable Officer (Conflict-free scheduling grid)
-   - Step 4: Admissions Officer (Application yield forecast)
-   - Step 5: Finance Officer (Fee ledger reconciliation)
-4. **Live ROI Showcase:** Directs the audience's attention to the live ROI counter accumulating hours and consulting rupees saved in real time.
-5. **Grand Impact Summary:** Points to the terminal summary showing total hours and consulting fees saved.
-6. **The 30-Day Pilot Ask:** Concludes the presentation with the zero-risk 30-day pilot offer: *"We will generate your complete NAAC SSR framework at zero cost. If it saves your IQAC team time, we discuss subscription. If not, you owe nothing."*
+| Service | Trigger | Input Data | AI Officer | Deliverable Output | Pricing (INR) | Delivery Method |
+|---|---|---|---|---|---|---|
+| **NAAC/NBA SSR Automation** | Public intake form or admin dispatch | Institutional SSR metrics & Cycle | Accreditation Officer | 7-Criterion Gap Analysis, Metrics, & SSR Executive Summary | ₹50,000 + 18% GST | Secure `/r/:token` link & PDF download |
+| **Student Dropout Risk Alert** | Cohort exam or semester registration | Attendance records & backlog history | Student Success Officer | Urgency Matrix, Intervention Directives & Retention Forecast | ₹15,000 + 18% GST | Admin workbench & IQAC PDF |
+| **Conflict-Free Timetable** | Department term scheduling | Faculty workload & room/lab limits | Timetable Officer | Clash-free master scheduling grid & faculty hours report | ₹20,000 + 18% GST | Interactive grid & Excel/PDF export |
+| **Admission Yield Predictor** | Applicant intake cycle | Application scores & demographic pool | Admissions Officer | Yield rate probability & regional conversion strategy | ₹15,000 + 18% GST | Executive enrollment forecast PDF |
+| **Fee Reconciliation** | Monthly or term fee collection | Bank statements & ERP fee ledger | Finance Officer | Defaulter aging list, ledger reconciliation, UPI audit | ₹10,000 + 18% GST | Reconciled ledger & GST audit PDF |
+| **Fee Reconciliation (Detailed)** | End-of-year audit | Full annual bank statement & cashbook | Finance Officer | Line-item transaction variance audit & escrow breakdown | ₹12,000 + 18% GST | Audit-grade spreadsheet & PDF |
+| **Hostel Occupancy Optimizer** | Academic session intake | Bed inventory, gender ratios, curfews | Digital Twin Engine | Dynamic room mapping & mess capacity plan | ₹25,000 + 18% GST | Coming Soon (Phase 2) |
+| **Placement Readiness Report** | Pre-campus placement drive | Student resumes & recruiter benchmarks | Career Forge Engine | Batch readiness index & interview sentiment score | ₹30,000 + 18% GST | Coming Soon (Phase 2) |
 
 ---
 
-## 3. Technical Data Flow
+## Section 3: The Lead to Cash Workflow
 
-The complete commercial flow from public lead submission to payment reconciliation:
+```mermaid
+flowchart LR
+    A["1. College Intake (/for-colleges)"] --> B["2. Honeypot & DB Insertion"]
+    B --> C["3. Admin Email Alert Dispatched"]
+    C --> D["4. Admin CRM Review (/admin-dashboard/leads)"]
+    D --> E["5. Pilot Offer / Report Delivery (/r/:token)"]
+    E --> F["6. Lead Status WON -> Auto-Invoice Generated"]
+    F --> G["7. GST Invoice Delivery & Remittance (EDU-YYYY-XXXX)"]
+```
+
+1. **Intake Submission:** An institutional leader navigates to `/services` or `/for-colleges`, selects a pilot tier (e.g., Timetable or Accreditation), and submits college details, student count, and contact info.
+2. **Anti-Spam & Ingestion:** `LeadController.js` performs honeypot verification and Zod schema validation, persisting the record to PostgreSQL with status `NEW`.
+3. **Internal Notification:** The system dispatches an alert email to `LEAD_NOTIFICATION_EMAIL` (falling back to structured JSON logging) with full college details.
+4. **Administrative Review:** The admin opens `/admin-dashboard/leads`, reviews incoming leads, updates the status to `CONTACTED`, and sends a one-click pilot offer.
+5. **Report Generation & Delivery:** The administrator executes the AI Officer generation and calls `/api/v1/reports/deliver`, which creates a 32-character hex token and sends the dean a branded URL (`/r/:token`).
+6. **Lead Won & Automated Invoicing:** Transitioning the lead status to `WON` automatically triggers `InvoiceRepository.create()`, which calculates the statutory 18% GST and formats the line items.
+7. **Settlement & Remittance:** The dean views the report, downloads the PDF, reviews the tax invoice (`EDU-YYYY-XXXX`), and initiates bank remittance to company bank details.
+
+---
+
+## Section 4: The AI Officer Streaming Workflow
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Dean as College Dean / Principal
-    participant PubUI as Public Web UI (/for-colleges)
-    participant API as Express API Gateway
-    participant DB as PostgreSQL Database
-    actor Admin as EduFlow Admin
-    participant AI as AI Officer Engine (LLM)
-    participant Rpt as Report Delivery Service
+    actor Admin as Institution Administrator
+    participant ReactHook as useStreamingOfficer Hook
+    participant Controller as OfficerController.js
+    participant Orchestrator as AIOrchestrator.js
+    participant Factory as ProviderFactory.js
+    participant LLM as Google Gemini / OpenAI
+    participant Mock as MockProvider (Fallback)
 
-    Dean->>PubUI: Fills Lead Intake Form
-    PubUI->>API: POST /api/v1/leads (with honeypot check)
-    API->>DB: INSERT into leads (status='NEW')
-    API-->>PubUI: 201 Created (Confirmation shown to Dean)
+    Admin->>ReactHook: Clicks "Generate Report"
+    ReactHook->>Controller: POST /api/v1/officers/{type}/stream (Bearer JWT)
+    Note over Controller: Auth Middleware & Zod Validation Pass
+    Controller->>ReactHook: HTTP 200 text/event-stream
+    Controller->>ReactHook: data: {"type": "thinking", "text": "Analyzing criteria..."}
+    Controller->>Orchestrator: streamOfficerResponse(type, prompt)
+    Orchestrator->>Factory: getProvider()
+    Factory->>LLM: streamGenerate(systemPrompt, userPrompt)
+    
+    alt LLM Live Connection Active
+        loop Real-Time Generation
+            LLM-->>Factory: Stream Token Chunks
+            Factory-->>Controller: Chunk Event
+            Controller-->>ReactHook: data: {"type": "token", "text": "chunk"}
+            ReactHook-->>Admin: Progressive Typewriter UI Render
+        end
+    else LLM Timeout or Network Exception
+        Factory-->>Mock: Trigger Deterministic MockProvider
+        Mock-->>Controller: Stream Canned Institutional Report
+        Controller-->>ReactHook: data: {"type": "token", "text": "mock_chunk"}
+    end
 
-    Admin->>API: GET /api/v1/leads (with JWT)
-    API->>DB: SELECT * FROM leads WHERE is_deleted=false
-    DB-->>API: Active leads list
-    API-->>Admin: Displays leads in Admin CRM
-
-    Admin->>API: POST /api/v1/officers/accreditation/stream
-    API->>AI: Stream prompts to Gemini / OpenAI / Claude
-    AI-->>API: SSE Token Chunks
-    API-->>Admin: Real-time Markdown Report Stream
-
-    Admin->>API: POST /api/v1/reports/deliver
-    API->>Rpt: Generate 32-char hex token
-    Rpt->>DB: INSERT into delivered_reports (token, content, scores)
-    DB-->>API: Delivery record created
-    API-->>Admin: Returns viewUrl: /r/{token}
-
-    Admin->>Dean: Shares report link (/r/{token})
-    Dean->>API: GET /r/{token}
-    API->>DB: UPDATE delivered_reports SET views_count = views_count + 1
-    API-->>Dean: Rendered branded HTML report page
-
-    Dean->>API: GET /r/{token}/pdf
-    API-->>Dean: Generates & downloads official PDF
-
-    Admin->>API: POST /api/v1/invoices (derived from service type)
-    API->>DB: INSERT into invoices (status='UNPAID', EDU-YYYY-XXXX)
-    DB-->>API: Invoice created
-    API-->>Admin: Invoice PDF ready for billing
-
-    Admin->>API: PATCH /api/v1/invoices/:id/mark-paid
-    API->>DB: UPDATE invoices SET status='PAID', paid_at=NOW()
-    API-->>Admin: Financial record archived
+    Controller->>ReactHook: data: {"type": "done", "roi": {"hoursSaved": 120, "moneySaved": 300000}}
+    ReactHook-->>Admin: Stream Complete — Display ROI & Export PDF Button
 ```
 
 ---
 
-## 4. State Machines
-
-### 4.1 Lead Status Lifecycle
+## Section 5: The Authentication Workflow
 
 ```mermaid
-stateDiagram-v2
-    [*] --> NEW: Submitted via /for-colleges
-    NEW --> CONTACTED: Admin contacts Principal
-    CONTACTED --> PILOT_OFFERED: Pilot scope sent
-    PILOT_OFFERED --> PILOT_DELIVERED: Report link shared
-    PILOT_DELIVERED --> WON: College approves & contracts
-    PILOT_DELIVERED --> LOST: College declines
-    CONTACTED --> LOST: Not interested / unqualified
-    WON --> [*]
-    LOST --> [*]
-```
+sequenceDiagram
+    autonumber
+    actor User as Dean / Faculty / Student
+    participant LoginUI as LoginPage.jsx
+    participant AuthAPI as /api/v1/auth/login
+    participant DB as PostgreSQL (users table)
+    participant Storage as Browser localStorage
+    participant Guard as ProtectedRoute.jsx
 
-### 4.2 Invoice Status Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> UNPAID: Created (EDU-YYYY-XXXX)
-    UNPAID --> PAID: Payment received & verified
-    UNPAID --> CANCELLED: Invoice retracted or voided
-    PAID --> [*]
-    CANCELLED --> [*]
-```
-
-### 4.3 Streaming Connection Lifecycle
-
-```mermaid
-stateDiagram-v2
-    [*] --> idle: Hook initialized
-    idle --> connecting: start(endpoint, payload) invoked
-    connecting --> streaming: HTTP 200 SSE stream opened
-    connecting --> error: Network failure / HTTP error
-    streaming --> streaming: "type":"token" chunks received
-    streaming --> done: "type":"done" event or stream end
-    streaming --> error: "type":"error" event / parse crash
-    streaming --> idle: stop() or AbortController triggered
-    done --> [*]
-    error --> [*]
-    idle --> [*]
+    User->>LoginUI: Enter Email & Password
+    LoginUI->>AuthAPI: POST /api/v1/auth/login {email, password}
+    AuthAPI->>DB: SELECT * FROM users WHERE email = $1
+    DB-->>AuthAPI: User row (bcrypt hash, role, institution_id)
+    
+    alt Password Valid
+        AuthAPI->>AuthAPI: bcrypt.compare(password, hash) == true
+        AuthAPI->>AuthAPI: Sign JWT Access Token (15m expiry)
+        AuthAPI->>AuthAPI: Sign Refresh Token (7d expiry)
+        AuthAPI-->>LoginUI: 200 {accessToken, refreshToken, user, institution}
+        LoginUI->>Storage: Store accessToken & user metadata
+        LoginUI->>Guard: Redirect to /{role}-dashboard
+        Guard-->>User: Render Authorized Dashboard
+    else Invalid Credentials
+        AuthAPI-->>LoginUI: 401 {error: "Invalid credentials"}
+        LoginUI-->>User: Display Toast Alert
+    end
 ```
 
 ---
 
-## 5. AI Officer Deep Dive
+## Section 6: The Observation Mode Workflow
 
-EduFlow AI utilizes five specialized AI personas. Each officer has custom prompts, validation schemas, and failure recovery protocols:
-
-### 1. Accreditation Officer
-- **Persona:** Senior NAAC Peer Team Reviewer with 15+ years experience.
-- **Endpoints:** `POST /api/v1/officers/accreditation/stream` (SSE), `POST /api/v1/officers/accreditation/generate` (Sync).
-- **Core Capabilities:** Analyzes qualitative and quantitative metrics across NAAC Criteria 1–7 (Curricular Aspects, Teaching-Learning, Research, Infrastructure, Student Support, Governance, Institutional Values). Identifies metric score shortfalls and generates actionable SSR remediation roadmaps.
-- **Fallback Behavior:** If primary LLM quota is exhausted, falls back to secondary provider or the deterministic MockProvider, returning a structured SSR framework.
-
-### 2. Student Success Officer
-- **Persona:** Academic Counselor and Student Retention Analytics Specialist.
-- **Endpoints:** `POST /api/v1/officers/student-success/stream` (SSE), `POST /api/v1/officers/student-success/predict-risk` (Sync).
-- **Core Capabilities:** Examines attendance patterns, internal assessment scores, and engagement logs to predict dropout likelihood. Classifies students into High, Moderate, and Low risk cohorts with specific mentor directives.
-
-### 3. Timetable Officer
-- **Persona:** Operations Research and Educational Scheduling Specialist.
-- **Endpoints:** `POST /api/v1/officers/timetable/stream` (SSE), `POST /api/v1/officers/timetable/generate` (Sync).
-- **Core Capabilities:** Resolves multidimensional scheduling constraints: room capacities, laboratory availability, faculty weekly workload limits, and departmental curriculum requirements. Emits conflict-free schedule matrices.
-
-### 4. Admissions Officer
-- **Persona:** Higher Education Strategic Enrollment Director.
-- **Endpoints:** `POST /api/v1/officers/admissions/stream` (SSE), `POST /api/v1/officers/admissions/predict-yield` (Sync).
-- **Core Capabilities:** Scores prospective applicant inquiries, analyzes geographic and demographic yield trends, and predicts final enrollment numbers.
-
-### 5. Finance Officer
-- **Persona:** Educational Institution Chartered Accountant and Financial Controller.
-- **Endpoints:** `POST /api/v1/officers/finance/stream` (SSE), `POST /api/v1/officers/finance/reconcile` (Sync).
-- **Core Capabilities:** Compares student fee accounts with incoming bank settlement feeds. Flags aging defaulter lists, reconciles unallocated payments, and calculates budget variances.
+1. **Host Launch:** Presenter navigates to `/demo/observe?observe=true&host=true`.
+2. **Auto-Sequence Initialization:** The UI loads `demoSequence.js` containing the choreographed 5-step demonstration for institutional stakeholders.
+3. **Step 1 (Accreditation Officer):** Starts autonomous SSE stream; real-time research gap SSR analysis renders progressive typewriter tokens. Emits completion payload (`hoursSaved: 120`, `moneySaved: ₹3,00,000`).
+4. **Inter-Step Breather:** The system pauses for 2,500ms with smooth animated transitions to allow presenters to explain ROI to executive audiences.
+5. **Step 2 (Student Success Officer):** Automatically triggers dropout risk scanning across 50 students; accumulates saved hours and metrics.
+6. **Steps 3 to 5 (Timetable, Admissions, Finance):** Sequentially executes conflict resolution, yield forecasting, and fee ledger reconciliation.
+7. **Master ROI Accumulation:** After Step 5, the observation view surfaces the comprehensive Institutional Savings Overlay (total ₹3,49,350+ consulting cost saved across 174.5+ human hours).
 
 ---
 
-## 6. Observation Mode Internals
-
-Observation Mode (`/demo/observe`) is engineered to execute an automated multi-officer demonstration without presenter manual intervention.
-
-### Sequence Orchestration
-The sequence is driven by `eduflow-core/web/src/pages/demo/demoSequence.js`, defining an array of 5 steps:
-1. **Accreditation Officer** (`/api/v1/officers/accreditation/stream`)
-2. **Student Success Officer** (`/api/v1/officers/student-success/stream`)
-3. **Timetable Officer** (`/api/v1/officers/timetable/stream`)
-4. **Admissions Officer** (`/api/v1/officers/admissions/stream`)
-5. **Finance Officer** (`/api/v1/officers/finance/stream`)
-
-### Execution Lifecycle
-- **Auto-Start (`?observe=true`):** Automatically starts Step 1 after a 100ms initialization delay.
-- **Breather Period:** Once an officer stream emits `done`, the system pauses for `2500ms / playbackSpeed` to allow the audience to read the conclusion, before auto-advancing to the next step.
-- **ROI Counter Accumulation:** After each step completes, its predefined ROI values (hours and rupees saved) are added to `accumulatedROI` and animated into view.
-- **Summary Overlay:** When all 5 steps finish, an impact modal renders highlighting total hours and financial savings.
-- **Presenter Toolbar (`?host=true`):** Renders floating controls for Play/Pause, Skip to Next Step, Replay from Step 1, and 1x/1.5x/2x speed adjustment.
-
----
-
-## 7. Database Entity Relationships
+## Section 7: The Database Schema
 
 ```mermaid
 erDiagram
-    institutions ||--o{ users : "has"
-    institutions ||--o{ audit_logs : "records"
+    institutions ||--o{ users : "has many"
+    institutions ||--o{ audit_logs : "tracks"
     users ||--o{ refresh_tokens : "owns"
-    users ||--o{ audit_logs : "triggers"
-    leads ||--o{ delivered_reports : "references"
+    leads ||--o{ delivered_reports : "associated with"
+    leads ||--o{ invoices : "billed to"
 
     institutions {
         int id PK
@@ -231,8 +149,6 @@ erDiagram
         varchar short_code UK
         varchar subscription_tier
         varchar primary_color
-        varchar secondary_color
-        varchar logo_url
         timestamp created_at
     }
 
@@ -240,7 +156,6 @@ erDiagram
         int id PK
         int institution_id FK
         varchar role
-        varchar username
         varchar email UK
         varchar password_hash
         varchar first_name
@@ -259,12 +174,10 @@ erDiagram
         int student_count
         varchar naac_cycle
         varchar automation_type
-        text message
         varchar status
         text notes
         bool is_deleted
         timestamp created_at
-        timestamp updated_at
     }
 
     delivered_reports {
@@ -278,32 +191,23 @@ erDiagram
         text report_content
         jsonb criteria_scores
         int views_count
-        timestamp last_viewed_at
         timestamp created_at
-        timestamp updated_at
     }
 
     invoices {
         int id PK
+        int lead_id FK
         varchar invoice_number UK
         varchar institution_name
-        varchar contact_person
         varchar contact_email
-        text address
-        varchar gst_number
-        varchar automation_type
         jsonb items
         numeric subtotal
         numeric tax_percent
         numeric tax_amount
         numeric total_amount
-        varchar currency
         varchar status
-        text bank_details
-        varchar company_gst
         timestamp paid_at
         timestamp created_at
-        timestamp updated_at
     }
 
     audit_logs {
@@ -311,123 +215,44 @@ erDiagram
         int institution_id FK
         int user_id FK
         varchar action
-        varchar ip_address
-        text user_agent
         jsonb metadata
         timestamp created_at
     }
-
-    refresh_tokens {
-        int id PK
-        int user_id FK
-        varchar token_hash
-        timestamp expires_at
-        bool revoked
-        timestamp created_at
-    }
-
-    recent_searches {
-        int id PK
-        varchar role
-        varchar query
-        varchar route_path
-        timestamp created_at
-    }
 ```
 
 ---
 
-## 8. Security Model
+## Section 8: The Deployment Pipeline
 
-EduFlow AI applies defense-in-depth principles across transport, authentication, and application layers:
-
-### 1. JWT Authentication Lifecycle
-- **Access Tokens:** Signed with HMAC-SHA256 (`JWT_SECRET`), valid for 15 minutes. Contains `{ userId, institutionId, role, email }`.
-- **Refresh Tokens:** Signed with `JWT_REFRESH_SECRET`, valid for 7 days. Stored as SHA-256 hashes in `refresh_tokens`. Supports revocation on logout.
-- **Passwords:** Hashed with `bcryptjs` using 10 salt rounds. Never logged or exposed in responses.
-
-### 2. Rate Limiting
-- Configured via `express-rate-limit` mounted across `/api/v1/*`.
-- **Authenticated users:** 100 requests per 15 minutes.
-- **Unauthenticated endpoints:** 20 requests per 15 minutes.
-- Emits standard `RateLimit-*` headers and `HTTP 429 Too Many Requests` with retry instructions.
-
-### 3. Helmet & Reverse Proxy Hardening
-- `app.set('trust proxy', 1)` enables accurate IP extraction behind Render and Cloudflare reverse proxies.
-- `helmet({ contentSecurityPolicy: false })` enables anti-clickjacking (`X-Frame-Options: SAMEORIGIN`), MIME-type sniffing defense (`X-Content-Type-Options: nosniff`), and strict referrers, while preserving inline streaming SSE connections and client PDF rendering.
-
-### 4. Honeypot Anti-Spam
-- The public lead intake form includes a hidden `website` field with `tabIndex="-1"`, `aria-hidden="true"`, and CSS `display: none`.
-- Bots that populate this field are rejected client-side; any incoming request with a non-empty `website` parameter receives an HTTP 400 rejection from the API without database insertion.
-
-### 5. Input Validation
-- All inbound route payloads are validated via Zod schemas prior to reaching database or controller logic (`authSchema`, `leadSchema`, `invoiceSchema`, `reportDeliverySchema`, `officerSchema`).
-- Requests with malformed fields return descriptive `HTTP 400 Bad Request` validation error arrays.
-
----
-
-## 9. Disaster Recovery Runbook
-
-EduFlow AI includes built-in database backup and restoration daemons.
-
-### 1. Generating an Immediate Backup
-```bash
-# Execute from project root
-node eduflow-backend/scripts/backup.js
-```
-- Emits a compressed gzip archive: `eduflow-backend/backups/daily/YYYY-MM-DD.sql.gz`.
-- Maintains a ledger manifest at `eduflow-backend/backups/manifest.json`.
-- Enforces rolling retention: maximum **30 daily backups** and **12 monthly archives**.
-
-### 2. Verifying Backup Integrity
-```bash
-# Verify gzip integrity and inspect header
-gzip -t eduflow-backend/backups/daily/*.sql.gz
-echo "Archive check exit code: $?"
-```
-
-### 3. Executing a Database Restore
-```bash
-# Run the interactive restoration script
-node eduflow-backend/scripts/restore.js
-```
-- Prompts the administrator to select from available backup archives.
-- Requires typing `YES` to confirm overwriting the active database.
-- Streams the decompressed SQL dump directly into the target PostgreSQL instance via `DATABASE_URL`.
-
----
-
-## 10. Production Deployment Runbook
-
-### Render Blueprint Deployment
-Deploying EduFlow AI to Render requires no manual infrastructure provisioning:
-
-1. **Push Changes:** Ensure your latest commits are pushed to the `main` branch on GitHub.
-2. **Open Render:** Navigate to [Render Dashboard](https://dashboard.render.com) ➔ **New** ➔ **Blueprint**.
-3. **Connect Repository:** Link the EduFlow AI repository. Render parses `render.yaml` and sets up:
-   - Web Service: `eduflow-backend` (Node.js)
-   - Static Site: `eduflow-web` (React build in `dist/`)
-   - Managed Database: `eduflow-postgres` (PostgreSQL 16)
-4. **Environment Variables Configuration:**
-   In the Render dashboard for `eduflow-backend`, verify or set:
-   - `AI_PROVIDER`: `gemini` (or `openai`, `claude`, `ollama`)
-   - `AI_API_KEY`: Your provider API key
-   - `CORS_ORIGIN`: Your frontend URL (`https://eduflow-web.onrender.com`)
-   - `APP_PUBLIC_URL`: Your frontend URL (`https://eduflow-web.onrender.com`)
-   In `eduflow-web`:
-   - `VITE_API_BASE_URL`: `https://eduflow-backend.onrender.com/api`
-5. **Post-Deployment Verification:**
-   Execute the following curl checks against the live production URL:
+1. **Code Push:** Developer pushes changes to branch `main` on GitHub (`origin/main`).
+2. **Render Trigger:** Render listens to GitHub webhooks and initiates unified blueprint provisioning defined in `render.yaml`.
+3. **Migration & Seeding Execution:** Because Render Free Tier does not support standalone `preDeployCommand`, database provisioning is chained directly into the backend startup command:
    ```bash
-   # 1. Base health check
-   curl -s -i https://eduflow-backend.onrender.com/api/health
-   # Expected: HTTP 200 {"ok":true,"service":"eduflow-backend","version":"1.0.0"}
-
-   # 2. Database connectivity
-   curl -s -i https://eduflow-backend.onrender.com/api/health/db
-   # Expected: HTTP 200 {"mode":"postgres","persistent":true}
-
-   # 3. Render cloud probe
-   curl -s -i https://eduflow-backend.onrender.com/api/health/render
-   # Expected: HTTP 200 {"status":"ok"}
+   bash scripts/migrate-and-seed.sh && node src/server.js
    ```
+4. **Schema Convergence:** `migrate-and-seed.sh` applies `sql/schema.sql` and `src/db/migrations/005_automation_tables.sql` idempotently, ensuring tables (`leads`, `delivered_reports`, `invoices`) and columns (`automation_type`) are present.
+5. **Static Frontend Compilation:** Render Static Site builder runs `npm ci && npm run build` for `eduflow-core/web`, outputting optimized chunked static assets into `dist/`.
+6. **Health Verification:** Render reverse proxy queries `/api/health` and `/api/health/db`. Once HTTP 200 is confirmed, traffic is routed to the new deployment.
+
+---
+
+## Section 9: Error Handling Strategy
+
+1. **Controller Isolation:** Every route handler wraps execution in standard `try / catch` blocks, returning structured JSON errors (`{ error: string, status: number }`) without crashing the process.
+2. **Global Fallback Middleware:** Uncaught exceptions bubble to Express `errorHandler` in `app.js`, ensuring status 500 responses with sanitized messages.
+3. **Database Memory Fallback:** `pool.js` catches PostgreSQL connection refusals and falls back to an in-process array pool (`memoryPool.js`), ensuring test suites and local sandboxes run without live databases.
+4. **AI Provider Fallback:** `ProviderFactory.js` wraps cloud API calls with fallback listeners. If Google Gemini or OpenAI times out or fails, the system switches to `MockProvider.js` to preserve stream integrity.
+5. **Frontend Error Boundaries:** All major views and streaming officers are wrapped in `<ErrorBoundary>`, displaying helpful reset actions rather than blank screens.
+6. **Graceful Shutdown:** `server.js` listens for `SIGTERM` and `SIGINT`, cleanly closing the HTTP server, draining the PostgreSQL connection pool, and disconnecting Redis before terminating.
+
+---
+
+## Section 10: Phase 2 Roadmap (Deferred Paid Features)
+
+The following integrations are intentionally scheduled for Phase 2 commercial rollouts to maintain a lean, zero-cost operational overhead during initial pilot validation:
+
+* **Razorpay / Stripe Payment Gateway:** Automated webhook processing to transition invoices from `UNPAID` to `PAID` upon UPI, net banking, or corporate credit card settlement.
+* **SMS & OTP Verification (Twilio / Gupshup):** Two-factor authentication for administrative logons and urgent SMS notifications for campus emergency alerts.
+* **WhatsApp Business Messaging API:** Direct institutional report delivery and attendance deficit notices sent to parents' WhatsApp accounts via official Meta Cloud APIs.
+* **Firebase Cloud Messaging (FCM):** Push notification routing for native mobile applications.
+* **Hostel & Placement Full Integration:** Comprehensive dynamic room reservation matrix and recruiter resume matching algorithms.

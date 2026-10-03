@@ -68,7 +68,15 @@ export function generateInvoicePdfBuffer(invoice) {
   let y = 515
   streamContent += `BT\n/F2 9 Tf\n55 ${y} Td\n18 TL\n`
 
-  const parsedItems = typeof items === 'string' ? JSON.parse(items) : items
+  let parsedItems = items
+  if (typeof items === 'string') {
+    try {
+      parsedItems = JSON.parse(items)
+    } catch {
+      parsedItems = []
+    }
+  }
+  if (!Array.isArray(parsedItems)) parsedItems = []
   for (const item of parsedItems) {
     const desc = escapePdfText(item.description || 'Service')
     const qty = String(item.quantity || 1)

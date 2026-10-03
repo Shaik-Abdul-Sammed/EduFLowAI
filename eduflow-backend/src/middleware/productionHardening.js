@@ -37,6 +37,7 @@ export const productionRateLimiter = rateLimit({
     return p === '/api/health' || p === '/api/health/db' || p.startsWith('/api/health')
   },
   handler: (req, res, _next, options) => {
+    pinoInstance.warn({ ip: req.ip, path: req.path }, 'Rate limit exceeded for client')
     const retryAfter = Math.ceil(options.windowMs / 1000)
     res.setHeader('Retry-After', String(retryAfter))
     res.status(429).json({
