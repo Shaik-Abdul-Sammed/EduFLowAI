@@ -1,83 +1,59 @@
--- Migration 005: Automation Tables (leads, delivered_reports, invoices)
+-- EduFlow AI OS: Automation Tables & Schema Migration
+-- Idempotently ensures all automation tables and columns exist
 
-CREATE TABLE IF NOT EXISTS leads (
-  id SERIAL PRIMARY KEY,
-  college_name VARCHAR(255) NOT NULL,
-  contact_name VARCHAR(255) NOT NULL,
-  designation VARCHAR(100),
-  email VARCHAR(255) NOT NULL,
-  phone VARCHAR(20) NOT NULL,
-  city_state VARCHAR(255),
-  student_count INTEGER,
-  naac_cycle VARCHAR(50),
-  message TEXT,
-  status VARCHAR(30) DEFAULT 'NEW' CHECK (status IN ('NEW','CONTACTED','PILOT_OFFERED','PILOT_DELIVERED','WON','LOST')),
-  source VARCHAR(50) DEFAULT 'website',
-  notes TEXT DEFAULT '',
-  is_deleted BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
+-- 1. Ensure automation_type column exists on leads table
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS automation_type VARCHAR(50) DEFAULT 'accreditation';
+CREATE INDEX IF NOT EXISTS leads_automation_type_idx ON leads(automation_type);
 
-CREATE INDEX IF NOT EXISTS leads_email_idx ON leads(email);
-CREATE INDEX IF NOT EXISTS leads_status_idx ON leads(status);
-CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
-
+-- 2. Ensure delivered_reports table exists
 CREATE TABLE IF NOT EXISTS delivered_reports (
   id SERIAL PRIMARY KEY,
   lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
-  token VARCHAR(64) UNIQUE,
-  secure_token VARCHAR(64) UNIQUE,
-  college_name VARCHAR(255),
-  contact_email VARCHAR(255),
+  token VARCHAR(64) UNIQUE NOT NULL,
+  college_name VARCHAR(255) NOT NULL,
+  contact_email VARCHAR(255) NOT NULL,
   report_type VARCHAR(100) DEFAULT 'NAAC_EXECUTIVE_SUMMARY',
-  title VARCHAR(255),
-  report_title VARCHAR(255),
-  report_content TEXT,
-  report_text TEXT,
-  criteria_scores JSONB DEFAULT '{}',
+  title VARCHAR(255) NOT NULL,
+  report_content TEXT NOT NULL,
+  criteria_scores JSONB DEFAULT '{}'::jsonb,
   views_count INTEGER DEFAULT 0,
-  view_count INTEGER DEFAULT 0,
   last_viewed_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS delivered_reports_token_idx ON delivered_reports(secure_token);
 CREATE INDEX IF NOT EXISTS idx_delivered_reports_token ON delivered_reports(token);
 CREATE INDEX IF NOT EXISTS idx_delivered_reports_lead_id ON delivered_reports(lead_id);
 
+-- 3. Ensure invoices table exists
 CREATE TABLE IF NOT EXISTS invoices (
   id SERIAL PRIMARY KEY,
-  invoice_number VARCHAR(50) UNIQUE NOT NULL,
   lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
-  institution_name VARCHAR(255),
-  contact_person VARCHAR(255),
-  contact_email VARCHAR(255),
-  address TEXT,
-  gst_number VARCHAR(50),
-  items JSONB DEFAULT '[]',
-  amount DECIMAL(12,2) DEFAULT 0,
-  subtotal DECIMAL(12,2) DEFAULT 0,
-  tax_percent DECIMAL(5,2) DEFAULT 18.00,
-  gst_percent DECIMAL(5,2) DEFAULT 18.00,
-  tax_amount DECIMAL(12,2) DEFAULT 0,
-  total_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  invoice_number VARCHAR(50) UNIQUE NOT NULL,
+  institution_name VARCHAR(255) NOT NULL,
+  contact_person VARCHAR(255) DEFAULT '',
+  contact_email VARCHAR(255) NOT NULL,
+  address TEXT DEFAULT '',
+  gst_number VARCHAR(50) DEFAULT '',
+  items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  amount NUMERIC(12,2) DEFAULT 0.00,
+  subtotal NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+  tax_percent NUMERIC(5,2) DEFAULT 18.00,
+  tax_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+  total_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00,
   currency VARCHAR(10) DEFAULT 'INR',
-  description TEXT,
-  due_date DATE,
-  status VARCHAR(20) DEFAULT 'UNPAID',
-  bank_details TEXT,
-  company_gst VARCHAR(50),
+  description TEXT DEFAULT '',
+  status VARCHAR(50) DEFAULT 'UNPAID',
+  bank_details TEXT DEFAULT '',
+  company_gst VARCHAR(50) DEFAULT '',
   notes TEXT DEFAULT '',
   paid_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS invoices_status_idx ON invoices(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_number ON invoices(invoice_number);
-CREATE SEQUENCE IF NOT EXISTS invoice_number_seq START 1;
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
 
 -- Column compatibility safeguards
 ALTER TABLE institutions ADD COLUMN IF NOT EXISTS slug TEXT;
