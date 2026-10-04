@@ -12,7 +12,7 @@ class ApiClient {
   // - Configurable via: flutter run --dart-define=API_BASE_URL=http://<host>:3000/api/v1
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000/api/v1',
+    defaultValue: 'https://eduflow-backend-jvn8.onrender.com/api/v1',
   );
 
   factory ApiClient() {

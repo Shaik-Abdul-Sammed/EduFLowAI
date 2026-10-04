@@ -25,6 +25,10 @@ android {
         versionName = flutter.versionName
     }
 
+    buildFeatures {
+        resValues = true
+    }
+
     flavorDimensions += "tier"
 
     productFlavors {

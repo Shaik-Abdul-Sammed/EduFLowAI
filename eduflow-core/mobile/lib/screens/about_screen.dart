@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'app_config.dart';
+import '../core/api_client.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -12,7 +10,7 @@ class AboutScreen extends StatefulWidget {
 
 class _AboutScreenState extends State<AboutScreen> {
 
-    List<dynamic> perksList = [];
+  List<dynamic> perksList = [];
   bool isLoadingPerks = true;
 
   @override
@@ -23,11 +21,11 @@ class _AboutScreenState extends State<AboutScreen> {
 
   Future<void> _fetchPerks() async {
     try {
-      final response = await http.get(Uri.parse('${AppConfig.apiBaseUrl}/user/dashboard-perks'));
+      final response = await ApiClient().dio.get('/user/dashboard-perks');
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = response.data;
         setState(() {
-          perksList = data['perks'] ?? [];
+          perksList = (data is Map && data['perks'] is List) ? data['perks'] : [];
           isLoadingPerks = false;
         });
       }
@@ -137,7 +135,7 @@ class _AboutScreenState extends State<AboutScreen> {
     );
   }
 
-  Widget _buildIconCard(BuildContext context, String icon, String title, String subtitle, {Color? color}) {
+  Widget _buildIconCard(BuildContext context, String icon, String title, String subtitle) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;

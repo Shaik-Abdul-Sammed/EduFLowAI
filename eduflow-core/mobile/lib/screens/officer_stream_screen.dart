@@ -3,17 +3,49 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../core/sse_client.dart';
 
-class LORScreen extends StatefulWidget {
-  const LORScreen({super.key});
+class OfficerStreamScreen extends StatefulWidget {
+  const OfficerStreamScreen({super.key});
 
   @override
-  State<LORScreen> createState() => _LORScreenState();
+  State<OfficerStreamScreen> createState() => _OfficerStreamScreenState();
 }
 
-class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMixin {
-  final TextEditingController _promptController = TextEditingController(
-    text: 'Draft comprehensive Letter of Recommendation for higher education application',
-  );
+class _OfficerStreamScreenState extends State<OfficerStreamScreen> with SingleTickerProviderStateMixin {
+  final Map<String, Map<String, dynamic>> _officerConfigs = {
+    'accreditation': {
+      'name': 'Accreditation Officer',
+      'icon': Icons.account_balance,
+      'color': Colors.purple,
+      'defaultPrompt': 'NAAC Criteria 3 SSR Analysis for SSIT',
+    },
+    'student-success': {
+      'name': 'Student Success Officer',
+      'icon': Icons.school,
+      'color': Colors.red,
+      'defaultPrompt': 'Semester 4 dropout risk analysis',
+    },
+    'timetable': {
+      'name': 'Timetable Officer',
+      'icon': Icons.calendar_month,
+      'color': Colors.blue,
+      'defaultPrompt': 'CSE Semester 4 conflict-free timetable',
+    },
+    'admissions': {
+      'name': 'Admissions Officer',
+      'icon': Icons.group_add,
+      'color': Colors.green,
+      'defaultPrompt': 'B.Tech 2026 applicant yield prediction',
+    },
+    'finance': {
+      'name': 'Finance Officer',
+      'icon': Icons.currency_rupee,
+      'color': Colors.amber.shade800,
+      'defaultPrompt': 'Term 1 fee reconciliation against bank ledger',
+    },
+  };
+
+  late String _selectedOfficer;
+  late TextEditingController _promptController;
   final ScrollController _scrollController = ScrollController();
   final SSEClient _sseClient = SSEClient();
 
@@ -31,6 +63,10 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    _selectedOfficer = 'accreditation';
+    _promptController = TextEditingController(
+      text: _officerConfigs[_selectedOfficer]!['defaultPrompt'],
+    );
     _cursorController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -45,6 +81,18 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
     _scrollController.dispose();
     _cursorController.dispose();
     super.dispose();
+  }
+
+  void _onOfficerChanged(String? newOfficer) {
+    if (newOfficer == null || _isStreaming) return;
+    setState(() {
+      _selectedOfficer = newOfficer;
+      _promptController.text = _officerConfigs[newOfficer]!['defaultPrompt'];
+      _generatedText = '';
+      _thinkingText = '';
+      _roiData = null;
+      _errorMessage = null;
+    });
   }
 
   void _scrollToBottom() {
@@ -73,7 +121,7 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
 
     setState(() {
       _isStreaming = true;
-      _thinkingText = 'AI Officer initializing...';
+      _thinkingText = 'Dispatching to $_selectedOfficer intelligence...';
       _generatedText = '';
       _roiData = null;
       _errorMessage = null;
@@ -82,7 +130,7 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
     _cancelToken = CancelToken();
 
     final stream = _sseClient.streamOfficer(
-      officerType: 'accreditation',
+      officerType: _selectedOfficer,
       payload: {'reportType': prompt},
       cancelToken: _cancelToken,
     );
@@ -92,7 +140,7 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
         final type = event['type'];
         if (type == 'thinking') {
           setState(() {
-            _thinkingText = event['text'] ?? 'Thinking...';
+            _thinkingText = event['text'] ?? 'Analyzing institutional context...';
           });
         } else if (type == 'token') {
           setState(() {
@@ -108,7 +156,7 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
         } else if (type == 'error') {
           setState(() {
             _isStreaming = false;
-            _errorMessage = event['message'] ?? 'An error occurred during generation';
+            _errorMessage = event['message'] ?? 'Streaming error encountered';
           });
         }
       },
@@ -128,9 +176,12 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
+    final config = _officerConfigs[_selectedOfficer]!;
+    final Color officerColor = config['color'] as Color;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI LOR Generator'),
+        title: const Text('AI Officers Streaming Hub'),
         elevation: 0,
       ),
       body: Padding(
@@ -138,40 +189,43 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Card
+            // Officer Selector Dropdown
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.teal.withOpacity(0.3)),
+                color: officerColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: officerColor.withOpacity(0.3)),
               ),
-              child: const Row(
-                children: [
-                  Icon(Icons.history_edu, size: 36, color: Colors.teal),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Institutional LOR Generator',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        Text('Powered by Accreditation Officer streaming intelligence',
-                            style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedOfficer,
+                  isExpanded: true,
+                  icon: Icon(Icons.arrow_drop_down, color: officerColor),
+                  onChanged: _isStreaming ? null : _onOfficerChanged,
+                  items: _officerConfigs.entries.map((entry) {
+                    return DropdownMenuItem<String>(
+                      value: entry.key,
+                      child: Row(
+                        children: [
+                          Icon(entry.value['icon'] as IconData, color: entry.value['color'] as Color, size: 20),
+                          const SizedBox(width: 10),
+                          Text(entry.value['name'] as String,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
             const SizedBox(height: 12),
 
-            // Prompt Input
+            // Prompt TextField
             TextField(
               controller: _promptController,
               decoration: InputDecoration(
-                labelText: 'Candidate Context / Specialization',
-                hintText: 'Enter student achievements, CGPA, target university...',
+                labelText: 'Directives / Report Context',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
@@ -180,16 +234,16 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
             ),
             const SizedBox(height: 10),
 
-            // Actions (Generate / Stop)
+            // Control Buttons
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _isStreaming ? null : _startStream,
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('Generate LOR'),
+                    icon: const Icon(Icons.bolt),
+                    label: Text('Stream ${config['name']}'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: officerColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -200,7 +254,7 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: _stopStream,
-                    icon: const Icon(Icons.stop_circle, color: Colors.red),
+                    icon: const Icon(Icons.stop, color: Colors.red),
                     label: const Text('Stop', style: TextStyle(color: Colors.red)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red),
@@ -213,20 +267,20 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
             ),
             const SizedBox(height: 12),
 
-            // Thinking or Error indicator
+            // Status message
             if (_thinkingText.isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.15),
+                  color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(_thinkingText, style: const TextStyle(fontSize: 12, color: Colors.brown))),
+                    Expanded(child: Text(_thinkingText, style: const TextStyle(fontSize: 12, color: Colors.indigo))),
                   ],
                 ),
               ),
@@ -249,24 +303,24 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
                 ),
               ),
 
-            // Streaming Output Box
+            // Streaming Console Output
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: const Color(0xFF334155)),
                 ),
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   child: RichText(
                     text: TextSpan(
-                      style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.5, fontFamily: 'monospace'),
+                      style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 13, height: 1.5, fontFamily: 'monospace'),
                       children: [
                         TextSpan(
                           text: _generatedText.isEmpty && !_isStreaming
-                              ? 'Tap "Generate LOR" to stream the recommendation letter in real time...'
+                              ? '// Select an AI Officer and tap stream to watch token-by-token synthesis...'
                               : _generatedText,
                         ),
                         if (_isStreaming)
@@ -275,8 +329,8 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
                               opacity: _cursorController,
                               child: Container(
                                 width: 8,
-                                height: 15,
-                                color: Colors.teal,
+                                height: 14,
+                                color: officerColor,
                                 margin: const EdgeInsets.only(left: 2),
                               ),
                             ),
@@ -288,30 +342,30 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
               ),
             ),
 
-            // ROI Card on Done
+            // ROI Summary on Done
             if (_roiData != null) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  border: Border.all(color: Colors.green.withOpacity(0.35)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     Column(
                       children: [
-                        const Text('Hours Saved', style: TextStyle(fontSize: 11, color: Colors.green)),
-                        Text('${_roiData!['hoursSaved'] ?? _roiData!['timeSavedHours'] ?? 2} hrs',
+                        const Text('Time Saved', style: TextStyle(fontSize: 11, color: Colors.green)),
+                        Text('${_roiData!['hoursSaved'] ?? _roiData!['timeSavedHours'] ?? 0} hrs',
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
                       ],
                     ),
                     Column(
                       children: [
-                        const Text('Value Generated', style: TextStyle(fontSize: 11, color: Colors.green)),
-                        Text('₹${_roiData!['moneySaved'] ?? _roiData!['costSaved'] ?? 5000}',
+                        const Text('Cost Saved', style: TextStyle(fontSize: 11, color: Colors.green)),
+                        Text('₹${_roiData!['moneySaved'] ?? _roiData!['costSaved'] ?? 0}',
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
                       ],
                     ),
