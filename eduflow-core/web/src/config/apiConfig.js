@@ -18,8 +18,8 @@ export function getApiBaseURL() {
     // Normalize: if the configured URL ends with /v1, strip it since caller routes append /v1
     apiBaseURL = envUrl.replace(/\/v1\/?$/, '').replace(/\/+$/, '')
   } else {
-    // Default fallback for development
-    apiBaseURL = 'http://localhost:3000/api'
+    // Fallback URL pointing to live Render backend
+    apiBaseURL = 'https://eduflow-backend-jvn8.onrender.com/api'
   }
 
   return apiBaseURL

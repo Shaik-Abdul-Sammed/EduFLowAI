@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MockSimulatorScreen extends StatelessWidget {
+  const MockSimulatorScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

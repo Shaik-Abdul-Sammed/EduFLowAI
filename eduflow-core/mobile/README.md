@@ -1,17 +1,19 @@
-# eduflow_app
+# EduFlow AI OS - Mobile Application
 
-A new Flutter project.
+Cross-platform mobile application for EduFlow AI OS built with Flutter.
 
-## Getting Started
+## Build Commands
 
-This project is a starting point for a Flutter application.
+To build the release APK for Android:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+cd ~/Github/EduFlowAI/eduflow-core/mobile
+flutter clean
+flutter pub get
+flutter analyze
+flutter test
+flutter build apk --release --dart-define=API_BASE_URL=https://eduflow-backend-jvn8.onrender.com/api/v1
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The APK will be generated at:
+`build/app/outputs/flutter-apk/app-release.apk`

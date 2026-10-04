@@ -30,6 +30,7 @@ const StudentSuccessOfficer = lazy(() => import('./pages/ai/officers/StudentSucc
 const TimetableOfficer = lazy(() => import('./pages/ai/officers/TimetableOfficer'))
 const AdmissionOfficer = lazy(() => import('./pages/ai/officers/AdmissionOfficer'))
 const FinanceOfficer = lazy(() => import('./pages/ai/officers/FinanceOfficer'))
+const DomainInsightPage = lazy(() => import('./pages/admin/insights/DomainInsightPage'))
 
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -74,6 +75,10 @@ const generatedRoutes = Object.entries(pageModules)
     if (fileName === 'LeadManagementPage') slug = 'leads'
     if (fileName === 'ReportDeliveryPage') slug = 'report-delivery'
     if (fileName === 'InvoiceGeneratorPage') slug = 'invoices'
+    if (fileName === 'NaacDashboardPage') slug = 'naac-dashboard'
+    if (fileName === 'NaacAiAnalysisPage') slug = 'naac-ai-analysis'
+    if (fileName === 'InsightsDashboardPage') slug = 'insights'
+    if (fileName === 'NirfDashboardPage') slug = 'nirf'
     const routePath = `/${role}-dashboard/${slug}`
 
     return {
@@ -301,6 +306,10 @@ function App() {
             path="/admin-dashboard"
             element={<DashboardHome role="admin" routes={groupedRoutes.admin || []} />}
           />
+          <Route
+            path="/admin-dashboard/insights/:domain"
+            element={<DomainInsightPage />}
+          />
         </Route>
 
           <Route path="/visitor-dashboard" element={<VisitorDashboard />} />
@@ -308,7 +317,7 @@ function App() {
         <Route path="/directory" element={isDemoMode ? <Navigate to="/admin-dashboard" replace /> : <HomeDirectory />} />
 
         {generatedRoutes.map((route) => {
-          const isAllowedInDemo = route.slug === 'audit-logs'
+          const isAllowedInDemo = ['audit-logs', 'leads', 'report-delivery', 'invoices', 'naac-dashboard', 'naac-ai-analysis', 'insights'].includes(route.slug)
           return (
             <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
               <Route

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class QRPassportScreen extends StatelessWidget {
+  const QRPassportScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

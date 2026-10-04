@@ -145,3 +145,5 @@ export const pool = {
     return Promise.all(tasks)
   },
 }
+
+export default pool

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PlacementRadarScreen extends StatelessWidget {
+  const PlacementRadarScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

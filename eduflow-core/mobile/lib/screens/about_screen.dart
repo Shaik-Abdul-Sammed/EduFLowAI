@@ -139,7 +139,7 @@ class _AboutScreenState extends State<AboutScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final shadowColor = isDark ? Colors.black26 : Colors.black.withOpacity(0.05);
+    final shadowColor = isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.05);
 
     return Container(
       decoration: BoxDecoration(
@@ -199,7 +199,7 @@ class _AboutScreenState extends State<AboutScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black26 : Colors.black.withOpacity(0.05),
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           )
@@ -210,7 +210,7 @@ class _AboutScreenState extends State<AboutScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Text('🏫', style: TextStyle(fontSize: 48)),
@@ -251,7 +251,7 @@ class _AboutScreenState extends State<AboutScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? color.shade900.withOpacity(0.3) : color.shade50,
+        color: isDark ? color.shade900.withValues(alpha: 0.3) : color.shade50,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark ? color.shade700 : color.shade200,
@@ -383,7 +383,7 @@ class _AboutScreenState extends State<AboutScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.amber.withOpacity(isDark ? 0.2 : 0.4),
+                color: Colors.amber.withValues(alpha: isDark ? 0.2 : 0.4),
                 blurRadius: 24,
                 spreadRadius: 2,
                 offset: const Offset(0, 8),
@@ -549,7 +549,7 @@ class _AboutScreenState extends State<AboutScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? color.shade900.withOpacity(0.5) : color.shade100),
+        border: Border.all(color: isDark ? color.shade900.withValues(alpha: 0.5) : color.shade100),
       ),
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -660,7 +660,7 @@ class _AboutScreenState extends State<AboutScreen> {
         fontWeight: FontWeight.w600,
         color: color,
         decoration: TextDecoration.underline,
-        decorationColor: color.withOpacity(0.3),
+        decorationColor: color.withValues(alpha: 0.3),
       ),
     );
   }

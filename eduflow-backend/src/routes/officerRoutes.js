@@ -61,6 +61,7 @@ export function createOfficerRouter() {
    * Exports generated officer report text as a branded PDF document.
    */
   router.post('/:type/export-pdf', requireRole(['admin', 'faculty']), OfficerExportController.exportPdf)
+  router.get('/:type/export-pdf', requireRole(['admin', 'faculty']), OfficerExportController.exportPdf)
 
   /**
    * POST /api/v1/officers/:type/chat

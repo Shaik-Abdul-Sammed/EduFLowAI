@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme_manager.dart';
-import '../../auth/screens/login_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -13,8 +12,9 @@ class DashboardScreen extends StatelessWidget {
     
     if (context.mounted) {
       Provider.of<ThemeManager>(context, listen: false).resetToDefault();
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/welcome',
+        (route) => false,
       );
     }
   }
@@ -115,6 +115,36 @@ class DashboardScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   leading: CircleAvatar(
+                    backgroundColor: Colors.purple.withValues(alpha: 0.15),
+                    child: const Icon(Icons.psychology, color: Colors.purple),
+                  ),
+                  title: const Text('Multi-Officer AI Insights', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('5 AI Officers • 82 Overall Health Score'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/insights'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.indigo.withValues(alpha: 0.15),
+                    child: const Icon(Icons.emoji_events, color: Colors.indigo),
+                  ),
+                  title: const Text('NIRF Ranking Intelligence', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Rank #51 • Peer Benchmarks & Advancement Blueprint'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/nirf'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: CircleAvatar(
                     backgroundColor: Colors.teal.withValues(alpha: 0.15),
                     child: const Icon(Icons.qr_code_2, color: Colors.teal),
                   ),
@@ -127,6 +157,37 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.pushNamed(context, '/insights');
+          } else if (index == 2) {
+            Navigator.pushNamed(context, '/officers');
+          } else if (index == 3) {
+            Navigator.pushNamed(context, '/nirf');
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.psychology),
+            label: 'Insights',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.hub),
+            label: 'Officers',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events),
+            label: 'NIRF',
+          ),
+        ],
       ),
     );
   }

@@ -11,9 +11,22 @@ const SUGGESTED_PROMPTS = [
   "Identify Documentation Gaps for NBA Accreditation",
 ];
 
+const CRITERIA_OPTIONS = [
+  { label: 'Select NAAC Criterion...', value: '' },
+  { label: 'Criterion 1 - Curricular Aspects', value: 'Criterion 1 - Curricular Aspects', prompt: 'Generate NAAC SSR Report for Criterion 1 - Curricular Aspects. Include curriculum design and development, academic flexibility, curriculum enrichment, and feedback system.' },
+  { label: 'Criterion 2 - Teaching-Learning and Evaluation', value: 'Criterion 2 - Teaching-Learning and Evaluation', prompt: 'Generate NAAC SSR Report for Criterion 2 - Teaching-Learning and Evaluation. Include student enrollment, student diversity, teaching-learning process, teacher profile and quality, evaluation process, and student performance.' },
+  { label: 'Criterion 3 - Research, Innovations and Extension', value: 'Criterion 3 - Research, Innovations and Extension', prompt: 'Generate NAAC SSR Report for Criterion 3 - Research, Innovations and Extension. Include resource mobilization for research, innovation ecosystem, research publications and awards, extension activities, and collaboration.' },
+  { label: 'Criterion 4 - Infrastructure and Learning Resources', value: 'Criterion 4 - Infrastructure and Learning Resources', prompt: 'Generate NAAC SSR Report for Criterion 4 - Infrastructure and Learning Resources. Include physical facilities, library as a learning resource, IT infrastructure, and campus maintenance.' },
+  { label: 'Criterion 5 - Student Support and Progression', value: 'Criterion 5 - Student Support and Progression', prompt: 'Generate NAAC SSR Report for Criterion 5 - Student Support and Progression. Include student support, student progression, student participation and activities, and alumni engagement.' },
+  { label: 'Criterion 6 - Governance, Leadership and Management', value: 'Criterion 6 - Governance, Leadership and Management', prompt: 'Generate NAAC SSR Report for Criterion 6 - Governance, Leadership and Management. Include institutional vision and leadership, strategy development, faculty empowerment strategies, financial management, and internal quality assurance system (IQAC).' },
+  { label: 'Criterion 7 - Institutional Values and Best Practices', value: 'Criterion 7 - Institutional Values and Best Practices', prompt: 'Generate NAAC SSR Report for Criterion 7 - Institutional Values and Best Practices. Include institutional values and social responsibilities, best practices, and institutional distinctiveness.' },
+  { label: 'All Criteria (Full SSR)', value: 'All Criteria (Full SSR)', prompt: 'Generate Full NAAC Self-Study Report (SSR) covering all 7 criteria (Criteria 1 to 7) for Sri Sudha Institute of Technology, with institutional metrics, quantitative tables, and overall CGPA contribution summary.' },
+];
+
 export default function AccreditationOfficer() {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const [selectedCriterion, setSelectedCriterion] = useState('');
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -65,6 +78,15 @@ export default function AccreditationOfficer() {
     },
     [inputValue, start]
   );
+
+  const handleCriterionSelect = (e) => {
+    const selected = e.target.value;
+    setSelectedCriterion(selected);
+    const opt = CRITERIA_OPTIONS.find((c) => c.value === selected);
+    if (opt && opt.prompt) {
+      setInputValue(opt.prompt);
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -394,7 +416,37 @@ export default function AccreditationOfficer() {
         )}
 
         {/* Input Bar */}
-        <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid rgba(255,255,255,0.1)', background: '#0A0E27' }}>
+        <div style={{ padding: '1.25rem 2rem', borderTop: '1px solid rgba(255,255,255,0.1)', background: '#0A0E27' }}>
+          {/* NAAC Criteria Selector Dropdown */}
+          <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <label htmlFor="naac-criteria-select" style={{ fontSize: '0.8rem', color: '#c4b5fd', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
+              <Sparkles size={14} color="#8B5CF6" /> NAAC Criterion:
+            </label>
+            <select
+              id="naac-criteria-select"
+              data-testid="naac-criteria-select"
+              value={selectedCriterion}
+              onChange={handleCriterionSelect}
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(139, 92, 246, 0.4)',
+                borderRadius: '8px',
+                color: '#f8fafc',
+                padding: '0.45rem 0.75rem',
+                fontSize: '0.85rem',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {CRITERIA_OPTIONS.map((opt, idx) => (
+                <option key={idx} value={opt.value} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div style={{
             display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', padding: '0.5rem',

@@ -22,6 +22,10 @@ import { createLeadRouter } from './routes/leadRoutes.js'
 import { createReportDeliveryRouter } from './routes/reportDeliveryRoutes.js'
 import { ReportDeliveryController } from './controllers/ReportDeliveryController.js'
 import { createInvoiceRouter } from './routes/invoiceRoutes.js'
+import { createDemoRouter } from './routes/demoRoutes.js'
+import { createNaacInsightsRouter } from './routes/naacInsightsRoutes.js'
+import { createInsightsRouter } from './routes/insightsRoutes.js'
+import { createNirfRouter } from './routes/nirfRoutes.js'
 import { pool } from './db/pool.js'
 import { httpLogger, productionRateLimiter } from './middleware/productionHardening.js'
 import helmet from 'helmet'
@@ -114,6 +118,10 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/leads', createLeadRouter())
   app.use('/api/v1/reports', createReportDeliveryRouter())
   app.use('/api/v1/invoices', createInvoiceRouter())
+  app.use('/api/v1/demo', createDemoRouter())
+  app.use('/api/v1/naac', createNaacInsightsRouter())
+  app.use('/api/v1/insights', createInsightsRouter())
+  app.use('/api/v1/nirf', createNirfRouter())
 
   // Public Report Viewer and Download endpoints
   app.get('/r/:token/pdf', ReportDeliveryController.downloadPublicReportPdf)

@@ -29,22 +29,6 @@ android {
         resValues = true
     }
 
-    flavorDimensions += "tier"
-
-    productFlavors {
-        create("shared") {
-            dimension = "tier"
-            applicationIdSuffix = ".shared"
-            resValue("string", "app_name", "EduFlow AI OS")
-        }
-        create("whitelabel") {
-            dimension = "tier"
-            // The generate_whitelabel_apk.sh will dynamically replace these at build time
-            applicationIdSuffix = ".${project.findProperty("INSTITUTION_ID") ?: "default"}"
-            resValue("string", "app_name", (project.findProperty("APP_NAME") as String?) ?: "EduFlow Branded")
-        }
-    }
-
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

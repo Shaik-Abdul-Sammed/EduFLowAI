@@ -279,7 +279,7 @@ export function createMemoryPool() {
         return { rows: [], rowCount: 1 }
       }
 
-      if (sql.includes('leads') || sql.includes('invoices') || sql.includes('delivered_reports')) {
+      if (sql.includes('leads') || sql.includes('invoices') || sql.includes('delivered_reports') || sql.includes('naac_') || sql.includes('ai_insight_runs') || sql.includes('ai_prediction_snapshots') || sql.includes('nirf_')) {
         throw new Error('Table queries handled by repository in-memory fallback')
       }
 

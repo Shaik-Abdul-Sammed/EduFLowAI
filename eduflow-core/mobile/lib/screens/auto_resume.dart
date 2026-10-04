@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AutoResumeBuilderScreen extends StatelessWidget {
+  const AutoResumeBuilderScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

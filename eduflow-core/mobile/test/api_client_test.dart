@@ -12,6 +12,11 @@ void main() {
       );
     });
 
+    test('ApiClient baseUrl points to live backend when no dart-define is set', () {
+      expect(ApiClient.baseUrl, contains('eduflow-backend-jvn8.onrender.com'));
+      expect(ApiClient.baseUrl, contains('/api/v1'));
+    });
+
     test('SSEClient can be instantiated', () {
       final client = SSEClient();
       expect(client, isNotNull);

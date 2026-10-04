@@ -227,24 +227,57 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               </div>
             </>
           ) : (
-            Object.entries(groupedRoutes).map(([category, currentRoutes]) => (
-              currentRoutes.length > 0 && (
-                <div key={category} style={{ marginBottom: '1.25rem' }}>
+            <>
+              {role === 'admin' && (
+                <div style={{ marginBottom: '1.25rem' }}>
                   <div style={{ 
                     fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
                     textTransform: 'uppercase', letterSpacing: '0.05em',
                     marginBottom: '0.5rem', paddingLeft: '0.875rem'
                   }}>
-                    {category}
+                    Accreditation AI
                   </div>
-                  {currentRoutes.map(route => (
+                  <NavLink
+                    to="/admin-dashboard/naac-ai-analysis"
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                    style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                      marginBottom: '0.2rem', textDecoration: 'none',
+                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                      color: isActive ? themeData.text : 'var(--sidebar-text)',
+                      background: isActive ? themeData.light : 'transparent',
+                      transition: 'all 0.2s',
+                    })}
+                  >
+                    <span>🧠</span>
+                    <span>NAAC AI Analysis</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin-dashboard/insights"
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                    style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                      marginBottom: '0.2rem', textDecoration: 'none',
+                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                      color: isActive ? themeData.text : 'var(--sidebar-text)',
+                      background: isActive ? themeData.light : 'transparent',
+                      transition: 'all 0.2s',
+                    })}
+                  >
+                    <span>🧠</span>
+                    <span>AI Insights</span>
+                  </NavLink>
+                  {!isDemoMode && (
                     <NavLink
-                      key={route.routePath}
-                      to={route.routePath}
+                      to="/admin-dashboard/nirf"
                       onClick={() => setOpen(false)}
                       className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                       style={({ isActive }) => ({
-                        display: 'block',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
                         padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
                         marginBottom: '0.2rem', textDecoration: 'none',
                         fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
@@ -253,12 +286,45 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
                         transition: 'all 0.2s',
                       })}
                     >
-                      {formatSlug(route.slug)}
+                      <span>🏆</span>
+                      <span>NIRF Ranking</span>
                     </NavLink>
-                  ))}
+                  )}
                 </div>
-              )
-            ))
+              )}
+              {Object.entries(groupedRoutes).map(([category, currentRoutes]) => (
+                currentRoutes.length > 0 && (
+                  <div key={category} style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ 
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
+                      textTransform: 'uppercase', letterSpacing: '0.05em',
+                      marginBottom: '0.5rem', paddingLeft: '0.875rem'
+                    }}>
+                      {category}
+                    </div>
+                    {currentRoutes.map(route => (
+                      <NavLink
+                        key={route.routePath}
+                        to={route.routePath}
+                        onClick={() => setOpen(false)}
+                        className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                        style={({ isActive }) => ({
+                          display: 'block',
+                          padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                          marginBottom: '0.2rem', textDecoration: 'none',
+                          fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                          color: isActive ? themeData.text : 'var(--sidebar-text)',
+                          background: isActive ? themeData.light : 'transparent',
+                          transition: 'all 0.2s',
+                        })}
+                      >
+                        {formatSlug(route.slug)}
+                      </NavLink>
+                    ))}
+                  </div>
+                )
+              ))}
+            </>
           )}
         </div>
         

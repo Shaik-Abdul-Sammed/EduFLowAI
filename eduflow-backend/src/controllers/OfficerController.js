@@ -4,6 +4,76 @@ import { AIService } from '../services/AIService.js'
 import { CacheService } from '../services/CacheService.js'
 import { calculateROI } from '../ai/officers/officerPrompts.js'
 import { logger } from '../utils/logger.js'
+import DemoDataRepository from '../models/DemoDataRepository.js'
+
+export async function buildInstitutionalDataContext(institutionId = 1) {
+  try {
+    const stats = await DemoDataRepository.getStats();
+    const courses = await DemoDataRepository.getCourses();
+    const infra = await DemoDataRepository.getInfrastructure();
+
+    const programs = (courses || [])
+      .filter((c, idx, arr) => arr.findIndex(x => x.program_name === c.program_name) === idx)
+      .slice(0, 8)
+      .map(c => `${c.program_name} (${c.total_seats || 60} seats)`)
+      .join('\n');
+
+    const classrooms = infra.find(i => i.type === 'Classroom')?.count || 120;
+    const labs = infra.find(i => i.type === 'Laboratory')?.count || 45;
+    const library = infra.find(i => i.type === 'Library');
+    const libraryArea = library ? `${library.area_sqft.toLocaleString()} sqft` : '12,000 sqft';
+    const hostels = infra.filter(i => i.type === 'Hostel');
+    const hostelCap = hostels.reduce((sum, h) => sum + (h.capacity || 0), 0) || 800;
+
+    return `INSTITUTIONAL DATA
+==================
+Institution: Sri Sudha Institute of Technology
+Total Students: ${stats.totalStudents || 1250}
+Total Faculty: ${stats.totalFaculty || 85}
+PhD Faculty: ${stats.phdFaculty || 40} (${Math.round(stats.phdRatio || 47)} percent)
+Average CGPA: ${stats.averageCgpa || 7.8}
+Average Attendance: ${Math.round(stats.averageAttendance || 82)} percent
+Placement Percentage: ${Math.round(stats.placementPercentage || 62)} percent
+Median Package: ${stats.medianPackageLpa || 5.5} LPA
+Research Publications: ${stats.totalResearch || 450}
+Scopus Indexed: ${stats.scopusResearch || 270}
+PROGRAMS
+${programs || 'B.Tech CSE (240 seats)\nB.Tech ECE (180 seats)'}
+INFRASTRUCTURE
+Classrooms: ${classrooms}
+Labs: ${labs}
+Library: ${libraryArea}
+Hostel: ${hostelCap} capacity
+
+Use this data to generate the report.
+`;
+  } catch (err) {
+    logger.warn('Failed to build institutional data context:', err);
+    return `INSTITUTIONAL DATA
+==================
+Institution: Sri Sudha Institute of Technology
+Total Students: 1250
+Total Faculty: 85
+PhD Faculty: 40 (47 percent)
+Average CGPA: 7.8
+Average Attendance: 82 percent
+Placement Percentage: 62 percent
+Median Package: 5.5 LPA
+Research Publications: 450
+Scopus Indexed: 270
+PROGRAMS
+B.Tech CSE (240 seats)
+B.Tech ECE (180 seats)
+INFRASTRUCTURE
+Classrooms: 120
+Labs: 45
+Library: 12,000 sqft
+Hostel: 800 capacity
+
+Use this data to generate the report.
+`;
+  }
+}
 
 export class OfficerController {
   static async generateAccreditation(req, res) {
@@ -22,7 +92,10 @@ export class OfficerController {
         roi.moneySaved
       )
 
-      const reply = await AIService.processPrompt('accreditation', `Generate ${reportType}`, { userRole: req.user.role })
+      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
+      const promptWithData = `${contextBlock}\nGenerate ${reportType}`
+
+      const reply = await AIService.processPrompt('accreditation', promptWithData, { userRole: req.user.role })
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'ACCREDITATION_REPORT_GENERATED', req.ip, req.get('user-agent'), { reportType })
 
       res.json({
@@ -281,7 +354,9 @@ export class OfficerController {
   }
 
   static async streamAccreditation(req, res) {
-    const prompt = req.body?.reportType || req.body?.action || 'Generate NAAC Criteria 3 SSR Analysis for SSIT'
+    const rawPrompt = req.body?.reportType || req.body?.action || 'Generate NAAC Criteria 3 SSR Analysis for SSIT'
+    const contextBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
+    const prompt = `${contextBlock}\n${rawPrompt}`
     return OfficerController.handleStream(
       req,
       res,
