@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import LoginPage from '../../pages/public/LoginPage'
 
-const mockLogin = jest.fn(async () => ({ token: 'demo', user: { role: 'student', name: 'Ananya' } }))
+const mockLogin = jest.fn(async () => ({ token: 'demo', user: { role: 'admin', name: 'Admin User' } }))
 const mockNavigate = jest.fn()
 
 jest.mock('../../hooks/useAuth', () => ({
@@ -14,35 +14,17 @@ jest.mock('react-router-dom', () => {
   const actual = jest.requireActual('react-router-dom')
   return {
     ...actual,
-      useNavigate: () => mockNavigate,
+    useNavigate: () => mockNavigate,
   }
 })
 
-describe('LoginPage', () => {
-  it.each([
-    ['student', 'ss26', 'student123'],
-    ['faculty', 'faculty', 'faculty123'],
-    ['parent', 'parent', 'parent123'],
-    ['admin', 'admin', 'admin123'],
-  ])('loads the %s demo credentials', async (roleName, expectedUsername, expectedPassword) => {
-    const user = userEvent.setup()
-
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>,
-    )
-
-    if (roleName !== 'student') {
-      await user.click(screen.getByRole('button', { name: new RegExp(roleName, 'i') }))
-    }
-
-    expect(screen.getByText(/Username \/ ID/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/••••••••/i)).toHaveValue(expectedPassword)
-    expect(screen.getByDisplayValue(expectedUsername)).toBeInTheDocument()
+describe('LoginPage Component in components/__tests__', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    jest.clearAllMocks()
   })
 
-  it('submits login after switching role', async () => {
+  it('renders login form and populates demo credentials', async () => {
     const user = userEvent.setup()
 
     render(
@@ -51,13 +33,31 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByRole('button', { name: /faculty/i }))
+    expect(screen.getByRole('button', { name: /fill admin credentials/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /fill admin credentials/i }))
 
-    expect(screen.getByPlaceholderText(/••••••••/i)).toHaveValue('faculty123')
-    expect(screen.getByDisplayValue('faculty')).toBeInTheDocument()
+    expect(screen.getByLabelText(/email address/i)).toHaveValue('admin@demo.edu')
+    expect(screen.getByLabelText(/^password$/i)).toHaveValue('Demo@2026')
+  })
 
-    await user.click(screen.getByRole('button', { name: /Login Securely/i }))
+  it('submits login securely with credentials', async () => {
+    const user = userEvent.setup()
 
-    expect(mockLogin).toHaveBeenCalledWith({ role: 'faculty', username: 'faculty', password: 'faculty123' })
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /fill admin credentials/i }))
+    await user.click(screen.getByRole('button', { name: /login securely/i }))
+
+    expect(mockLogin).toHaveBeenCalledWith({
+      email: 'admin@demo.edu',
+      username: 'admin@demo.edu',
+      password: 'Demo@2026',
+      institutionId: 'demo',
+    })
+    expect(mockNavigate).toHaveBeenCalledWith('/admin-dashboard', { replace: true })
   })
 })

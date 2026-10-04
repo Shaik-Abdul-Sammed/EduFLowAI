@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Database, ArrowLeft, RefreshCw, CheckCircle, Circle, Upload, FileText } from 'lucide-react'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const DEMO_TWIN = {
   name: 'Springfield Engineering College',
@@ -60,7 +61,7 @@ export default function DigitalTwinManager() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const res = await fetch('http://localhost:3000/api/v1/digital-twin/ingest', {
+      const res = await fetch(getFullApiUrl('/v1/digital-twin/ingest'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

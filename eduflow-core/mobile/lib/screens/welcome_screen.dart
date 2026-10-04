@@ -87,11 +87,20 @@ class WelcomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(
-            child: Icon(
-              Icons.school,
-              size: 48,
-              color: accentGold,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset(
+              'assets/icon/app_icon.png',
+              width: 90,
+              height: 90,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(
+                  Icons.school,
+                  size: 48,
+                  color: accentGold,
+                ),
+              ),
             ),
           ),
         ),

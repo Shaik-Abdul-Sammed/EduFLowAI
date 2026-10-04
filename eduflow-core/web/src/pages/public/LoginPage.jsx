@@ -1,254 +1,534 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { LazyMotionDiv, LazyMotionButton } from '../../components/LazyMotion'
+import { Eye, EyeOff, ShieldCheck, Mail, Lock, Sparkles, ArrowRight } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { studentDummyIds } from '../../utils/studentCatalog'
-import { useI18n } from '../../i18n'
-
-const instituteName = 'EduFlow AI'
-
-const roleDefaults = {
-  student: { username: studentDummyIds[0].id, password: 'student123' },
-  faculty: { username: 'faculty', password: 'faculty123' },
-  parent:  { username: 'parent',  password: 'parent123'  },
-  admin:   { username: 'admin',   password: 'admin123'   },
-}
-
-const roleInfo = {
-  student: { icon: '👨‍🎓', color: '#2563EB', gradStart: '#2563EB', gradEnd: '#06B6D4', title: 'Student',  desc: 'Access your academics'  },
-  faculty: { icon: '👨‍🏫', color: '#10B981', gradStart: '#10B981', gradEnd: '#0EA5E9', title: 'Faculty',  desc: 'Manage your courses'   },
-  parent:  { icon: '👨‍👩‍👧', color: '#F59E0B', gradStart: '#F59E0B', gradEnd: '#EF4444', title: 'Parent',   desc: 'Monitor child progress' },
-  admin:   { icon: '⚙️',   color: '#7C3AED', gradStart: '#7C3AED', gradEnd: '#EF4444', title: 'Admin',    desc: 'System control'        },
-}
-
-const sideFeatures = [
-  { icon: '🔐', text: 'Role-based secure access' },
-  { icon: '📊', text: 'Real-time dashboards' },
-  { icon: '📱', text: 'PWA offline support' },
-  { icon: '🌍', text: 'Multilingual interface' },
-]
+import { DEMO_ACCOUNTS } from '../../config/demoCredentials'
+import { mapAuthError } from '../../services/authService'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const { t } = useI18n()
 
-  const [role, setRole] = useState('student')
-  const [username, setUsername] = useState(roleDefaults.student.username)
-  const [password, setPassword] = useState(roleDefaults.student.password)
+  const [email, setEmail] = useState(() => {
+    try {
+      return localStorage.getItem('eduflow_remembered_email') || ''
+    } catch {
+      return ''
+    }
+  })
+  const [password, setPassword] = useState('')
+  const [institutionId, setInstitutionId] = useState('demo')
+  const [phone, setPhone] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('eduflow_remembered_email')) ||
+        localStorage.getItem('eduflow_remember_me') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const [rememberMe, setRememberMe] = useState(() => {
-    return localStorage.getItem('eduflow_remember_me') === 'true'
-  })
-
-  function handleRoleChange(nextRole) {
-    setRole(nextRole)
-    setUsername(roleDefaults[nextRole].username)
-    setPassword(roleDefaults[nextRole].password)
+  const handleFillAdmin = () => {
+    const adminAccount = DEMO_ACCOUNTS.find(a => a.id === 'admin') || {
+      email: 'admin@demo.edu',
+      password: 'Demo@2026',
+      institutionId: 'demo',
+    }
+    setEmail(adminAccount.email)
+    setPassword(adminAccount.password)
+    setInstitutionId(adminAccount.institutionId || 'demo')
+    setPhone('')
     setError('')
   }
 
-  function handleRememberMeChange(e) {
+  const handleFillDean = () => {
+    const deanAccount = DEMO_ACCOUNTS.find(a => a.id === 'dean') || {
+      email: 's9010150809@gmail.com',
+      password: 'Demo@2026',
+      institutionId: 'demo',
+    }
+    setEmail(deanAccount.email)
+    setPassword(deanAccount.password)
+    setInstitutionId(deanAccount.institutionId || 'demo')
+    setPhone('9010150809')
+    setError('')
+  }
+
+  const handleRememberMeChange = (e) => {
     const checked = e.target.checked
     setRememberMe(checked)
-    localStorage.setItem('eduflow_remember_me', String(checked))
+    try {
+      localStorage.setItem('eduflow_remember_me', String(checked))
+      if (!checked) {
+        localStorage.removeItem('eduflow_remembered_email')
+      }
+    } catch {
+      // Ignore
+    }
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-    if (!username.trim() || !password.trim()) {
-      setError('Username and password are required')
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!email.trim() || !password.trim()) {
+      setError('Email and password are required')
       return
     }
+
     setLoading(true)
     setError('')
+
     try {
-      await login({ role, username, password })
+      const res = await login({
+        email: email.trim(),
+        username: email.trim(),
+        password,
+        institutionId: institutionId || 'demo',
+      })
+
+      try {
+        if (rememberMe) {
+          localStorage.setItem('eduflow_remembered_email', email.trim())
+          localStorage.setItem('eduflow_remember_me', 'true')
+        } else {
+          localStorage.removeItem('eduflow_remembered_email')
+        }
+      } catch {
+        // Ignore
+      }
+
+      const role = res?.user?.role || 'admin'
       navigate(`/${role}-dashboard`, { replace: true })
     } catch (err) {
-      setError(err.message || 'Invalid credentials')
+      const friendly = mapAuthError(err)
+      setError(friendly)
     } finally {
       setLoading(false)
     }
   }
 
-  const info = roleInfo[role]
-
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '1.5rem',
+      background: 'linear-gradient(135deg, #0A2540 0%, #061325 50%, #0B192C 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem 1rem',
     }}>
-      <LazyMotionDiv
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        style={{
-          display: 'grid', gridTemplateColumns: '1.2fr 1fr',
-          width: '100%', maxWidth: 1000,
-          borderRadius: '1.75rem', overflow: 'hidden',
-          boxShadow: '0 24px 64px rgba(15,23,42,0.16)',
-        }}
-        className="login-grid"
-      >
-        {/* ── LEFT PANEL ── */}
-        <div className="login-side-panel d-none d-lg-flex" style={{ 
-          flexDirection: 'column', justifyContent: 'space-between',
-          background: `linear-gradient(135deg, ${info.gradStart}, ${info.gradEnd})`,
-          padding: '3rem', color: 'white'
+      <div style={{
+        width: '100%',
+        maxWidth: 520,
+        background: '#ffffff',
+        borderRadius: '1.25rem',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+        padding: '2.5rem 2.25rem',
+      }}>
+        {/* Section 1 - Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            marginBottom: '0.5rem',
+          }}>
+            <img
+              src="/logo.svg"
+              alt="EduFlow AI"
+              width="48"
+              height="48"
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '12px',
+                objectFit: 'contain',
+              }}
+            />
+            <span style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: '#0A2540',
+              letterSpacing: '-0.02em',
+            }}>
+              EduFlow AI
+            </span>
+          </div>
+          <p style={{
+            color: '#64748B',
+            fontSize: '0.925rem',
+            fontWeight: 500,
+            margin: 0,
+          }}>
+            The Autonomous Institution Operating System
+          </p>
+        </div>
+
+        {/* Section 2 - Demo Credentials Helper Card */}
+        <div style={{
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%)',
+          border: '1px solid #E2E8F0',
+          borderRadius: '0.875rem',
+          padding: '1.25rem',
+          marginBottom: '1.75rem',
         }}>
-          <div>
-            <Link to="/entry" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', marginBottom: '3rem', color: 'white' }}>
-              <span style={{ fontSize: '1.5rem' }}>🏫</span>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '0.04em' }}>{instituteName}</span>
-            </Link>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.875rem',
+          }}>
+            <Sparkles size={16} color="#2563EB" />
+            <h3 style={{
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              color: '#0A2540',
+              margin: 0,
+            }}>
+              Try the Demo
+            </h3>
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              background: '#DBEAFE',
+              color: '#1D4ED8',
+              padding: '0.15rem 0.5rem',
+              borderRadius: '9999px',
+              marginLeft: 'auto',
+            }}>
+              One-Tap Access
+            </span>
+          </div>
 
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '1rem', lineHeight: 1.1 }}>
-              Welcome back to<br />the {info.title} Portal
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6, maxWidth: 320, marginBottom: '2.5rem' }}>
-              {info.desc} and stay connected with the EduFlow AI core system seamlessly.
-            </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {/* Admin option */}
+            <div style={{
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '0.625rem',
+              padding: '0.75rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#1E293B' }}>
+                  For Administrators <span style={{ color: '#64748B', fontWeight: 500 }}>(NAAC / NIRF / Insights)</span>
+                </span>
+              </div>
+              <div style={{ fontSize: '0.775rem', color: '#475569', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
+                Email: <strong>admin@demo.edu</strong> • Password: <strong>Demo@2026</strong>
+              </div>
+              <button
+                type="button"
+                onClick={handleFillAdmin}
+                style={{
+                  width: '100%',
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  padding: '0.45rem 0.75rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  transition: 'background 0.15s ease',
+                }}
+              >
+                <span>Fill Admin Credentials</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {sideFeatures.map(f => (
-                <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '0.625rem',
-                    background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem',
-                  }}>
-                    {f.icon}
-                  </div>
-                  <span style={{ color: 'rgba(255,255,255,0.95)', fontSize: '0.9rem', fontWeight: 600 }}>{f.text}</span>
-                </div>
-              ))}
+            {/* Dean option */}
+            <div style={{
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '0.625rem',
+              padding: '0.75rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#1E293B' }}>
+                  For College Dean <span style={{ color: '#64748B', fontWeight: 500 }}>(personal demo)</span>
+                </span>
+              </div>
+              <div style={{ fontSize: '0.775rem', color: '#475569', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
+                Email: <strong>s9010150809@gmail.com</strong> • Phone: <strong>9010150809</strong>
+              </div>
+              <button
+                type="button"
+                onClick={handleFillDean}
+                style={{
+                  width: '100%',
+                  background: '#0F766E',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  padding: '0.45rem 0.75rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  transition: 'background 0.15s ease',
+                }}
+              >
+                <span>Fill Dean Credentials</span>
+                <ArrowRight size={13} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* ── RIGHT PANEL (Form) ── */}
-        <div style={{
-          background: '#ffffff', padding: 'clamp(2rem, 4vw, 3rem)',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          position: 'relative'
-        }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.2rem' }}>{t('sign_in')}</h1>
-            <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>Select your role to continue</p>
+        {/* Error Alert */}
+        {error && (
+          <div
+            role="alert"
+            style={{
+              background: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              color: '#B91C1C',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.625rem',
+              fontSize: '0.85rem',
+              marginBottom: '1.25rem',
+              lineHeight: 1.45,
+            }}
+          >
+            {error}
           </div>
+        )}
 
-          {/* Role Tabs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '2rem' }}>
-            {Object.entries(roleInfo).map(([roleKey, roleData]) => {
-              const isSelected = role === roleKey
-              return (
-                <LazyMotionButton
-                  key={roleKey} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
-                  onClick={() => handleRoleChange(roleKey)}
-                  style={{
-                    padding: '0.75rem 0.25rem', borderRadius: '0.875rem',
-                    border: isSelected ? `2px solid ${roleData.color}` : '2px solid #e2e8f0',
-                    background: isSelected ? `${roleData.color}12` : '#f8fafc',
-                    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem',
-                    transition: 'border-color 0.2s, background 0.2s',
-                  }}
-                >
-                  <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{roleData.icon}</span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isSelected ? roleData.color : '#94a3b8', textTransform: 'uppercase' }}>
-                    {roleData.title}
-                  </span>
-                </LazyMotionButton>
-              )
-            })}
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {/* Username */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
-                {t('username_label')}
-              </label>
+        {/* Section 3 - Login Form */}
+        <form onSubmit={handleSubmit}>
+          {/* Email Address Field */}
+          <div style={{ marginBottom: '1.15rem' }}>
+            <label
+              htmlFor="email"
+              style={{
+                display: 'block',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#1E293B',
+                marginBottom: '0.35rem',
+              }}
+            >
+              Email Address
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
-                className="form-control"
-                placeholder={t('username_label') + ` (${role})`}
-                value={username} onChange={e => setUsername(e.target.value)}
-                required style={{ padding: '0.75rem 1rem', borderRadius: '0.75rem', fontSize: '0.9rem' }}
-                onFocus={e => { e.currentTarget.style.borderColor = info.color; e.currentTarget.style.boxShadow = `0 0 0 3px ${info.color}20` }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@demo.edu"
+                aria-label="Email Address"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem 0.65rem 2.5rem',
+                  fontSize: '0.925rem',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '0.625rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <Mail
+                size={16}
+                color="#94A3B8"
+                style={{
+                  position: 'absolute',
+                  left: '0.85rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                }}
               />
             </div>
-
-            {/* Password */}
-            <LazyMotionDiv key="password" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', margin: 0 }}>{t('password_label')}</label>
-                <button type="button" onClick={() => setShowPassword(v => !v)} style={{ fontSize: '0.75rem', color: info.color, background: 'none', border: 'none', fontWeight: 600, padding: 0 }}>
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
+            {phone && (
+              <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem' }}>
+                Associated Phone: {phone}
               </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="form-control" placeholder="••••••••"
-                value={password} onChange={e => setPassword(e.target.value)}
-                required style={{ padding: '0.75rem 1rem', borderRadius: '0.75rem', fontSize: '0.9rem', letterSpacing: showPassword ? 'normal' : '0.15em' }}
-                onFocus={e => { e.currentTarget.style.borderColor = info.color; e.currentTarget.style.boxShadow = `0 0 0 3px ${info.color}20` }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none' }}
-              />
-            </LazyMotionDiv>
+            )}
+          </div>
 
-            {/* Remember Me */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Password Field */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label
+              htmlFor="password"
+              style={{
+                display: 'block',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                color: '#1E293B',
+                marginBottom: '0.35rem',
+              }}
+            >
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
               <input
-                type="checkbox"
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                aria-label="Password"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 2.75rem 0.65rem 2.5rem',
+                  fontSize: '0.925rem',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '0.625rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <Lock
+                size={16}
+                color="#94A3B8"
+                style={{
+                  position: 'absolute',
+                  left: '0.85rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#64748B',
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember Me & Forgot Password */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem',
+            fontSize: '0.85rem',
+          }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              color: '#475569',
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}>
+              <input
                 id="rememberMe"
                 name="rememberMe"
+                type="checkbox"
                 checked={rememberMe}
                 onChange={handleRememberMeChange}
                 style={{ cursor: 'pointer' }}
               />
-              <label htmlFor="rememberMe" style={{ fontSize: '0.8rem', color: '#64748b', cursor: 'pointer', margin: 0 }}>
-                Remember me
-              </label>
-            </div>
+              <span>Remember Me</span>
+            </label>
 
-            {/* Error */}
-            {error && (
-              <div role="alert" className="error-toast" style={{ padding: '0.75rem 1rem', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
-                ⚠️ {error}
-              </div>
-            )}
+            <Link
+              to="/forgot-password"
+              style={{
+                color: '#2563EB',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
-            {/* Submit Button */}
-            <div style={{ display: 'grid', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <button
-                type="submit" disabled={loading}
-                style={{
-                  padding: '0.875rem', background: `linear-gradient(135deg, ${info.gradStart}, ${info.gradEnd})`,
-                  border: 'none', borderRadius: '0.875rem', color: 'white',
-                  fontWeight: 800, fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: `0 4px 14px ${info.gradStart}50`, transition: 'all 0.2s ease',
-                }}
-              >
-                {loading ? 'Authenticating...' : t('login_securely')}
-              </button>
-            </div>
+          {/* Primary Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              background: 'linear-gradient(135deg, #0A2540 0%, #1E3A8A 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '0.625rem',
+              padding: '0.75rem 1.25rem',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 12px rgba(10, 37, 64, 0.25)',
+              opacity: loading ? 0.75 : 1,
+            }}
+          >
+            <ShieldCheck size={18} />
+            <span>{loading ? 'Authenticating...' : 'Login Securely'}</span>
+          </button>
+        </form>
 
-          </form>
+        {/* Section 4 - Footer */}
+        <div style={{
+          marginTop: '2rem',
+          paddingTop: '1.25rem',
+          borderTop: '1px solid #F1F5F9',
+          textAlign: 'center',
+          fontSize: '0.85rem',
+          color: '#64748B',
+        }}>
+          <p style={{ margin: '0 0 0.5rem 0' }}>
+            Don't have an account?{' '}
+            <Link
+              to="/signup"
+              style={{
+                color: '#2563EB',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Create one
+            </Link>
+          </p>
+          <p style={{ margin: 0 }}>
+            <Link
+              to="/welcome"
+              style={{
+                color: '#64748B',
+                textDecoration: 'none',
+                fontSize: '0.8rem',
+              }}
+            >
+              ← Back to Welcome
+            </Link>
+          </p>
         </div>
-      </LazyMotionDiv>
-
-      <style>{`
-        @media (max-width: 991px) {
-          .login-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+      </div>
     </div>
   )
 }

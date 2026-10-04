@@ -93,7 +93,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.4rem' }}>🏫</span>
+            <img src="/app-logo.png" alt="EduFlow AI Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
             <span style={{
               fontSize: '1.15rem', fontWeight: 800,
               background: 'linear-gradient(135deg,#2563EB,#06B6D4)',

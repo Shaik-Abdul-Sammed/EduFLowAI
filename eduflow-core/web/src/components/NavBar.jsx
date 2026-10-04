@@ -72,7 +72,7 @@ export default function NavBar({ routes, onMenuClick }) {
           {/* Desktop Brand (if not logged in, or alongside sidebar) */}
           {!user && (
             <Link to="/entry" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-              <span style={{ fontSize: '1.4rem' }}>🏫</span>
+              <img src="/app-logo.png" alt="EduFlow AI Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
               <span style={{
                 fontSize: '1.2rem', fontWeight: 800,
                 background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
