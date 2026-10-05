@@ -61,7 +61,11 @@ async function runRestore() {
   logger.info('User confirmed restore with YES. Beginning database restoration...')
 
   try {
-    const databaseUrl = process.env.DATABASE_URL
+    let databaseUrl = process.env.DATABASE_URL
+    const isRemote = /render\.com|dpg-/.test(String(databaseUrl || ''))
+    if (isRemote && databaseUrl && !databaseUrl.includes('sslmode=')) {
+      databaseUrl += (databaseUrl.includes('?') ? '&' : '?') + 'sslmode=require'
+    }
     const compressedBuffer = fs.readFileSync(filePath)
     const sqlContent = zlib.gunzipSync(compressedBuffer).toString('utf-8')
 

@@ -109,7 +109,11 @@ async function runBackup() {
     const targetPath = path.join(backupDir, fileName)
     logger.info(`Initiating database backup: ${fileName}`)
 
-    const databaseUrl = process.env.DATABASE_URL
+    let databaseUrl = process.env.DATABASE_URL
+    const isRemote = /render\.com|dpg-/.test(String(databaseUrl || ''))
+    if (isRemote && databaseUrl && !databaseUrl.includes('sslmode=')) {
+      databaseUrl += (databaseUrl.includes('?') ? '&' : '?') + 'sslmode=require'
+    }
     let dumpSucceeded = false
 
     if (databaseUrl) {

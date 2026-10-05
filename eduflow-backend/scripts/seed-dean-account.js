@@ -13,10 +13,12 @@ const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@
 console.log('🌱 Starting Dean Account Seeder...')
 console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
 
-const pool = new Pool({
-  connectionString: databaseUrl,
-  connectionTimeoutMillis: 5000,
-})
+const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
+const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
+if (isRemote) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+const pool = new Pool(poolConfig);
 
 export async function seedDeanAccount(clientOrPool = pool) {
   // 1. Query institution_id from admin@demo.edu or fallback to first institution

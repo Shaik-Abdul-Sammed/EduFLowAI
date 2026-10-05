@@ -14,10 +14,12 @@ const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@
 console.log('🌱 Starting EduFlow Demo Institution Seeder...')
 console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
 
-const pool = new Pool({
-  connectionString: databaseUrl,
-  connectionTimeoutMillis: 5000,
-})
+const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
+const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
+if (isRemote) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+const pool = new Pool(poolConfig);
 
 const INDIAN_FIRST_NAMES = [
   'Aarav', 'Ananya', 'Rohan', 'Sneha', 'Aditya', 'Meera', 'Karthik', 'Pooja', 'Sai', 'Divya',

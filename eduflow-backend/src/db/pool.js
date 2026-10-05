@@ -25,15 +25,18 @@ if (useMemoryOnly) {
 const memoryPool = createMemoryPool()
 let hasLoggedMemoryWarning = useMemoryOnly
 
-const realPool = useMemoryOnly
-  ? null
-  : new Pool({
-      connectionString: databaseUrl,
-      max: 50,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      maxUses: 7500,
-    })
+const isRemote = /render\.com|dpg-/.test(databaseUrl);
+const realPoolConfig = {
+  connectionString: databaseUrl,
+  max: 50,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  maxUses: 7500,
+};
+if (isRemote) {
+  realPoolConfig.ssl = { rejectUnauthorized: false };
+}
+const realPool = useMemoryOnly ? null : new Pool(realPoolConfig);
 
 function logMemoryFallbackWarningOnce() {
   if (!hasLoggedMemoryWarning) {

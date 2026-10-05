@@ -3,9 +3,13 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { fileURLToPath } from 'node:url'
+
 describe('Dark Mode Theme Configuration Audit', () => {
-  const indexCss = fs.readFileSync(path.resolve('src/index.css'), 'utf-8')
-  const loginPage = fs.readFileSync(path.resolve('src/pages/public/LoginPage.jsx'), 'utf-8')
+  const indexCssPath = fileURLToPath(new URL('../index.css', import.meta.url))
+  const loginPagePath = fileURLToPath(new URL('../pages/public/LoginPage.jsx', import.meta.url))
+  const indexCss = fs.readFileSync(indexCssPath, 'utf-8')
+  const loginPage = fs.readFileSync(loginPagePath, 'utf-8')
 
   test('index.css defines complete dark mode variables in [data-theme="dark"]', () => {
     assert.match(indexCss, /\[data-theme=['"]dark['"]\]\s*\{/)

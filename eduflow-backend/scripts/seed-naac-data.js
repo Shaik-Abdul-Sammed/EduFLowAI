@@ -31,10 +31,12 @@ export async function seedNaacData() {
   };
 
   try {
-    pool = new Pool({
-      connectionString: databaseUrl,
-      connectionTimeoutMillis: 3000,
-    });
+    const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
+    const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl, connectionTimeoutMillis: 3000 };
+    if (isRemote) {
+      poolConfig.ssl = { rejectUnauthorized: false };
+    }
+    pool = new Pool(poolConfig);
     client = await pool.connect();
     isDbAvailable = true;
     console.log('📡 Connected to PostgreSQL database.');
