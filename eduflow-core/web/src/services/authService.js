@@ -1,4 +1,4 @@
-import { getApiBaseURL } from '../config/apiConfig'
+import { getApiBaseURL, getFullApiUrl } from '../config/apiConfig'
 import { wakeUpFetch } from '../utils/wakeUpHandler'
 
 export function mapAuthError(err, status) {
@@ -57,7 +57,6 @@ export function mapAuthError(err, status) {
  * Perform login using the real backend API.
  */
 export async function loginWithRole({ role, username, email, password, institutionId }) {
-  const baseUrl = getApiBaseURL() + '/v1'
   const effectiveEmail = email || username
   const effectiveUsername = username || email
 
@@ -66,7 +65,7 @@ export async function loginWithRole({ role, username, email, password, instituti
     let targetInstId = institutionId
     if (!targetInstId || targetInstId === 'demo' || targetInstId === 1 || targetInstId === '1') {
       try {
-        const instResponse = await wakeUpFetch(`${baseUrl}/auth/default-institution`)
+        const instResponse = await wakeUpFetch(getFullApiUrl('/v1/auth/default-institution'))
         if (instResponse.ok) {
           const instData = await instResponse.json()
           targetInstId = instData?.id
@@ -87,7 +86,7 @@ export async function loginWithRole({ role, username, email, password, instituti
       requestBody.institutionId = targetInstId
     }
 
-    const loginResponse = await wakeUpFetch(`${baseUrl}/auth/login`, {
+    const loginResponse = await wakeUpFetch(getFullApiUrl('/v1/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
@@ -136,10 +135,8 @@ export async function loginWithRole({ role, username, email, password, instituti
  * Register a new institution and admin user.
  */
 export async function registerInstitution(registrationData) {
-  const baseUrl = getApiBaseURL() + '/v1'
-  
   try {
-    const response = await fetch(`${baseUrl}/institutions/register`, {
+    const response = await fetch(getFullApiUrl('/v1/institutions/register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(registrationData)
@@ -168,11 +165,10 @@ export async function registerInstitution(registrationData) {
  * Handle logout
  */
 export async function logout() {
-  const baseUrl = getApiBaseURL() + '/v1'
   const refreshToken = localStorage.getItem('refreshToken')
   if (refreshToken) {
     try {
-      await fetch(`${baseUrl}/auth/logout`, {
+      await fetch(getFullApiUrl('/v1/auth/logout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken })
@@ -190,11 +186,10 @@ export async function logout() {
  * Automatically fetch a new access token using the refresh token
  */
 export async function refreshSession() {
-  const baseUrl = getApiBaseURL() + '/v1'
   const refreshToken = localStorage.getItem('refreshToken')
   if (!refreshToken) throw new Error('No refresh token available')
 
-  const response = await fetch(`${baseUrl}/auth/refresh`, {
+  const response = await fetch(getFullApiUrl('/v1/auth/refresh'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken })

@@ -106,7 +106,7 @@ export default function InstitutionRegister() {
   const strength = passwordStrength();
 
   return (
-    <div className="min-vh-100 d-flex flex-column" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%)' }}>
+    <div className="min-vh-100 d-flex flex-column" style={{ background: 'var(--app-bg, linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%))' }}>
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 fixed-top shadow-sm">
         <div className="container-xl">
@@ -134,7 +134,7 @@ export default function InstitutionRegister() {
               <p className="text-muted">Get your AI-powered campus management platform running in under 2 minutes.</p>
             </div>
 
-            <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden" style={{ background: 'var(--card-bg)', color: 'var(--app-text)' }}>
               <div className="row g-0">
 
                 {/* Left sidebar */}

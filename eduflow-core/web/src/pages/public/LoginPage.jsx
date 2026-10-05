@@ -118,14 +118,18 @@ export default function LoginPage() {
       justifyContent: 'center',
       padding: '2rem 1rem',
     }}>
-      <div style={{
-        width: '100%',
-        maxWidth: 520,
-        background: '#ffffff',
-        borderRadius: '1.25rem',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-        padding: '2.5rem 2.25rem',
-      }}>
+      <div
+        className="login-card"
+        style={{
+          width: '100%',
+          maxWidth: 520,
+          background: 'var(--card-bg, #ffffff)',
+          border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+          borderRadius: '1.25rem',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--border-color, rgba(255, 255, 255, 0.1))',
+          padding: '2.5rem 2.25rem',
+        }}
+      >
         {/* Section 1 - Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
@@ -150,14 +154,14 @@ export default function LoginPage() {
             <span style={{
               fontSize: '1.75rem',
               fontWeight: 800,
-              color: '#0A2540',
+              color: 'var(--hero-text, var(--app-text, #0A2540))',
               letterSpacing: '-0.02em',
             }}>
               EduFlow AI
             </span>
           </div>
           <p style={{
-            color: '#64748B',
+            color: 'var(--app-text-muted, #64748B)',
             fontSize: '0.925rem',
             fontWeight: 500,
             margin: 0,
@@ -168,8 +172,8 @@ export default function LoginPage() {
 
         {/* Section 2 - Demo Credentials Helper Card */}
         <div style={{
-          background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%)',
-          border: '1px solid #E2E8F0',
+          background: 'var(--surface-bg, linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%))',
+          border: '1px solid var(--border-color, #E2E8F0)',
           borderRadius: '0.875rem',
           padding: '1.25rem',
           marginBottom: '1.75rem',
@@ -180,11 +184,11 @@ export default function LoginPage() {
             gap: '0.5rem',
             marginBottom: '0.875rem',
           }}>
-            <Sparkles size={16} color="#2563EB" />
+            <Sparkles size={16} color="var(--svc-blue, #2563EB)" />
             <h3 style={{
               fontSize: '0.95rem',
               fontWeight: 700,
-              color: '#0A2540',
+              color: 'var(--hero-text, var(--app-text, #0A2540))',
               margin: 0,
             }}>
               Try the Demo
@@ -192,8 +196,8 @@ export default function LoginPage() {
             <span style={{
               fontSize: '0.7rem',
               fontWeight: 600,
-              background: '#DBEAFE',
-              color: '#1D4ED8',
+              background: 'rgba(37, 99, 235, 0.15)',
+              color: 'var(--svc-blue, #1D4ED8)',
               padding: '0.15rem 0.5rem',
               borderRadius: '9999px',
               marginLeft: 'auto',
@@ -205,17 +209,17 @@ export default function LoginPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             {/* Admin option */}
             <div style={{
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              background: 'var(--card-bg, #FFFFFF)',
+              border: '1px solid var(--border-color, #E2E8F0)',
               borderRadius: '0.625rem',
               padding: '0.75rem',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#1E293B' }}>
-                  For Administrators <span style={{ color: '#64748B', fontWeight: 500 }}>(NAAC / NIRF / Insights)</span>
+                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--app-text, #1E293B)' }}>
+                  For Administrators <span style={{ color: 'var(--app-text-muted, #64748B)', fontWeight: 500 }}>(NAAC / NIRF / Insights)</span>
                 </span>
               </div>
-              <div style={{ fontSize: '0.775rem', color: '#475569', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
+              <div style={{ fontSize: '0.775rem', color: 'var(--app-text-muted, #475569)', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
                 Email: <strong>admin@demo.edu</strong> • Password: <strong>Demo@2026</strong>
               </div>
               <button
@@ -245,17 +249,17 @@ export default function LoginPage() {
 
             {/* Dean option */}
             <div style={{
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              background: 'var(--card-bg, #FFFFFF)',
+              border: '1px solid var(--border-color, #E2E8F0)',
               borderRadius: '0.625rem',
               padding: '0.75rem',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#1E293B' }}>
-                  For College Dean <span style={{ color: '#64748B', fontWeight: 500 }}>(personal demo)</span>
+                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--app-text, #1E293B)' }}>
+                  For College Dean <span style={{ color: 'var(--app-text-muted, #64748B)', fontWeight: 500 }}>(personal demo)</span>
                 </span>
               </div>
-              <div style={{ fontSize: '0.775rem', color: '#475569', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
+              <div style={{ fontSize: '0.775rem', color: 'var(--app-text-muted, #475569)', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
                 Email: <strong>s9010150809@gmail.com</strong> • Phone: <strong>9010150809</strong>
               </div>
               <button
@@ -314,7 +318,7 @@ export default function LoginPage() {
                 display: 'block',
                 fontSize: '0.85rem',
                 fontWeight: 600,
-                color: '#1E293B',
+                color: 'var(--app-text, #1E293B)',
                 marginBottom: '0.35rem',
               }}
             >
@@ -334,7 +338,9 @@ export default function LoginPage() {
                   width: '100%',
                   padding: '0.65rem 0.85rem 0.65rem 2.5rem',
                   fontSize: '0.925rem',
-                  border: '1px solid #CBD5E1',
+                  background: 'var(--input-bg, #FFFFFF)',
+                  color: 'var(--app-text, #1E293B)',
+                  border: '1px solid var(--border-color, #CBD5E1)',
                   borderRadius: '0.625rem',
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -353,7 +359,7 @@ export default function LoginPage() {
               />
             </div>
             {phone && (
-              <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--app-text-muted, #64748B)', marginTop: '0.25rem' }}>
                 Associated Phone: {phone}
               </div>
             )}
@@ -367,7 +373,7 @@ export default function LoginPage() {
                 display: 'block',
                 fontSize: '0.85rem',
                 fontWeight: 600,
-                color: '#1E293B',
+                color: 'var(--app-text, #1E293B)',
                 marginBottom: '0.35rem',
               }}
             >
@@ -387,7 +393,9 @@ export default function LoginPage() {
                   width: '100%',
                   padding: '0.65rem 2.75rem 0.65rem 2.5rem',
                   fontSize: '0.925rem',
-                  border: '1px solid #CBD5E1',
+                  background: 'var(--input-bg, #FFFFFF)',
+                  color: 'var(--app-text, #1E293B)',
+                  border: '1px solid var(--border-color, #CBD5E1)',
                   borderRadius: '0.625rem',
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -439,7 +447,7 @@ export default function LoginPage() {
               display: 'flex',
               alignItems: 'center',
               gap: '0.45rem',
-              color: '#475569',
+              color: 'var(--app-text-muted, #475569)',
               cursor: 'pointer',
               userSelect: 'none',
             }}>
@@ -457,7 +465,7 @@ export default function LoginPage() {
             <Link
               to="/forgot-password"
               style={{
-                color: '#2563EB',
+                color: 'var(--svc-blue, #2563EB)',
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
@@ -472,7 +480,7 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              background: 'linear-gradient(135deg, #0A2540 0%, #1E3A8A 100%)',
+              background: 'linear-gradient(135deg, var(--svc-navy, #0A2540) 0%, var(--svc-blue, #1E3A8A) 100%)',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: '0.625rem',
@@ -497,17 +505,17 @@ export default function LoginPage() {
         <div style={{
           marginTop: '2rem',
           paddingTop: '1.25rem',
-          borderTop: '1px solid #F1F5F9',
+          borderTop: '1px solid var(--border-color, #F1F5F9)',
           textAlign: 'center',
           fontSize: '0.85rem',
-          color: '#64748B',
+          color: 'var(--app-text-muted, #64748B)',
         }}>
           <p style={{ margin: '0 0 0.5rem 0' }}>
             Don't have an account?{' '}
             <Link
               to="/signup"
               style={{
-                color: '#2563EB',
+                color: 'var(--svc-blue, #2563EB)',
                 fontWeight: 700,
                 textDecoration: 'none',
               }}
@@ -519,7 +527,7 @@ export default function LoginPage() {
             <Link
               to="/welcome"
               style={{
-                color: '#64748B',
+                color: 'var(--app-text-muted, #64748B)',
                 textDecoration: 'none',
                 fontSize: '0.8rem',
               }}

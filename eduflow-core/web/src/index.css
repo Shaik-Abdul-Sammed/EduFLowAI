@@ -90,6 +90,8 @@ body {
   --sidebar-muted: #94a3b8;
   --hero-text: #f8fafc;
   --hero-subtext: #cbd5e1;
+  --svc-navy: #f1f5f9;
+  --svc-light: #071226;
 }
 
 [data-bs-theme='dark'] {
@@ -393,3 +395,17 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .directory-link.active, .nav-link.active { font-weight: 700; }
 .search-result-active { background: rgba(79, 70, 229, 0.1); }
 .offcanvas.show { visibility: visible; }
+
+/* ── Login Card Theme Support ── */
+.login-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--app-text);
+}
+
+[data-theme='dark'] .login-card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--app-text) !important;
+}
+
