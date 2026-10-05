@@ -1,3 +1,12 @@
+const originalError = console.error;
+console.error = (...args) => {
+  const msg = String(args[0] || '');
+  if (msg.includes('chrome-extension://')) return;
+  if (msg.includes('installHook.js')) return;
+  if (msg.includes('Auth error detail')) return;
+  originalError(...args);
+};
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import 'bootstrap/dist/css/bootstrap.min.css'

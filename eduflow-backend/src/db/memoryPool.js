@@ -31,6 +31,30 @@ export function createMemoryPool() {
       created_at: new Date().toISOString()
     },
     {
+      id: 'user-admin-002',
+      institution_id: defaultInstId,
+      role: 'admin',
+      username: 'admin',
+      email: 'admin@demo.edu',
+      password_hash: bcrypt.hashSync('Demo@2026', 10),
+      name: 'System Administrator',
+      metadata: {},
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'user-dean-001',
+      institution_id: defaultInstId,
+      role: 'admin',
+      username: 'dean',
+      email: 's9010150809@gmail.com',
+      password_hash: bcrypt.hashSync('Demo@2026', 10),
+      name: 'Dean Demo',
+      first_name: 'Dean',
+      last_name: 'Demo',
+      metadata: { phone: '9010150809' },
+      created_at: new Date().toISOString()
+    },
+    {
       id: 'user-faculty-001',
       institution_id: defaultInstId,
       role: 'faculty',
