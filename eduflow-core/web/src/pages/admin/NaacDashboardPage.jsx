@@ -145,7 +145,7 @@ export default function NaacDashboardPage() {
     setDownloadingPdf(true);
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      const response = await fetch(`${getApiBaseURL()}/v1/officers/naac-grade-report/export-pdf`, {
+      const response = await fetch(getFullApiUrl('/v1/officers/accreditation/export-pdf'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ export default function NaacDashboardPage() {
         },
         body: JSON.stringify({
           institutionName: 'Sri Sudha Institute of Technology',
-          prediction,
+          text: `NAAC Self Study Report & Grade Prediction\nInstitution: Sri Sudha Institute of Technology\nPredicted Grade: ${prediction.grade} (CGPA: ${prediction.cgpa})\nReadiness Score: ${prediction.readinessScore}%\n\nStrengths:\n${(prediction.strengths || []).join('\n')}\n\nRecommendations:\n${(prediction.recommendations || []).join('\n')}`,
         }),
       });
 

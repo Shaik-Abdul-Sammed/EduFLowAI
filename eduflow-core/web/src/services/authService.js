@@ -1,4 +1,5 @@
 import { getApiBaseURL } from '../config/apiConfig'
+import { wakeUpFetch } from '../utils/wakeUpHandler'
 
 export function mapAuthError(err, status) {
   console.error('Auth error detail:', err)
@@ -63,31 +64,33 @@ export async function loginWithRole({ role, username, email, password, instituti
   try {
     // 1. Get default institution for MVP or use provided institutionId
     let targetInstId = institutionId
-    if (!targetInstId) {
+    if (!targetInstId || targetInstId === 'demo' || targetInstId === 1 || targetInstId === '1') {
       try {
-        const instResponse = await fetch(`${baseUrl}/auth/default-institution`)
+        const instResponse = await wakeUpFetch(`${baseUrl}/auth/default-institution`)
         if (instResponse.ok) {
           const instData = await instResponse.json()
-          targetInstId = instData?.id || 1
-        } else {
-          targetInstId = 1
+          targetInstId = instData?.id
         }
       } catch {
-        targetInstId = 1
+        targetInstId = undefined
       }
     }
 
     // 2. Perform actual login
-    const loginResponse = await fetch(`${baseUrl}/auth/login`, {
+    const requestBody = {
+      username: effectiveUsername,
+      email: effectiveEmail,
+      password,
+      ...(role ? { role } : {})
+    }
+    if (targetInstId && targetInstId !== 'demo') {
+      requestBody.institutionId = targetInstId
+    }
+
+    const loginResponse = await wakeUpFetch(`${baseUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        institutionId: targetInstId === 'demo' ? 1 : targetInstId,
-        username: effectiveUsername,
-        email: effectiveEmail,
-        password,
-        ...(role ? { role } : {})
-      })
+      body: JSON.stringify(requestBody)
     })
 
     if (!loginResponse.ok) {

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { io } from 'socket.io-client'
+import { getApiBaseURL } from '../../config/apiConfig'
 
 export default function ChildTracking() {
   const [childData, setChildData] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    // In a real app, use the actual backend URL
-    const socket = io('http://localhost:4000')
+    const socketUrl = getApiBaseURL().replace(/\/api\/?$/, '')
+    const socket = io(socketUrl)
 
     socket.on('connect', () => {
       setIsConnected(true)

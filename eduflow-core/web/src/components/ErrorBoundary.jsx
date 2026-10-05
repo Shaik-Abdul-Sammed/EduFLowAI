@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { getFullApiUrl } from '../config/apiConfig'
 
 export class ErrorBoundary extends Component {
   constructor(props) {
@@ -14,7 +15,7 @@ export class ErrorBoundary extends Component {
     console.error('ErrorBoundary caught an unhandled error:', error, errorInfo)
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
-      fetch('/api/v1/admin/error-report', {
+      fetch(getFullApiUrl('/v1/admin/error-report'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

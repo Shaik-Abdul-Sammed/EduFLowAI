@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { getFullApiUrl } from '../config/apiConfig'
 
 function getAuthToken() {
   try {
@@ -69,7 +70,16 @@ export function useStreamingOfficer() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(endpoint, {
+      let targetUrl = endpoint
+      if (typeof endpoint === 'string') {
+        if (endpoint.startsWith('/api/')) {
+          targetUrl = getFullApiUrl(endpoint.replace(/^\/api/, ''))
+        } else if (endpoint.startsWith('/v1/')) {
+          targetUrl = getFullApiUrl(endpoint)
+        }
+      }
+
+      const response = await fetch(targetUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),

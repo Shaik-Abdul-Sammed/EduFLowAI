@@ -1,3 +1,5 @@
+import { getFullApiUrl } from '../config/apiConfig'
+
 // Analytics tracking service
 
 class Analytics {
@@ -68,7 +70,7 @@ class Analytics {
 
   sendEvent(event) {
     // Send to analytics backend
-    fetch('/api/analytics/events', {
+    fetch(getFullApiUrl('/analytics/events'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(event),

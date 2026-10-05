@@ -109,6 +109,10 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(LEGACY_USER_KEY)
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('role')
+    localStorage.removeItem('institutionId')
   }
 
   function updateLanguage(value) {

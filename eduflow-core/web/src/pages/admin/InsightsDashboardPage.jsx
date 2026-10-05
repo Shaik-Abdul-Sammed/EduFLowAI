@@ -4,6 +4,8 @@ import {
   Award, GraduationCap, Calendar, TrendingUp, DollarSign, 
   ArrowUpRight, ArrowDownRight, ArrowRight, RefreshCw, AlertTriangle, CheckCircle 
 } from 'lucide-react'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
 export default function InsightsDashboardPage() {
   const navigate = useNavigate()
@@ -32,10 +34,10 @@ export default function InsightsDashboardPage() {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
       const [dashRes, actRes] = await Promise.all([
-        fetch('/api/v1/insights/dashboard', {
+        wakeUpFetch(getFullApiUrl('/v1/insights/dashboard'), {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch('/api/v1/insights/activity?limit=20', {
+        wakeUpFetch(getFullApiUrl('/v1/insights/activity?limit=20'), {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ])
@@ -64,10 +66,10 @@ export default function InsightsDashboardPage() {
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
         const [dashRes, actRes] = await Promise.all([
-          fetch('/api/v1/insights/dashboard', {
+          wakeUpFetch(getFullApiUrl('/v1/insights/dashboard'), {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('/api/v1/insights/activity?limit=20', {
+          wakeUpFetch(getFullApiUrl('/v1/insights/activity?limit=20'), {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])

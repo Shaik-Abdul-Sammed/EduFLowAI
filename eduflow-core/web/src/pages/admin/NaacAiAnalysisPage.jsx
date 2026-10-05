@@ -16,7 +16,8 @@ import {
   Target,
   FileCheck,
 } from 'lucide-react'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
 const CRITERIA_OPTIONS = [
   { value: 1, label: 'Criterion 1: Curricular Aspects' },
@@ -226,7 +227,7 @@ export default function NaacAiAnalysisPage() {
   const loadDashboardInsights = useCallback(async () => {
     setLoadingInsights(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/api/v1/naac/dashboard-insights`, {
+      const res = await wakeUpFetch(getFullApiUrl('/v1/naac/dashboard-insights'), {
         headers: getHeaders(),
       })
       if (res.ok) {
@@ -252,7 +253,7 @@ export default function NaacAiAnalysisPage() {
     let isMounted = true
     const fetchData = async () => {
       try {
-        const res = await fetch(`${getApiBaseURL()}/api/v1/naac/dashboard-insights`, {
+        const res = await wakeUpFetch(getFullApiUrl('/v1/naac/dashboard-insights'), {
           headers: getHeaders(),
         })
         if (res.ok && isMounted) {
@@ -281,7 +282,7 @@ export default function NaacAiAnalysisPage() {
   const handleExplainSection = async () => {
     setExplaining(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/api/v1/naac/explain`, {
+      const res = await fetch(getFullApiUrl('/v1/naac/explain'), {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -366,7 +367,7 @@ export default function NaacAiAnalysisPage() {
     setAsking(true)
 
     try {
-      const res = await fetch(`${getApiBaseURL()}/api/v1/naac/ask`, {
+      const res = await fetch(getFullApiUrl('/v1/naac/ask'), {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -415,7 +416,7 @@ export default function NaacAiAnalysisPage() {
   const handlePredictVisit = async () => {
     setPredictingVisit(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/api/v1/naac/predict-visit`, {
+      const res = await fetch(getFullApiUrl('/v1/naac/predict-visit'), {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ institutionId: 1 }),
@@ -454,7 +455,7 @@ export default function NaacAiAnalysisPage() {
   const handleGeneratePlan = async () => {
     setGeneratingPlan(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/api/v1/naac/improvement-plan`, {
+      const res = await fetch(getFullApiUrl('/v1/naac/improvement-plan'), {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({

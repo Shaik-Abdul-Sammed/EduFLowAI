@@ -273,9 +273,11 @@ function App() {
           <Route element={<Layout routes={generatedRoutes} />}>
             <Route path="/" element={<RedirectHome />} />
             <Route path="/entry" element={<EntryPage />} />
-              <Route path="/about" element={<AboutPage />} />
+            <Route path="/welcome" element={<EntryPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register-institution" element={<InstitutionRegister />} />
+            <Route path="/signup" element={<InstitutionRegister />} />
             <Route path="/for-colleges" element={<LeadIntakePage />} />
             <Route path="/r/:token" element={<PublicReportViewer />} />
             <Route path="/profile" element={<ProfilePage />} />
@@ -317,7 +319,7 @@ function App() {
         <Route path="/directory" element={isDemoMode ? <Navigate to="/admin-dashboard" replace /> : <HomeDirectory />} />
 
         {generatedRoutes.map((route) => {
-          const isAllowedInDemo = ['audit-logs', 'leads', 'report-delivery', 'invoices', 'naac-dashboard', 'naac-ai-analysis', 'insights'].includes(route.slug)
+          const isAllowedInDemo = ['audit-logs', 'leads', 'report-delivery', 'invoices', 'naac-dashboard', 'naac-ai-analysis', 'insights', 'nirf'].includes(route.slug)
           return (
             <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
               <Route

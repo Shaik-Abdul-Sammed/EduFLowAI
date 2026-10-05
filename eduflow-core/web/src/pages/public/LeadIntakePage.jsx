@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 import './LeadIntakePage.css'
 
 const SERVICE_OPTIONS = [
@@ -99,7 +100,7 @@ export default function LeadIntakePage() {
       const baseUrl = getApiBaseURL()
       const url = baseUrl.endsWith('/v1') ? `${baseUrl}/leads` : `${baseUrl}/v1/leads`
 
-      const response = await fetch(url, {
+      const response = await wakeUpFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

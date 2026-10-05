@@ -4,6 +4,8 @@ import {
   AlertCircle, ChevronDown, ChevronUp, Download, RefreshCw,
   Compass, ArrowUpRight, Users, BookOpen
 } from 'lucide-react'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
 export default function NirfDashboardPage() {
   const [category, setCategory] = useState('Engineering')
@@ -62,9 +64,9 @@ export default function NirfDashboardPage() {
       try {
         const headers = { Authorization: `Bearer ${token}` }
         const [scoreRes, peersRes, naacRes] = await Promise.all([
-          fetch(`/api/v1/nirf/score?category=${category}`, { headers }),
-          fetch(`/api/v1/nirf/peers?category=${category}&limit=20`, { headers }),
-          fetch('/api/v1/nirf/compare-naac', { headers }),
+          wakeUpFetch(getFullApiUrl(`/v1/nirf/score?category=${category}`), { headers }),
+          wakeUpFetch(getFullApiUrl(`/v1/nirf/peers?category=${category}&limit=20`), { headers }),
+          wakeUpFetch(getFullApiUrl('/v1/nirf/compare-naac'), { headers }),
         ])
 
         if (scoreRes.ok) {
@@ -94,7 +96,7 @@ export default function NirfDashboardPage() {
   const handlePredictRank = async () => {
     setPredicting(true)
     try {
-      const res = await fetch(`/api/v1/nirf/predict-rank?category=${category}&monthsAhead=12`, {
+      const res = await fetch(getFullApiUrl(`/v1/nirf/predict-rank?category=${category}&monthsAhead=12`), {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
@@ -126,7 +128,7 @@ export default function NirfDashboardPage() {
     setExpandedParam(paramKey)
     if (!paramDetails[paramKey]) {
       try {
-        const res = await fetch('/api/v1/nirf/explain', {
+        const res = await fetch(getFullApiUrl('/v1/nirf/explain'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -148,7 +150,7 @@ export default function NirfDashboardPage() {
   const handleGeneratePlan = async () => {
     setPlanLoading(true)
     try {
-      const res = await fetch('/api/v1/nirf/improve', {
+      const res = await fetch(getFullApiUrl('/v1/nirf/improve'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +190,7 @@ export default function NirfDashboardPage() {
   // Handle PDF Export
   const handleExportPdf = async (reportType = 'score') => {
     try {
-      const res = await fetch('/api/v1/nirf/export-pdf', {
+      const res = await fetch(getFullApiUrl('/v1/nirf/export-pdf'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,7 +207,18 @@ export default function NirfDashboardPage() {
         document.body.appendChild(a)
         a.click()
         a.remove()
+        return
       }
+      // Client-side fallback if backend route is in deployment transition
+      const reportContent = `EduFlow AI OS — NIRF Ranking Analysis\nCategory: ${category}\nPredicted Rank: #${scoreData.predictedRank}\nOverall Score: ${scoreData.totalScore}/100\nConfidence: ${Math.round(scoreData.confidence * 100)}%\n\nGenerated: ${new Date().toLocaleDateString()}`
+      const blob = new Blob([reportContent], { type: 'text/plain' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `nirf-${reportType}-summary.txt`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
     } catch (err) {
       console.error('Failed to download PDF:', err)
     }

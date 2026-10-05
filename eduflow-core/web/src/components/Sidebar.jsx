@@ -93,7 +93,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <img src="/app-logo.png" alt="EduFlow AI Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
+            <img src="/logo.svg" alt="EduFlow AI Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
             <span style={{
               fontSize: '1.15rem', fontWeight: 800,
               background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
@@ -170,6 +170,41 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
                   { to: '/officer/admissions', icon: '🎓', label: 'Admission Officer' },
                   { to: '/officer/finance', icon: '💰', label: 'Finance Officer' },
                   { to: '/officers-dashboard', icon: '⚡', label: 'Officers Hub & ROI' },
+                ].map(item => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                    style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                      marginBottom: '0.2rem', textDecoration: 'none',
+                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                      color: isActive ? themeData.text : 'var(--sidebar-text)',
+                      background: isActive ? themeData.light : 'transparent',
+                      transition: 'all 0.2s',
+                    })}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+
+              {/* Demo Mode System & Core Tools */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ 
+                  fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
+                  textTransform: 'uppercase', letterSpacing: '0.05em',
+                  marginBottom: '0.5rem', paddingLeft: '0.875rem'
+                }}>
+                  Accreditation & Analytics
+                </div>
+                {[
+                  { to: '/admin-dashboard/naac-ai-analysis', icon: '🧠', label: 'NAAC AI Analysis' },
+                  { to: '/admin-dashboard/insights', icon: '⚡', label: 'AI Insights' },
+                  { to: '/admin-dashboard/nirf', icon: '🏆', label: 'NIRF Ranking' },
                 ].map(item => (
                   <NavLink
                     key={item.to}

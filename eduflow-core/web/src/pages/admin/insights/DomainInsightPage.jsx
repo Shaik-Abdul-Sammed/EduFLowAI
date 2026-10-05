@@ -4,6 +4,8 @@ import {
   Award, GraduationCap, Calendar, TrendingUp, DollarSign, 
   ArrowLeft, Play, Sparkles, HelpCircle, FileText 
 } from 'lucide-react'
+import { getFullApiUrl } from '../../../config/apiConfig'
+import { wakeUpFetch } from '../../../utils/wakeUpHandler'
 
 const DOMAIN_METADATA = {
   accreditation: {
@@ -81,7 +83,7 @@ export default function DomainInsightPage() {
     const loadHistory = async () => {
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
-        const res = await fetch(`/api/v1/insights/${domainKey}/history?limit=10`, {
+        const res = await wakeUpFetch(getFullApiUrl(`/v1/insights/${domainKey}/history?limit=10`), {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -105,7 +107,7 @@ export default function DomainInsightPage() {
   const handlePredict = async () => {
     setPredictLoading(true)
     try {
-      const res = await fetch(`/api/v1/insights/${domainKey}/predict`, {
+      const res = await fetch(getFullApiUrl(`/v1/insights/${domainKey}/predict`), {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ institutionId: 1 }),
@@ -128,7 +130,7 @@ export default function DomainInsightPage() {
   const handleImprove = async () => {
     setImproveLoading(true)
     try {
-      const res = await fetch(`/api/v1/insights/${domainKey}/improve`, {
+      const res = await fetch(getFullApiUrl(`/v1/insights/${domainKey}/improve`), {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ institutionId: 1, target }),
@@ -151,7 +153,7 @@ export default function DomainInsightPage() {
     if (!explainText) return
     setExplainLoading(true)
     try {
-      const res = await fetch(`/api/v1/insights/${domainKey}/explain`, {
+      const res = await fetch(getFullApiUrl(`/v1/insights/${domainKey}/explain`), {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ text: explainText, context: {} }),
@@ -180,7 +182,7 @@ export default function DomainInsightPage() {
     setChatHistory((prev) => [...prev, { role: 'user', text: currentQ }])
 
     try {
-      const res = await fetch(`/api/v1/insights/${domainKey}/ask`, {
+      const res = await fetch(getFullApiUrl(`/v1/insights/${domainKey}/ask`), {
         method: 'POST',
         headers: getAuthHeader(),
         body: JSON.stringify({ text: explainText, question: currentQ }),
