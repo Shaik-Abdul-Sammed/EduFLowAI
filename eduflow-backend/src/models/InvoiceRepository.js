@@ -73,7 +73,15 @@ export class InvoiceRepository {
       ]
 
       const result = await pool.query(query, params)
-      return result.rows[0]
+      const row = result.rows[0]
+      if (row) {
+        if (row.subtotal !== undefined) row.subtotal = Number(row.subtotal)
+        if (row.total_amount !== undefined) row.total_amount = Number(row.total_amount)
+        if (row.amount !== undefined) row.amount = Number(row.amount)
+        if (row.tax_percent !== undefined) row.tax_percent = Number(row.tax_percent)
+        if (row.tax_amount !== undefined) row.tax_amount = Number(row.tax_amount)
+      }
+      return row
     } catch (err) {
       logger.warn(`InvoiceRepository.create using memory store: ${err.message}`)
       const newInvoice = {

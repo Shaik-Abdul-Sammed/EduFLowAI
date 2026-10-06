@@ -26,6 +26,12 @@ import { createDemoRouter } from './routes/demoRoutes.js'
 import { createNaacInsightsRouter } from './routes/naacInsightsRoutes.js'
 import { createInsightsRouter } from './routes/insightsRoutes.js'
 import { createNirfRouter } from './routes/nirfRoutes.js'
+import staffRouter from './routes/staffRoutes.js'
+import approvalRouter from './routes/approvalRoutes.js'
+import calendarRouter from './routes/calendarRoutes.js'
+import attendanceRouter from './routes/attendanceRoutes.js'
+import portalRouter from './routes/portalRoutes.js'
+import { createNotificationRouter } from './routes/notificationRoutes.js'
 import { pool } from './db/pool.js'
 import { httpLogger, productionRateLimiter } from './middleware/productionHardening.js'
 import helmet from 'helmet'
@@ -122,6 +128,12 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/naac', createNaacInsightsRouter())
   app.use('/api/v1/insights', createInsightsRouter())
   app.use('/api/v1/nirf', createNirfRouter())
+  app.use('/api/v1/staff', staffRouter)
+  app.use('/api/v1/approvals', approvalRouter)
+  app.use('/api/v1/calendar', calendarRouter)
+  app.use('/api/v1/attendance', attendanceRouter)
+  app.use('/api/v1/portal', portalRouter)
+  app.use('/api/v1/notifications', createNotificationRouter(db))
 
   // Public Report Viewer and Download endpoints
   app.get('/r/:token/pdf', ReportDeliveryController.downloadPublicReportPdf)

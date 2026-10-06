@@ -205,6 +205,20 @@ export default function ObservationMode() {
 
   return (
     <div className="obs-root">
+      {/* Demo Mode Fallback Banner */}
+      <div
+        className="w-full py-1 px-3 text-xs font-medium text-center flex items-center justify-center gap-2"
+        style={{
+          backgroundColor: 'rgba(245, 158, 11, 0.12)',
+          borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+          color: '#fbbf24',
+          letterSpacing: '0.02em',
+        }}
+      >
+        <Sparkles size={13} style={{ color: '#f59e0b' }} />
+        <span>Demo Mode — Using Sample Data</span>
+      </div>
+
       {/* Header */}
       <header className="obs-header">
         <div className="obs-brand-badge">
@@ -477,7 +491,7 @@ export default function ObservationMode() {
                 onClick={handleRestart}
               >
                 <RotateCcw size={16} />
-                <span>Replay Observation Demo</span>
+                <span>Replay Demo</span>
               </button>
             </div>
           </div>

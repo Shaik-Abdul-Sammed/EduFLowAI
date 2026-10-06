@@ -13,6 +13,7 @@ jest.mock('../../hooks/useAuth', () => ({
 }))
 
 jest.mock('../GlobalSearch', () => () => <div data-testid="global-search" />)
+jest.mock('../NotificationCenter', () => () => <div data-testid="notification-center" />)
 
 describe('NavBar', () => {
   it('renders active navigation and search controls', () => {

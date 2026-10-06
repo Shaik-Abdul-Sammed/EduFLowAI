@@ -16,6 +16,9 @@ describe('Integration: Full End-to-End Business Journey', () => {
   })
 
   after(async () => {
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections()
+    }
     await new Promise((resolve) => server.close(resolve))
   })
 
@@ -90,7 +93,10 @@ describe('Integration: Full End-to-End Business Journey', () => {
       const { value, done } = await reader.read()
       if (done) break
       streamOutput += decoder.decode(value, { stream: true })
-      if (streamOutput.includes('"type":"done"')) break
+      if (streamOutput.includes('"type":"done"')) {
+        await reader.cancel()
+        break
+      }
     }
     assert.ok(streamOutput.includes('data: '), 'Expected SSE stream data chunks')
 

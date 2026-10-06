@@ -48,7 +48,12 @@ describe('useStreamingOfficer Edge Cases', () => {
   test('Abort controller call sets status to "idle"', async () => {
     global.fetch = jest.fn().mockImplementation((url, options) => {
       return new Promise((resolve, reject) => {
-        options.signal.addEventListener('abort', () => {
+        if (options?.signal?.aborted) {
+          const err = new Error('The user aborted a request.')
+          err.name = 'AbortError'
+          return reject(err)
+        }
+        options?.signal?.addEventListener('abort', () => {
           const err = new Error('The user aborted a request.')
           err.name = 'AbortError'
           reject(err)

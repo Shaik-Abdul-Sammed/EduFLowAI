@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar'
+import TourGuide from './TourGuide'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
@@ -20,7 +21,7 @@ export default function Layout({ routes }) {
     )
   }
 
-  // If user is logged in, show Sidebar + Content area
+  // If user is logged in, show Sidebar + Content area + TourGuide
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--app-bg)' }}>
       <Sidebar routes={routes} isOpen={sidebarOpen} setOpen={setSidebarOpen} />
@@ -45,6 +46,7 @@ export default function Layout({ routes }) {
           <Outlet />
         </main>
       </div>
+      <TourGuide />
     </div>
   )
 }

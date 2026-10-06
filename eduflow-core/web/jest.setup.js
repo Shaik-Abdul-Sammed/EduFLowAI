@@ -26,6 +26,13 @@ if (typeof globalThis.scrollTo !== 'function') {
   globalThis.scrollTo = () => {}
 }
 
+jest.mock('react-markdown', () => {
+  return function MockReactMarkdown(props) {
+    return <div data-testid="markdown-renderer">{props.children}</div>
+  }
+})
+jest.mock('remark-gfm', () => () => {})
+
 const originalConsoleError = console.error.bind(console)
 
 beforeAll(() => {

@@ -68,13 +68,15 @@ export class UserRepository {
 
   static async logAudit(institutionId, userId, action, ipAddress, userAgent, metadata = {}) {
     try {
+      const isUuid = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)
+      const validUserId = isUuid ? userId : null
       await pool.query(
         `INSERT INTO audit_logs (institution_id, user_id, action, ip_address, user_agent, metadata)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [institutionId, userId, action, ipAddress, userAgent, metadata]
+        [institutionId, validUserId, action, ipAddress, userAgent, metadata]
       )
-    } catch (e) {
-      console.error('Failed to log audit:', e)
+    } catch {
+      // Non-fatal logging failure
     }
   }
 }

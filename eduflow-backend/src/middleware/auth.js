@@ -27,12 +27,13 @@ export function authMiddleware(req, res, next) {
  * Must be used AFTER authMiddleware.
  * @param {string[]} roles Array of allowed roles (e.g., ['admin', 'faculty'])
  */
-export function requireRole(roles) {
+export function requireRole(...roles) {
+  const allowed = roles.flat()
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' })
     }
-    if (!roles.includes(req.user.role)) {
+    if (!allowed.includes(req.user.role)) {
       return res.status(403).json({ error: 'Forbidden: Insufficient role permissions' })
     }
     next()

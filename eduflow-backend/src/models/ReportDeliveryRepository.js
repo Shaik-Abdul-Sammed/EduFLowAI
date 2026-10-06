@@ -67,7 +67,8 @@ export class ReportDeliveryRepository {
         'SELECT * FROM delivered_reports WHERE token = $1',
         [token]
       )
-      return result.rows[0] || null
+      if (result.rows[0]) return result.rows[0]
+      return memoryReports.find((r) => r.token === token) || null
     } catch (err) {
       logger.warn(`ReportDeliveryRepository.findByToken using memory store: ${err.message}`)
       return memoryReports.find((r) => r.token === token) || null
@@ -83,7 +84,15 @@ export class ReportDeliveryRepository {
          RETURNING *`,
         [token]
       )
-      return result.rows[0] || null
+      if (result.rows[0]) return result.rows[0]
+      const mem = memoryReports.find((r) => r.token === token)
+      if (mem) {
+        mem.views_count = (mem.views_count || 0) + 1
+        mem.last_viewed_at = new Date().toISOString()
+        mem.updated_at = new Date().toISOString()
+        return mem
+      }
+      return null
     } catch (err) {
       logger.warn(`ReportDeliveryRepository.incrementViews using memory store: ${err.message}`)
       const report = memoryReports.find((r) => r.token === token)

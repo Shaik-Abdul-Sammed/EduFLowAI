@@ -15,6 +15,84 @@ function getAuthToken() {
   return localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
 }
 
+function parseJwtExp(token) {
+  try {
+    if (!token || typeof token !== 'string') return null
+    const parts = token.split('.')
+    if (parts.length < 2) return null
+    const base64Url = parts[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    const decoded = JSON.parse(jsonPayload)
+    return decoded.exp ? decoded.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+function isTokenExpiredOrExpiring(token) {
+  const expMs = parseJwtExp(token)
+  if (!expMs) return false
+  return Date.now() >= (expMs - 60000)
+}
+
+async function getOrRefreshToken() {
+  let token = getAuthToken()
+  const refreshToken = localStorage.getItem('refreshToken') || ''
+
+  if (token && isTokenExpiredOrExpiring(token)) {
+    if (refreshToken) {
+      try {
+        const refreshUrl = getFullApiUrl('/v1/auth/refresh')
+        const res = await fetch(refreshUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const newToken = data.accessToken || data.token
+          if (newToken) {
+            localStorage.setItem('accessToken', newToken)
+            localStorage.setItem('token', newToken)
+            try {
+              const authKey = localStorage.getItem('eduflow-ai-auth') ? 'eduflow-ai-auth' : 'sri-sudha-auth'
+              const stored = localStorage.getItem(authKey)
+              if (stored) {
+                const parsed = JSON.parse(stored)
+                parsed.token = newToken
+                localStorage.setItem(authKey, JSON.stringify(parsed))
+              }
+            } catch {
+              // ignore storage write errors
+            }
+            return newToken
+          }
+        }
+      } catch (err) {
+        console.warn('Proactive token refresh error:', err)
+      }
+    }
+    // Refresh failed or no refreshToken
+    try {
+      sessionStorage.setItem('loginMessage', 'Session expired. Please log in again.')
+    } catch {
+      // ignore sessionStorage errors
+    }
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.href = '/login'
+    }
+    throw new Error('Session expired. Please log in again.')
+  }
+
+  return token
+}
+
 /**
  * Hook for consuming Server-Sent Events (SSE) from EduFlow AI Officer streaming endpoints.
  * Uses fetch + ReadableStream to support POST requests with JSON payload and auth headers.
@@ -62,7 +140,7 @@ export function useStreamingOfficer() {
     setStatus('connecting')
 
     try {
-      const token = getAuthToken()
+      let token = await getOrRefreshToken()
       const headers = {
         'Content-Type': 'application/json',
       }
@@ -79,12 +157,58 @@ export function useStreamingOfficer() {
         }
       }
 
-      const response = await fetch(targetUrl, {
+      let response = await fetch(targetUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
         signal: controller.signal,
       })
+
+      // If 401 received, attempt one refresh and retry
+      if (response.status === 401) {
+        const refreshToken = localStorage.getItem('refreshToken') || ''
+        let refreshed = false
+        if (refreshToken) {
+          try {
+            const refreshUrl = getFullApiUrl('/v1/auth/refresh')
+            const res = await fetch(refreshUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refreshToken }),
+            })
+            if (res.ok) {
+              const data = await res.json()
+              const newToken = data.accessToken || data.token
+              if (newToken) {
+                localStorage.setItem('accessToken', newToken)
+                localStorage.setItem('token', newToken)
+                headers['Authorization'] = `Bearer ${newToken}`
+                refreshed = true
+                response = await fetch(targetUrl, {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify(payload),
+                  signal: controller.signal,
+                })
+              }
+            }
+          } catch (rErr) {
+            console.warn('Reactive refresh failed:', rErr)
+          }
+        }
+
+        if (!refreshed || response.status === 401) {
+          try {
+            sessionStorage.setItem('loginMessage', 'Session expired. Please log in again.')
+          } catch {
+            // ignore sessionStorage errors
+          }
+          if (typeof window !== 'undefined' && window.location) {
+            window.location.href = '/login'
+          }
+          throw new Error('Session expired. Please log in again.')
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => '')

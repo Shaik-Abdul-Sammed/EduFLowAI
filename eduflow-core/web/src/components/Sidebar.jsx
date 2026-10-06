@@ -6,6 +6,8 @@ const roleColors = {
   faculty: { bg: '#10B981', light: 'rgba(16,185,129,0.1)', text: '#059669', icon: '👨‍🏫' },
   parent:  { bg: '#F59E0B', light: 'rgba(245,158,11,0.1)', text: '#D97706', icon: '👨‍👩‍👧' },
   admin:   { bg: '#EF4444', light: 'rgba(239,68,68,0.1)',  text: '#DC2626', icon: '⚙️' },
+  hod:     { bg: '#8B5CF6', light: 'rgba(139,92,246,0.1)', text: '#7C3AED', icon: '🎓' },
+  staff:   { bg: '#0EA5E9', light: 'rgba(14,165,233,0.1)', text: '#0284C7', icon: '📋' },
 }
 
 const formatSlug = (slug) => {
@@ -14,7 +16,6 @@ const formatSlug = (slug) => {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
-const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
 export default function Sidebar({ routes, isOpen, setOpen }) {
   const { user, logout } = useAuth()
@@ -25,29 +26,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
   const themeData = roleColors[role] || roleColors.student
   
   // Filter routes for the current user's role
-  const roleRoutes = routes.filter(r => r.role === role)
-
-  // Quick categorization logic (can be expanded later)
-  const categories = {
-    'Academics': ['attendance-entry', 'marks-entry', 'lesson-planner', 'syllabus-tracker', 'class-timetable', 'academic-analytics', 'assignment-creator'],
-    'Assessments': ['exam-invigilation', 'question-bank-upload', 'exam-calendar', 'online-exam', 'result-analysis'],
-    'Communication': ['parent-messaging', 'department-notices', 'mentoring-log', 'feedback', 'student-messaging'],
-    'Resources & Admin': ['resource-repository', 'leave-application', 'research-tracker', 'fee-payment', 'hostel-management', 'library-access'],
-  }
-
-  const getCategory = (slug) => {
-    for (const [cat, slugs] of Object.entries(categories)) {
-      if (slugs.includes(slug)) return cat
-    }
-    return 'General Modules'
-  }
-
-  const groupedRoutes = roleRoutes.reduce((acc, route) => {
-    const cat = getCategory(route.slug)
-    if (!acc[cat]) acc[cat] = []
-    acc[cat].push(route)
-    return acc
-  }, {})
+  const roleRoutes = (routes || []).filter(r => r.role === role)
 
   return (
     <>
@@ -69,7 +48,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
         className={`sidebar ${isOpen ? 'open' : ''}`}
         style={{
           width: 260,
-          background: 'var(--sidebar-bg)',
+          background: 'var(--sidebar-bg, #ffffff)',
           borderRight: '1px solid var(--border-color, #e2e8f0)',
           height: '100vh',
           position: 'fixed',
@@ -93,7 +72,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <img src="/logo.svg" alt="EduFlow AI Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
+            <span style={{ fontSize: '1.4rem' }}>🎓</span>
             <span style={{
               fontSize: '1.15rem', fontWeight: 800,
               background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
@@ -118,14 +97,14 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 800, fontSize: '1rem',
             }}>
-              {user.name?.charAt(0) || 'U'}
+              {(user.firstName || user.name || user.email || 'U').charAt(0).toUpperCase()}
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--app-text)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                {user.name || 'User'}
+              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--app-text, #1e293b)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.name || user.email || 'User'}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--app-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-                {themeData.icon} {role}
+              <div style={{ fontSize: '0.7rem', color: 'var(--app-text-muted, #64748b)', textTransform: 'uppercase', fontWeight: 600 }}>
+                {themeData.icon} {role} {user.department ? `• ${user.department}` : ''}
               </div>
             </div>
           </div>
@@ -134,8 +113,9 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
         {/* Navigation Links */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
           
+          {/* Main Dashboard Link */}
           <NavLink 
-            to={`/${role}-dashboard`}
+            to={role === 'staff' ? '/staff-dashboard' : role === 'hod' ? '/hod-dashboard' : `/${role}-dashboard`}
             onClick={() => setOpen(false)}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
             style={({ isActive }) => ({
@@ -143,224 +123,170 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               padding: '0.6rem 0.875rem', borderRadius: '0.5rem',
               marginBottom: '1rem', textDecoration: 'none',
               fontSize: '0.875rem', fontWeight: isActive ? 700 : 600,
-              color: isActive ? themeData.text : 'var(--sidebar-text)',
+              color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
               background: isActive ? themeData.light : 'transparent',
               transition: 'all 0.2s',
             })}
           >
             <span style={{ fontSize: '1.1rem' }}>📊</span>
-            Dashboard Overview
+            {role === 'hod' ? 'Department Dashboard' : role === 'staff' ? 'My Dashboard' : 'Dashboard Overview'}
           </NavLink>
 
-          {isDemoMode ? (
-            <>
-              {/* Demo Mode Curated AI Officers */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ 
-                  fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
-                  marginBottom: '0.5rem', paddingLeft: '0.875rem'
-                }}>
-                  AI Officers (Live)
-                </div>
-                {[
-                  { to: '/officer/accreditation', icon: '🏛️', label: 'Accreditation Officer' },
-                  { to: '/officer/student-success', icon: '🎯', label: 'Student Success Officer' },
-                  { to: '/officer/timetable', icon: '📅', label: 'Timetable Officer' },
-                  { to: '/officer/admissions', icon: '🎓', label: 'Admission Officer' },
-                  { to: '/officer/finance', icon: '💰', label: 'Finance Officer' },
-                  { to: '/officers-dashboard', icon: '⚡', label: 'Officers Hub & ROI' },
-                ].map(item => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                      marginBottom: '0.2rem', textDecoration: 'none',
-                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                      color: isActive ? themeData.text : 'var(--sidebar-text)',
-                      background: isActive ? themeData.light : 'transparent',
-                      transition: 'all 0.2s',
-                    })}
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
+          {/* ADMIN ROLE LINKS */}
+          {role === 'admin' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Academic Management
               </div>
-
-              {/* Demo Mode System & Core Tools */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ 
-                  fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
-                  marginBottom: '0.5rem', paddingLeft: '0.875rem'
-                }}>
-                  Accreditation & Analytics
-                </div>
-                {[
-                  { to: '/admin-dashboard/naac-ai-analysis', icon: '🧠', label: 'NAAC AI Analysis' },
-                  { to: '/admin-dashboard/insights', icon: '⚡', label: 'AI Insights' },
-                  { to: '/admin-dashboard/nirf', icon: '🏆', label: 'NIRF Ranking' },
-                ].map(item => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                      marginBottom: '0.2rem', textDecoration: 'none',
-                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                      color: isActive ? themeData.text : 'var(--sidebar-text)',
-                      background: isActive ? themeData.light : 'transparent',
-                      transition: 'all 0.2s',
-                    })}
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-
-              {/* Demo Mode System & Core Tools */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ 
-                  fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
-                  marginBottom: '0.5rem', paddingLeft: '0.875rem'
-                }}>
-                  System & Intelligence
-                </div>
-                {[
-                  { to: '/ai-terminal', icon: '💻', label: 'AI Terminal' },
-                  { to: '/admin-dashboard/audit-logs', icon: '📋', label: 'Audit Logs' },
-                ].map(item => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                      marginBottom: '0.2rem', textDecoration: 'none',
-                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                      color: isActive ? themeData.text : 'var(--sidebar-text)',
-                      background: isActive ? themeData.light : 'transparent',
-                      transition: 'all 0.2s',
-                    })}
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              {role === 'admin' && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ 
-                    fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
-                    textTransform: 'uppercase', letterSpacing: '0.05em',
-                    marginBottom: '0.5rem', paddingLeft: '0.875rem'
-                  }}>
-                    Accreditation AI
-                  </div>
-                  <NavLink
-                    to="/admin-dashboard/naac-ai-analysis"
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                      marginBottom: '0.2rem', textDecoration: 'none',
-                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                      color: isActive ? themeData.text : 'var(--sidebar-text)',
-                      background: isActive ? themeData.light : 'transparent',
-                      transition: 'all 0.2s',
-                    })}
-                  >
-                    <span>🧠</span>
-                    <span>NAAC AI Analysis</span>
-                  </NavLink>
-                  <NavLink
-                    to="/admin-dashboard/insights"
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                      marginBottom: '0.2rem', textDecoration: 'none',
-                      fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                      color: isActive ? themeData.text : 'var(--sidebar-text)',
-                      background: isActive ? themeData.light : 'transparent',
-                      transition: 'all 0.2s',
-                    })}
-                  >
-                    <span>🧠</span>
-                    <span>AI Insights</span>
-                  </NavLink>
-                  {!isDemoMode && (
-                    <NavLink
-                      to="/admin-dashboard/nirf"
-                      onClick={() => setOpen(false)}
-                      className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                      style={({ isActive }) => ({
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                        marginBottom: '0.2rem', textDecoration: 'none',
-                        fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                        color: isActive ? themeData.text : 'var(--sidebar-text)',
-                        background: isActive ? themeData.light : 'transparent',
-                        transition: 'all 0.2s',
-                      })}
-                    >
-                      <span>🏆</span>
-                      <span>NIRF Ranking</span>
-                    </NavLink>
-                  )}
-                </div>
-              )}
-              {Object.entries(groupedRoutes).map(([category, currentRoutes]) => (
-                currentRoutes.length > 0 && (
-                  <div key={category} style={{ marginBottom: '1.25rem' }}>
-                    <div style={{ 
-                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted)',
-                      textTransform: 'uppercase', letterSpacing: '0.05em',
-                      marginBottom: '0.5rem', paddingLeft: '0.875rem'
-                    }}>
-                      {category}
-                    </div>
-                    {currentRoutes.map(route => (
-                      <NavLink
-                        key={route.routePath}
-                        to={route.routePath}
-                        onClick={() => setOpen(false)}
-                        className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                        style={({ isActive }) => ({
-                          display: 'block',
-                          padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
-                          marginBottom: '0.2rem', textDecoration: 'none',
-                          fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
-                          color: isActive ? themeData.text : 'var(--sidebar-text)',
-                          background: isActive ? themeData.light : 'transparent',
-                          transition: 'all 0.2s',
-                        })}
-                      >
-                        {formatSlug(route.slug)}
-                      </NavLink>
-                    ))}
-                  </div>
-                )
+              {[
+                { to: '/officers-dashboard', icon: '⚡', label: 'AI Officers Hub' },
+                { to: '/admin-dashboard/attendance', icon: '👥', label: 'Attendance Intelligence' },
+                { to: '/admin-dashboard/portal', icon: '🔌', label: 'Portal Connections' },
+                { to: '/admin-dashboard/calendar', icon: '📅', label: 'Academic Calendar' },
+                { to: '/admin-dashboard/staff', icon: '🛡️', label: 'Staff Management' },
+                { to: '/admin-dashboard/naac-ai-analysis', icon: '🏛️', label: 'NAAC Dashboard' },
+                { to: '/admin-dashboard/nirf', icon: '🏆', label: 'NIRF Ranking' },
+                { to: '/admin-dashboard/insights', icon: '🧠', label: 'AI Insights' },
+                { to: '/admin-dashboard/leads', icon: '📈', label: 'Lead Management' },
+                { to: '/admin-dashboard/invoices', icon: '💳', label: 'Invoice Generator' },
+                { to: '/admin-dashboard/audit-logs', icon: '📋', label: 'Audit Logs' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
               ))}
-            </>
+            </div>
           )}
+
+          {/* HOD ROLE LINKS */}
+          {role === 'hod' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Department Command
+              </div>
+              {[
+                { to: '/hod-dashboard/staff', icon: '👥', label: 'Staff & Approvals' },
+                { to: '/hod-dashboard/calendar', icon: '📅', label: 'Department Calendar' },
+                { to: '/officer/timetable', icon: '🕒', label: 'Timetable Officer' },
+                { to: '/officer/student-success', icon: '🎯', label: 'At-Risk Students' },
+                { to: '/officers-dashboard', icon: '⚡', label: 'AI Officers' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {/* STAFF ROLE LINKS */}
+          {role === 'staff' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Staff Workflows
+              </div>
+              {[
+                { to: '/staff-dashboard', icon: '📊', label: 'My Dashboard' },
+                { to: '/officer/timetable', icon: '🕒', label: 'Timetable Officer' },
+                { to: '/officer/accreditation', icon: '🏛️', label: 'Accreditation' },
+                { to: '/officer/student-success', icon: '🎯', label: 'Student Success' },
+                { to: '/officers-dashboard', icon: '⚡', label: 'My Officers' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {/* FACULTY / STUDENT / PARENT LINKS */}
+          {['faculty', 'student', 'parent'].includes(role) && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Modules
+              </div>
+              {roleRoutes.slice(0, 10).map(route => (
+                <NavLink
+                  key={route.routePath}
+                  to={route.routePath}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'block',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  {formatSlug(route.slug)}
+                </NavLink>
+              ))}
+            </div>
+          )}
+
         </div>
         
         {/* Footer Area */}
@@ -371,11 +297,11 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '0.6rem',
               padding: '0.5rem 0.875rem', borderRadius: '0.5rem',
-              textDecoration: 'none', color: 'var(--sidebar-text)',
+              textDecoration: 'none', color: 'var(--sidebar-text, #334155)',
               fontSize: '0.85rem', fontWeight: 600,
             }}
           >
-            ⚙️ Institution Settings
+            ⚙️ Settings
           </NavLink>
           <button 
             onClick={() => {

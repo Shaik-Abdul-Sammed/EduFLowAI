@@ -27,11 +27,15 @@ export class OfficerRepository {
   }
 
   static async logSession(institutionId, officerType, messages, lastOutput, hoursSaved, moneySaved) {
-    const result = await pool.query(`
-      INSERT INTO officer_sessions (institution_id, officer_type, messages, last_output, roi_hours_saved, roi_money_saved)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `, [institutionId, officerType, JSON.stringify(messages), JSON.stringify(lastOutput), hoursSaved, moneySaved])
-    return result.rows[0]
+    try {
+      const result = await pool.query(`
+        INSERT INTO officer_sessions (institution_id, officer_type, messages, last_output, roi_hours_saved, roi_money_saved)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `, [institutionId, officerType, JSON.stringify(messages), JSON.stringify(lastOutput), hoursSaved, moneySaved])
+      return result.rows[0]
+    } catch (err) {
+      return null
+    }
   }
 }

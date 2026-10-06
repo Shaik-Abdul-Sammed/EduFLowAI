@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { getFullApiUrl } from '../../config/apiConfig'
 import { wakeUpFetch } from '../../utils/wakeUpHandler'
+import MarkdownRenderer from '../../components/MarkdownRenderer'
 
 const CRITERIA_OPTIONS = [
   { value: 1, label: 'Criterion 1: Curricular Aspects' },
@@ -625,14 +626,34 @@ export default function NaacAiAnalysisPage() {
               <label htmlFor="report-text-area" className="form-label small text-secondary fw-semibold">
                 Paste SSR Section Text (Draft or Generated Content)
               </label>
-              <textarea
-                id="report-text-area"
-                rows={4}
-                className="form-control bg-dark text-white border-secondary border-opacity-50"
-                placeholder="Paste your Self-Study Report narrative here to translate technical terminology and uncover evidentiary gaps..."
-                value={explainReportText}
-                onChange={(e) => setExplainReportText(e.target.value)}
-              />
+              <div className="position-relative">
+                <textarea
+                  id="report-text-area"
+                  rows={4}
+                  className="form-control"
+                  style={{
+                    background: 'var(--input-bg, #0c121e)',
+                    color: 'var(--app-text, #e6eef8)',
+                    border: '1px solid var(--border-color, rgba(148, 163, 184, 0.4))',
+                    paddingBottom: '1.75rem',
+                    fontSize: '0.95rem',
+                    lineHeight: '1.5',
+                  }}
+                  placeholder="Paste your Self-Study Report narrative here to translate technical terminology and uncover evidentiary gaps..."
+                  value={explainReportText}
+                  onChange={(e) => setExplainReportText(e.target.value)}
+                />
+                <div
+                  className="small position-absolute end-0 bottom-0 px-2 py-1"
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--app-text-muted, #94a3b8)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {explainReportText.length} characters
+                </div>
+              </div>
             </div>
           </div>
 
@@ -763,14 +784,34 @@ export default function NaacAiAnalysisPage() {
             <label htmlFor="ask-report-context" className="form-label small text-secondary fw-semibold">
               Contextual SSR Report Excerpt (Optional)
             </label>
-            <textarea
-              id="ask-report-context"
-              rows={2}
-              className="form-control bg-dark text-white border-secondary border-opacity-50"
-              placeholder="Provide report text context if asking about a specific section or metric..."
-              value={askReportText}
-              onChange={(e) => setAskReportText(e.target.value)}
-            />
+            <div className="position-relative">
+              <textarea
+                id="ask-report-context"
+                rows={2}
+                className="form-control"
+                style={{
+                  background: 'var(--input-bg, #0c121e)',
+                  color: 'var(--app-text, #e6eef8)',
+                  border: '1px solid var(--border-color, rgba(148, 163, 184, 0.4))',
+                  paddingBottom: '1.75rem',
+                  fontSize: '0.95rem',
+                  lineHeight: '1.5',
+                }}
+                placeholder="Provide report text context if asking about a specific section or metric..."
+                value={askReportText}
+                onChange={(e) => setAskReportText(e.target.value)}
+              />
+              <div
+                className="small position-absolute end-0 bottom-0 px-2 py-1"
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--app-text-muted, #94a3b8)',
+                  pointerEvents: 'none',
+                }}
+              >
+                {askReportText.length} characters
+              </div>
+            </div>
           </div>
 
           {/* Chat Messages */}
@@ -794,7 +835,11 @@ export default function NaacAiAnalysisPage() {
                   <div className="fw-semibold small mb-1 opacity-75">
                     {msg.role === 'user' ? 'Dean' : 'EduFlow NAAC AI'}
                   </div>
-                  <div>{msg.content}</div>
+                  {msg.role === 'assistant' ? (
+                    <MarkdownRenderer content={msg.content} />
+                  ) : (
+                    <div>{msg.content}</div>
+                  )}
                   {msg.citedSections?.length > 0 && (
                     <div className="mt-2 pt-2 border-top border-secondary border-opacity-25 small opacity-75">
                       <span className="fw-bold">Citations: </span>

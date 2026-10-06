@@ -10,8 +10,8 @@ const SERVICE_OPTIONS = [
   { id: 'timetable', label: 'Timetable Generator' },
   { id: 'admissions', label: 'Admission Yield Predictor' },
   { id: 'finance', label: 'Fee Reconciliation' },
-  { id: 'hostel', label: 'Hostel Occupancy Optimizer (Coming Soon)' },
-  { id: 'placement', label: 'Placement Readiness Report (Coming Soon)' },
+  { id: 'hostel', label: 'Hostel Occupancy & Resource Optimizer' },
+  { id: 'placement', label: 'Placement Readiness & Recruiter Alignment' },
 ]
 
 export default function LeadIntakePage() {

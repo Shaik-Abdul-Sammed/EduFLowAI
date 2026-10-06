@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getRecentSearches, saveRecentSearch } from '../services/searchService'
 import { useI18n } from '../i18n'
+import { getApiBaseURL } from '../config/apiConfig'
 
 const RECENT_KEY = 'eduflow-ai-recent-searches'
 
@@ -47,10 +48,42 @@ export default function GlobalSearch({ routes = [], currentRole = 'student', cla
   const [open, setOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [recent, setRecent] = useState([])
+  const [apiResults, setApiResults] = useState([])
   const navigate = useNavigate()
   const ref = useRef()
   const inputRef = useRef()
   const { t } = useI18n()
+
+  useEffect(() => {
+    const trimmed = q.trim()
+    if (!trimmed) {
+      setApiResults([])
+      return
+    }
+
+    let active = true
+    const timer = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+        const res = await fetch(`${getApiBaseURL()}/v1/search?q=${encodeURIComponent(trimmed)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (active && Array.isArray(data.results)) {
+            setApiResults(data.results)
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }, 150)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [q])
 
   const scopedRoutes = useMemo(() => {
     if (!currentRole) return routes
@@ -128,14 +161,23 @@ export default function GlobalSearch({ routes = [], currentRole = 'student', cla
   }, [indexedRoutes, q])
 
   const listItems = useMemo(() => {
-    if (q.trim()) return results
+    if (q.trim()) {
+      const combined = [...results]
+      const seen = new Set(results.map((r) => r.routePath))
+      apiResults.forEach((ar) => {
+        if (!seen.has(ar.routePath) || ar.category) {
+          combined.push(ar)
+        }
+      })
+      return combined.slice(0, 15)
+    }
     return recent
       .filter((item) => !currentRole || item.role === currentRole)
       .map((item) => ({
         ...item,
         title: item.title || routeTitleByPath.get(item.routePath) || item.query || 'Untitled module',
       }))
-  }, [q, results, recent, currentRole, routeTitleByPath])
+  }, [q, results, apiResults, recent, currentRole, routeTitleByPath])
 
   async function openRoute(item) {
     if (!item?.routePath) return
@@ -214,15 +256,23 @@ export default function GlobalSearch({ routes = [], currentRole = 'student', cla
             {listItems.length === 0 && <li className="list-group-item">{t('search_no_results')}</li>}
             {listItems.map((item, index) => (
               <li
-                key={item.routePath}
+                key={item.id || item.routePath || index}
                 role="option"
                 aria-selected={index === selectedIndex}
-                className={`list-group-item list-group-item-action ${index === selectedIndex ? 'search-result-active' : ''}`}
+                className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${index === selectedIndex ? 'search-result-active' : ''}`}
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={() => setSelectedIndex(index)}
                 onClick={() => openRoute(item)}
               >
-                {item.title || toTitle(item.slug)}
+                <div>
+                  <div className="fw-medium text-dark">{item.title || toTitle(item.slug || '')}</div>
+                  {item.subtitle && <div className="text-muted small" style={{ fontSize: '0.75rem' }}>{item.subtitle}</div>}
+                </div>
+                {item.category && (
+                  <span className="badge bg-primary-subtle text-primary border border-primary-subtle ms-2 text-uppercase" style={{ fontSize: '0.65rem' }}>
+                    {item.category}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

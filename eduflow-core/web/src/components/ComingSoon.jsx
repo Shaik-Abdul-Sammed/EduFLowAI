@@ -112,7 +112,7 @@ export default function ComingSoon({
           color: 'var(--app-text, #0f172a)',
           marginBottom: '0.75rem'
         }}>
-          {moduleName} is Coming Soon
+          {moduleName} Deployment Preview
         </h2>
 
         {/* Description */}

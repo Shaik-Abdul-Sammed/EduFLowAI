@@ -11,6 +11,18 @@ import InstitutionRegister from './pages/public/InstitutionRegister'
 import LeadIntakePage from './pages/public/LeadIntakePage'
 import ServicesPage from './pages/public/ServicesPage'
 import PublicReportViewer from './pages/public/PublicReportViewer'
+import OnboardingPage from './pages/public/OnboardingPage'
+import WhyEduFlowPage from './pages/public/WhyEduFlowPage'
+import AttendanceExplainerPage from './pages/public/AttendanceExplainerPage'
+import StaffDashboardPage from './pages/staff/StaffDashboardPage'
+import HodDashboardPage from './pages/hod/HodDashboardPage'
+import HodStaffManagementPage from './pages/hod/StaffManagementPage'
+import HodCalendarPage from './pages/hod/HodCalendarPage'
+import AcademicCalendarPage from './pages/admin/AcademicCalendarPage'
+import PortalConnectionPage from './pages/admin/PortalConnectionPage'
+import AttendanceIntegrationPage from './pages/admin/AttendanceIntegrationPage'
+import AdminStaffManagementPage from './pages/admin/StaffManagementPage'
+import TimetableUploadPage from './pages/ai/officers/TimetableUploadPage'
 import './App.css'
 import Layout from './components/Layout'
 import VisitorDashboard from './components/VisitorDashboard'
@@ -41,6 +53,8 @@ const roleColorClass = {
   faculty: 'text-bg-success',
   parent: 'text-bg-warning',
   admin: 'text-bg-danger',
+  hod: 'text-bg-info',
+  staff: 'text-bg-secondary',
 }
 
 const roleDisplay = {
@@ -48,6 +62,8 @@ const roleDisplay = {
   faculty: 'Faculty',
   parent: 'Parent',
   admin: 'Admin',
+  hod: 'Head of Department (HOD)',
+  staff: 'Non-Teaching Staff',
 }
 
 const toKebabCase = (value) =>
@@ -79,6 +95,11 @@ const generatedRoutes = Object.entries(pageModules)
     if (fileName === 'NaacAiAnalysisPage') slug = 'naac-ai-analysis'
     if (fileName === 'InsightsDashboardPage') slug = 'insights'
     if (fileName === 'NirfDashboardPage') slug = 'nirf'
+    if (fileName === 'StaffManagementPage') slug = 'staff'
+    if (fileName === 'AcademicCalendarPage') slug = 'calendar'
+    if (fileName === 'HodCalendarPage') slug = 'calendar'
+    if (fileName === 'PortalConnectionPage') slug = 'portal'
+    if (fileName === 'AttendanceIntegrationPage') slug = 'attendance'
     const routePath = `/${role}-dashboard/${slug}`
 
     return {
@@ -101,7 +122,7 @@ function HomeDirectory() {
     return acc
   }, {})
 
-  const roleOrder = ['student', 'faculty', 'parent', 'admin']
+  const roleOrder = ['student', 'faculty', 'parent', 'admin', 'hod', 'staff']
 
   const filtered = (arr) =>
     (arr || []).filter((r) => r.slug.toLowerCase().includes(filter.trim().toLowerCase()))
@@ -135,21 +156,7 @@ function HomeDirectory() {
 
                 <p className="text-muted small mb-3">Tap a module to open the full sectioned page for this role.</p>
 
-                <ul className="list-group list-group-flush module-list" onKeyDown={(e) => {
-                  const links = Array.from(e.currentTarget.querySelectorAll('.directory-link'))
-                  if (!links.length) return
-                  const active = document.activeElement
-                  const idx = links.indexOf(active)
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault()
-                    if (idx === -1) links[0].focus()
-                    else links[Math.min(idx + 1, links.length - 1)].focus()
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault()
-                    if (idx === -1) links[0].focus()
-                    else links[Math.max(idx - 1, 0)].focus()
-                  }
-                }}>
+                <ul className="list-group list-group-flush module-list">
                   {filtered(groupedRoutes[role]).map((route) => (
                     <li key={route.routePath} className="list-group-item px-0">
                       <NavLink className={({isActive}) => `directory-link ${isActive ? 'text-primary fw-bold' : ''}`} to={route.routePath} tabIndex={0}>
@@ -172,6 +179,14 @@ function RedirectHome() {
 
   if (!isAuthenticated) {
     return <Navigate to="/entry" replace />
+  }
+
+  if (user?.role === 'staff') {
+    return <Navigate to="/staff-dashboard" replace />
+  }
+
+  if (user?.role === 'hod') {
+    return <Navigate to="/hod-dashboard" replace />
   }
 
   return <Navigate to={`/${user.role}-dashboard`} replace />
@@ -248,6 +263,22 @@ function App() {
             }
           />
           <Route
+            path="/officer/timetable/upload"
+            element={
+              <ErrorBoundary>
+                <TimetableUploadPage />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/timetable/upload"
+            element={
+              <ErrorBoundary>
+                <TimetableUploadPage />
+              </ErrorBoundary>
+            }
+          />
+          <Route
             path="/officer/admissions"
             element={
               <ErrorBoundary>
@@ -279,8 +310,23 @@ function App() {
             <Route path="/register-institution" element={<InstitutionRegister />} />
             <Route path="/signup" element={<InstitutionRegister />} />
             <Route path="/for-colleges" element={<LeadIntakePage />} />
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/why-eduflow" element={<WhyEduFlowPage />} />
+            <Route path="/how-attendance-works" element={<AttendanceExplainerPage />} />
             <Route path="/r/:token" element={<PublicReportViewer />} />
             <Route path="/profile" element={<ProfilePage />} />
+
+        {/* Staff Routes */}
+        <Route element={<ProtectedRoute role="staff" />}>
+          <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
+        </Route>
+
+        {/* HOD Routes */}
+        <Route element={<ProtectedRoute role="hod" />}>
+          <Route path="/hod-dashboard" element={<HodDashboardPage />} />
+          <Route path="/hod-dashboard/staff" element={<HodStaffManagementPage />} />
+          <Route path="/hod-dashboard/calendar" element={<HodCalendarPage />} />
+        </Route>
 
         <Route element={<ProtectedRoute role="student" />}>
           <Route
@@ -312,6 +358,22 @@ function App() {
             path="/admin-dashboard/insights/:domain"
             element={<DomainInsightPage />}
           />
+          <Route
+            path="/admin-dashboard/calendar"
+            element={<AcademicCalendarPage />}
+          />
+          <Route
+            path="/admin-dashboard/portal"
+            element={<PortalConnectionPage />}
+          />
+          <Route
+            path="/admin-dashboard/attendance"
+            element={<AttendanceIntegrationPage />}
+          />
+          <Route
+            path="/admin-dashboard/staff"
+            element={<AdminStaffManagementPage />}
+          />
         </Route>
 
           <Route path="/visitor-dashboard" element={<VisitorDashboard />} />
@@ -319,7 +381,11 @@ function App() {
         <Route path="/directory" element={isDemoMode ? <Navigate to="/admin-dashboard" replace /> : <HomeDirectory />} />
 
         {generatedRoutes.map((route) => {
-          const isAllowedInDemo = ['audit-logs', 'leads', 'report-delivery', 'invoices', 'naac-dashboard', 'naac-ai-analysis', 'insights', 'nirf'].includes(route.slug)
+          const isAllowedInDemo = [
+            'audit-logs', 'leads', 'report-delivery', 'invoices',
+            'naac-dashboard', 'naac-ai-analysis', 'insights', 'nirf',
+            'staff', 'calendar', 'portal', 'attendance'
+          ].includes(route.slug)
           return (
             <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
               <Route

@@ -1,3 +1,7 @@
+import multer from 'multer'
+import os from 'os'
+import path from 'path'
+import fs from 'fs'
 import { Router } from 'express'
 import { AIOrchestrator } from '../ai/AIOrchestrator.js'
 import { OFFICER_PROMPTS, calculateROI } from '../ai/officers/officerPrompts.js'
@@ -7,8 +11,18 @@ import { OfficerController } from '../controllers/OfficerController.js'
 import { OfficerExportController } from '../controllers/OfficerExportController.js'
 import { UserRepository } from '../repositories/UserRepository.js'
 import { validateRequest, officerPromptSchema } from '../middleware/validateRequest.js'
+import { checkOfficerPermission } from '../middleware/staffPermissions.js'
 
 const VALID_OFFICERS = ['accreditation', 'timetable', 'admissions', 'finance', 'student-success']
+
+const uploadDir = path.join(os.tmpdir(), 'eduflow-uploads')
+if (!fs.existsSync(uploadDir)) {
+  try { fs.mkdirSync(uploadDir, { recursive: true }) } catch {}
+}
+const upload = multer({
+  dest: uploadDir,
+  limits: { fileSize: 25 * 1024 * 1024 },
+})
 
 /** @returns {import('express').Router} */
 export function createOfficerRouter() {
@@ -21,47 +35,53 @@ export function createOfficerRouter() {
    * POST /api/v1/officers/accreditation/generate
    * Generates a mock accreditation report and stores it in the database.
    */
-  router.post('/accreditation/generate', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.generateAccreditation)
+  router.post('/accreditation/generate', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('accreditation'), validateRequest(officerPromptSchema), OfficerController.generateAccreditation)
 
   /**
    * POST /api/v1/officers/student-success/predict-risk
    * Returns a mock risk prediction summary
    */
-  router.post('/student-success/predict-risk', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.predictStudentRisk)
+  router.post('/student-success/predict-risk', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('student-success'), validateRequest(officerPromptSchema), OfficerController.predictStudentRisk)
 
   /**
    * POST /api/v1/officers/timetable/generate
    * Generates conflict-free timetable
    */
-  router.post('/timetable/generate', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.generateTimetable)
+  router.post('/timetable/generate', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('timetable'), validateRequest(officerPromptSchema), OfficerController.generateTimetable)
 
   /**
    * POST /api/v1/officers/admissions/predict-yield
    * Predicts admission conversion and yield rate
    */
-  router.post('/admissions/predict-yield', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.predictAdmissionsYield)
+  router.post('/admissions/predict-yield', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('admissions'), validateRequest(officerPromptSchema), OfficerController.predictAdmissionsYield)
 
   /**
    * POST /api/v1/officers/finance/reconcile
    * Reconciles fee payments against bank statements
    */
-  router.post('/finance/reconcile', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.reconcileFinance)
+  router.post('/finance/reconcile', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('finance'), validateRequest(officerPromptSchema), OfficerController.reconcileFinance)
 
   /**
    * SSE Streaming Endpoints for AI Officers (Task A)
    */
-  router.post('/accreditation/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamAccreditation)
-  router.post('/student-success/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamStudentRisk)
-  router.post('/timetable/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamTimetable)
-  router.post('/admissions/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamAdmissions)
-  router.post('/finance/stream', requireRole(['admin', 'faculty']), validateRequest(officerPromptSchema), OfficerController.streamFinance)
+  router.post('/accreditation/stream', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('accreditation'), validateRequest(officerPromptSchema), OfficerController.streamAccreditation)
+  router.post('/student-success/stream', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('student-success'), validateRequest(officerPromptSchema), OfficerController.streamStudentRisk)
+  router.post('/timetable/stream', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('timetable'), validateRequest(officerPromptSchema), OfficerController.streamTimetable)
+  router.post('/admissions/stream', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('admissions'), validateRequest(officerPromptSchema), OfficerController.streamAdmissions)
+  router.post('/finance/stream', requireRole(['admin', 'hod', 'faculty', 'staff']), checkOfficerPermission('finance'), validateRequest(officerPromptSchema), OfficerController.streamFinance)
 
   /**
    * POST /api/v1/officers/:type/export-pdf
    * Exports generated officer report text as a branded PDF document.
    */
-  router.post('/:type/export-pdf', requireRole(['admin', 'faculty']), OfficerExportController.exportPdf)
-  router.get('/:type/export-pdf', requireRole(['admin', 'faculty']), OfficerExportController.exportPdf)
+  router.post('/:type/export-pdf', requireRole(['admin', 'hod', 'faculty', 'staff']), OfficerExportController.exportPdf)
+  router.get('/:type/export-pdf', requireRole(['admin', 'hod', 'faculty', 'staff']), OfficerExportController.exportPdf)
+
+  /**
+   * POST /api/v1/officers/:type/upload
+   * Ingests files (.csv, .xlsx, .pdf, .docx), extracts text, and returns extracted content with jobId.
+   */
+  router.post('/:type/upload', requireRole(['admin', 'hod', 'faculty', 'staff']), upload.single('file'), OfficerController.uploadFile)
 
   /**
    * POST /api/v1/officers/:type/chat

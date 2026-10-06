@@ -9,8 +9,65 @@ try {
   logger.warn('AI Provider could not be initialized:', e)
 }
 
-const OFFICER_FALLBACK_TEXTS = {
-  accreditation: `# NAAC Criterion 3: Research, Innovations and Extension (SSR Analysis)
+export const NAAC_CRITERIA_FALLBACKS = {
+  criterion1: `# NAAC Criterion 1: Curricular Aspects (SSR Analysis)
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 91.2 / 100 ✅
+
+---
+### Metric Compliance Breakdown
+
+1. **Metric 1.1 — Curricular Planning and Implementation**
+   - ✅ Compliant: Academic calendar aligned with university guidelines and 100% adhered to.
+   - ✅ Compliant: Choice Based Credit System (CBCS) implemented across all UG and PG programs.
+   - ⚠️ Gap: Annual stakeholder feedback analysis report pending final IQAC signoff.
+
+2. **Metric 1.2 — Academic Flexibility & Electives**
+   - ✅ Compliant: 24 new value-added courses introduced addressing emerging tech (AI/ML, IoT).
+   - ✅ Compliant: 42% interdisciplinary elective enrollment among 3rd and 4th-year students.
+
+3. **Metric 1.3 — Curriculum Enrichment & Experiential Learning**
+   - ✅ Compliant: Mandatory internship credits completed by 94% of final-year engineering cohort.
+   - 🔴 Critical Gap: Documentation of field projects for 2nd-year core branches requires consolidation.
+
+---
+### Automated Remediation & Next Steps
+- Action 1: Publish consolidated Stakeholder Feedback ATR on official website [Est: 3 hrs]
+- Action 2: Archive industry-mentored capstone project completion certificates [Est: 4 hrs]
+
+Estimated hours saved: 95 hrs | Consulting cost saved: ₹2,40,000`,
+
+  criterion2: `# NAAC Criterion 2: Teaching-Learning and Evaluation (SSR Analysis)
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 89.6 / 100 ✅
+
+---
+### Metric Compliance Breakdown
+
+1. **Metric 2.1 — Student Enrollment and Profile**
+   - ✅ Compliant: Average enrollment ratio sustained at 94.2% against sanctioned intake.
+   - ✅ Compliant: 100% adherence to state reservation policy across reserved category seats.
+
+2. **Metric 2.2 — Catering to Student Diversity & Student-Faculty Ratio**
+   - ✅ Compliant: Student-Faculty Ratio (SFR) maintained at 14.7:1 (exceeds AICTE 15:1 norm).
+   - ✅ Compliant: Advanced learners and slow learners identified with targeted remedial bridge courses.
+
+3. **Metric 2.3 — Teaching-Learning Process & ICT Enablement**
+   - ✅ Compliant: 100% classrooms ICT-enabled with interactive smart panels and LMS syncing.
+   - ⚠️ Gap: Experiential lab learning video repositories need uniform metadata tagging.
+
+4. **Metric 2.4 — Teacher Profile and Quality**
+   - ✅ Compliant: 85 full-time faculty; 40 Ph.D. holders (47.1% Ph.D. density).
+   - 🔴 Critical Gap: Average teaching experience in same institution is 4.8 years; retention incentives needed.
+
+---
+### Automated Remediation & Next Steps
+- Action 1: Compile proctor-mentee meeting logs with remedial attendance registers [Est: 4 hrs]
+- Action 2: Standardize Course Outcome (CO) direct attainment matrices across all departments [Est: 6 hrs]
+
+Estimated hours saved: 140 hrs | Consulting cost saved: ₹3,50,000`,
+
+  criterion3: `# NAAC Criterion 3: Research, Innovations and Extension (SSR Analysis)
 **Institution:** Sri Siddhartha Institute of Technology (SSIT)
 **Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 88.4 / 100 ✅
 
@@ -36,6 +93,179 @@ const OFFICER_FALLBACK_TEXTS = {
 - Action 2: Gazette notification for revised Research Promotion Policy [Est: 4 hrs]
 
 Estimated hours saved: 120 hrs | Consulting cost saved: ₹3,00,000`,
+
+  criterion4: `# NAAC Criterion 4: Infrastructure and Learning Resources (SSR Analysis)
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 93.0 / 100 ✅
+
+---
+### Metric Compliance Breakdown
+
+1. **Metric 4.1 — Physical Facilities**
+   - ✅ Compliant: 120 air-conditioned smart classrooms, 45 specialized engineering laboratories.
+   - ✅ Compliant: Indoor sports stadium, gymnasium, and 800-capacity hostel facilities operational.
+
+2. **Metric 4.2 — Library as a Learning Resource**
+   - ✅ Compliant: Central Library spans 12,000 sq.ft., automated with Koha ILMS software.
+   - ✅ Compliant: Annual subscription to IEEE Xplore, ScienceDirect, and DELNET consortiums.
+   - ⚠️ Gap: Remote digital access logs for e-books need automated weekly audit report exports.
+
+3. **Metric 4.3 — IT Infrastructure & Bandwidth**
+   - ✅ Compliant: 1 Gbps dedicated 1:1 leased line internet with campus-wide secure Wi-Fi 6.
+   - ✅ Compliant: Student-to-computer ratio maintained at 2.4:1 across campus computer centers.
+
+---
+### Automated Remediation & Next Steps
+- Action 1: Export audited annual expenditure statements for library e-resources [Est: 2 hrs]
+- Action 2: Document AMC contracts for campus IT network infrastructure and solar power plants [Est: 3 hrs]
+
+Estimated hours saved: 80 hrs | Consulting cost saved: ₹2,00,000`,
+
+  criterion5: `# NAAC Criterion 5: Student Support and Progression (SSR Analysis)
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 87.5 / 100 ✅
+
+---
+### Metric Compliance Breakdown
+
+1. **Metric 5.1 — Student Support & Scholarships**
+   - ✅ Compliant: 72% eligible students received government and institutional merit freeships.
+   - ✅ Compliant: Active capability enhancement programs in soft skills, language labs, and aptitude.
+
+2. **Metric 5.2 — Student Progression & Placement**
+   - ✅ Compliant: Placement percentage reached 62.4% with median package of ₹5.5 LPA.
+   - ⚠️ Gap: Formal tracking records of students progressing to higher education need verification.
+
+3. **Metric 5.3 — Student Participation and Activities**
+   - ✅ Compliant: 38 university and state-level sports/cultural awards won in the assessment period.
+   - ✅ Compliant: Active student council representation in IQAC and departmental committees.
+
+4. **Metric 5.4 — Alumni Engagement**
+   - ✅ Compliant: Registered Alumni Association with annual chapter meets in Bangalore and Hyderabad.
+   - 🔴 Critical Gap: Documented non-financial alumni contributions (guest lectures, mentoring) need formal logging.
+
+---
+### Automated Remediation & Next Steps
+- Action 1: Consolidate appointment letters and higher education admission proofs [Est: 5 hrs]
+- Action 2: Audit Alumni Association financial statement and statutory filings [Est: 3 hrs]
+
+Estimated hours saved: 110 hrs | Consulting cost saved: ₹2,80,000`,
+
+  criterion6: `# NAAC Criterion 6: Governance, Leadership and Management (SSR Analysis)
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 90.1 / 100 ✅
+
+---
+### Metric Compliance Breakdown
+
+1. **Metric 6.1 — Institutional Vision and Leadership**
+   - ✅ Compliant: Decentralized governance structure with faculty participation in statutory bodies.
+   - ✅ Compliant: Strategic 5-year perspective plan deployed and monitored biannually by Governing Council.
+
+2. **Metric 6.2 — Strategy Development and Deployment**
+   - ✅ Compliant: E-governance implemented across administration, finance, student admission, and exams.
+
+3. **Metric 6.3 — Faculty Empowerment Strategies**
+   - ✅ Compliant: 68% faculty provided financial support for attending conferences and workshops.
+   - ⚠️ Gap: Annual professional development program attendance certificates need central archiving.
+
+4. **Metric 6.5 — Internal Quality Assurance System (IQAC)**
+   - ✅ Compliant: IQAC conducts regular quarterly meetings, Academic & Administrative Audits (AAA).
+   - ✅ Compliant: Participated in NIRF and ISO 9001:2015 certification audits successfully.
+
+---
+### Automated Remediation & Next Steps
+- Action 1: Upload signed minutes of all 4 quarterly IQAC meetings with Action Taken Reports [Est: 3 hrs]
+- Action 2: Organize external AAA audit report signed by peer university experts [Est: 4 hrs]
+
+Estimated hours saved: 105 hrs | Consulting cost saved: ₹2,60,000`,
+
+  criterion7: `# NAAC Criterion 7: Institutional Values and Best Practices (SSR Analysis)
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 92.8 / 100 ✅
+
+---
+### Metric Compliance Breakdown
+
+1. **Metric 7.1 — Institutional Values & Social Responsibilities**
+   - ✅ Compliant: 200 kW rooftop solar PV installation covering 35% of daytime electricity demand.
+   - ✅ Compliant: Rainwater harvesting, STP sewage treatment plant, and zero-discharge campus certified.
+   - ✅ Compliant: Barrier-free disabled-friendly environment with ramps, lifts, and Divyangjan restrooms.
+
+2. **Metric 7.2 — Best Practices**
+   - ✅ Practice 1: "Project-Based Learning Incubator" — industry mentors guiding semester engineering prototypes.
+   - ✅ Practice 2: "Gram Seva Rural Upliftment" — student adoption of 5 neighboring rural primary schools.
+
+3. **Metric 7.3 — Institutional Distinctiveness**
+   - ✅ Compliant: Distinctive focus on rural engineering talent grooming with 100% placement track record.
+
+---
+### Automated Remediation & Next Steps
+- Action 1: Obtain updated Green Audit, Energy Audit, and Environment Audit certificates [Est: 2 hrs]
+- Action 2: Compile high-resolution geotagged photographs of eco-friendly campus facilities [Est: 2 hrs]
+
+Estimated hours saved: 75 hrs | Consulting cost saved: ₹1,90,000`,
+
+  allCriteria: `# Comprehensive NAAC Self-Study Report (SSR) — Full Assessment
+**Institution:** Sri Siddhartha Institute of Technology (SSIT)
+**Overall Projected NAAC Grade:** A+ | **Estimated Cumulative CGPA:** 3.42 / 4.00 ✅
+
+---
+### 7-Criteria Performance Summary
+
+| Criterion | Focus Area | Max Weight | Estimated Score | Status |
+|---|---|---|---|---|
+| **Criterion 1** | Curricular Aspects | 100 | 91.2 | ✅ Strong |
+| **Criterion 2** | Teaching-Learning & Evaluation | 350 | 313.6 | ✅ Strong |
+| **Criterion 3** | Research, Innovations & Extension | 110 | 97.2 | ⚠️ Priority Gap |
+| **Criterion 4** | Infrastructure & Learning Resources | 100 | 93.0 | ✅ Benchmark |
+| **Criterion 5** | Student Support & Progression | 140 | 122.5 | ⚠️ Moderate |
+| **Criterion 6** | Governance, Leadership & Management | 100 | 90.1 | ✅ Strong |
+| **Criterion 7** | Institutional Values & Best Practices | 100 | 92.8 | ✅ Benchmark |
+
+---
+### Strategic Executive Recommendations
+1. **Focus on Criterion 3:** Maximize faculty seed grant utilization and accelerate Scopus publication incentives before peer team visit.
+2. **Standardize Criterion 2:** Verify student proctor diaries and direct CO-PO attainment evidence across all departments.
+3. **Consolidate Criterion 5:** Finalize alumni contribution documentary records and higher education progression proofs.
+
+Estimated total hours saved: 725 hrs | Total consulting savings: ₹18,20,000`
+}
+
+export function resolveAccreditationFallback(prompt = '', context = {}) {
+  const cTarget = String(context?.criterion || '').toLowerCase()
+  const pTarget = String(prompt || '').toLowerCase()
+  const combined = `${pTarget} ${cTarget}`
+
+  if (cTarget === 'all' || cTarget === 'all criteria' || combined.includes('all criteria') || combined.includes('full ssr') || combined.includes('criteria 1 to 7') || combined.includes('criterion 1 to 7')) {
+    return NAAC_CRITERIA_FALLBACKS.allCriteria
+  }
+  if (cTarget === '1' || cTarget === 'criterion 1' || cTarget === 'criteria 1' || combined.includes('criterion 1') || combined.includes('criteria 1') || combined.includes('curricular')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion1
+  }
+  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('teaching')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion2
+  }
+  if (cTarget === '4' || cTarget === 'criterion 4' || cTarget === 'criteria 4' || combined.includes('criterion 4') || combined.includes('criteria 4') || combined.includes('infrastructure')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion4
+  }
+  if (cTarget === '5' || cTarget === 'criterion 5' || cTarget === 'criteria 5' || combined.includes('criterion 5') || combined.includes('criteria 5') || combined.includes('student support')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion5
+  }
+  if (cTarget === '6' || cTarget === 'criterion 6' || cTarget === 'criteria 6' || combined.includes('criterion 6') || combined.includes('criteria 6') || combined.includes('governance')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion6
+  }
+  if (cTarget === '7' || cTarget === 'criterion 7' || cTarget === 'criteria 7' || combined.includes('criterion 7') || combined.includes('criteria 7') || combined.includes('institutional values')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion7
+  }
+  if (cTarget === '3' || cTarget === 'criterion 3' || cTarget === 'criteria 3' || combined.includes('criterion 3') || combined.includes('criteria 3') || combined.includes('research')) {
+    return NAAC_CRITERIA_FALLBACKS.criterion3
+  }
+  return NAAC_CRITERIA_FALLBACKS.criterion3
+}
+
+const OFFICER_FALLBACK_TEXTS = {
+  accreditation: NAAC_CRITERIA_FALLBACKS.criterion3,
 
   'student-success': `# Institutional Dropout Risk & Early Warning Assessment
 **Cohort:** B.Tech Semester 4 (All Departments)
@@ -166,6 +396,9 @@ export class AIService {
     }
 
     // Return rich fallback response
+    if (officerType === 'accreditation') {
+      return resolveAccreditationFallback(prompt, context)
+    }
     if (OFFICER_FALLBACK_TEXTS[officerType]) {
       return OFFICER_FALLBACK_TEXTS[officerType]
     }
@@ -210,7 +443,9 @@ export class AIService {
     }
 
     // Stream rich demo template with realistic token intervals (30ms)
-    const fallbackText = OFFICER_FALLBACK_TEXTS[officerType] || `[${officerType} AI Officer]: Analysis completed for "${prompt}". All constraints satisfied.`
+    const fallbackText = officerType === 'accreditation'
+      ? resolveAccreditationFallback(prompt, context)
+      : (OFFICER_FALLBACK_TEXTS[officerType] || `[${officerType} AI Officer]: Analysis completed for "${prompt}". All constraints satisfied.`)
     yield* simulateTokenStream(fallbackText, 30)
   }
 }

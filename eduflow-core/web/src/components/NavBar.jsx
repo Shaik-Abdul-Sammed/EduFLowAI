@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import GlobalSearch from './GlobalSearch'
+import NotificationCenter from './NotificationCenter'
 import { useI18n } from '../i18n'
 
 export default function NavBar({ routes, onMenuClick }) {
@@ -92,6 +93,8 @@ export default function NavBar({ routes, onMenuClick }) {
             <div className="d-none d-md-block" style={{ width: 220 }}>
               <GlobalSearch routes={routes} currentRole={user?.role} />
             </div>
+
+            <NotificationCenter />
 
             <button
               onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}

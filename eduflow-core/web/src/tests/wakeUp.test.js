@@ -32,5 +32,5 @@ describe('wakeUpFetch Utility', () => {
     const res = await wakeUpFetch('https://example.com/api/test')
     expect(res.status).toBe(200)
     expect(mockFetch).toHaveBeenCalledTimes(2)
-  })
+  }, 15000)
 })

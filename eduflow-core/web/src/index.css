@@ -165,6 +165,36 @@ body {
   color: #cbd5e1 !important;
 }
 
+[data-theme='dark'] .bg-light {
+  background-color: var(--surface-bg) !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .modal-content {
+  background-color: var(--card-bg) !important;
+  color: var(--app-text) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .modal-header,
+[data-theme='dark'] .modal-footer {
+  border-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .dropdown-menu {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .dropdown-item {
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .dropdown-item:hover {
+  background-color: var(--sidebar-link-hover) !important;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -407,5 +437,32 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   background-color: var(--card-bg) !important;
   border-color: var(--border-color) !important;
   color: var(--app-text) !important;
+}
+
+/* ── Mobile Responsiveness & Touch Targets ── */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .btn {
+    min-height: 38px;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .container-fluid {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .card {
+    word-wrap: break-word;
+  }
 }
 

@@ -13,9 +13,68 @@ import {
   CheckCircle2,
   XCircle,
   BarChart3,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Share2
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from 'recharts';
+import ShareReportModal from '../../components/ShareReportModal';
 import { getApiBaseURL } from '../../config/apiConfig';
+
+const CRITERION_2_CHART_DATA = [
+  { department: 'CSE', sfr: 13.5 },
+  { department: 'ECE', sfr: 14.2 },
+  { department: 'EEE', sfr: 14.0 },
+  { department: 'MECH', sfr: 15.8 },
+  { department: 'CIVIL', sfr: 16.1 },
+];
+
+const CRITERION_3_CHART_DATA = [
+  { year: '2022', publications: 48 },
+  { year: '2023', publications: 65 },
+  { year: '2024', publications: 82 },
+  { year: '2025', publications: 110 },
+  { year: '2026', publications: 145 },
+];
+
+const CRITERION_4_CHART_DATA = [
+  { name: 'Classrooms', value: 35, color: '#3B82F6' },
+  { name: 'Labs & R&D', value: 30, color: '#10B981' },
+  { name: 'Library Hub', value: 20, color: '#8B5CF6' },
+  { name: 'Campus IT', value: 15, color: '#F59E0B' },
+];
+
+const CRITERION_5_CHART_DATA = [
+  { department: 'CSE', placement: 88 },
+  { department: 'ECE', placement: 76 },
+  { department: 'EEE', placement: 68 },
+  { department: 'MECH', placement: 58 },
+  { department: 'CIVIL', placement: 54 },
+];
+
+const CRITERION_7_CHART_DATA = [
+  { metric: 'Gender Equity', score: 88 },
+  { metric: 'Green Campus', score: 92 },
+  { metric: 'Inclusion', score: 85 },
+  { metric: 'Human Values', score: 82 },
+  { metric: 'Best Practices', score: 90 },
+];
 
 const GRADE_SCALE = [
   { grade: 'D', min: 0.0, max: 1.5 },
@@ -69,6 +128,7 @@ export default function NaacDashboardPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [prediction, setPrediction] = useState({
     grade: 'A+',
     cgpa: 3.42,
@@ -145,7 +205,7 @@ export default function NaacDashboardPage() {
     setDownloadingPdf(true);
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      const response = await fetch(getFullApiUrl('/v1/officers/accreditation/export-pdf'), {
+      const response = await fetch(`${getApiBaseURL()}/v1/officers/naac-grade-report/export-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -469,6 +529,99 @@ export default function NaacDashboardPage() {
                       }}
                     />
                   </div>
+
+                  {/* Pictorial Criteria Visualizations */}
+                  {c.criterion === 2 && (
+                    <div style={{ marginTop: '0.85rem', width: '100%' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '4px', fontWeight: 500 }}>
+                        Student-Faculty Ratio (Target &le; 15:1)
+                      </div>
+                      <div style={{ width: '100%', height: 110 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={CRITERION_2_CHART_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                            <XAxis dataKey="department" stroke="#6B7280" fontSize={10} />
+                            <YAxis stroke="#6B7280" fontSize={10} />
+                            <Tooltip contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', fontSize: '11px', borderRadius: '6px' }} />
+                            <Bar dataKey="sfr" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
+                  {c.criterion === 3 && (
+                    <div style={{ marginTop: '0.85rem', width: '100%' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '4px', fontWeight: 500 }}>
+                        5-Year Research Publications
+                      </div>
+                      <div style={{ width: '100%', height: 110 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={CRITERION_3_CHART_DATA} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+                            <XAxis dataKey="year" stroke="#6B7280" fontSize={10} />
+                            <YAxis stroke="#6B7280" fontSize={10} />
+                            <Tooltip contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', fontSize: '11px', borderRadius: '6px' }} />
+                            <Line type="monotone" dataKey="publications" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
+                  {c.criterion === 4 && (
+                    <div style={{ marginTop: '0.85rem', width: '100%' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '4px', fontWeight: 500 }}>
+                        Infrastructure Resource Allocation
+                      </div>
+                      <div style={{ width: '100%', height: 110 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={CRITERION_4_CHART_DATA} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={42} innerRadius={22}>
+                              {CRITERION_4_CHART_DATA.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', fontSize: '11px', borderRadius: '6px' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
+                  {c.criterion === 5 && (
+                    <div style={{ marginTop: '0.85rem', width: '100%' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '4px', fontWeight: 500 }}>
+                        Department Placement Rate (%)
+                      </div>
+                      <div style={{ width: '100%', height: 110 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={CRITERION_5_CHART_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                            <XAxis dataKey="department" stroke="#6B7280" fontSize={10} />
+                            <YAxis stroke="#6B7280" fontSize={10} />
+                            <Tooltip contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', fontSize: '11px', borderRadius: '6px' }} />
+                            <Bar dataKey="placement" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
+                  {c.criterion === 7 && (
+                    <div style={{ marginTop: '0.85rem', width: '100%' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '4px', fontWeight: 500 }}>
+                        Institutional Values & Best Practices Radar
+                      </div>
+                      <div style={{ width: '100%', height: 110 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={CRITERION_7_CHART_DATA} cx="50%" cy="50%" outerRadius={38}>
+                            <PolarGrid stroke="#374151" />
+                            <PolarAngleAxis dataKey="metric" stroke="#9CA3AF" fontSize={8} />
+                            <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#4B5563" fontSize={7} />
+                            <Radar name="Score" dataKey="score" stroke="#EC4899" fill="#EC4899" fillOpacity={0.4} />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -794,8 +947,38 @@ export default function NaacDashboardPage() {
             <FileSpreadsheet size={18} />
             <span>Export Data as CSV</span>
           </button>
+
+          <button
+            type="button"
+            data-testid="share-grade-report-button"
+            onClick={() => setShareModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'rgba(59, 130, 246, 0.15)',
+              color: '#93C5FD',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              borderRadius: '10px',
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+            }}
+          >
+            <Share2 size={18} />
+            <span>Share Grade Report</span>
+          </button>
         </div>
       </div>
+
+      <ShareReportModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        title={`NAAC Grade Report (${prediction.grade})`}
+        collegeName="Sri Sudha Institute of Technology"
+        reportContent={`NAAC Self Study Report & Grade Prediction\nInstitution: Sri Sudha Institute of Technology\nPredicted Grade: ${prediction.grade} (CGPA: ${prediction.cgpa})\nReadiness Score: ${prediction.readinessScore || 85}%\n\nStrengths:\n${(prediction.strengths || []).join('\n')}\n\nRecommendations:\n${(prediction.recommendations || []).join('\n')}`}
+      />
     </div>
   );
 }

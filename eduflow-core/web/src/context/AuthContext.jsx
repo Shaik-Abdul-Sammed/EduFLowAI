@@ -1,4 +1,4 @@
-import { createContext, useMemo, useState, useEffect } from 'react'
+import { createContext, useMemo, useState, useEffect, useContext } from 'react'
 import { loginWithRole, logout as apiLogout, registerInstitution } from '../services/authService'
 
 const STORAGE_KEY = 'eduflow-ai-auth'
@@ -136,6 +136,15 @@ export function AuthProvider({ children }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used inside AuthProvider')
+  }
+  return context
 }
 
 export { AuthContext }

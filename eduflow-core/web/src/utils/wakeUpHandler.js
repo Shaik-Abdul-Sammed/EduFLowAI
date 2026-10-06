@@ -88,7 +88,7 @@ export async function wakeUpFetch(url, options = {}) {
     }
     hideWakeUpBanner()
     return res
-  } catch (err) {
+  } catch {
     // Network error or offline
     showWakeUpBanner('Server waking up... Retrying connection in 5 seconds.')
     await new Promise((resolve) => setTimeout(resolve, 5000))

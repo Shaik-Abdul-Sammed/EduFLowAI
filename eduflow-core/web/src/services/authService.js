@@ -1,4 +1,4 @@
-import { getApiBaseURL, getFullApiUrl } from '../config/apiConfig'
+import { getFullApiUrl } from '../config/apiConfig'
 import { wakeUpFetch } from '../utils/wakeUpHandler'
 
 export function mapAuthError(err, status) {

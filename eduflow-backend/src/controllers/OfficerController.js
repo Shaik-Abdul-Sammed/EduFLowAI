@@ -1,3 +1,6 @@
+import fs from 'fs'
+import path from 'path'
+import crypto from 'crypto'
 import { OfficerRepository } from '../repositories/OfficerRepository.js'
 import { UserRepository } from '../repositories/UserRepository.js'
 import { AIService } from '../services/AIService.js'
@@ -286,7 +289,7 @@ export class OfficerController {
     }
   }
 
-  static async handleStream(req, res, officerType, prompt, actionType, auditAction) {
+  static async handleStream(req, res, officerType, prompt, actionType, auditAction, extraContext = {}) {
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
@@ -307,6 +310,7 @@ export class OfficerController {
       const context = {
         institutionId: req.user?.institutionId,
         userRole: req.user?.role,
+        ...extraContext,
       }
 
       for await (const token of AIService.streamPrompt(officerType, prompt, context)) {
@@ -354,16 +358,21 @@ export class OfficerController {
   }
 
   static async streamAccreditation(req, res) {
-    const rawPrompt = req.body?.reportType || req.body?.action || 'Generate NAAC Criteria 3 SSR Analysis for SSIT'
+    const rawPrompt = req.body?.reportType || req.body?.action || req.body?.prompt || 'Generate NAAC Criteria 3 SSR Analysis for SSIT'
+    const criterion = req.body?.criterion || req.body?.criterionNumber || req.body?.selectedCriterion
     const contextBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
-    const prompt = `${contextBlock}\n${rawPrompt}`
+    let prompt = `${contextBlock}\n${rawPrompt}`
+    if (criterion && !prompt.toLowerCase().includes(String(criterion).toLowerCase())) {
+      prompt = `${prompt}\nSpecific NAAC Criterion Target: ${criterion}`
+    }
     return OfficerController.handleStream(
       req,
       res,
       'accreditation',
       prompt,
       'generate_naac_report',
-      'ACCREDITATION_REPORT_STREAMED'
+      'ACCREDITATION_REPORT_STREAMED',
+      { criterion }
     )
   }
 
@@ -413,6 +422,77 @@ export class OfficerController {
       'reconcile_fees',
       'FINANCE_RECONCILED_STREAMED'
     )
+  }
+
+  static async uploadFile(req, res) {
+    try {
+      const { type } = req.params
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' })
+      }
+
+      const filePath = req.file.path
+      const originalName = req.file.originalname
+      const ext = path.extname(originalName).toLowerCase()
+      let extractedText = ''
+
+      if (ext === '.xlsx' || ext === '.xls') {
+        const xlsx = await import('xlsx')
+        const workbook = xlsx.readFile(filePath)
+        extractedText = workbook.SheetNames.map(sheetName => {
+          const sheet = workbook.Sheets[sheetName]
+          return `--- Sheet: ${sheetName} ---\n${xlsx.utils.sheet_to_csv(sheet)}`
+        }).join('\n\n')
+      } else if (ext === '.pdf') {
+        try {
+          const { PDFParse } = await import('pdf-parse')
+          const dataBuffer = fs.readFileSync(filePath)
+          if (typeof PDFParse === 'function') {
+            try {
+              const parser = new PDFParse(dataBuffer)
+              if (typeof parser.extractText === 'function') {
+                extractedText = await parser.extractText()
+              } else if (typeof parser.getText === 'function') {
+                extractedText = await parser.getText()
+              }
+            } catch {
+              // fallback
+            }
+          }
+          if (!extractedText) {
+            extractedText = dataBuffer.toString('latin1').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ')
+          }
+        } catch {
+          extractedText = `[PDF Document: ${originalName}]`
+        }
+      } else {
+        // csv, txt, docx, etc.
+        try {
+          extractedText = fs.readFileSync(filePath, 'utf-8')
+        } catch {
+          extractedText = fs.readFileSync(filePath, 'latin1')
+        }
+      }
+
+      const jobId = `job_${crypto.randomBytes(8).toString('hex')}`
+
+      // Clean up temp file safely in background
+      setTimeout(() => {
+        try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath) } catch {}
+      }, 5000)
+
+      return res.status(200).json({
+        success: true,
+        jobId,
+        filename: originalName,
+        officerType: type,
+        extractedText: (extractedText || '').slice(0, 15000),
+        length: (extractedText || '').length,
+      })
+    } catch (err) {
+      logger.error('Error handling officer file upload:', err)
+      return res.status(500).json({ error: 'Failed to process and extract text from uploaded file' })
+    }
   }
 }
 

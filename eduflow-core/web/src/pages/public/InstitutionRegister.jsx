@@ -4,6 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { validateForm, validators } from '../../utils/validators';
 import { ShieldCheck, Building, User, Mail, Lock, Globe } from 'lucide-react';
+import { IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 export default function InstitutionRegister() {
   const [formData, setFormData] = useState({
@@ -14,6 +16,8 @@ export default function InstitutionRegister() {
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subdomainLocked, setSubdomainLocked] = useState(false);
@@ -273,13 +277,23 @@ export default function InstitutionRegister() {
                           <div className="input-group">
                             <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={17} /></span>
                             <input
-                              type="password"
-                              className={`form-control border-start-0 ${errors.password ? 'is-invalid' : ''}`}
+                              type={showPassword ? 'text' : 'password'}
+                              className={`form-control border-start-0 border-end-0 ${errors.password ? 'is-invalid' : ''}`}
                               name="password"
                               placeholder="Min 8 chars, 1 uppercase, 1 number"
                               value={formData.password}
                               onChange={handleChange}
                             />
+                            <span className="input-group-text bg-light p-0 border-start-0">
+                              <IconButton
+                                size="small"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                style={{ padding: '4px 8px', color: '#64748B' }}
+                              >
+                                {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                              </IconButton>
+                            </span>
                           </div>
                           {strength && (
                             <div className="mt-1">
@@ -299,13 +313,23 @@ export default function InstitutionRegister() {
                           <div className="input-group">
                             <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={17} /></span>
                             <input
-                              type="password"
-                              className={`form-control border-start-0 ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              className={`form-control border-start-0 border-end-0 ${errors.confirmPassword ? 'is-invalid' : ''}`}
                               name="confirmPassword"
                               placeholder="Re-enter password"
                               value={formData.confirmPassword}
                               onChange={handleChange}
                             />
+                            <span className="input-group-text bg-light p-0 border-start-0">
+                              <IconButton
+                                size="small"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                                style={{ padding: '4px 8px', color: '#64748B' }}
+                              >
+                                {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                              </IconButton>
+                            </span>
                           </div>
                           {errors.confirmPassword && <div className="text-danger small mt-1">⚠ {errors.confirmPassword}</div>}
                           {!errors.confirmPassword && formData.confirmPassword && formData.confirmPassword === formData.password && (

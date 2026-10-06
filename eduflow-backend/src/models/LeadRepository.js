@@ -143,7 +143,8 @@ export class LeadRepository {
         'SELECT * FROM leads WHERE id = $1 AND is_deleted = false',
         [id],
       )
-      return result.rows[0] || null
+      if (result.rows[0]) return result.rows[0]
+      return memoryLeads.find((l) => String(l.id) === String(id) && !l.is_deleted) || null
     } catch (err) {
       logger.warn(`LeadRepository.findById using memory store: ${err.message}`)
       return memoryLeads.find((l) => String(l.id) === String(id) && !l.is_deleted) || null
@@ -172,7 +173,13 @@ export class LeadRepository {
         RETURNING *
       `
       const result = await pool.query(query, params)
-      return result.rows[0] || null
+      if (result.rows[0]) return result.rows[0]
+      const lead = memoryLeads.find((l) => String(l.id) === String(id) && !l.is_deleted)
+      if (!lead) return null
+      if (status !== undefined) lead.status = status
+      if (notes !== undefined) lead.notes = notes
+      lead.updated_at = new Date().toISOString()
+      return lead
     } catch (err) {
       logger.warn(`LeadRepository.update using memory store: ${err.message}`)
       const lead = memoryLeads.find((l) => String(l.id) === String(id) && !l.is_deleted)
@@ -190,7 +197,12 @@ export class LeadRepository {
         'UPDATE leads SET is_deleted = true, updated_at = NOW() WHERE id = $1 RETURNING *',
         [id],
       )
-      return result.rows[0] || null
+      if (result.rows[0]) return result.rows[0]
+      const lead = memoryLeads.find((l) => String(l.id) === String(id))
+      if (!lead) return null
+      lead.is_deleted = true
+      lead.updated_at = new Date().toISOString()
+      return lead
     } catch (err) {
       logger.warn(`LeadRepository.softDelete using memory store: ${err.message}`)
       const lead = memoryLeads.find((l) => String(l.id) === String(id))
