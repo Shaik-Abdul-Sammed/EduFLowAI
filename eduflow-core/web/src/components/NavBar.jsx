@@ -96,6 +96,42 @@ export default function NavBar({ routes, onMenuClick }) {
 
             <NotificationCenter />
 
+            <Link
+              to="/docs"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                textDecoration: 'none',
+                color: isDark ? '#94a3b8' : '#475569',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                padding: '0.45rem 0.65rem',
+                borderRadius: '0.5rem',
+                background: isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.04)'
+              }}
+              title="Documentation"
+            >
+              📖 Docs
+            </Link>
+
+            <Link
+              to="/help"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                textDecoration: 'none',
+                color: isDark ? '#94a3b8' : '#2563EB',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                padding: '0.45rem 0.65rem',
+                borderRadius: '0.5rem',
+                background: isDark ? 'rgba(148,163,184,0.1)' : 'rgba(37,99,235,0.08)'
+              }}
+              title="Help Center"
+            >
+              ❓ Help
+            </Link>
+
             <button
               onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
               style={{

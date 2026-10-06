@@ -14,6 +14,8 @@ export function createInvoiceRouter() {
   router.get('/', adminGuard, InvoiceController.getInvoices)
   router.get('/:id', adminGuard, InvoiceController.getInvoiceById)
   router.patch('/:id/mark-paid', adminGuard, InvoiceController.markPaid)
+  router.post('/:id/upi-link', adminGuard, InvoiceController.generateUpiLink)
+  router.post('/:id/mark-paid-manual', adminGuard, InvoiceController.markPaidManual)
 
   return router
 }

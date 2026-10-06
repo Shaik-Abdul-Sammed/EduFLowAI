@@ -118,5 +118,28 @@ export function createInstitutionRouter() {
     }
   })
 
+  /**
+   * Institutional Settings & Export endpoints
+   */
+  router.get('/settings', async (req, res, next) => {
+    const { InstitutionController } = await import('../controllers/InstitutionController.js')
+    return InstitutionController.getSettings(req, res, next)
+  })
+
+  router.patch('/settings', async (req, res, next) => {
+    const { InstitutionController } = await import('../controllers/InstitutionController.js')
+    return InstitutionController.updateSettings(req, res, next)
+  })
+
+  router.post('/logo', async (req, res, next) => {
+    const { InstitutionController } = await import('../controllers/InstitutionController.js')
+    return InstitutionController.uploadLogo(req, res, next)
+  })
+
+  router.get('/export', async (req, res, next) => {
+    const { InstitutionController } = await import('../controllers/InstitutionController.js')
+    return InstitutionController.exportDataZip(req, res, next)
+  })
+
   return router
 }

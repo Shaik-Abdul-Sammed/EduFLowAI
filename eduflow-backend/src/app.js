@@ -32,6 +32,13 @@ import calendarRouter from './routes/calendarRoutes.js'
 import attendanceRouter from './routes/attendanceRoutes.js'
 import portalRouter from './routes/portalRoutes.js'
 import { createNotificationRouter } from './routes/notificationRoutes.js'
+import { createOnboardingRouter } from './routes/onboardingRoutes.js'
+import { createLegalRouter } from './routes/legalRoutes.js'
+import { createSupportRouter } from './routes/supportRoutes.js'
+import { createMonitoringRouter } from './routes/monitoringRoutes.js'
+import { verifyLatestBackup } from './workers/backupVerifier.js'
+import { sessionTimeout } from './middleware/sessionTimeout.js'
+import { rateLimitPerUser } from './middleware/rateLimitPerUser.js'
 import { pool } from './db/pool.js'
 import { httpLogger, productionRateLimiter } from './middleware/productionHardening.js'
 import helmet from 'helmet'
@@ -86,6 +93,8 @@ export function createApp({ db } = {}) {
 
   // Apply production rate limiter to all /api/v1/* routes
   app.use('/api/v1', productionRateLimiter)
+  app.use('/api/v1', sessionTimeout(60))
+  app.use('/api/v1', rateLimitPerUser)
 
   // API v1 routes
   app.use('/api/v1/search', createSearchRouter(db))
@@ -134,6 +143,21 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/attendance', attendanceRouter)
   app.use('/api/v1/portal', portalRouter)
   app.use('/api/v1/notifications', createNotificationRouter(db))
+  app.use('/api/v1/onboarding', createOnboardingRouter())
+  app.use('/api/v1/legal', createLegalRouter())
+  app.use('/api/v1/support', createSupportRouter())
+  app.use('/api/v1/monitoring', createMonitoringRouter())
+  app.use('/api/v1/admin/monitoring', createMonitoringRouter())
+
+  // Manual Backup Verification trigger
+  app.get('/api/v1/admin/backup/verify', async (_req, res) => {
+    try {
+      const report = await verifyLatestBackup()
+      res.json({ success: true, report })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
 
   // Public Report Viewer and Download endpoints
   app.get('/r/:token/pdf', ReportDeliveryController.downloadPublicReportPdf)

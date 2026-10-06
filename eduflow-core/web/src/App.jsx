@@ -21,8 +21,17 @@ import HodCalendarPage from './pages/hod/HodCalendarPage'
 import AcademicCalendarPage from './pages/admin/AcademicCalendarPage'
 import PortalConnectionPage from './pages/admin/PortalConnectionPage'
 import AttendanceIntegrationPage from './pages/admin/AttendanceIntegrationPage'
-import AdminStaffManagementPage from './pages/admin/StaffManagementPage'
 import TimetableUploadPage from './pages/ai/officers/TimetableUploadPage'
+import OnboardingWizardPage from './pages/admin/OnboardingWizardPage'
+import TermsOfServicePage from './pages/public/TermsOfServicePage'
+import PrivacyPolicyPage from './pages/public/PrivacyPolicyPage'
+import DataProcessingAgreementPage from './pages/public/DataProcessingAgreementPage'
+import HelpCenterPage from './pages/public/HelpCenterPage'
+import SupportTicketsPage from './pages/admin/SupportTicketsPage'
+import SystemHealthPage from './pages/admin/SystemHealthPage'
+import InstitutionSettingsPage from './pages/admin/InstitutionSettingsPage'
+import UPICollectionPage from './pages/admin/UPICollectionPage'
+import DocsPage from './pages/public/DocsPage'
 import './App.css'
 import Layout from './components/Layout'
 import VisitorDashboard from './components/VisitorDashboard'
@@ -311,6 +320,11 @@ function App() {
             <Route path="/signup" element={<InstitutionRegister />} />
             <Route path="/for-colleges" element={<LeadIntakePage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/dpa" element={<DataProcessingAgreementPage />} />
+            <Route path="/help" element={<HelpCenterPage />} />
+            <Route path="/docs" element={<DocsPage />} />
             <Route path="/why-eduflow" element={<WhyEduFlowPage />} />
             <Route path="/how-attendance-works" element={<AttendanceExplainerPage />} />
             <Route path="/r/:token" element={<PublicReportViewer />} />
@@ -353,6 +367,26 @@ function App() {
           <Route
             path="/admin-dashboard"
             element={<DashboardHome role="admin" routes={groupedRoutes.admin || []} />}
+          />
+          <Route
+            path="/admin-dashboard/onboarding"
+            element={<OnboardingWizardPage />}
+          />
+          <Route
+            path="/admin-dashboard/settings"
+            element={<InstitutionSettingsPage />}
+          />
+          <Route
+            path="/admin-dashboard/system-health"
+            element={<SystemHealthPage />}
+          />
+          <Route
+            path="/admin-dashboard/support-tickets"
+            element={<SupportTicketsPage />}
+          />
+          <Route
+            path="/admin-dashboard/upi-collection"
+            element={<UPICollectionPage />}
           />
           <Route
             path="/admin-dashboard/insights/:domain"

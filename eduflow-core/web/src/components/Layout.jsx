@@ -45,6 +45,26 @@ export default function Layout({ routes }) {
         <main style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
           <Outlet />
         </main>
+        
+        <footer style={{
+          borderTop: '1px solid rgba(148,163,184,0.2)',
+          padding: '0.85rem 1.25rem',
+          fontSize: '0.8rem',
+          color: 'var(--text-muted, #64748b)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          background: 'transparent'
+        }}>
+          <div>© 2026 EduFlow Technologies Pvt Ltd • All Rights Reserved</div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <a href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>Terms of Service</a>
+            <a href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy Policy</a>
+            <a href="/dpa" style={{ color: 'inherit', textDecoration: 'none' }}>Data Processing Agreement (DPA)</a>
+          </div>
+        </footer>
       </div>
       <TourGuide />
     </div>

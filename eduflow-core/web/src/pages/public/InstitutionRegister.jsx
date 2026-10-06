@@ -339,6 +339,18 @@ export default function InstitutionRegister() {
                       </div>
                     </div>
 
+                      <div className="mb-3 form-check text-start">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="termsConsent"
+                          required
+                        />
+                        <label className="form-check-label small text-muted" htmlFor="termsConsent">
+                          I agree to the <a href="/terms" target="_blank" rel="noreferrer" className="text-primary fw-semibold">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary fw-semibold">Privacy Policy</a> (DPDP Act 2023).
+                        </label>
+                      </div>
+
                     <button
                       type="submit"
                       className="btn btn-primary w-100 rounded-pill py-2 fw-bold fs-6"

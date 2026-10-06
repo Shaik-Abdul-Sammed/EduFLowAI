@@ -300,6 +300,57 @@ export class InvoiceController {
     }
   }
 
+  static async generateUpiLink(req, res) {
+    try {
+      const { id } = req.params
+      const invoice = await InvoiceRepository.findById(id)
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' })
+      }
+
+      const upiId = req.body?.upiId || invoice.upi_id || 'eduflow@icici'
+      const payeeName = encodeURIComponent(invoice.institution_name || 'EduFlow')
+      const amount = Number(invoice.total_amount || invoice.amount || 0).toFixed(2)
+      const ref = invoice.invoice_number || `INV${id}`
+
+      const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${payeeName}&am=${amount}&cu=INR&tn=${encodeURIComponent('Fee Payment Ref ' + ref)}`
+
+      return res.status(200).json({
+        success: true,
+        invoiceId: id,
+        invoiceNumber: ref,
+        amount,
+        upiId,
+        upiUri
+      })
+    } catch (err) {
+      logger.error('Error generating UPI link:', err)
+      return res.status(500).json({ error: 'Failed to generate UPI link' })
+    }
+  }
+
+  static async markPaidManual(req, res) {
+    try {
+      const { id } = req.params
+      const { referenceNumber, paymentMode = 'UPI', paidAt = new Date().toISOString() } = req.body || {}
+      
+      const invoice = await InvoiceRepository.markPaid(id)
+      if (!invoice) {
+        return res.status(404).json({ error: 'Invoice not found' })
+      }
+
+      invoice.payment_reference = referenceNumber || `MANUAL-${Date.now()}`
+      invoice.payment_mode = paymentMode
+      invoice.paid_at = paidAt
+
+      logger.info({ invoiceId: id, status: 'PAID', ref: referenceNumber }, 'Invoice marked as paid manually')
+      return res.json({ success: true, invoice, message: 'Payment recorded successfully' })
+    } catch (err) {
+      logger.error(`Error recording manual payment for invoice ${req.params.id}:`, err)
+      return res.status(500).json({ error: 'Failed to record manual payment' })
+    }
+  }
+
   static async markPaid(req, res) {
     try {
       const { id } = req.params
