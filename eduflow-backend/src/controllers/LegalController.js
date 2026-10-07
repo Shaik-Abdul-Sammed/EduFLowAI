@@ -51,7 +51,7 @@ export class LegalController {
         { id: 'definitions', title: '2. Definitions', content: 'Terms follow definitions in Indian IT Act 2000 and DPDP Act 2023.' },
         { id: 'processor_obligations', title: '3. Processor Obligations', content: 'Processor shall process data solely in accordance with documented instructions of the institution.' },
         { id: 'subprocessors', title: '4. Sub-processors', content: 'Sub-processors are vetted for strict ISO/IEC 27001 or SOC2 controls.' },
-        { id: 'security_measures', title: '5. Technical & Organizational Measures', content: 'Role-based access control, JWT authentication, rate limiting, and automated backup audits.' },
+        { id: 'security_measures', title: '5. Security Measures (Technical & Organizational)', content: 'Role-based access control, JWT authentication, rate limiting, and automated backup audits.' },
         { id: 'subject_requests', title: '6. Data Subject Requests', content: 'Processor assists the college in responding to student/faculty data access or erasure requests.' },
         { id: 'breach_notification', title: '7. Breach Notification', content: 'Processor notifies the institution within 72 hours of confirming any unauthorized data breach.' },
         { id: 'audit_rights', title: '8. Audit Rights', content: 'Institutions may conduct annual compliance reviews upon reasonable advance notice.' },

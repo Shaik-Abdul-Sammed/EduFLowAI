@@ -1,5 +1,8 @@
-import archiver from 'archiver'
+import { createRequire } from 'module'
 import { pool } from '../db/pool.js'
+
+const require = createRequire(import.meta.url)
+const archiver = require('archiver')
 
 let memorySettings = {
   branding: {
