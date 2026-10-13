@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   BookOpen,
-  FileText,
-  ChevronRight,
-  HelpCircle,
-  ExternalLink
+  ChevronRight
 } from 'lucide-react'
 
 const DOC_FILES = [
@@ -37,7 +34,7 @@ export default function DocsPage() {
         } else {
           setContent(`# ${selectedDoc.title}\n\nDocumentation content loaded successfully. Refer to the admin manual for detailed steps.`)
         }
-      } catch (err) {
+      } catch {
         setContent(`# ${selectedDoc.title}\n\nDocumentation content is accessible in the official system knowledgebase.`)
       } finally {
         setLoading(false)

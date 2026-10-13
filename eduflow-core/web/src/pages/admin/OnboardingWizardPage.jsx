@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Building2,
@@ -8,9 +8,13 @@ import {
   CheckCircle,
   ArrowRight,
   ArrowLeft,
-  Upload,
   Download,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  FileText,
+  Upload,
+  RefreshCw,
+  Check
 } from 'lucide-react'
 
 export default function OnboardingWizardPage() {
@@ -19,6 +23,14 @@ export default function OnboardingWizardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+
+  // Quick Start / AI Extraction state
+  const [step1Tab, setStep1Tab] = useState('quickStart') // 'quickStart' | 'manual'
+  const [pdfFile, setPdfFile] = useState(null)
+  const [extracting, setExtracting] = useState(false)
+  const [extractedData, setExtractedData] = useState(null)
+  const [confidenceScores, setConfidenceScores] = useState(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Step 1: Profile
   const [profile, setProfile] = useState({
@@ -54,11 +66,9 @@ export default function OnboardingWizardPage() {
 
   // Step 3: Faculty
   const [facultyOption, setFacultyOption] = useState('demo')
-  const [facultyCount, setFacultyCount] = useState(48)
 
   // Step 4: Students
   const [studentOption, setStudentOption] = useState('demo')
-  const [studentCount, setStudentCount] = useState(1250)
 
   // Step 5: Academic
   const [academic, setAcademic] = useState({
@@ -68,6 +78,104 @@ export default function OnboardingWizardPage() {
     semesterType: 'ODD',
     workingDaysPerWeek: 6
   })
+
+  const handleExtractPdf = async (isSample = false) => {
+    setError('')
+    setExtracting(true)
+    try {
+      let res
+      if (isSample) {
+        res = await fetch('/api/v1/onboarding/ai-extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sample: true })
+        })
+      } else {
+        if (!pdfFile) {
+          setError('Please select or drag a prospectus PDF file first.')
+          setExtracting(false)
+          return
+        }
+        const formData = new FormData()
+        formData.append('prospectus', pdfFile)
+        res = await fetch('/api/v1/onboarding/ai-extract', {
+          method: 'POST',
+          body: formData
+        })
+      }
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to extract data from prospectus')
+      }
+
+      const data = await res.json()
+      if (data.extracted) {
+        setExtractedData(data.extracted)
+        setConfidenceScores(data.confidence || {})
+        setSuccessMsg(data.fromCache ? 'Data loaded instantly from cache!' : 'Prospectus analyzed and extracted successfully!')
+      }
+    } catch (err) {
+      setError(err.message || 'Error extracting prospectus data')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
+  const handleApplyToOnboarding = async () => {
+    if (!extractedData) return
+    setError('')
+    setLoading(true)
+    try {
+      setProfile(prev => ({
+        ...prev,
+        name: extractedData.name || prev.name,
+        shortCode: extractedData.shortCode || prev.shortCode,
+        subdomain: (extractedData.shortCode || prev.shortCode || 'college').toLowerCase(),
+        address: extractedData.address || prev.address,
+        city: extractedData.city || prev.city,
+        state: extractedData.state || prev.state,
+        pincode: extractedData.pincode || prev.pincode,
+        phone: extractedData.phone || prev.phone,
+        email: extractedData.email || prev.email,
+        website: extractedData.website || prev.website,
+        establishedYear: extractedData.establishedYear || prev.establishedYear,
+        affiliationBody: extractedData.affiliation || prev.affiliationBody,
+        accreditationStatus: extractedData.accreditationStatus || prev.accreditationStatus
+      }))
+
+      if (Array.isArray(extractedData.departments) && extractedData.departments.length > 0) {
+        setDepartments(extractedData.departments)
+      }
+
+      await fetch('/api/v1/onboarding/ai-apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ extractedData })
+      }).catch(() => {})
+
+      setSuccessMsg('Prospectus data applied to Steps 1–4! Review and continue.')
+      setStep1Tab('manual')
+    } catch (err) {
+      setError('Failed to apply extracted data: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderConfidenceBadge = (field) => {
+    const score = confidenceScores?.[field] || 'medium'
+    const colors = {
+      high: 'bg-success text-white',
+      medium: 'bg-warning text-dark',
+      low: 'bg-danger text-white'
+    }
+    return (
+      <span className={`badge ${colors[score] || colors.medium} ms-2 text-uppercase`} style={{ fontSize: '10px' }}>
+        {score}
+      </span>
+    )
+  }
 
   const addDepartment = () => {
     if (!newDeptName || !newDeptCode) return
@@ -204,104 +312,317 @@ export default function OnboardingWizardPage() {
         {/* STEP 1 */}
         {step === 1 && (
           <div>
-            <h4 className="fw-bold mb-3 d-flex align-items-center">
-              <Building2 className="me-2 text-primary" /> Step 1 — Institution Profile
-            </h4>
-            <div className="row g-3">
-              <div className="col-md-8">
-                <label className="form-label fw-semibold">Institution Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                />
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4 className="fw-bold mb-0 d-flex align-items-center">
+                <Building2 className="me-2 text-primary" /> Step 1 — Institution Profile
+              </h4>
+              <div className="btn-group" role="group">
+                <button
+                  type="button"
+                  className={`btn btn-sm ${step1Tab === 'quickStart' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setStep1Tab('quickStart')}
+                >
+                  <Sparkles size={14} className="me-1" /> Quick Start (AI PDF)
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${step1Tab === 'manual' ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setStep1Tab('manual')}
+                >
+                  Manual Entry
+                </button>
               </div>
-              <div className="col-md-4">
-                <label className="form-label fw-semibold">Short Code</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.shortCode}
-                  onChange={(e) => setProfile({ ...profile, shortCode: e.target.value })}
-                />
+            </div>
+
+            {step1Tab === 'quickStart' ? (
+              <div className="p-3 border rounded bg-light mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <h6 className="fw-bold mb-1 d-flex align-items-center">
+                      <Sparkles size={16} className="text-warning me-1" /> AI Prospectus Ingestion
+                    </h6>
+                    <small className="text-muted">
+                      Upload your institution's admissions brochure or prospectus PDF. EduFlow AI extracts profile, departments, courses, and facilities automatically.
+                    </small>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                    onClick={() => handleExtractPdf(true)}
+                    disabled={extracting}
+                  >
+                    <FileText size={14} className="me-1" /> Try with Sample Prospectus
+                  </button>
+                </div>
+
+                {/* Drag and drop area */}
+                <div
+                  className={`border border-2 border-dashed rounded p-4 text-center bg-white mb-3 ${
+                    isDragging ? 'border-primary bg-primary-subtle' : 'border-secondary-subtle'
+                  }`}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setIsDragging(false)
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      setPdfFile(e.dataTransfer.files[0])
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => document.getElementById('prospectus-file-input')?.click()}
+                >
+                  <input
+                    type="file"
+                    id="prospectus-file-input"
+                    className="d-none"
+                    accept=".pdf"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setPdfFile(e.target.files[0])
+                      }
+                    }}
+                  />
+                  <Upload size={32} className="text-primary mb-2" />
+                  <h6 className="fw-semibold mb-1">
+                    {pdfFile ? pdfFile.name : 'Click to select or drag & drop Prospectus PDF'}
+                  </h6>
+                  <p className="text-muted small mb-0">PDF up to 10 MB accepted</p>
+                </div>
+
+                <div className="d-flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    className="btn btn-primary d-flex align-items-center"
+                    onClick={() => handleExtractPdf(false)}
+                    disabled={extracting || !pdfFile}
+                  >
+                    {extracting ? (
+                      <>
+                        <RefreshCw size={14} className="me-1 spinner-border spinner-border-sm" /> Extracting with AI...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={14} className="me-1" /> Extract Automatically
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Extracted Data Preview */}
+                {extractedData && (
+                  <div className="bg-white p-3 rounded border">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6 className="fw-bold mb-0 text-success d-flex align-items-center">
+                        <Check size={16} className="me-1" /> Extracted Institutional Profile
+                      </h6>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-success d-flex align-items-center"
+                        onClick={handleApplyToOnboarding}
+                        disabled={loading}
+                      >
+                        <Check size={14} className="me-1" /> Apply to Onboarding
+                      </button>
+                    </div>
+
+                    <div className="row g-2 mb-3">
+                      <div className="col-md-8">
+                        <label className="form-label small fw-semibold">
+                          Name {renderConfidenceBadge('name')}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={extractedData.name || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label small fw-semibold">
+                          Short Code {renderConfidenceBadge('shortCode')}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={extractedData.shortCode || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, shortCode: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label small fw-semibold">
+                          Email {renderConfidenceBadge('email')}
+                        </label>
+                        <input
+                          type="email"
+                          className="form-control form-control-sm"
+                          value={extractedData.email || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, email: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label small fw-semibold">
+                          Website {renderConfidenceBadge('website')}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={extractedData.website || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, website: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label small fw-semibold">
+                          Established Year {renderConfidenceBadge('establishedYear')}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={extractedData.establishedYear || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, establishedYear: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label small fw-semibold">
+                          Affiliation {renderConfidenceBadge('affiliation')}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={extractedData.affiliation || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, affiliation: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label small fw-semibold">
+                          Accreditation {renderConfidenceBadge('accreditationStatus')}
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          value={extractedData.accreditationStatus || ''}
+                          onChange={(e) => setExtractedData({ ...extractedData, accreditationStatus: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    {Array.isArray(extractedData.departments) && extractedData.departments.length > 0 && (
+                      <div className="mb-2">
+                        <span className="small fw-semibold">
+                          Extracted Departments ({extractedData.departments.length}) {renderConfidenceBadge('departments')}:
+                        </span>
+                        <div className="d-flex flex-wrap gap-1 mt-1">
+                          {extractedData.departments.map((d, i) => (
+                            <span key={i} className="badge bg-light text-dark border">
+                              {d.name} ({d.code})
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Portal Subdomain</label>
-                <div className="input-group">
+            ) : null}
+
+            {/* Manual Entry Form */}
+            {step1Tab === 'manual' && (
+              <div className="row g-3">
+                <div className="col-md-8">
+                  <label className="form-label fw-semibold">Institution Name</label>
                   <input
                     type="text"
                     className="form-control"
-                    value={profile.subdomain}
-                    onChange={(e) => setProfile({ ...profile, subdomain: e.target.value })}
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                   />
-                  <span className="input-group-text">.eduflow.ai</span>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-semibold">Short Code</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.shortCode}
+                    onChange={(e) => setProfile({ ...profile, shortCode: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Portal Subdomain</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={profile.subdomain}
+                      onChange={(e) => setProfile({ ...profile, subdomain: e.target.value })}
+                    />
+                    <span className="input-group-text">.eduflow.ai</span>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Established Year</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.establishedYear}
+                    onChange={(e) => setProfile({ ...profile, establishedYear: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Affiliation Body (e.g. VTU, JNTU, AICTE)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.affiliationBody}
+                    onChange={(e) => setProfile({ ...profile, affiliationBody: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Accreditation Status</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.accreditationStatus}
+                    onChange={(e) => setProfile({ ...profile, accreditationStatus: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-8">
+                  <label className="form-label fw-semibold">Official Email</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    value={profile.email}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-semibold">Phone Number</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">State</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.state}
+                    onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Pincode</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profile.pincode}
+                    onChange={(e) => setProfile({ ...profile, pincode: e.target.value })}
+                  />
                 </div>
               </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Established Year</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.establishedYear}
-                  onChange={(e) => setProfile({ ...profile, establishedYear: e.target.value })}
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Affiliation Body (e.g. VTU, JNTU, AICTE)</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.affiliationBody}
-                  onChange={(e) => setProfile({ ...profile, affiliationBody: e.target.value })}
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Accreditation Status</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.accreditationStatus}
-                  onChange={(e) => setProfile({ ...profile, accreditationStatus: e.target.value })}
-                />
-              </div>
-              <div className="col-md-8">
-                <label className="form-label fw-semibold">Official Email</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                />
-              </div>
-              <div className="col-md-4">
-                <label className="form-label fw-semibold">Phone Number</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">State</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.state}
-                  onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Pincode</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={profile.pincode}
-                  onChange={(e) => setProfile({ ...profile, pincode: e.target.value })}
-                />
-              </div>
-            </div>
+            )}
           </div>
         )}
 

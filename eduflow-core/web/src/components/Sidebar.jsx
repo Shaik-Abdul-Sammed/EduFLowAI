@@ -145,6 +145,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
               {[
                 { to: '/officers-dashboard', icon: '⚡', label: 'AI Officers Hub' },
                 { to: '/admin-dashboard/attendance', icon: '👥', label: 'Attendance Intelligence' },
+                { to: '/admin-dashboard/whatsapp-attendance', icon: '💬', label: 'WhatsApp Attendance' },
                 { to: '/admin-dashboard/portal', icon: '🔌', label: 'Portal Connections' },
                 { to: '/admin-dashboard/calendar', icon: '📅', label: 'Academic Calendar' },
                 { to: '/admin-dashboard/staff', icon: '🛡️', label: 'Staff Management' },
@@ -153,6 +154,7 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
                 { to: '/admin-dashboard/insights', icon: '🧠', label: 'AI Insights' },
                 { to: '/admin-dashboard/leads', icon: '📈', label: 'Lead Management' },
                 { to: '/admin-dashboard/invoices', icon: '💳', label: 'Invoice Generator' },
+                { to: '/admin-dashboard/fee-reminders', icon: '🔔', label: 'Fee Reminders' },
                 { to: '/admin-dashboard/audit-logs', icon: '📋', label: 'Audit Logs' },
               ].map(item => (
                 <NavLink

@@ -112,7 +112,7 @@ describe('ObservationMode Component', () => {
 
     // Test restart button resets ROI to 0 and restarts from step 1
     act(() => {
-      const restartBtn = screen.getByRole('button', { name: /Replay Observation Demo/i })
+      const restartBtn = screen.getByRole('button', { name: /Replay Demo/i })
       fireEvent.click(restartBtn)
     })
 

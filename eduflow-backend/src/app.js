@@ -36,6 +36,8 @@ import { createOnboardingRouter } from './routes/onboardingRoutes.js'
 import { createLegalRouter } from './routes/legalRoutes.js'
 import { createSupportRouter } from './routes/supportRoutes.js'
 import { createMonitoringRouter } from './routes/monitoringRoutes.js'
+import { createWhatsAppRouter } from './routes/whatsappRoutes.js'
+import { createFeeReminderRouter } from './routes/feeReminderRoutes.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
 import { rateLimitPerUser } from './middleware/rateLimitPerUser.js'
@@ -148,6 +150,8 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/support', createSupportRouter())
   app.use('/api/v1/monitoring', createMonitoringRouter())
   app.use('/api/v1/admin/monitoring', createMonitoringRouter())
+  app.use('/api/v1/whatsapp', createWhatsAppRouter())
+  app.use('/api/v1/fee-reminders', createFeeReminderRouter())
 
   // Manual Backup Verification trigger
   app.get('/api/v1/admin/backup/verify', async (_req, res) => {

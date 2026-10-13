@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Shield, Lock } from 'lucide-react'
+import { Shield } from 'lucide-react'
 
 export default function PrivacyPolicyPage() {
   const sections = [

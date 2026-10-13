@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   LifeBuoy,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  MessageSquare
+  CheckCircle
 } from 'lucide-react'
 
 export default function SupportTicketsPage() {

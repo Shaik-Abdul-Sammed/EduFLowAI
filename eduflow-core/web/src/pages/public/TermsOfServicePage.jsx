@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ShieldCheck, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 
 export default function TermsOfServicePage() {
   const sections = [

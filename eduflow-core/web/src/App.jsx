@@ -21,6 +21,7 @@ import HodCalendarPage from './pages/hod/HodCalendarPage'
 import AcademicCalendarPage from './pages/admin/AcademicCalendarPage'
 import PortalConnectionPage from './pages/admin/PortalConnectionPage'
 import AttendanceIntegrationPage from './pages/admin/AttendanceIntegrationPage'
+import AdminStaffManagementPage from './pages/admin/StaffManagementPage'
 import TimetableUploadPage from './pages/ai/officers/TimetableUploadPage'
 import OnboardingWizardPage from './pages/admin/OnboardingWizardPage'
 import TermsOfServicePage from './pages/public/TermsOfServicePage'
@@ -31,6 +32,8 @@ import SupportTicketsPage from './pages/admin/SupportTicketsPage'
 import SystemHealthPage from './pages/admin/SystemHealthPage'
 import InstitutionSettingsPage from './pages/admin/InstitutionSettingsPage'
 import UPICollectionPage from './pages/admin/UPICollectionPage'
+import WhatsAppAttendancePage from './pages/admin/WhatsAppAttendancePage'
+import FeeReminderPage from './pages/admin/FeeReminderPage'
 import DocsPage from './pages/public/DocsPage'
 import './App.css'
 import Layout from './components/Layout'
@@ -387,6 +390,14 @@ function App() {
           <Route
             path="/admin-dashboard/upi-collection"
             element={<UPICollectionPage />}
+          />
+          <Route
+            path="/admin-dashboard/whatsapp-attendance"
+            element={<WhatsAppAttendancePage />}
+          />
+          <Route
+            path="/admin-dashboard/fee-reminders"
+            element={<FeeReminderPage />}
           />
           <Route
             path="/admin-dashboard/insights/:domain"

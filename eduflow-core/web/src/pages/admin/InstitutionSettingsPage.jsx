@@ -4,8 +4,6 @@ import {
   Building,
   Phone,
   Calendar,
-  Globe,
-  Bell,
   Shield,
   CreditCard,
   Download,
@@ -58,14 +56,12 @@ export default function InstitutionSettingsPage() {
     }
   })
 
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
   const fetchSettings = async () => {
     try {
-      setLoading(true)
       const res = await fetch('/api/v1/institution/settings')
       const data = await res.json()
       if (data.settings) {
@@ -81,8 +77,6 @@ export default function InstitutionSettingsPage() {
       }
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoading(false)
     }
   }
 

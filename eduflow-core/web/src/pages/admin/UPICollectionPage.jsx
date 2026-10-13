@@ -4,15 +4,13 @@ import {
   Copy,
   Check,
   Send,
-  DollarSign,
   Share2,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react'
 
 export default function UPICollectionPage() {
-  const [upiId, setUpiId] = useState('ssit@icici')
-  const [institutionName, setInstitutionName] = useState('Sri Siddhartha Institute of Technology')
+  const [upiId] = useState('ssit@icici')
+  const [institutionName] = useState('Sri Siddhartha Institute of Technology')
   const [invoiceRef, setInvoiceRef] = useState('EDU-2026-0001')
   const [amount, setAmount] = useState('59000')
   const [copied, setCopied] = useState(false)
@@ -52,7 +50,7 @@ export default function UPICollectionPage() {
       } else {
         setManualStatus(`Manual payment recorded successfully for Ref #${manualRef}`)
       }
-    } catch (err) {
+    } catch {
       setManualStatus(`Payment recorded locally for Ref #${manualRef}`)
     } finally {
       setLoading(false)

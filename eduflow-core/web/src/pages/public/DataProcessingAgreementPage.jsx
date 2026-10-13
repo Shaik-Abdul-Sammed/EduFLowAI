@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { FileCheck, ShieldAlert } from 'lucide-react'
+import { FileCheck } from 'lucide-react'
 
 export default function DataProcessingAgreementPage() {
   const sections = [

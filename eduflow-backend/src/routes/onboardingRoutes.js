@@ -1,9 +1,19 @@
 import express from 'express'
+import multer from 'multer'
 import { OnboardingController } from '../controllers/OnboardingController.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { OnboardingAIController } from '../controllers/OnboardingAIController.js'
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+})
 
 export function createOnboardingRouter() {
   const router = express.Router()
+
+  // AI-Powered Prospectus Extraction
+  router.post('/ai-extract', upload.single('prospectus'), OnboardingAIController.extract)
+  router.post('/ai-apply', OnboardingAIController.apply)
 
   // Templates & status (can be fetched during onboarding flow)
   router.get('/templates/faculty.csv', OnboardingController.getFacultyTemplate)
@@ -20,3 +30,4 @@ export function createOnboardingRouter() {
 
   return router
 }
+
