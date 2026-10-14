@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: eduflow-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.onprem.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      web:
+        condition: service_started
+    networks:
+      - eduflow-network
+
+  backend:
+    build:
+      context: ../../eduflow-backend
+      dockerfile: Dockerfile
+    container_name: eduflow-backend
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - AI_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CORS_ORIGIN=https://${CAMPUS_DOMAIN}
+      - APP_PUBLIC_URL=https://${CAMPUS_DOMAIN}
+      - TRUST_PROXY=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eduflow-network
+
+  web:
+    build:
+      context: ../../eduflow-core/web
+      dockerfile: Dockerfile
+    container_name: eduflow-web
+    restart: always
+    environment:
+      - VITE_API_URL=https://${CAMPUS_DOMAIN}/api
+    networks:
+      - eduflow-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: eduflow-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-eduflow}
+      POSTGRES_USER: ${POSTGRES_USER:-eduflow_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeThisSecureDbPassword2026!}
+    volumes:
+      - eduflow-postgres-data:/var/lib/postgresql/data
+      - ../../eduflow-backend/src/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eduflow_admin} -d ${POSTGRES_DB:-eduflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eduflow-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: eduflow-ollama
+    restart: always
+    volumes:
+      - eduflow-ollama-data:/root/.ollama
+    # If GPU is present, un-comment below deploy section:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    networks:
+      - eduflow-network
+
+volumes:
+  eduflow-postgres-data:
+  eduflow-ollama-data:
+
+networks:
+  eduflow-network:
+    driver: bridge

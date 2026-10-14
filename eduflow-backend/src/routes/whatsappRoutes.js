@@ -21,5 +21,10 @@ export function createWhatsAppRouter() {
   router.get('/logs', WhatsAppWebhookController.getLogs)
   router.get('/faculty', WhatsAppWebhookController.getFaculty)
 
+  // Governance Summaries & Leave Management
+  router.get('/hod-daily-summary', WhatsAppWebhookController.getHodDailySummary)
+  router.get('/dean-attendance-summary', WhatsAppWebhookController.getDeanAttendanceSummary)
+  router.post('/leave', WhatsAppWebhookController.registerFacultyLeave)
+
   return router
 }

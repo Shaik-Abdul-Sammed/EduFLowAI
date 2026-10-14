@@ -52,7 +52,8 @@ export default function InstitutionSettingsPage() {
       gstNumber: '29AAAAA0000A1Z5',
       billingAddress: 'Maralur, Tumakuru, Karnataka',
       billingEmail: 'accounts@ssit.edu.in',
-      upiId: 'ssit@icici'
+      upiId: 'ssit@icici',
+      deanWaiverThreshold: 100000
     }
   })
 
@@ -346,6 +347,20 @@ export default function InstitutionSettingsPage() {
                 value={settings.billing.billingEmail}
                 onChange={(e) => setSettings({ ...settings, billing: { ...settings.billing, billingEmail: e.target.value } })}
               />
+            </div>
+            <div className="col-md-6 mt-3">
+              <label className="form-label fw-semibold">Dean Approval Required for Waivers Above (INR)</label>
+              <div className="input-group">
+                <span className="input-group-text">₹</span>
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="100000"
+                  value={settings.billing.deanWaiverThreshold || 100000}
+                  onChange={(e) => setSettings({ ...settings, billing: { ...settings.billing, deanWaiverThreshold: Number(e.target.value) } })}
+                />
+              </div>
+              <small className="text-muted">Statutory governance rule: Waivers exceeding this threshold automatically escalate to the Dean.</small>
             </div>
           </div>
         </div>

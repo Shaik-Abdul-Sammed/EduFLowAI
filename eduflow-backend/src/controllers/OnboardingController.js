@@ -305,6 +305,56 @@ STU202603,Rohan Verma,rohan.verma@student.edu,+919812345672,MECH,B.Tech,2024,3,7
     }
   }
 
+  static async step6Financial(req, res) {
+    try {
+      const institutionId = req.user?.institutionId || req.body.institutionId || 1
+      const {
+        collectionCenters = ['Main Office'],
+        financeOfficerName = 'Dr. Rajesh Deshmukh',
+        financeOfficerEmail = 'fo@college.edu',
+        accountsStaffEmails = 'accounts1@college.edu, accounts2@college.edu',
+        upiVpa = 'college@sbi',
+        gstNumber = '29AAAAA0000A1Z5',
+        billingAddress = ''
+      } = req.body
+
+      const financialData = {
+        collectionCenters,
+        financeOfficerName,
+        financeOfficerEmail,
+        accountsStaffEmails,
+        upiVpa,
+        gstNumber,
+        billingAddress
+      }
+
+      let stateObj = memoryOnboarding.get(Number(institutionId)) || { institutionId }
+      stateObj.financialData = financialData
+      stateObj.currentStep = Math.max(stateObj.currentStep || 1, 7)
+      memoryOnboarding.set(Number(institutionId), stateObj)
+
+      try {
+        await pool.query(
+          `INSERT INTO onboarding_progress (institution_id, current_step, financial_data, updated_at)
+           VALUES ($1, 7, $2, NOW())
+           ON CONFLICT (institution_id) DO UPDATE SET current_step = GREATEST(onboarding_progress.current_step, 7), financial_data = $2, updated_at = NOW()`,
+          [institutionId, JSON.stringify(financialData)]
+        )
+      } catch (dbErr) {
+        // memory fallback
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Financial structure configured',
+        nextStep: 7,
+        financialData
+      })
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
   static async finish(req, res) {
     try {
       const institutionId = req.user?.institutionId || req.body.institutionId || 1
@@ -324,13 +374,13 @@ STU202603,Rohan Verma,rohan.verma@student.edu,+919812345672,MECH,B.Tech,2024,3,7
 
       stateObj.isCompleted = true
       stateObj.completedAt = new Date().toISOString()
-      stateObj.currentStep = 6
+      stateObj.currentStep = 7
       memoryOnboarding.set(Number(institutionId), stateObj)
 
       try {
         await pool.query(
           `UPDATE onboarding_progress 
-           SET is_completed = TRUE, completed_at = NOW(), current_step = 6, updated_at = NOW() 
+           SET is_completed = TRUE, completed_at = NOW(), current_step = 7, updated_at = NOW() 
            WHERE institution_id = $1`,
           [institutionId]
         )
@@ -348,6 +398,7 @@ STU202603,Rohan Verma,rohan.verma@student.edu,+919812345672,MECH,B.Tech,2024,3,7
           facultyCount: (stateObj.faculty_data || stateObj.facultyData || []).length,
           studentsCount: (stateObj.students_data || stateObj.studentsData || []).length,
           academicYear: (stateObj.academic_data || stateObj.academicData || {}).academicYear || '2026-2027',
+          financialStructure: stateObj.financial_data || stateObj.financialData || { configured: true },
           calendarGenerated: true
         },
         redirectUrl: '/admin-dashboard'

@@ -8,8 +8,11 @@ function ProtectedRoute({ role }) {
     return <Navigate to="/login" replace />
   }
 
-  if (role && user?.role !== role) {
-    return <Navigate to="/entry" replace />
+  if (role) {
+    const allowed = Array.isArray(role) ? role : [role]
+    if (!allowed.includes(user?.role)) {
+      return <Navigate to="/entry" replace />
+    }
   }
 
   return <Outlet />

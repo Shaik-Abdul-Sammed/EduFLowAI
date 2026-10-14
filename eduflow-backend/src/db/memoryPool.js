@@ -108,7 +108,13 @@ export function createMemoryPool() {
     ],
     users: [...demoUsers],
     refreshTokens: [],
-    auditLogs: []
+    auditLogs: [],
+    currentInstitutionId: null,
+    bypassRls: false,
+    invoices: [
+      { id: 1, institution_id: 1, invoice_number: 'INV-101', total_amount: 50000 },
+      { id: 2, institution_id: 2, invoice_number: 'INV-201', total_amount: 75000 }
+    ]
   }
 
   function readRecentSearches(role, limit) {
@@ -303,12 +309,46 @@ export function createMemoryPool() {
         return { rows: [], rowCount: 1 }
       }
 
-      if (sql.includes('leads') || sql.includes('invoices') || sql.includes('delivered_reports') || sql.includes('naac_') || sql.includes('ai_insight_runs') || sql.includes('ai_prediction_snapshots') || sql.includes('nirf_') || sql.includes('staff_') || sql.includes('support_') || sql.includes('monitoring_') || sql.includes('onboarding_')) {
+      // RLS Session Setting
+      if (sql.includes('set_current_institution') || sql.includes('app.current_institution_id')) {
+        const match = sql.match(/set_current_institution\s*\(\s*(\d+)\s*\)/)
+        if (match) {
+          state.currentInstitutionId = Number(match[1])
+        } else if (params && params.length > 0 && params[0] !== undefined) {
+          state.currentInstitutionId = Number(params[0])
+        }
+        return { rows: [], rowCount: 1 }
+      }
+
+      if (sql.includes("set app.bypass_rls = 'on'") || sql.includes("bypass_rls = 'on'")) {
+        state.bypassRls = true
+        return { rows: [], rowCount: 1 }
+      }
+
+      if (sql.includes("set app.bypass_rls = 'off'") || sql.includes("bypass_rls = 'off'")) {
+        state.bypassRls = false
+        return { rows: [], rowCount: 1 }
+      }
+
+      // RLS Invoices query
+      if (sql.includes('from invoices')) {
+        let rows = [...state.invoices]
+        if (state.currentInstitutionId && !state.bypassRls) {
+          rows = rows.filter(r => r.institution_id === state.currentInstitutionId)
+        }
+        return { rows, rowCount: rows.length }
+      }
+
+      if (sql.includes('leads') || sql.includes('delivered_reports') || sql.includes('naac_') || sql.includes('ai_insight_runs') || sql.includes('ai_prediction_snapshots') || sql.includes('nirf_') || sql.includes('staff_') || sql.includes('support_') || sql.includes('monitoring_') || sql.includes('onboarding_')) {
         throw new Error('Table queries handled by repository in-memory fallback')
       }
 
       // Fallback for mock generic query
       return { rows: [], rowCount: 0 }
+    },
+    setSessionInstitution(instId, bypass = false) {
+      state.currentInstitutionId = instId ? Number(instId) : null
+      state.bypassRls = Boolean(bypass)
     },
     async end() {
       state.recentSearches = []

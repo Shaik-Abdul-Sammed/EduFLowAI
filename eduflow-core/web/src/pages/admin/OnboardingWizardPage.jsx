@@ -14,7 +14,8 @@ import {
   FileText,
   Upload,
   RefreshCw,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-react'
 
 export default function OnboardingWizardPage() {
@@ -77,6 +78,17 @@ export default function OnboardingWizardPage() {
     stateCode: 'KA',
     semesterType: 'ODD',
     workingDaysPerWeek: 6
+  })
+
+  // Step 6: Financial Structure & Governance
+  const [financial, setFinancial] = useState({
+    collectionCenters: ['Main Office', 'Hostel'],
+    financeOfficerName: 'Dr. Rajesh Deshmukh',
+    financeOfficerEmail: 'fo@ssit.edu.in',
+    accountsStaffEmails: 'accounts1@ssit.edu.in, accounts2@ssit.edu.in',
+    upiVpa: 'ssit@sbi',
+    gstNumber: '29AAAAA0000A1Z5',
+    billingAddress: 'Maralur, Tumakuru, Karnataka 572105'
   })
 
   const handleExtractPdf = async (isSample = false) => {
@@ -228,6 +240,13 @@ export default function OnboardingWizardPage() {
           body: JSON.stringify(academic)
         })
         if (!res.ok) throw new Error('Failed to save academic parameters')
+      } else if (step === 6) {
+        const res = await fetch('/api/v1/onboarding/step6-financial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(financial)
+        })
+        if (!res.ok) throw new Error('Failed to save financial structure')
       }
 
       setStep(prev => prev + 1)
@@ -245,7 +264,7 @@ export default function OnboardingWizardPage() {
       const res = await fetch('/api/v1/onboarding/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ institutionId: 1 })
+        body: JSON.stringify({ institutionId: 1, financial })
       })
       if (!res.ok) throw new Error('Failed to finalize onboarding')
       setSuccessMsg('Onboarding Completed Successfully! Redirecting to Dashboard...')
@@ -264,7 +283,7 @@ export default function OnboardingWizardPage() {
       {/* Header */}
       <div className="text-center mb-4">
         <h2 className="fw-bold">Institution Onboarding Wizard</h2>
-        <p className="text-muted">Set up your college profile, rosters, and 2026 academic calendar in 6 simple steps.</p>
+        <p className="text-muted">Set up your college profile, rosters, academic calendar, and financial governance in 7 simple steps.</p>
       </div>
 
       {/* Stepper Progress */}
@@ -276,7 +295,8 @@ export default function OnboardingWizardPage() {
             { num: 3, label: 'Faculty' },
             { num: 4, label: 'Students' },
             { num: 5, label: 'Academic Year' },
-            { num: 6, label: 'Review' }
+            { num: 6, label: 'Financial' },
+            { num: 7, label: 'Review' }
           ].map((s) => (
             <div key={s.num} className="d-flex flex-column align-items-center flex-fill position-relative">
               <div
@@ -699,6 +719,14 @@ export default function OnboardingWizardPage() {
             <h4 className="fw-bold mb-3 d-flex align-items-center">
               <Users className="me-2 text-primary" /> Step 3 — Faculty Roster Import
             </h4>
+
+            <div className="alert alert-info border d-flex align-items-center mb-3">
+              <AlertCircle size={18} className="me-2 text-primary flex-shrink-0" />
+              <div>
+                <strong>Note on Financial Governance:</strong> Faculty and student records will be created. Financial records must be imported separately by the Finance Officer.
+              </div>
+            </div>
+
             <div className="row g-3">
               <div className="col-md-6">
                 <div
@@ -746,6 +774,14 @@ export default function OnboardingWizardPage() {
             <h4 className="fw-bold mb-3 d-flex align-items-center">
               <GraduationCap className="me-2 text-primary" /> Step 4 — Student Roster Import
             </h4>
+
+            <div className="alert alert-info border d-flex align-items-center mb-3">
+              <AlertCircle size={18} className="me-2 text-primary flex-shrink-0" />
+              <div>
+                <strong>Note on Financial Governance:</strong> Faculty and student records will be created. Financial records must be imported separately by the Finance Officer.
+              </div>
+            </div>
+
             <div className="row g-3">
               <div className="col-md-6">
                 <div
@@ -850,7 +886,108 @@ export default function OnboardingWizardPage() {
         {step === 6 && (
           <div>
             <h4 className="fw-bold mb-3 d-flex align-items-center">
-              <CheckCircle className="me-2 text-success" /> Step 6 — Review & Launch
+              <CreditCard className="me-2 text-primary" /> Step 6 — Financial Structure & Scope
+            </h4>
+            <p className="text-muted">
+              Establish separated financial ownership. In real Indian universities, the Dean does not collect fees or issue reminders; a dedicated Finance Officer manages ledgers and collection centers.
+            </p>
+
+            <div className="card bg-light border-0 p-3 mb-4">
+              <h6 className="fw-bold mb-2">Authorized Fee Collection Centers</h6>
+              <div className="d-flex flex-wrap gap-3">
+                {['Main Office', 'Department', 'Hostel', 'Examination Cell'].map((center) => (
+                  <div key={center} className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={`center-${center}`}
+                      checked={financial.collectionCenters.includes(center)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFinancial({ ...financial, collectionCenters: [...financial.collectionCenters, center] })
+                        } else {
+                          setFinancial({ ...financial, collectionCenters: financial.collectionCenters.filter(c => c !== center) })
+                        }
+                      }}
+                    />
+                    <label className="form-check-label fw-semibold" htmlFor={`center-${center}`}>
+                      {center}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">Finance Officer Full Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="e.g. Dr. Rajesh Deshmukh"
+                  value={financial.financeOfficerName}
+                  onChange={(e) => setFinancial({ ...financial, financeOfficerName: e.target.value })}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">Finance Officer Email (Invite Admin Access)</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  placeholder="fo@institution.edu"
+                  value={financial.financeOfficerEmail}
+                  onChange={(e) => setFinancial({ ...financial, financeOfficerEmail: e.target.value })}
+                />
+              </div>
+              <div className="col-12">
+                <label className="form-label fw-semibold">Accounts Staff Email Invites (Comma-separated)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="accounts1@college.edu, accounts2@college.edu"
+                  value={financial.accountsStaffEmails}
+                  onChange={(e) => setFinancial({ ...financial, accountsStaffEmails: e.target.value })}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">UPI Virtual Payment Address (VPA)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="institution@bank"
+                  value={financial.upiVpa}
+                  onChange={(e) => setFinancial({ ...financial, upiVpa: e.target.value })}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">Institutional GSTIN / Tax ID</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="29AAAAA0000A1Z5"
+                  value={financial.gstNumber}
+                  onChange={(e) => setFinancial({ ...financial, gstNumber: e.target.value })}
+                />
+              </div>
+              <div className="col-12">
+                <label className="form-label fw-semibold">Official Billing Address</label>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  placeholder="Accounts Department, Administrative Block..."
+                  value={financial.billingAddress}
+                  onChange={(e) => setFinancial({ ...financial, billingAddress: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 7 */}
+        {step === 7 && (
+          <div>
+            <h4 className="fw-bold mb-3 d-flex align-items-center">
+              <CheckCircle className="me-2 text-success" /> Step 7 — Review & Launch
             </h4>
             <div className="bg-light p-3 rounded mb-3">
               <div className="row g-2">
@@ -860,10 +997,14 @@ export default function OnboardingWizardPage() {
                 <div className="col-md-6"><strong>Academic Year:</strong> {academic.academicYear} ({academic.semesterType})</div>
                 <div className="col-md-6"><strong>Holiday State:</strong> {academic.stateCode}</div>
                 <div className="col-md-6"><strong>Portal:</strong> {profile.subdomain}.eduflow.ai</div>
+                <div className="col-md-6"><strong>Finance Officer:</strong> {financial.financeOfficerName} ({financial.financeOfficerEmail})</div>
+                <div className="col-md-6"><strong>UPI VPA:</strong> {financial.upiVpa}</div>
+                <div className="col-md-6"><strong>GSTIN:</strong> {financial.gstNumber}</div>
+                <div className="col-md-6"><strong>Collection Centers:</strong> {financial.collectionCenters.join(', ')}</div>
               </div>
             </div>
             <div className="alert alert-info">
-              Clicking <strong>Finalize & Launch Platform</strong> will persist the institution setup, seed academic records, configure the 2026 academic calendar, and grant full administrative dashboard access.
+              Clicking <strong>Finalize & Launch Platform</strong> will persist the institution setup, configure separated financial governance, seed academic records, and grant administrative access.
             </div>
           </div>
         )}
@@ -879,7 +1020,7 @@ export default function OnboardingWizardPage() {
             <ArrowLeft size={16} className="me-1" /> Back
           </button>
 
-          {step < 6 ? (
+          {step < 7 ? (
             <button
               type="button"
               className="btn btn-primary d-flex align-items-center"

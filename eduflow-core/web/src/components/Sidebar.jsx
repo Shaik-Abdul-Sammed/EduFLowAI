@@ -153,9 +153,53 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
                 { to: '/admin-dashboard/nirf', icon: '🏆', label: 'NIRF Ranking' },
                 { to: '/admin-dashboard/insights', icon: '🧠', label: 'AI Insights' },
                 { to: '/admin-dashboard/leads', icon: '📈', label: 'Lead Management' },
-                { to: '/admin-dashboard/invoices', icon: '💳', label: 'Invoice Generator' },
-                { to: '/admin-dashboard/fee-reminders', icon: '🔔', label: 'Fee Reminders' },
+                { to: '/admin-dashboard/sso-config', icon: '🔐', label: 'SSO & Directory Setup' },
+                { to: '/admin-dashboard/compliance', icon: '🛡️', label: 'SOC 2 & DPDP Compliance' },
+                { to: '/admin-dashboard/live-data', icon: '🌐', label: 'Live Regulatory Feeds' },
+                { to: '/finance-dashboard', icon: '📊', label: 'Finance Overview (Read-Only)' },
                 { to: '/admin-dashboard/audit-logs', icon: '📋', label: 'Audit Logs' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {/* FINANCE OFFICER & ACCOUNTS STAFF ROLE LINKS */}
+          {(role === 'finance_officer' || role === 'accounts_staff') && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Financial Governance
+              </div>
+              {[
+                { to: '/finance-dashboard', icon: '📊', label: 'Financial Dashboard' },
+                { to: '/finance-dashboard/fee-reminders', icon: '🔔', label: 'Fee Reminders' },
+                { to: '/finance-dashboard/invoices', icon: '💳', label: 'Invoice Generator' },
+                { to: '/finance-dashboard/upi-collection', icon: '📲', label: 'UPI Collection' },
+                { to: '/finance-dashboard#reconciliation', icon: '🔄', label: 'Reconciliation Queue' },
+                { to: '/finance-dashboard#scholarships', icon: '🎓', label: 'Scholarships & Waivers' },
+                { to: '/officer/finance', icon: '🏛️', label: 'Financial Reports' },
+                { to: '/admin-dashboard/insights/finance', icon: '📈', label: 'Budget Tracking' },
               ].map(item => (
                 <NavLink
                   key={item.to}

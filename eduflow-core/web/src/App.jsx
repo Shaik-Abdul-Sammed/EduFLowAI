@@ -34,6 +34,10 @@ import InstitutionSettingsPage from './pages/admin/InstitutionSettingsPage'
 import UPICollectionPage from './pages/admin/UPICollectionPage'
 import WhatsAppAttendancePage from './pages/admin/WhatsAppAttendancePage'
 import FeeReminderPage from './pages/admin/FeeReminderPage'
+import FinanceDashboardPage from './pages/finance/FinanceDashboardPage'
+import SSOConfigPage from './pages/admin/SSOConfigPage'
+import CompliancePage from './pages/admin/CompliancePage'
+import LiveDataPage from './pages/admin/LiveDataPage'
 import DocsPage from './pages/public/DocsPage'
 import './App.css'
 import Layout from './components/Layout'
@@ -199,6 +203,10 @@ function RedirectHome() {
 
   if (user?.role === 'hod') {
     return <Navigate to="/hod-dashboard" replace />
+  }
+
+  if (user?.role === 'finance_officer' || user?.role === 'accounts_staff') {
+    return <Navigate to="/finance-dashboard" replace />
   }
 
   return <Navigate to={`/${user.role}-dashboard`} replace />
@@ -416,9 +424,27 @@ function App() {
             element={<AttendanceIntegrationPage />}
           />
           <Route
+            path="/admin-dashboard/sso-config"
+            element={<SSOConfigPage />}
+          />
+          <Route
+            path="/admin-dashboard/compliance"
+            element={<CompliancePage />}
+          />
+          <Route
+            path="/admin-dashboard/live-data"
+            element={<LiveDataPage />}
+          />
+          <Route
             path="/admin-dashboard/staff"
             element={<AdminStaffManagementPage />}
-          />
+        </Route>
+        
+        {/* Finance Governance Routes */}
+        <Route element={<ProtectedRoute role={['finance_officer', 'accounts_staff', 'admin']} />}>
+          <Route path="/finance-dashboard" element={<FinanceDashboardPage />} />
+          <Route path="/finance-dashboard/fee-reminders" element={<FeeReminderPage />} />
+          <Route path="/finance-dashboard/upi-collection" element={<UPICollectionPage />} />
         </Route>
 
           <Route path="/visitor-dashboard" element={<VisitorDashboard />} />

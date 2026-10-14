@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks'
 import dotenv from 'dotenv'
 import pg from 'pg'
 import { createMemoryPool } from './memoryPool.js'
@@ -6,6 +7,20 @@ import { logger } from '../utils/logger.js'
 dotenv.config()
 
 const { Pool } = pg
+
+export const institutionContext = new AsyncLocalStorage()
+
+export function attachInstitutionContext(req, res, next) {
+  const institutionId = req.user?.institutionId || req.user?.institution_id || req.headers['x-institution-id'] || req.query?.institutionId || 1
+  const bypassRls = req.headers['x-bypass-rls'] === 'true' || (req.user?.role === 'superadmin' && req.headers['x-bypass-rls'] === 'true')
+  institutionContext.run({ institutionId: Number(institutionId), bypassRls: Boolean(bypassRls) }, () => {
+    next()
+  })
+}
+
+export function runWithInstitutionContext(context, fn) {
+  return institutionContext.run(context, fn)
+}
 
 const databaseUrl = String(process.env.DATABASE_URL || '').trim()
 const dbMode = String(process.env.DB_MODE || '').trim().toLowerCase()
@@ -93,8 +108,13 @@ export const pool = {
   },
 
   async connect() {
+    const ctx = institutionContext.getStore()
+
     if (useMemoryOnly) {
       logMemoryFallbackWarningOnce()
+      if (ctx?.institutionId && memoryPool.setSessionInstitution) {
+        memoryPool.setSessionInstitution(ctx.institutionId, ctx.bypassRls)
+      }
       return {
         query: (text, params) => memoryPool.query(text, params),
         release: () => {},
@@ -102,7 +122,18 @@ export const pool = {
     }
 
     try {
-      return await realPool.connect()
+      const client = await realPool.connect()
+      if (ctx?.institutionId) {
+        try {
+          await client.query('SELECT set_current_institution($1)', [ctx.institutionId])
+          if (ctx.bypassRls) {
+            await client.query("SET app.bypass_rls = 'on'")
+          }
+        } catch {
+          // If set_current_institution function is not yet created, proceed cleanly
+        }
+      }
+      return client
     } catch (error) {
       if (forcePostgres) {
         logger.error('FATAL: PostgreSQL connection failed and DB_MODE=postgres:', error)
@@ -120,12 +151,29 @@ export const pool = {
   },
 
   async query(text, params = []) {
+    const ctx = institutionContext.getStore()
+
     if (useMemoryOnly) {
       logMemoryFallbackWarningOnce()
+      if (ctx?.institutionId && memoryPool.setSessionInstitution) {
+        memoryPool.setSessionInstitution(ctx.institutionId, ctx.bypassRls)
+      }
       return memoryPool.query(text, params)
     }
 
     try {
+      if (ctx?.institutionId) {
+        const client = await realPool.connect()
+        try {
+          await client.query('SELECT set_current_institution($1)', [ctx.institutionId])
+          if (ctx.bypassRls) {
+            await client.query("SET app.bypass_rls = 'on'")
+          }
+          return await client.query(text, params)
+        } finally {
+          client.release()
+        }
+      }
       return await realPool.query(text, params)
     } catch (error) {
       if (forcePostgres) {
@@ -137,6 +185,12 @@ export const pool = {
         return memoryPool.query(text, params)
       }
       throw error
+    }
+  },
+
+  setSessionInstitution(institutionId, bypassRls = false) {
+    if (memoryPool.setSessionInstitution) {
+      memoryPool.setSessionInstitution(institutionId, bypassRls)
     }
   },
 

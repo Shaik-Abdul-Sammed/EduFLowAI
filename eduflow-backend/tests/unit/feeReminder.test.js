@@ -39,17 +39,18 @@ describe('FeeReminderService Unit Tests', () => {
     assert.ok(t2.subject.includes('Important Notice'))
     assert.ok(t2.emailBody.includes('late surcharge'))
 
-    // Tier 3: 31-60 days (urgent with portal hold warning)
+    // Tier 3: 31-60 days (urgent with portal hold warning by Finance Officer)
     const t3 = FeeReminderService.generateReminderMessage(sampleInv, 45)
     assert.equal(t3.tier, 'tier3')
     assert.ok(t3.subject.includes('URGENT'))
     assert.ok(t3.emailBody.includes('portal suspension'))
+    assert.ok(t3.emailBody.includes('Finance Officer'))
 
-    // Tier 4: 60+ days (final notice with HOD/Dean escalation)
+    // Tier 4: 60+ days (final statutory notice with Registrar escalation)
     const t4 = FeeReminderService.generateReminderMessage(sampleInv, 75)
     assert.equal(t4.tier, 'tier4')
     assert.ok(t4.subject.includes('FINAL STATUTORY NOTICE'))
-    assert.ok(t4.emailBody.includes('escalated to the Dean'))
+    assert.ok(t4.emailBody.includes("Registrar's Office"))
   })
 
   test('dispatches reminder and records in fee reminder log', async () => {

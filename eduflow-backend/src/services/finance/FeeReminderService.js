@@ -163,13 +163,13 @@ export class FeeReminderService {
     } else if (daysOverdue <= 60) {
       tier = 'tier3'
       subject = `URGENT: Fee Clearance Required - Academic Portal Hold Warning (${invNo})`
-      emailBody = `Dear ${student} & Parent,\n\nURGENT: Your fee payment of ₹${amount} (${invNo}) is overdue by ${daysOverdue} days.\n\nUnder university regulations, accounts unpaid for over 30 days are scheduled for temporary academic portal suspension and exam hall ticket hold. Please settle the pending dues within 48 hours.\n\nOffice of Finance & Admissions\nEduFlow Institution Management`
-      whatsappBody = `🚨 *URGENT ACTION REQUIRED*\nDear ${student}, your fee of *₹${amount}* is ${daysOverdue} days overdue. Academic portal & hall-ticket holds will take effect unless cleared within 48 hrs. Contact Accounts immediately.`
+      emailBody = `Dear ${student} & Parent,\n\nURGENT: Your fee payment of ₹${amount} (${invNo}) is overdue by ${daysOverdue} days.\n\nUnder university regulations, accounts unpaid for over 30 days are scheduled for temporary academic portal suspension and exam hall ticket hold by the Finance Officer. Please settle the pending dues within 48 hours.\n\nOffice of the Finance Officer\nEduFlow Institution Management`
+      whatsappBody = `🚨 *URGENT ACTION REQUIRED*\nDear ${student}, your fee of *₹${amount}* is ${daysOverdue} days overdue. Academic portal & hall-ticket holds initiated by Finance Officer will take effect unless cleared within 48 hrs. Contact Accounts immediately.`
     } else {
       tier = 'tier4'
-      subject = `FINAL STATUTORY NOTICE: Serious Overdue Balance - Escalated to HOD & Dean (${invNo})`
-      emailBody = `Dear ${student} and Respected Parents,\n\nFINAL NOTICE: Your outstanding balance of ₹${amount} (${invNo}) has now exceeded ${daysOverdue} days past the scheduled due date.\n\nThis case has been formally escalated to the Dean of Academic Affairs and Head of Department for administrative hearing. Continued non-payment may result in deregistration.\n\nDean of Academic Affairs\nOffice of Institutional Governance`
-      whatsappBody = `⛔ *FINAL STATUTORY NOTICE*\nDear ${student}, outstanding fee *₹${amount}* is ${daysOverdue} days overdue. This file has been escalated to the Dean & HOD. Immediate settlement required.`
+      subject = `FINAL STATUTORY NOTICE: Serious Overdue Balance - Escalated to Registrar's Office (${invNo})`
+      emailBody = `Dear ${student} and Respected Parents,\n\nFINAL STATUTORY NOTICE: Your outstanding balance of ₹${amount} (${invNo}) has now exceeded ${daysOverdue} days past the scheduled due date.\n\nThis file has been formally escalated to the Registrar's Office for statutory action and potential administrative deregistration. Immediate settlement is mandatory.\n\nOffice of the Registrar\nEduFlow Institution Management`
+      whatsappBody = `⛔ *FINAL STATUTORY NOTICE*\nDear ${student}, outstanding fee *₹${amount}* is ${daysOverdue} days overdue. This file has been escalated to the Registrar's Office for statutory action. Immediate settlement required.`
     }
 
     return {

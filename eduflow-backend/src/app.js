@@ -38,10 +38,14 @@ import { createSupportRouter } from './routes/supportRoutes.js'
 import { createMonitoringRouter } from './routes/monitoringRoutes.js'
 import { createWhatsAppRouter } from './routes/whatsappRoutes.js'
 import { createFeeReminderRouter } from './routes/feeReminderRoutes.js'
+import academicEscalationRouter from './routes/academicEscalationRoutes.js'
+import { createSSORouter } from './routes/ssoRoutes.js'
+import { createComplianceRouter } from './routes/complianceRoutes.js'
+import { createLiveDataRouter } from './routes/liveDataRoutes.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
 import { rateLimitPerUser } from './middleware/rateLimitPerUser.js'
-import { pool } from './db/pool.js'
+import { pool, attachInstitutionContext } from './db/pool.js'
 import { httpLogger, productionRateLimiter } from './middleware/productionHardening.js'
 import helmet from 'helmet'
 import { requestTimeout } from './middleware/timeout.js'
@@ -75,6 +79,7 @@ export function createApp({ db } = {}) {
   app.use(express.json())
   app.use(securityHeadersMiddleware)
   app.use(httpLogger)
+  app.use(attachInstitutionContext)
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'eduflow-backend', version: '1.0.0', timestamp: new Date().toISOString() })
@@ -152,6 +157,12 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/admin/monitoring', createMonitoringRouter())
   app.use('/api/v1/whatsapp', createWhatsAppRouter())
   app.use('/api/v1/fee-reminders', createFeeReminderRouter())
+  app.use('/api/v1/escalations', academicEscalationRouter)
+  app.use('/api/v1/sso', createSSORouter())
+  app.use('/api/v1/admin/sso', createSSORouter())
+  app.use('/api/v1/compliance', createComplianceRouter())
+  app.use('/api/v1/admin/compliance', createComplianceRouter())
+  app.use('/api/v1/live-data', createLiveDataRouter())
 
   // Manual Backup Verification trigger
   app.get('/api/v1/admin/backup/verify', async (_req, res) => {

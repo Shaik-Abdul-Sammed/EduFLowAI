@@ -4,6 +4,21 @@ import { useAuth } from '../../hooks/useAuth'
 
 export default function FeeReminderPage() {
   const { user } = useAuth()
+  const role = user?.role || 'admin'
+  const isFinanceOfficer = role === 'finance_officer'
+  const isAccountsStaff = role === 'accounts_staff'
+  const isAdminDean = role === 'admin'
+  const isHOD = role === 'hod'
+
+  // Access rules:
+  // finance_officer: full access
+  // accounts_staff: can send reminders, but cannot edit settings/templates
+  // admin: read-only view
+  // hod: can see department overdue list, but cannot send reminders
+  const canSendReminders = isFinanceOfficer || isAccountsStaff
+  const canConfigureSettings = isFinanceOfficer
+  const canModifyTemplates = isFinanceOfficer
+
   const [loading, setLoading] = useState(true)
   const [pendingData, setPendingData] = useState({
     summary: { totalOverdueAccounts: 0, totalOverdueAmount: 0, averageOverdueDays: 0 },
@@ -18,7 +33,7 @@ export default function FeeReminderPage() {
     tier2Days: 30,
     tier3Days: 60,
     upiId: 'ssit@icici',
-    escalationEmail: 'dean.academics@ssit.edu.in'
+    escalationEmail: 'finance.officer@ssit.edu.in'
   })
 
   const [activeTierTab, setActiveTierTab] = useState('ALL')
@@ -236,13 +251,15 @@ export default function FeeReminderPage() {
           >
             {loading ? 'Refreshing...' : '🔄 Refresh Data'}
           </button>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => handleSendReminders()}
-            disabled={sending || allInvoices.length === 0}
-          >
-            {sending ? 'Dispatching...' : '🚀 Run Scheduled Reminders Now'}
-          </button>
+          {canSendReminders && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => handleSendReminders()}
+              disabled={sending || allInvoices.length === 0}
+            >
+              {sending ? 'Dispatching...' : '🚀 Run Scheduled Reminders Now'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -519,14 +536,14 @@ export default function FeeReminderPage() {
                 <div className="accordion-item border-0 mb-2 shadow-sm rounded">
                   <h2 className="accordion-header" id="headingThree">
                     <button className="accordion-button bg-light fw-semibold text-danger collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
-                      Tier 3: Urgent Notice + Academic Portal Hold (31–60 Days Overdue)
+                      Tier 3: Urgent Notice + Finance Officer Portal Hold (31–60 Days Overdue)
                     </button>
                   </h2>
                   <div id="collapseThree" className="accordion-collapse collapse">
                     <div className="accordion-body small bg-light-subtle">
                       <strong>Subject:</strong> URGENT: Fee Clearance Required - Academic Portal Hold Warning (EDU-2026-XXXX)<br />
-                      <strong>Email Content:</strong> "Under university regulations, accounts unpaid for over 30 days are scheduled for temporary academic portal suspension and exam hall ticket hold. Please settle within 48 hours."<br />
-                      <strong className="text-success">WhatsApp:</strong> "🚨 *URGENT ACTION REQUIRED* - Academic portal & hall-ticket holds will take effect unless cleared within 48 hrs."
+                      <strong>Email Content:</strong> "Under university regulations, accounts unpaid for over 30 days are scheduled for temporary academic portal suspension and exam hall ticket hold by the Finance Officer. Please settle within 48 hours."<br />
+                      <strong className="text-success">WhatsApp:</strong> "🚨 *URGENT ACTION REQUIRED* - Academic portal & hall-ticket holds initiated by Finance Officer will take effect unless cleared within 48 hrs."
                     </div>
                   </div>
                 </div>
@@ -535,14 +552,14 @@ export default function FeeReminderPage() {
                 <div className="accordion-item border-0 mb-2 shadow-sm rounded">
                   <h2 className="accordion-header" id="headingFour">
                     <button className="accordion-button bg-light fw-semibold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
-                      Tier 4: Final Statutory Notice + Escalation to Dean & HOD (60+ Days)
+                      Tier 4: Final Statutory Notice + Escalation to Registrar's Office (60+ Days)
                     </button>
                   </h2>
                   <div id="collapseFour" className="accordion-collapse collapse">
                     <div className="accordion-body small bg-light-subtle">
-                      <strong>Subject:</strong> FINAL STATUTORY NOTICE: Serious Overdue Balance - Escalated to HOD & Dean<br />
-                      <strong>Email Content:</strong> "This case has been formally escalated to the Dean of Academic Affairs and Head of Department for administrative hearing. Continued non-payment may result in deregistration."<br />
-                      <strong className="text-success">WhatsApp:</strong> "⛔ *FINAL STATUTORY NOTICE* - Outstanding fee is overdue. This file has been escalated to the Dean & HOD. Immediate settlement required."
+                      <strong>Subject:</strong> FINAL STATUTORY NOTICE: Serious Overdue Balance - Escalated to Registrar's Office<br />
+                      <strong>Email Content:</strong> "This file has been formally escalated to the Registrar's Office for statutory action and potential administrative deregistration. Immediate settlement is mandatory."<br />
+                      <strong className="text-success">WhatsApp:</strong> "⛔ *FINAL STATUTORY NOTICE* - Outstanding fee is overdue. This file has been escalated to the Registrar's Office for statutory action. Immediate settlement required."
                     </div>
                   </div>
                 </div>
@@ -702,9 +719,9 @@ export default function FeeReminderPage() {
                 <button
                   type="submit"
                   className="btn btn-primary btn-sm w-100"
-                  disabled={savingSettings}
+                  disabled={savingSettings || !canConfigureSettings}
                 >
-                  {savingSettings ? 'Saving...' : 'Save Reminder Cadence'}
+                  {savingSettings ? 'Saving...' : canConfigureSettings ? 'Save Reminder Cadence' : '🔒 Read-Only (Finance Officer Only)'}
                 </button>
               </form>
             </div>

@@ -294,22 +294,49 @@ export default function DashboardHome({ role, routes = [] }) {
               <div
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
-                onClick={() => navigate('/admin-dashboard/invoices')}
+                onClick={() => navigate('/finance-dashboard')}
                 role="button"
                 tabIndex={0}
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
-                  <span style={{ fontSize: '1.25rem' }}>💳</span>
-                  <span className="badge bg-danger-subtle text-danger small">Unpaid</span>
+                  <span style={{ fontSize: '1.25rem' }}>🏛️</span>
+                  <span className="badge bg-primary-subtle text-primary small">Finance Overview</span>
                 </div>
-                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#DC2626', lineHeight: 1.1 }}>
-                  {adminMetrics.unpaidInvoices} <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748B' }}>
-                    (₹{Number(adminMetrics.unpaidInvoicesAmount).toLocaleString('en-IN')})
-                  </span>
+                <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#7C3AED', lineHeight: 1.1 }}>
+                  98.8%
                 </div>
                 <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--app-text-muted)', textTransform: 'uppercase', marginTop: '0.3rem', letterSpacing: '0.04em' }}>
-                  Unpaid Invoices
+                  Collection Efficiency (View)
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dean Policy Approvals Alert Bar */}
+          <div className="card border-0 shadow-sm mb-4 bg-light p-3" style={{ borderRadius: '1rem' }}>
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div className="d-flex align-items-center gap-2">
+                <span style={{ fontSize: '1.5rem' }}>⚖️</span>
+                <div>
+                  <strong className="d-block small">Dean Financial Policy & Sanctions Desk</strong>
+                  <span className="text-muted small">
+                    Institutional Governance Rule: Dean statutory review required for Fee Waivers &gt; ₹1 Lakh.
+                  </span>
+                </div>
+              </div>
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => navigate('/finance-dashboard#scholarships')}
+                >
+                  Review Pending Waivers (1)
+                </button>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() => navigate('/admin-dashboard/settings')}
+                >
+                  Waiver Threshold Settings
+                </button>
               </div>
             </div>
           </div>

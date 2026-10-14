@@ -3,6 +3,7 @@ import { pool } from '../../db/pool.js'
 // In-memory fallback stores for tests and development without DB
 const stagedAttendanceStore = []
 const messageLogStore = []
+const facultyLeaveStore = []
 
 export class WhatsAppAttendance {
   static getStagedStore() {
@@ -13,9 +14,54 @@ export class WhatsAppAttendance {
     return messageLogStore
   }
 
+  static getFacultyLeaveStore() {
+    return facultyLeaveStore
+  }
+
   static clearStores() {
     stagedAttendanceStore.length = 0
     messageLogStore.length = 0
+    facultyLeaveStore.length = 0
+  }
+
+  /**
+   * Register approved faculty leave
+   */
+  static registerFacultyLeave(facultyId, date, reason = 'Personal Leave', phone = '') {
+    const rec = {
+      id: facultyLeaveStore.length + 1,
+      faculty_id: facultyId,
+      date,
+      reason,
+      phone
+    }
+    facultyLeaveStore.push(rec)
+    return rec
+  }
+
+  /**
+   * Check if faculty is on leave for a given date
+   */
+  static isFacultyOnLeave(facultyId, date = new Date().toISOString().split('T')[0], phone = '') {
+    return facultyLeaveStore.some(l => 
+      (l.faculty_id === facultyId || (phone && l.phone === phone)) &&
+      l.date === date
+    )
+  }
+
+  /**
+   * Match course & section against known faculty assignments
+   */
+  static matchFacultyCourse(faculty, courseCode, section) {
+    if (!faculty || !faculty.courses) return false
+    const targetCode = (courseCode || '').toUpperCase()
+    const targetSec = (section || '').toUpperCase()
+    const fullSpec = `${targetCode} ${targetSec}`.trim()
+
+    return faculty.courses.some(c => {
+      const upper = c.toUpperCase()
+      return upper === fullSpec || upper === targetCode || upper.includes(targetCode) || (faculty.department && faculty.department.toUpperCase() === targetCode)
+    })
   }
 
   /**
@@ -130,7 +176,7 @@ export class WhatsAppAttendance {
   /**
    * Stage parsed attendance into database or memory store
    */
-  static async stageAttendance(parsedData, institutionId = 1) {
+  static async stageAttendance(parsedData, institutionId = 1, initialStatus = 'PENDING') {
     const stagedRecord = {
       id: stagedAttendanceStore.length + 1,
       institution_id: institutionId,
@@ -141,7 +187,7 @@ export class WhatsAppAttendance {
       present_count: parsedData.presentCount,
       absent_count: parsedData.absentCount,
       date: parsedData.date,
-      status: 'PENDING',
+      status: initialStatus,
       raw_message: parsedData.rawMessage,
       created_at: new Date().toISOString()
     }
@@ -152,7 +198,7 @@ export class WhatsAppAttendance {
       const res = await pool.query(
         `INSERT INTO whatsapp_staged_attendance 
          (institution_id, faculty_id, faculty_phone, course_code, section, present_count, absent_count, date, status, raw_message)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDING', $9)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           institutionId,
@@ -163,6 +209,7 @@ export class WhatsAppAttendance {
           parsedData.presentCount,
           parsedData.absentCount,
           parsedData.date,
+          initialStatus,
           parsedData.rawMessage
         ]
       )

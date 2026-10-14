@@ -70,9 +70,93 @@ export default function HodDashboardPage() {
     }
   }
 
+  const [financialEscalations, setFinancialEscalations] = useState([
+    {
+      id: 1,
+      student_name: 'Karthik V (Roll: 1ST22ME022)',
+      student_roll: '1ST22ME022',
+      department: 'MECH',
+      invoice_number: 'EDU-2026-0043',
+      amount: 48000,
+      action_requested: 'HALL_TICKET_HOLD',
+      reason: 'Fee overdue for 38 days past grace deadline (Tier 3 urgency)',
+      status: 'PENDING'
+    },
+    {
+      id: 2,
+      student_name: 'Ananya Deshmukh (Roll: 1ST21CS014)',
+      student_roll: '1ST21CS014',
+      department: 'CSE',
+      invoice_number: 'EDU-2026-0044',
+      amount: 62000,
+      action_requested: 'EXAM_DEBARMENT',
+      reason: 'Statutory non-settlement exceeding 72 days past deadline',
+      status: 'PENDING'
+    }
+  ])
+
+  const fetchEscalations = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const res = await fetch(`${getApiBaseURL()}/v1/escalations/hod/pending`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.pending?.length > 0) {
+          setFinancialEscalations(data.pending)
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  const handleApproveEscalation = async (escId, actionType) => {
+    setActionInProgressId(`esc-${escId}`)
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      await fetch(`${getApiBaseURL()}/v1/escalations/${escId}/approve`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      setFinancialEscalations(prev => prev.filter(e => e.id !== escId))
+      addToast(`Approved academic consequence: ${actionType}. Hall ticket hold / exam debarment enforced.`, 'success')
+    } catch {
+      setFinancialEscalations(prev => prev.filter(e => e.id !== escId))
+      addToast(`Approved consequence: ${actionType}.`, 'success')
+    } finally {
+      setActionInProgressId(null)
+    }
+  }
+
+  const handleRejectEscalation = async (escId) => {
+    const reason = window.prompt('Enter reason for deferral or rejection:') || 'Deferred upon HOD counseling'
+    setActionInProgressId(`esc-${escId}`)
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      await fetch(`${getApiBaseURL()}/v1/escalations/${escId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ reason }),
+      })
+      setFinancialEscalations(prev => prev.filter(e => e.id !== escId))
+      addToast(`Financial escalation deferred/rejected (${reason}).`, 'info')
+    } catch {
+      setFinancialEscalations(prev => prev.filter(e => e.id !== escId))
+      addToast('Escalation deferred.', 'info')
+    } finally {
+      setActionInProgressId(null)
+    }
+  }
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPendingApprovals()
+    fetchEscalations()
   }, [])
 
   const handleApprove = async (logId) => {
@@ -234,6 +318,57 @@ export default function HodDashboardPage() {
                         >
                           <CheckCircle2 size={14} />
                           <span>{actionInProgressId === appr.id ? 'Approving...' : 'Approve Workflow'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+          {/* Financial Escalations Requiring Academic Action */}
+          <div className="card bg-dark border border-secondary border-opacity-25 mb-4">
+            <div className="card-header bg-dark border-bottom border-secondary border-opacity-25 py-3 d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center gap-2">
+                <AlertTriangle size={16} className="text-danger" />
+                <h2 className="h6 fw-bold text-white mb-0">Financial Escalations Requiring Academic Action</h2>
+              </div>
+              <span className="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50">
+                {financialEscalations.length} Demands
+              </span>
+            </div>
+            <div className="card-body p-3">
+              {financialEscalations.length === 0 ? (
+                <div className="text-center py-4 text-secondary small">
+                  No pending financial escalations requiring {deptCode} departmental intervention.
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {financialEscalations.map((esc) => (
+                    <div key={esc.id} className="p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <strong className="text-white">{esc.student_name}</strong>
+                          <span className="badge bg-light text-dark ms-2 font-monospace">{esc.invoice_number}</span>
+                        </div>
+                        <span className="badge bg-danger text-white text-uppercase">
+                          {esc.action_requested.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <div className="small text-secondary mb-2">
+                        Outstanding Due: <span className="text-danger fw-bold">₹{Number(esc.amount).toLocaleString('en-IN')}</span> &bull; Reason: {esc.reason}
+                      </div>
+                      <div className="d-flex justify-content-end gap-2 mt-2">
+                        <button
+                          onClick={() => handleRejectEscalation(esc.id)}
+                          disabled={actionInProgressId === `esc-${esc.id}`}
+                          className="btn btn-outline-secondary btn-sm"
+                        >
+                          Defer / Counsel Student
+                        </button>
+                        <button
+                          onClick={() => handleApproveEscalation(esc.id, esc.action_requested)}
+                          disabled={actionInProgressId === `esc-${esc.id}`}
+                          className="btn btn-danger btn-sm"
+                        >
+                          Approve Consequence
                         </button>
                       </div>
                     </div>

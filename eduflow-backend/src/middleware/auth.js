@@ -39,3 +39,81 @@ export function requireRole(...roles) {
     next()
   }
 }
+
+/**
+ * Middleware to enforce department scope and finance scope.
+ * Validates that users with departmental or financial restrictions operate strictly within their assigned boundaries.
+ */
+export function requireDepartmentScope(allowedScopes = []) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' })
+    }
+
+    const { role, departmentId, finance_scope, financeScope } = req.user
+    const effectiveFinanceScope = finance_scope || financeScope
+
+    // Global administrative roles bypass specific departmental constraints
+    if (role === 'admin' || role === 'registrar') {
+      return next()
+    }
+
+    // Finance roles validation
+    if (role === 'finance_officer' || role === 'accounts_staff') {
+      if (allowedScopes.length > 0) {
+        if (!effectiveFinanceScope || (!allowedScopes.includes(effectiveFinanceScope) && effectiveFinanceScope !== 'INSTITUTION')) {
+          return res.status(403).json({
+            error: `Forbidden: User finance_scope (${effectiveFinanceScope || 'NONE'}) lacks required scope (${allowedScopes.join(', ')})`
+          })
+        }
+      }
+      return next()
+    }
+
+    // HOD or faculty departmental validation
+    if (role === 'hod' || role === 'faculty') {
+      const targetDept = req.params.departmentId || req.query.departmentId || req.body?.departmentId
+      if (targetDept && departmentId && String(targetDept) !== String(departmentId)) {
+        return res.status(403).json({ error: 'Forbidden: Cannot access departmental resources outside assigned department' })
+      }
+      return next()
+    }
+
+    next()
+  }
+}
+
+/**
+ * Explicit middleware for finance scope checking
+ * Allowed scopes: 'INSTITUTION', 'DEPARTMENT', 'HOSTEL', 'EXAMINATION', 'SCHOLARSHIP'
+ */
+export function requireFinanceScope(...scopes) {
+  const allowed = scopes.flat()
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' })
+    }
+
+    if (req.user.role === 'admin' || req.user.role === 'registrar') {
+      return next()
+    }
+
+    const userScope = req.user.finance_scope || req.user.financeScope
+    if (!userScope) {
+      return res.status(403).json({ error: 'Forbidden: User has no finance scope assigned' })
+    }
+
+    if (userScope === 'INSTITUTION') {
+      return next()
+    }
+
+    if (allowed.length > 0 && !allowed.includes(userScope)) {
+      return res.status(403).json({
+        error: `Forbidden: Finance scope ${userScope} not authorized for required scope(s): ${allowed.join(', ')}`
+      })
+    }
+
+    next()
+  }
+}
+

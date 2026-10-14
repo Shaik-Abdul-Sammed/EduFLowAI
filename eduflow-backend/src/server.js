@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import { createApp } from './app.js'
 import { Server } from 'socket.io'
+import { SocketService } from './services/realtime/SocketService.js'
 import { validateEnv } from './utils/validateEnv.js'
 import { logger } from './utils/logger.js'
 import { pool } from './db/pool.js'
@@ -79,13 +80,8 @@ async function startServer() {
       const server = await listenOnPort(port)
       setupGracefulShutdown(server)
       
-      // Initialize Socket.io for Live User GPS tracking
-      const io = new Server(server, {
-        cors: {
-          origin: '*',
-          methods: ['GET', 'POST']
-        }
-      })
+      // Initialize Socket.IO with multi-tenant rooms and authentication
+      const io = SocketService.attachSocketIO(server)
       
       io.on('connection', (socket) => {
         console.log(`Socket connected: ${socket.id}`)

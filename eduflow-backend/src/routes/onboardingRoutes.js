@@ -26,6 +26,7 @@ export function createOnboardingRouter() {
   router.post('/step3-faculty', OnboardingController.step3Faculty)
   router.post('/step4-students', OnboardingController.step4Students)
   router.post('/step5-academic', OnboardingController.step5Academic)
+  router.post('/step6-financial', OnboardingController.step6Financial)
   router.post('/finish', OnboardingController.finish)
 
   return router
