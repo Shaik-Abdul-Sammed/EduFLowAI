@@ -74,6 +74,10 @@ function isConnectionFailure(error) {
 }
 
 export const pool = {
+  get isMemoryMode() {
+    return useMemoryOnly || hasLoggedMemoryWarning || (pool.getDbStatus && pool.getDbStatus().mode === 'memory')
+  },
+
   getDbStatus() {
     if (forcePostgres) {
       return { mode: 'postgres', persistent: true }
@@ -112,8 +116,8 @@ export const pool = {
 
     if (useMemoryOnly) {
       logMemoryFallbackWarningOnce()
-      if (ctx?.institutionId && memoryPool.setSessionInstitution) {
-        memoryPool.setSessionInstitution(ctx.institutionId, ctx.bypassRls)
+      if (memoryPool.setSessionInstitution) {
+        memoryPool.setSessionInstitution(ctx?.institutionId || null, ctx?.bypassRls || false)
       }
       return {
         query: (text, params) => memoryPool.query(text, params),
@@ -155,8 +159,8 @@ export const pool = {
 
     if (useMemoryOnly) {
       logMemoryFallbackWarningOnce()
-      if (ctx?.institutionId && memoryPool.setSessionInstitution) {
-        memoryPool.setSessionInstitution(ctx.institutionId, ctx.bypassRls)
+      if (memoryPool.setSessionInstitution) {
+        memoryPool.setSessionInstitution(ctx?.institutionId || null, ctx?.bypassRls || false)
       }
       return memoryPool.query(text, params)
     }
@@ -168,9 +172,14 @@ export const pool = {
           await client.query('SELECT set_current_institution($1)', [ctx.institutionId])
           if (ctx.bypassRls) {
             await client.query("SET app.bypass_rls = 'on'")
+          } else {
+            await client.query("SET app.bypass_rls = 'off'")
           }
           return await client.query(text, params)
         } finally {
+          try {
+            await client.query("SET app.bypass_rls = 'off'")
+          } catch {}
           client.release()
         }
       }

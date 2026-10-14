@@ -16,6 +16,18 @@ BEGIN
 END
 $$;
 
+-- Ensure institution_id exists on multi-tenant tables
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'invoices') THEN
+    ALTER TABLE invoices ADD COLUMN IF NOT EXISTS institution_id INTEGER DEFAULT 1;
+  END IF;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'leads') THEN
+    ALTER TABLE leads ADD COLUMN IF NOT EXISTS institution_id INTEGER DEFAULT 1;
+  END IF;
+END
+$$;
+
 -- 3. Enable RLS and apply tenant_isolation_policy on multi-tenant tables
 DO $$
 DECLARE
@@ -46,7 +58,7 @@ BEGIN
          FOR ALL
          TO PUBLIC
          USING (
-           institution_id = NULLIF(current_setting(''app.current_institution_id'', true), '''信::INTEGER
+           institution_id = NULLIF(current_setting(''app.current_institution_id'', true), '''')' || '::INTEGER
            OR current_setting(''app.bypass_rls'', true) = ''on''
          );', tbl
       );

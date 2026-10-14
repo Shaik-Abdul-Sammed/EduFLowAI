@@ -107,7 +107,6 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       };
       fetchPerms();
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasCheckedPermission(true);
     }
   }, [user, type]);

@@ -112,8 +112,11 @@ export function createMemoryPool() {
     currentInstitutionId: null,
     bypassRls: false,
     invoices: [
-      { id: 1, institution_id: 1, invoice_number: 'INV-101', total_amount: 50000 },
-      { id: 2, institution_id: 2, invoice_number: 'INV-201', total_amount: 75000 }
+      { id: 101, institution_id: 1, invoice_number: 'EDU-2026-0041', institution_name: 'Sri Siddhartha Institute of Technology', contact_person: 'Rahul Sharma (Roll: 1ST22CS089)', contact_email: 'rahul.s@ssit.edu.in', contact_phone: '+919876543201', total_amount: 59000, currency: 'INR', status: 'UNPAID', due_date: new Date(Date.now() - 4 * 86400000).toISOString().split('T')[0] },
+      { id: 102, institution_id: 1, invoice_number: 'EDU-2026-0042', institution_name: 'Sri Siddhartha Institute of Technology', contact_person: 'Pooja Hegde (Roll: 1ST22EC045)', contact_email: 'pooja.h@ssit.edu.in', contact_phone: '+919876543202', total_amount: 54000, currency: 'INR', status: 'UNPAID', due_date: new Date(Date.now() - 16 * 86400000).toISOString().split('T')[0] },
+      { id: 103, institution_id: 1, invoice_number: 'EDU-2026-0043', institution_name: 'Sri Siddhartha Institute of Technology', contact_person: 'Karthik V (Roll: 1ST22ME022)', contact_email: 'karthik.v@ssit.edu.in', contact_phone: '+919876543203', total_amount: 48000, currency: 'INR', status: 'UNPAID', due_date: new Date(Date.now() - 38 * 86400000).toISOString().split('T')[0] },
+      { id: 104, institution_id: 1, invoice_number: 'EDU-2026-0044', institution_name: 'Sri Siddhartha Institute of Technology', contact_person: 'Ananya Deshmukh (Roll: 1ST21CS014)', contact_email: 'ananya.d@ssit.edu.in', contact_phone: '+919876543204', total_amount: 62000, currency: 'INR', status: 'UNPAID', due_date: new Date(Date.now() - 72 * 86400000).toISOString().split('T')[0] },
+      { id: 201, institution_id: 2, invoice_number: 'INV-201', institution_name: 'Inst 2', contact_person: 'Inst 2 Student', contact_email: 'student2@demo.edu', contact_phone: '+919876543205', total_amount: 75000, currency: 'INR', status: 'UNPAID', due_date: new Date(Date.now() - 5 * 86400000).toISOString().split('T')[0] }
     ]
   }
 
@@ -335,6 +338,11 @@ export function createMemoryPool() {
         let rows = [...state.invoices]
         if (state.currentInstitutionId && !state.bypassRls) {
           rows = rows.filter(r => r.institution_id === state.currentInstitutionId)
+        } else if (params && params.length > 0 && sql.includes('institution_id = $1')) {
+          rows = rows.filter(r => r.institution_id === Number(params[0]))
+        }
+        if (sql.includes("status = 'unpaid'")) {
+          rows = rows.filter(r => r.status === 'UNPAID')
         }
         return { rows, rowCount: rows.length }
       }

@@ -118,7 +118,6 @@ export default function PortalConnectionPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSources()
     fetchSyncLogs()
   // eslint-disable-next-line react-hooks/exhaustive-deps

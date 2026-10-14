@@ -252,6 +252,39 @@ export class FeeReminderService {
   }
 
   /**
+   * Get template message for given tier and context data
+   */
+  static getTemplate(tier, data = {}) {
+    const student = data.studentName || 'Student'
+    const invNo = data.invoiceNumber || 'EDU-INV'
+    const amount = data.amountDue || '₹0'
+    const daysOverdue = data.daysOverdue || 5
+    const instName = data.institutionName || 'EduFlow Institution Management'
+
+    if (tier === 1) {
+      return {
+        subject: `Gentle Reminder: Semester Fee Payment Due for ${invNo}`,
+        body: `Dear ${student},\n\nThis is a gentle reminder that your institutional semester fee of ${amount} for invoice ${invNo} is due.\n\nWarm regards,\nAccounts Office\n${instName}`
+      }
+    } else if (tier === 2) {
+      return {
+        subject: `Important Notice: Overdue Fee Payment (${daysOverdue} Days) - ${invNo}`,
+        body: `Dear ${student},\n\nYour institutional fee invoice ${invNo} of ${amount} is currently overdue by ${daysOverdue} days.\n\nAccounts Office\n${instName}`
+      }
+    } else if (tier === 3) {
+      return {
+        subject: `URGENT: Fee Clearance Required - Academic Portal Hold Warning (${invNo})`,
+        body: `Dear ${student} & Parent,\n\nURGENT: Your fee payment of ${amount} (${invNo}) is overdue by ${daysOverdue} days.\n\nUnder university regulations, accounts unpaid for over 30 days are scheduled for temporary academic portal suspension and exam hall ticket hold by the Finance Officer.\n\nOffice of the Finance Officer\n${instName}`
+      }
+    } else {
+      return {
+        subject: `FINAL STATUTORY NOTICE: Serious Overdue Balance - Escalated to Registrar's Office (${invNo})`,
+        body: `Dear ${student} and Respected Parents,\n\nFINAL STATUTORY NOTICE: Your outstanding balance of ${amount} (${invNo}) has now exceeded ${daysOverdue} days past the scheduled due date.\n\nThis file has been formally escalated to the Office of the Registrar for statutory action.\n\nOffice of the Registrar\n${instName}`
+      }
+    }
+  }
+
+  /**
    * Automated scheduled batch run
    */
   static async scheduleReminders(institutionId = 1) {

@@ -7,7 +7,7 @@ import FeeReminderPage from '../pages/admin/FeeReminderPage'
 // Mock useAuth hook
 jest.mock('../hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 1, email: 'admin@demo.edu', role: 'admin' },
+    user: { id: 1, email: 'finance@demo.edu', role: 'finance_officer' },
     isAuthenticated: true
   })
 }))

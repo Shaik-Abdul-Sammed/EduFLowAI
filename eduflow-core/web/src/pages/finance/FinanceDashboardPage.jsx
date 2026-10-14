@@ -8,7 +8,7 @@ export default function FinanceDashboardPage() {
   const isFinanceOfficer = user?.role === 'finance_officer'
   const isAccountsStaff = user?.role === 'accounts_staff'
 
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [feedback, setFeedback] = useState(null)
   
   // Section 1: Financial Health Snapshot
@@ -21,7 +21,7 @@ export default function FinanceDashboardPage() {
   })
 
   // Section 2: Overdue Breakdown
-  const [overdueBreakdown, setOverdueBreakdown] = useState({
+  const [overdueBreakdown] = useState({
     deptWise: [
       { dept: 'Computer Science & Engineering', code: 'CSE', overdue: 95000, count: 2 },
       { dept: 'Electronics & Communication', code: 'ECE', overdue: 54000, count: 1 },
@@ -57,7 +57,6 @@ export default function FinanceDashboardPage() {
   const [manualUtr, setManualUtr] = useState('')
   const [manualInvoiceNo, setManualInvoiceNo] = useState('')
   const [manualAmount, setManualAmount] = useState('')
-  const [reconciling, setReconciling] = useState(false)
 
   // Section 4: Reconciliation Queue
   const [reconQueue, setReconQueue] = useState([
@@ -91,7 +90,7 @@ export default function FinanceDashboardPage() {
   ])
 
   // Section 5: Scholarships & Waivers
-  const [waivers, setWaivers] = useState([
+  const [waivers] = useState([
     {
       id: 'WAV-01',
       studentName: 'Suresh Raina (Roll: 1ST23CS012)',
@@ -177,7 +176,7 @@ export default function FinanceDashboardPage() {
             {isFinanceOfficer && <span className="badge bg-success">Finance Officer Authority</span>}
             {isAccountsStaff && <span className="badge bg-info text-dark">Accounts Staff Scope</span>}
           </div>
-          <h2 className="h4 fw-bold mb-1">Office of Finance & Accounts Dashboard</h2>
+          <h2 className="h4 fw-bold mb-1">Financial Governance & Accounts Command</h2>
           <p className="text-muted small mb-0">
             Institutional revenue, fee collections, bank ledger reconciliation, and scholarship governance.
           </p>
@@ -209,7 +208,7 @@ export default function FinanceDashboardPage() {
           <div className="col-md-2dot4 col-sm-6 col-12">
             <div className="card shadow-sm border-0 border-start border-4 border-success h-100">
               <div className="card-body p-3">
-                <span className="text-muted small fw-semibold text-uppercase">Collected (This Month)</span>
+                <span className="text-muted small fw-semibold text-uppercase">Total Collected This Month</span>
                 <h4 className="fw-bold text-success mb-0 mt-1">₹{Number(snapshot.totalCollectedMonth).toLocaleString('en-IN')}</h4>
                 <div className="small text-muted mt-1">Across all colleges & hostels</div>
               </div>
@@ -218,7 +217,7 @@ export default function FinanceDashboardPage() {
           <div className="col-md-2dot4 col-sm-6 col-12">
             <div className="card shadow-sm border-0 border-start border-4 border-danger h-100">
               <div className="card-body p-3">
-                <span className="text-muted small fw-semibold text-uppercase">Total Overdue Dues</span>
+                <span className="text-muted small fw-semibold text-uppercase">Total Overdue</span>
                 <h4 className="fw-bold text-danger mb-0 mt-1">₹{Number(snapshot.totalOverdue).toLocaleString('en-IN')}</h4>
                 <div className="small text-muted mt-1">4 active escalated accounts</div>
               </div>
@@ -259,7 +258,7 @@ export default function FinanceDashboardPage() {
         <div className="col-lg-7">
           <div className="card shadow-sm border-0 h-100">
             <div className="card-header bg-white py-3">
-              <h6 className="fw-bold mb-0">Department-wise Overdue Aggregates</h6>
+              <h6 className="fw-bold mb-0">Department-wise Overdue & Collection Breakdown</h6>
               <div className="text-muted small">Academic departments monitored for semester fee clearances.</div>
             </div>
             <div className="table-responsive">
@@ -519,9 +518,9 @@ export default function FinanceDashboardPage() {
       {/* SECTION 5: Scholarship and Waiver Management */}
       <div className="card shadow-sm border-0">
         <div className="card-header bg-white py-3">
-          <h6 className="fw-bold mb-0">Section 5 — Scholarship and Waiver Governance</h6>
+          <h6 className="fw-bold mb-0">Scholarship & Fee Waiver Governance</h6>
           <div className="text-muted small">
-            Statutory separation: Waivers &lt; ₹1 Lakh decided by Finance Officer; Waivers &gt; ₹1 Lakh automatically routed to Dean.
+            Statutory separation: Waivers &lt; ₹1 Lakh decided by Finance Officer; Waivers &gt; ₹1,00,000 auto-route to Dean.
           </div>
         </div>
         <div className="table-responsive">

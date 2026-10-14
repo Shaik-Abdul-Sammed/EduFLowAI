@@ -78,7 +78,6 @@ export default function StaffDashboardPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStaffData()
   }, [])
 

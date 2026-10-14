@@ -154,7 +154,6 @@ export default function HodDashboardPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPendingApprovals()
     fetchEscalations()
   }, [])
@@ -228,6 +227,9 @@ export default function HodDashboardPage() {
             <h1 className="h3 mb-0 fw-bold text-white">{deptName} — HOD Command Center</h1>
             <span className="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 px-2 py-1 small">
               Department Scoped
+            </span>
+            <span className="badge bg-info bg-opacity-25 text-info border border-info border-opacity-50 px-2 py-1 small">
+              IIT Bombay & Anna University Governance Model
             </span>
           </div>
           <p className="text-secondary mb-0 small">
@@ -323,6 +325,10 @@ export default function HodDashboardPage() {
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          </div>
+
           {/* Financial Escalations Requiring Academic Action */}
           <div className="card bg-dark border border-secondary border-opacity-25 mb-4">
             <div className="card-header bg-dark border-bottom border-secondary border-opacity-25 py-3 d-flex justify-content-between align-items-center">
@@ -361,14 +367,14 @@ export default function HodDashboardPage() {
                           disabled={actionInProgressId === `esc-${esc.id}`}
                           className="btn btn-outline-secondary btn-sm"
                         >
-                          Defer / Counsel Student
+                          Defer (Counsel)
                         </button>
                         <button
                           onClick={() => handleApproveEscalation(esc.id, esc.action_requested)}
                           disabled={actionInProgressId === `esc-${esc.id}`}
                           className="btn btn-danger btn-sm"
                         >
-                          Approve Consequence
+                          {esc.action_requested === 'HALL_TICKET_HOLD' ? 'Approve Hold' : 'Approve Consequence'}
                         </button>
                       </div>
                     </div>

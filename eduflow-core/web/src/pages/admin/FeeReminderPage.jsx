@@ -7,17 +7,8 @@ export default function FeeReminderPage() {
   const role = user?.role || 'admin'
   const isFinanceOfficer = role === 'finance_officer'
   const isAccountsStaff = role === 'accounts_staff'
-  const isAdminDean = role === 'admin'
-  const isHOD = role === 'hod'
-
-  // Access rules:
-  // finance_officer: full access
-  // accounts_staff: can send reminders, but cannot edit settings/templates
-  // admin: read-only view
-  // hod: can see department overdue list, but cannot send reminders
   const canSendReminders = isFinanceOfficer || isAccountsStaff
   const canConfigureSettings = isFinanceOfficer
-  const canModifyTemplates = isFinanceOfficer
 
   const [loading, setLoading] = useState(true)
   const [pendingData, setPendingData] = useState({
@@ -85,6 +76,7 @@ export default function FeeReminderPage() {
 
   useEffect(() => {
     fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Flattened invoices list

@@ -438,6 +438,7 @@ function App() {
           <Route
             path="/admin-dashboard/staff"
             element={<AdminStaffManagementPage />}
+          />
         </Route>
         
         {/* Finance Governance Routes */}

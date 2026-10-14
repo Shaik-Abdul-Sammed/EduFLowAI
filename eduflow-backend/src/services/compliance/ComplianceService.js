@@ -1,6 +1,9 @@
-import archiver from 'archiver'
+import { createRequire } from 'module'
 import { PassThrough } from 'stream'
 import { pool } from '../../db/pool.js'
+
+const require = createRequire(import.meta.url)
+const { ZipArchive } = require('archiver')
 
 // In-memory fallback stores for compliance testing and development
 const complianceEventsStore = [
@@ -205,11 +208,15 @@ export class ComplianceService {
     const dataInventory = this.generateDataInventory()
     const dpia = this.generateDPIAReport(institutionId)
 
-    const archive = archiver('zip', { zlib: { level: 9 } })
+    const archive = new ZipArchive({ zlib: { level: 9 } })
     const stream = new PassThrough()
     const chunks = []
 
     stream.on('data', chunk => chunks.push(chunk))
+    const donePromise = new Promise((resolve, reject) => {
+      stream.on('end', () => resolve(Buffer.concat(chunks)))
+      stream.on('error', reject)
+    })
 
     archive.pipe(stream)
 
@@ -225,10 +232,6 @@ export class ComplianceService {
     )
 
     await archive.finalize()
-
-    return new Promise((resolve, reject) => {
-      stream.on('end', () => resolve(Buffer.concat(chunks)))
-      stream.on('error', reject)
-    })
+    return await donePromise
   }
 }

@@ -4,12 +4,14 @@ import { useAuth } from '../hooks/useAuth'
 import GlobalSearch from './GlobalSearch'
 import NotificationCenter from './NotificationCenter'
 import { useI18n } from '../i18n'
+import { useSocketEvents } from '../hooks/useSocketEvents'
 
 export default function NavBar({ routes, onMenuClick }) {
   const { user, logout } = useAuth()
   const [langOpen, setLangOpen] = useState(false)
   const [theme, setTheme] = useState(localStorage.getItem('eduflow-ai-theme') || localStorage.getItem('sri-sudha-theme') || 'light')
   const { t, locale, setLanguage } = useI18n()
+  const { isConnected } = useSocketEvents()
 
   const langRef = useRef(null)
 
@@ -113,6 +115,36 @@ export default function NavBar({ routes, onMenuClick }) {
             >
               📖 Docs
             </Link>
+
+            {/* Live Real-Time Connection Indicator */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '9999px',
+                background: isConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.25)' : 'rgba(234, 179, 8, 0.25)'}`,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: isConnected ? '#16a34a' : '#ca8a04',
+                whiteSpace: 'nowrap'
+              }}
+              title={isConnected ? 'Real-Time WebSocket Active' : 'Connecting to Real-Time Network...'}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: isConnected ? '#22c55e' : '#eab308',
+                  boxShadow: isConnected ? '0 0 8px #22c55e' : 'none',
+                  display: 'inline-block'
+                }}
+              />
+              <span className="d-none d-md-inline">{isConnected ? 'Live' : 'Connecting'}</span>
+            </div>
 
             <Link
               to="/help"

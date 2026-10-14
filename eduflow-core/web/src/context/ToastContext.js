@@ -5,7 +5,7 @@ export const ToastContext = createContext(null)
 export function useToast() {
   const context = useContext(ToastContext)
   if (!context) {
-    return { addToast: (msg, variant = 'info') => {} }
+    return { addToast: (_msg, _variant = 'info') => {} }
   }
   return context
 }

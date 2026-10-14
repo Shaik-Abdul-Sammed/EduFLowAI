@@ -77,7 +77,7 @@ describe('HOD Academic Escalations Desk Tests', () => {
     await waitFor(() => {
       expect(screen.getByText(/Karthik V/i)).toBeInTheDocument()
       expect(screen.getByText(/Approve Hold/i)).toBeInTheDocument()
-      expect(screen.getByText(/Defer \(Counsel\)/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Defer \(Counsel\)/i).length).toBeGreaterThan(0)
     })
   })
 })

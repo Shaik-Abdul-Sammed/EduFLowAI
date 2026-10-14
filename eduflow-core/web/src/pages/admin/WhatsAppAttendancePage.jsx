@@ -91,6 +91,7 @@ export default function WhatsAppAttendancePage() {
 
   useEffect(() => {
     refreshAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSimulate = async (e) => {

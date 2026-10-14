@@ -10,9 +10,7 @@ import {
   Database,
   Trash2,
   CheckCircle2,
-  RefreshCw,
-  Clock,
-  Key
+  RefreshCw
 } from 'lucide-react'
 
 export default function CompliancePage() {
@@ -22,13 +20,9 @@ export default function CompliancePage() {
   const [changeLogData, setChangeLogData] = useState(null)
   const [incidentData, setIncidentData] = useState(null)
   const [inventoryData, setInventoryData] = useState(null)
-  const [dpiaData, setDpiaData] = useState(null)
-  const [purgeStatus, setPurgeStatus] = useState(null)
+  const [_dpiaData, setDpiaData] = useState(null)
+  const [_purgeStatus, setPurgeStatus] = useState(null)
   const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    fetchComplianceData()
-  }, [])
 
   const fetchComplianceData = async () => {
     setLoading(true)
@@ -52,6 +46,10 @@ export default function CompliancePage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchComplianceData()
+  }, [])
 
   const handleExportZip = () => {
     window.location.href = '/api/v1/compliance/export-audit-package'

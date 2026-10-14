@@ -1,4 +1,4 @@
-import { pool } from '../../db/memoryPool.js'
+import { pool } from '../../db/pool.js'
 
 // In-memory fallback store for development & mock tests
 let escalationsStore = [

@@ -5,10 +5,17 @@ let globalSocket = null
 
 function getSocketInstance() {
   if (!globalSocket) {
-    const token = localStorage.getItem('accessToken') || ''
-    const socketUrl = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-      : window.location.origin
+    let metaEnv
+    try {
+      metaEnv = new Function('try { return import.meta.env } catch { return undefined }')()
+    } catch {
+      metaEnv = undefined
+    }
+    const envUrl = (metaEnv && metaEnv.VITE_API_URL) || (typeof process !== 'undefined' && process.env && process.env.VITE_API_URL)
+    const token = (typeof localStorage !== 'undefined' && localStorage.getItem('accessToken')) || ''
+    const socketUrl = envUrl
+      ? envUrl.replace(/\/api\/?$/, '')
+      : (typeof window !== 'undefined' && window.location ? window.location.origin : 'http://localhost:3000')
 
     globalSocket = io(socketUrl, {
       auth: { token },
@@ -80,11 +87,13 @@ export function useSocketEvents() {
     return false
   }, [])
 
+  const getSocket = useCallback(() => socketRef.current, [])
+
   return {
     isConnected,
     lastEvent,
     recentUpdates,
     emitEvent,
-    socket: socketRef.current
+    getSocket
   }
 }

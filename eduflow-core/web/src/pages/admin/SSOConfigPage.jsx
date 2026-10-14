@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   ShieldCheck,
   KeyRound,
   Server,
-  Upload,
   CheckCircle2,
   AlertCircle,
   Play,
   Save,
   Users,
-  RefreshCw,
   Globe
 } from 'lucide-react'
 

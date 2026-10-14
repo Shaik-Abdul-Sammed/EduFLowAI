@@ -86,6 +86,7 @@ export class FeeReminderController {
 
       return res.status(200).json({
         history,
+        logs: history,
         total: history.length
       })
     } catch (err) {

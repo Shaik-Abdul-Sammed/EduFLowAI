@@ -72,7 +72,6 @@ export default function AttendanceIntegrationPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats()
     fetchAtRisk()
   // eslint-disable-next-line react-hooks/exhaustive-deps

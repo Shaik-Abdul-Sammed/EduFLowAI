@@ -3,17 +3,14 @@ import {
   Globe,
   Search,
   RefreshCw,
-  ExternalLink,
   Award,
   BookOpen,
   Calendar,
   Newspaper,
   CheckCircle2,
-  AlertCircle,
   Database,
   ArrowUpRight,
-  TrendingUp,
-  Cpu
+  TrendingUp
 } from 'lucide-react'
 
 export default function LiveDataPage() {
@@ -31,10 +28,6 @@ export default function LiveDataPage() {
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchResults, setSearchResults] = useState(null)
   const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    fetchAllFeeds()
-  }, [])
 
   const fetchAllFeeds = async () => {
     setLoading(true)
@@ -63,12 +56,16 @@ export default function LiveDataPage() {
     }
   }
 
+  useEffect(() => {
+    fetchAllFeeds()
+  }, [])
+
   const handleRefresh = async () => {
     setLoading(true)
     setMessage('')
     try {
       const res = await fetch('/api/v1/live-data/refresh', { method: 'POST' })
-      const json = await res.json()
+      await res.json()
       setMessage('All 6 external regulatory and ranking channels refreshed in real time.')
       await fetchAllFeeds()
     } catch (e) {

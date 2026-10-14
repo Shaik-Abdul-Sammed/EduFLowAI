@@ -40,6 +40,9 @@ export default function LoginPage() {
   useEffect(() => {
     // When URL contains ?institutionId=X or demo, fetch active SSO providers
     const targetInstId = queryInstId || (institutionId !== 'demo' ? institutionId : '1')
+    if (typeof fetch !== 'function') {
+      return
+    }
     fetch(`/api/v1/sso/${targetInstId}/providers`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {

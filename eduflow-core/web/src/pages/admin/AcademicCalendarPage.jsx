@@ -126,7 +126,6 @@ export default function AcademicCalendarPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCalendar()
     fetchHolidays()
   // eslint-disable-next-line react-hooks/exhaustive-deps
