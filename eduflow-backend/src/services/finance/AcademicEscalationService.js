@@ -98,7 +98,7 @@ export class AcademicEscalationService {
     }
 
     try {
-      if (pool) {
+      if (pool && !pool.isMemoryMode) {
         const query = `
           INSERT INTO academic_escalations 
             (institution_id, invoice_id, student_id, raised_by, action_requested, reason, status, effective_from)
@@ -129,11 +129,25 @@ export class AcademicEscalationService {
   /**
    * Retrieve pending escalations for a specific department (or all for admin/finance)
    */
-  static async getPendingForHOD({ department = null, institutionId = 1 } = {}) {
+  static async getPendingForHOD(deptOrOpts = null, maybeInstId = 1) {
+    let department = null
+    let institutionId = 1
+    if (typeof deptOrOpts === 'string' || deptOrOpts === null) {
+      department = deptOrOpts
+      institutionId = maybeInstId ?? 1
+    } else if (typeof deptOrOpts === 'object') {
+      department = deptOrOpts.department || null
+      institutionId = deptOrOpts.institutionId ?? 1
+    }
+
     try {
-      if (pool) {
+      if (pool && !pool.isMemoryMode) {
         let query = `SELECT * FROM academic_escalations WHERE status = 'PENDING' AND institution_id = $1`
         const params = [institutionId]
+        if (department) {
+          query += ` AND UPPER(department) = UPPER($2)`
+          params.push(department)
+        }
         const res = await pool.query(query, params)
         if (res.rows && res.rows.length > 0) {
           return res.rows
@@ -165,7 +179,7 @@ export class AcademicEscalationService {
     esc.approved_at = new Date().toISOString()
 
     try {
-      if (pool) {
+      if (pool && !pool.isMemoryMode) {
         await pool.query(
           `UPDATE academic_escalations 
            SET status = 'APPROVED', approved_by = $1, approved_at = NOW() 
@@ -195,7 +209,7 @@ export class AcademicEscalationService {
     esc.rejection_reason = rejectionReason
 
     try {
-      if (pool) {
+      if (pool && !pool.isMemoryMode) {
         await pool.query(
           `UPDATE academic_escalations 
            SET status = 'REJECTED', approved_by = $1, approved_at = NOW(), rejection_reason = $2 

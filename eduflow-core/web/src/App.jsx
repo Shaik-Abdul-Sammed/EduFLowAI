@@ -4,54 +4,55 @@ import { I18nProvider } from './i18n'
 import DashboardHome from './components/DashboardHome'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './hooks/useAuth'
-import EntryPage from './pages/public/EntryPage'
-import LoginPage from './pages/public/LoginPage'
-import AboutPage from './pages/public/AboutPage'
-import InstitutionRegister from './pages/public/InstitutionRegister'
-import LeadIntakePage from './pages/public/LeadIntakePage'
-import ServicesPage from './pages/public/ServicesPage'
-import PublicReportViewer from './pages/public/PublicReportViewer'
-import OnboardingPage from './pages/public/OnboardingPage'
-import WhyEduFlowPage from './pages/public/WhyEduFlowPage'
-import AttendanceExplainerPage from './pages/public/AttendanceExplainerPage'
-import StaffDashboardPage from './pages/staff/StaffDashboardPage'
-import HodDashboardPage from './pages/hod/HodDashboardPage'
-import HodStaffManagementPage from './pages/hod/StaffManagementPage'
-import HodCalendarPage from './pages/hod/HodCalendarPage'
-import AcademicCalendarPage from './pages/admin/AcademicCalendarPage'
-import PortalConnectionPage from './pages/admin/PortalConnectionPage'
-import AttendanceIntegrationPage from './pages/admin/AttendanceIntegrationPage'
-import AdminStaffManagementPage from './pages/admin/StaffManagementPage'
-import TimetableUploadPage from './pages/ai/officers/TimetableUploadPage'
-import OnboardingWizardPage from './pages/admin/OnboardingWizardPage'
-import TermsOfServicePage from './pages/public/TermsOfServicePage'
-import PrivacyPolicyPage from './pages/public/PrivacyPolicyPage'
-import DataProcessingAgreementPage from './pages/public/DataProcessingAgreementPage'
-import HelpCenterPage from './pages/public/HelpCenterPage'
-import SupportTicketsPage from './pages/admin/SupportTicketsPage'
-import SystemHealthPage from './pages/admin/SystemHealthPage'
-import InstitutionSettingsPage from './pages/admin/InstitutionSettingsPage'
-import UPICollectionPage from './pages/admin/UPICollectionPage'
-import WhatsAppAttendancePage from './pages/admin/WhatsAppAttendancePage'
-import FeeReminderPage from './pages/admin/FeeReminderPage'
-import FinanceDashboardPage from './pages/finance/FinanceDashboardPage'
-import SSOConfigPage from './pages/admin/SSOConfigPage'
-import CompliancePage from './pages/admin/CompliancePage'
-import LiveDataPage from './pages/admin/LiveDataPage'
-import DocsPage from './pages/public/DocsPage'
 import './App.css'
 import Layout from './components/Layout'
-import VisitorDashboard from './components/VisitorDashboard'
-import ProfilePage from './pages/common/ProfilePage'
 import { ToastProvider } from './components/ToastProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import SkeletonLoader from './components/SkeletonLoader'
-import AITerminal from './pages/ai/AITerminal'
-import DigitalTwinManager from './pages/ai/DigitalTwinManager'
-import BuildManager from './pages/ai/BuildManager'
-import OfficersDashboard from './pages/ai/OfficersDashboard'
-import ObservationMode from './pages/demo/ObservationMode'
 import ComingSoon from './components/ComingSoon'
+
+const EntryPage = lazy(() => import('./pages/public/EntryPage'))
+const LoginPage = lazy(() => import('./pages/public/LoginPage'))
+const AboutPage = lazy(() => import('./pages/public/AboutPage'))
+const InstitutionRegister = lazy(() => import('./pages/public/InstitutionRegister'))
+const LeadIntakePage = lazy(() => import('./pages/public/LeadIntakePage'))
+const ServicesPage = lazy(() => import('./pages/public/ServicesPage'))
+const PublicReportViewer = lazy(() => import('./pages/public/PublicReportViewer'))
+const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'))
+const WhyEduFlowPage = lazy(() => import('./pages/public/WhyEduFlowPage'))
+const AttendanceExplainerPage = lazy(() => import('./pages/public/AttendanceExplainerPage'))
+const StaffDashboardPage = lazy(() => import('./pages/staff/StaffDashboardPage'))
+const HodDashboardPage = lazy(() => import('./pages/hod/HodDashboardPage'))
+const HodStaffManagementPage = lazy(() => import('./pages/hod/StaffManagementPage'))
+const HodCalendarPage = lazy(() => import('./pages/hod/HodCalendarPage'))
+const AcademicCalendarPage = lazy(() => import('./pages/admin/AcademicCalendarPage'))
+const PortalConnectionPage = lazy(() => import('./pages/admin/PortalConnectionPage'))
+const AttendanceIntegrationPage = lazy(() => import('./pages/admin/AttendanceIntegrationPage'))
+const AdminStaffManagementPage = lazy(() => import('./pages/admin/StaffManagementPage'))
+const TimetableUploadPage = lazy(() => import('./pages/ai/officers/TimetableUploadPage'))
+const OnboardingWizardPage = lazy(() => import('./pages/admin/OnboardingWizardPage'))
+const TermsOfServicePage = lazy(() => import('./pages/public/TermsOfServicePage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/public/PrivacyPolicyPage'))
+const DataProcessingAgreementPage = lazy(() => import('./pages/public/DataProcessingAgreementPage'))
+const HelpCenterPage = lazy(() => import('./pages/public/HelpCenterPage'))
+const SupportTicketsPage = lazy(() => import('./pages/admin/SupportTicketsPage'))
+const SystemHealthPage = lazy(() => import('./pages/admin/SystemHealthPage'))
+const InstitutionSettingsPage = lazy(() => import('./pages/admin/InstitutionSettingsPage'))
+const UPICollectionPage = lazy(() => import('./pages/admin/UPICollectionPage'))
+const WhatsAppAttendancePage = lazy(() => import('./pages/admin/WhatsAppAttendancePage'))
+const FeeReminderPage = lazy(() => import('./pages/admin/FeeReminderPage'))
+const FinanceDashboardPage = lazy(() => import('./pages/finance/FinanceDashboardPage'))
+const SSOConfigPage = lazy(() => import('./pages/admin/SSOConfigPage'))
+const CompliancePage = lazy(() => import('./pages/admin/CompliancePage'))
+const LiveDataPage = lazy(() => import('./pages/admin/LiveDataPage'))
+const DocsPage = lazy(() => import('./pages/public/DocsPage'))
+const VisitorDashboard = lazy(() => import('./components/VisitorDashboard'))
+const ProfilePage = lazy(() => import('./pages/common/ProfilePage'))
+const AITerminal = lazy(() => import('./pages/ai/AITerminal'))
+const DigitalTwinManager = lazy(() => import('./pages/ai/DigitalTwinManager'))
+const BuildManager = lazy(() => import('./pages/ai/BuildManager'))
+const OfficersDashboard = lazy(() => import('./pages/ai/OfficersDashboard'))
+const ObservationMode = lazy(() => import('./pages/demo/ObservationMode'))
 
 const AccreditationOfficer = lazy(() => import('./pages/ai/officers/AccreditationOfficer'))
 const StudentSuccessOfficer = lazy(() => import('./pages/ai/officers/StudentSuccessOfficer'))
@@ -93,10 +94,10 @@ const toTitleCase = (value) =>
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (character) => character.toUpperCase())
 
-const pageModules = import.meta.glob('./pages/*/*.jsx', { eager: true })
+const pageModules = import.meta.glob('./pages/*/*.jsx')
 
 const generatedRoutes = Object.entries(pageModules)
-  .map(([filePath, module]) => {
+  .map(([filePath, importFn]) => {
     const match = filePath.match(/\.\/pages\/([^/]+)\/([^/]+)\.jsx$/)
     if (!match) {
       return null
@@ -123,7 +124,7 @@ const generatedRoutes = Object.entries(pageModules)
       fileName,
       slug,
       routePath,
-      Component: module.default,
+      Component: lazy(importFn),
     }
   })
   .filter(Boolean)
@@ -248,10 +249,10 @@ function App() {
       <I18nProvider>
       <ToastProvider>
         <Routes>
-          <Route path="/ai-terminal" element={<AITerminal />} />
-          <Route path="/digital-twin" element={<DigitalTwinManager />} />
-          <Route path="/build-manager" element={<BuildManager />} />
-          <Route path="/officers-dashboard" element={<OfficersDashboard />} />
+          <Route path="/ai-terminal" element={<ErrorBoundary><Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}><AITerminal /></Suspense></ErrorBoundary>} />
+          <Route path="/digital-twin" element={<ErrorBoundary><Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}><DigitalTwinManager /></Suspense></ErrorBoundary>} />
+          <Route path="/build-manager" element={<ErrorBoundary><Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}><BuildManager /></Suspense></ErrorBoundary>} />
+          <Route path="/officers-dashboard" element={<ErrorBoundary><Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}><OfficersDashboard /></Suspense></ErrorBoundary>} />
           <Route
             path="/officer/accreditation"
             element={
@@ -286,7 +287,9 @@ function App() {
             path="/officer/timetable/upload"
             element={
               <ErrorBoundary>
-                <TimetableUploadPage />
+                <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>
+                  <TimetableUploadPage />
+                </Suspense>
               </ErrorBoundary>
             }
           />
@@ -294,7 +297,9 @@ function App() {
             path="/timetable/upload"
             element={
               <ErrorBoundary>
-                <TimetableUploadPage />
+                <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>
+                  <TimetableUploadPage />
+                </Suspense>
               </ErrorBoundary>
             }
           />
@@ -318,8 +323,8 @@ function App() {
               </ErrorBoundary>
             }
           />
-          <Route path="/demo/observe" element={<ObservationMode />} />
-          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/demo/observe" element={<ErrorBoundary><Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#030712', padding: '2rem' }}><SkeletonLoader variant="card" /></div>}><ObservationMode /></Suspense></ErrorBoundary>} />
+          <Route path="/services" element={<ErrorBoundary><Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}><ServicesPage /></Suspense></ErrorBoundary>} />
 
           <Route element={<Layout routes={generatedRoutes} />}>
             <Route path="/" element={<RedirectHome />} />

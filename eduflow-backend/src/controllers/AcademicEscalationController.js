@@ -58,7 +58,7 @@ export class AcademicEscalationController {
         department,
         institutionId: req.user?.institutionId || 1
       })
-      return res.status(200).json({ pending })
+      return res.status(200).json({ success: true, pending, escalations: pending })
     } catch (err) {
       return res.status(500).json({ error: err.message })
     }
@@ -124,3 +124,9 @@ export class AcademicEscalationController {
     }
   }
 }
+
+AcademicEscalationController.createEscalation = AcademicEscalationController.raiseEscalation
+AcademicEscalationController.getPendingForHOD = AcademicEscalationController.getPendingHOD
+AcademicEscalationController.approveEscalation = AcademicEscalationController.approve
+AcademicEscalationController.rejectEscalation = AcademicEscalationController.reject
+

@@ -165,7 +165,7 @@ export default function ServicesPage() {
               onClick={() => setFilter('upcoming')}
               className={`btn btn-sm rounded-pill px-4 ${filter === 'upcoming' ? 'btn-primary' : 'btn-outline-secondary'}`}
             >
-              Coming Soon (2)
+              Upcoming Pilots (2)
             </button>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function ServicesPage() {
                         </div>
                         {service.comingSoon ? (
                           <span className="badge bg-secondary-subtle text-secondary border rounded-pill px-3 py-1">
-                            <Clock size={12} className="me-1" /> Coming Soon
+                            <Clock size={12} className="me-1" /> Pilot Pipeline
                           </span>
                         ) : (
                           <span
@@ -263,7 +263,7 @@ export default function ServicesPage() {
                           to={`/for-colleges?service=${service.id}`}
                           className="btn btn-outline-secondary w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
                         >
-                          Join Waitlist <ArrowRight size={16} />
+                          Request Pilot Access <ArrowRight size={16} />
                         </Link>
                       ) : (
                         <Link

@@ -96,9 +96,16 @@ export default function Page() {
                     </td>
                     <td>
                       {p.receipt ? (
-                        <a href="#" className="btn btn-sm btn-outline-primary" style={{ fontSize: '0.72rem' }} onClick={e => e.preventDefault()}>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary"
+                          style={{ fontSize: '0.72rem' }}
+                          onClick={() => {
+                            window.open(`/api/v1/invoices/${p.receipt}/pdf`, '_blank')
+                          }}
+                        >
                           View Receipt 📥
-                        </a>
+                        </button>
                       ) : '—'}
                     </td>
                   </tr>

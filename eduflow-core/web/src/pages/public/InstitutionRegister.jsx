@@ -4,8 +4,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import { validateForm, validators } from '../../utils/validators';
 import { ShieldCheck, Building, User, Mail, Lock, Globe } from 'lucide-react';
-import { IconButton } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 export default function InstitutionRegister() {
   const [formData, setFormData] = useState({

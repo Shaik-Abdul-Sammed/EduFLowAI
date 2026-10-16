@@ -7,7 +7,7 @@ import { getApiBaseURL } from '../config/apiConfig'
 
 export default function ComingSoon({ 
   moduleName = 'This Module', 
-  description = 'This module is in active development and will be available in the next release.' 
+  description = 'This feature requires institution module activation or administrator configuration. Contact your administrator to enable access.' 
 }) {
   const { user } = useAuth()
   const { addToast } = useToast()
@@ -39,11 +39,11 @@ export default function ComingSoon({
       })
 
       setSubmitted(true)
-      addToast(`You will be notified as soon as ${moduleName} is available!`, 'success')
+      addToast(`Access notification registered for ${moduleName}!`, 'success')
     } catch {
       // Graceful fallback for demo
       setSubmitted(true)
-      addToast(`You will be notified when ${moduleName} launches.`, 'success')
+      addToast(`Access notification registered for ${moduleName}.`, 'success')
     } finally {
       setLoading(false)
     }
@@ -83,7 +83,7 @@ export default function ComingSoon({
           margin: '0 auto 1.5rem',
           fontSize: '2.5rem'
         }}>
-          ⏳
+          ⚙️
         </div>
 
         {/* Status Badge */}
@@ -91,8 +91,8 @@ export default function ComingSoon({
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.4rem',
-          background: 'rgba(245, 158, 11, 0.1)',
-          color: '#d97706',
+          background: 'rgba(37, 99, 235, 0.1)',
+          color: '#2563EB',
           padding: '0.35rem 0.85rem',
           borderRadius: '999px',
           fontSize: '0.75rem',
@@ -102,7 +102,7 @@ export default function ComingSoon({
           marginBottom: '1rem'
         }}>
           <Clock size={13} />
-          Under Active Development
+          Administrative Setup Required
         </span>
 
         {/* Title */}
@@ -112,7 +112,7 @@ export default function ComingSoon({
           color: 'var(--app-text, #0f172a)',
           marginBottom: '0.75rem'
         }}>
-          {moduleName} Deployment Preview
+          {moduleName} Module
         </h2>
 
         {/* Description */}

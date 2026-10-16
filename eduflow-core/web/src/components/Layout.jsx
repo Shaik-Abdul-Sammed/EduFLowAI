@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar'
 import TourGuide from './TourGuide'
+import SkeletonLoader from './SkeletonLoader'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
@@ -15,7 +16,9 @@ export default function Layout({ routes }) {
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
         <main style={{ flex: 1 }}>
-          <Outlet />
+          <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     )
@@ -43,7 +46,9 @@ export default function Layout({ routes }) {
         <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
         
         <main style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
-          <Outlet />
+          <Suspense fallback={<div className="container-fluid py-3"><SkeletonLoader variant="card" /></div>}>
+            <Outlet />
+          </Suspense>
         </main>
         
         <footer style={{

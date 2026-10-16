@@ -24,6 +24,9 @@ export function runWithInstitutionContext(context, fn) {
 
 const databaseUrl = String(process.env.DATABASE_URL || '').trim()
 const dbMode = String(process.env.DB_MODE || '').trim().toLowerCase()
+const isTest = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'test' ||
+  process.argv.some(a => String(a).includes('test') || String(a).includes('tests/')) ||
+  process.execArgv.some(a => String(a).includes('test'))
 const isProduction = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'production'
 const forcePostgres = dbMode === 'postgres' || isProduction
 
@@ -31,7 +34,7 @@ if (forcePostgres && !databaseUrl) {
   throw new Error('FATAL: DATABASE_URL environment variable is required when DB_MODE=postgres or NODE_ENV=production')
 }
 
-const useMemoryOnly = !databaseUrl || dbMode === 'memory'
+const useMemoryOnly = (!databaseUrl || dbMode === 'memory' || isTest) && !forcePostgres
 
 if (useMemoryOnly) {
   console.warn('⚠️ RUNNING IN MEMORY MODE — DATA WILL NOT PERSIST')
@@ -70,6 +73,9 @@ function isConnectionFailure(error) {
     'ENETUNREACH',
     'connect ECONNREFUSED',
     'getaddrinfo ENOTFOUND',
+    'timeout',
+    'Connection terminated',
+    'ETIMEDOUT',
   ].some((token) => message.includes(token) || error?.code === token)
 }
 

@@ -125,51 +125,14 @@ export class WhatsAppWebhookController {
           })
         }
 
-        // 2. Auto-confirm attendance when faculty message matches known faculty's course (bypass manual YES/NO or admin queue)
-        const isKnownCourse = faculty && WhatsAppAttendance.matchFacultyCourse(faculty, parsed.courseCode, parsed.section)
-        if (isKnownCourse) {
-          const staged = await WhatsAppAttendance.stageAttendance(parsed, 1, 'CONFIRMED')
-          const confirmText = `✅ Attendance confirmed for ${parsed.courseCode} ${parsed.section}: ${parsed.presentCount} present, ${parsed.absentCount} absent. Logged into institutional records.`
-
-          // Send confirmation directly back to the faculty
-          await WhatsAppAttendance.sendMessage(from, confirmText)
-
-          // Trigger sync into institutional attendance records immediately
-          await processConfirmedStagedAttendance().catch(() => {})
-
-          // Log confirmation into staff_activity_log
-          try {
-            await pool.query(
-              `INSERT INTO staff_activity_log
-               (institution_id, staff_user_id, officer_key, action_type, prompt_text, output_summary, approval_status)
-               VALUES ($1, $2, 'attendance', 'WHATSAPP_AUTO_CONFIRM', $3, $4, 'APPROVED')`,
-              [
-                1,
-                faculty.id,
-                body,
-                `Auto-confirmed WhatsApp attendance for ${parsed.courseCode} ${parsed.section}: ${parsed.presentCount} present, ${parsed.absentCount} absent`
-              ]
-            )
-          } catch {
-            // DB fallback handled cleanly
-          }
-
-          return res.status(200).json({
-            success: true,
-            autoConfirmed: true,
-            status: 'CONFIRMED',
-            data: staged,
-            reply: confirmText
-          })
-        }
-
-        // 3. Fallback: Stage with PENDING and prompt confirmation
+        // 2. Stage with PENDING and prompt confirmation
         const staged = await WhatsAppAttendance.stageAttendance(parsed, 1, 'PENDING')
         await WhatsAppAttendance.sendMessage(from, parsed.confirmationReply)
 
         return res.status(200).json({
           success: true,
           staged: true,
+          status: 'PENDING',
           data: staged,
           reply: parsed.confirmationReply
         })
