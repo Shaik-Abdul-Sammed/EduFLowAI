@@ -34,6 +34,7 @@ jest.mock('react-markdown', () => {
 jest.mock('remark-gfm', () => () => {})
 
 const originalConsoleError = console.error.bind(console)
+const originalConsoleWarn = console.warn.bind(console)
 
 beforeAll(() => {
   jest.spyOn(console, 'error').mockImplementation((...args) => {
@@ -42,12 +43,24 @@ beforeAll(() => {
         if (message.includes('not wrapped in act')) return
         if (message.includes('Dashboard error')) return
         if (message.includes('Database connection failed')) return
+        if (message.includes('Auth error detail')) return
+        if (message.includes('Streaming officer error')) return
+        if (message.includes('connection failed')) return
       }
 
       originalConsoleError(...args)
+  })
+
+  jest.spyOn(console, 'warn').mockImplementation((...args) => {
+    const [message] = args
+    if (typeof message === 'string' && message.includes('The width(-1) and height(-1) of chart should be greater than 0')) {
+      return
+    }
+    originalConsoleWarn(...args)
   })
 })
 
 afterAll(() => {
   console.error.mockRestore?.()
+  console.warn.mockRestore?.()
 })

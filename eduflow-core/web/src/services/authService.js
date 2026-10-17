@@ -5,12 +5,23 @@ export function mapAuthError(err, status) {
   console.error('Auth error detail:', err)
 
   const effectiveStatus = status || err?.status || err?.statusCode || (typeof err === 'number' ? err : undefined)
+  const code = err?.code || (err?.cause && err.cause?.code)
+  const errMsg = (err?.message || err?.error || (typeof err === 'string' ? err : '')).toLowerCase()
 
   if (effectiveStatus === 401) {
-    return "Invalid email or password. Please check and try again. If using demo, click 'Fill Admin Credentials'."
+    if (code === 'USER_NOT_FOUND' || errMsg.includes('no account found') || errMsg.includes('user_not_found') || (errMsg.includes('not found') && errMsg.includes('email'))) {
+      return 'No account found for this email. Create one?'
+    }
+    if (code === 'INVALID_PASSWORD' || errMsg.includes('wrong password') || errMsg.includes('invalid_password')) {
+      return 'Wrong password for this email.'
+    }
+    if (err?.message && (err.message.includes('Invalid email or password') || err.message.includes('Fill Admin Credentials'))) {
+      return err.message
+    }
+    return 'Wrong password for this email.'
   }
   if (effectiveStatus === 404) {
-    return 'Email not found. Did you mean to sign up?'
+    return 'No account found for this email. Create one?'
   }
   if (effectiveStatus === 429) {
     return 'Too many login attempts. Please wait 15 minutes.'
@@ -19,20 +30,6 @@ export function mapAuthError(err, status) {
     return 'Server is temporarily unavailable. Please try again in a minute.'
   }
 
-  const errMsg = (err?.message || (typeof err === 'string' ? err : '')).toLowerCase()
-
-  if (errMsg.includes('401') || errMsg.includes('invalid email') || errMsg.includes('invalid credential') || errMsg.includes('invalid password')) {
-    return "Invalid email or password. Please check and try again. If using demo, click 'Fill Admin Credentials'."
-  }
-  if (errMsg.includes('404') || errMsg.includes('email not found')) {
-    return 'Email not found. Did you mean to sign up?'
-  }
-  if (errMsg.includes('429') || errMsg.includes('too many login attempts') || errMsg.includes('rate limit')) {
-    return 'Too many login attempts. Please wait 15 minutes.'
-  }
-  if (errMsg.includes('500') || errMsg.includes('502') || errMsg.includes('temporarily unavailable')) {
-    return 'Server is temporarily unavailable. Please try again in a minute.'
-  }
   if (
     errMsg.includes('failed to fetch') ||
     errMsg.includes('network') ||
@@ -46,7 +43,27 @@ export function mapAuthError(err, status) {
     return 'Cannot reach server. The backend may be waking up. Please wait 30 seconds and try again.'
   }
 
-  if (err?.message && !errMsg.includes('failed to fetch') && !errMsg.includes('networkerror')) {
+  if (errMsg.includes('user_not_found') || errMsg.includes('no account found') || (errMsg.includes('not found') && errMsg.includes('email'))) {
+    return 'No account found for this email. Create one?'
+  }
+
+  if (errMsg.includes('wrong password') || errMsg.includes('invalid_password')) {
+    return 'Wrong password for this email.'
+  }
+
+  if (errMsg.includes('invalid email') || errMsg.includes('invalid credential') || errMsg.includes('invalid password')) {
+    if (err?.message && err.message.includes('Fill Admin Credentials')) return err.message
+    return 'Wrong password for this email.'
+  }
+
+  if (errMsg.includes('429') || errMsg.includes('too many login attempts') || errMsg.includes('rate limit')) {
+    return 'Too many login attempts. Please wait 15 minutes.'
+  }
+  if (errMsg.includes('500') || errMsg.includes('502') || errMsg.includes('temporarily unavailable')) {
+    return 'Server is temporarily unavailable. Please try again in a minute.'
+  }
+
+  if (err?.message && !errMsg.includes('failed to fetch') && !errMsg.includes('networkerror') && !errMsg.includes('401')) {
     return err.message
   }
 
@@ -101,7 +118,10 @@ export async function loginWithRole({ role, username, email, password, instituti
         errJson = { raw: errText, error: String(parseErr) }
       }
       const mappedMsg = mapAuthError(errJson, loginResponse.status)
-      throw new Error(mappedMsg)
+      const errorObj = new Error(mappedMsg)
+      errorObj.status = loginResponse.status
+      errorObj.code = errJson?.code
+      throw errorObj
     }
 
     const data = await loginResponse.json()
@@ -117,6 +137,8 @@ export async function loginWithRole({ role, username, email, password, instituti
   } catch (err) {
     const knownMessages = [
       "Invalid email or password. Please check and try again. If using demo, click 'Fill Admin Credentials'.",
+      "Wrong password for this email.",
+      "No account found for this email. Create one?",
       "Email not found. Did you mean to sign up?",
       "Too many login attempts. Please wait 15 minutes.",
       "Server is temporarily unavailable. Please try again in a minute.",
@@ -145,7 +167,9 @@ export async function registerInstitution(registrationData) {
     const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.error || 'Registration failed')
+      const err = new Error(data.error || 'Registration failed')
+      err.status = response.status
+      throw err
     }
 
     if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)

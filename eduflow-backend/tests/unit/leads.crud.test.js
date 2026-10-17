@@ -226,4 +226,49 @@ describe('Unit: Leads CRUD & Validation', () => {
     const found = listBody.leads.find((l) => Number(l.id) === Number(leadId))
     assert.equal(found, undefined, 'Soft-deleted lead should not appear in active leads list')
   })
+
+  it('Create lead from service pilot modal via POST /api/v1/leads/from-service returns 201', async () => {
+    const payload = {
+      serviceId: 'timetable',
+      institutionName: 'IIT Roorkee',
+      contactName: 'Prof. Anjali Verma',
+      designation: 'Dean',
+      email: 'dean@iitr.ac.in',
+      phone: '9876543219',
+      cityState: 'Roorkee, Uttarakhand',
+      studentCount: 8000,
+      preferredTime: 'Morning',
+      message: 'Interested in Timetable Officer pilot for 2026 semester.',
+    }
+
+    const res = await fetch(`${baseUrl}/api/v1/leads/from-service`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    assert.equal(res.status, 201)
+    const body = await res.json()
+    assert.equal(body.success, true)
+    assert.ok(body.leadId, 'Expected leadId from /from-service')
+    assert.equal(body.lead.college_name, 'IIT Roorkee')
+  })
+
+  it('POST /api/v1/leads/from-service with missing required fields returns 400', async () => {
+    const payload = {
+      serviceId: 'timetable',
+      // missing institutionName, email, etc.
+    }
+
+    const res = await fetch(`${baseUrl}/api/v1/leads/from-service`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    assert.equal(res.status, 400)
+    const body = await res.json()
+    assert.equal(body.error, 'Validation failed')
+  })
 })
+

@@ -193,7 +193,7 @@ export default function InvoiceGeneratorPage() {
               zIndex: 9999,
               padding: '0.85rem 1.25rem',
               borderRadius: '0.5rem',
-              color: '#ffffff',
+              color: 'var(--toast-text, #ffffff)',
               background: toastMessage.isError ? '#EF4444' : '#10B981',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               fontWeight: 600,
@@ -207,7 +207,7 @@ export default function InvoiceGeneratorPage() {
         {/* Invoice Generator Card */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1rem', padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#1e293b' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--app-text, #1e293b)' }}>
               🧾 Generate New Tax Invoice
             </h3>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>

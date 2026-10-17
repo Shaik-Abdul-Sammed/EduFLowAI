@@ -121,6 +121,11 @@ export function createInstitutionRouter() {
   /**
    * Institutional Settings & Export endpoints
    */
+  router.get('/check-subdomain', async (req, res, next) => {
+    const { InstitutionController } = await import('../controllers/InstitutionController.js')
+    return InstitutionController.checkSubdomain(req, res, next)
+  })
+
   router.get('/settings', async (req, res, next) => {
     const { InstitutionController } = await import('../controllers/InstitutionController.js')
     return InstitutionController.getSettings(req, res, next)

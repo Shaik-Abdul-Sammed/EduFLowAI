@@ -62,20 +62,20 @@ export function createAuthRouter() {
       const user = await UserRepository.findByUsernameOrEmail(institutionId, identifier)
       if (!user) {
         await UserRepository.logAudit(institutionId, null, 'LOGIN_FAILED_USER_NOT_FOUND', req.ip, req.get('user-agent'), { identifier })
-        return res.status(401).json({ error: 'Invalid credentials' })
+        return res.status(401).json({ error: 'Invalid credentials', code: 'USER_NOT_FOUND', message: 'No account found for this email' })
       }
 
       // Optional: strict role check
       if (role && user.role !== role) {
         await UserRepository.logAudit(institutionId, user.id, 'LOGIN_FAILED_ROLE_MISMATCH', req.ip, req.get('user-agent'), { identifier, requestedRole: role })
-        return res.status(401).json({ error: 'Invalid credentials or role' })
+        return res.status(401).json({ error: 'Invalid credentials or role', code: 'ROLE_MISMATCH' })
       }
 
       // Verify password
       const isMatch = await bcrypt.compare(password, user.password_hash)
       if (!isMatch) {
         await UserRepository.logAudit(institutionId, user.id, 'LOGIN_FAILED_INVALID_PASSWORD', req.ip, req.get('user-agent'), { email })
-        return res.status(401).json({ error: 'Invalid credentials' })
+        return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_PASSWORD', message: 'Wrong password for this email' })
       }
 
       // Generate tokens

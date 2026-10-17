@@ -373,17 +373,42 @@ export default function LoginPage() {
           <div
             role="alert"
             style={{
-              background: '#FEF2F2',
-              border: '1px solid #FCA5A5',
-              color: '#B91C1C',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#DC2626',
               padding: '0.75rem 1rem',
               borderRadius: '0.625rem',
               fontSize: '0.85rem',
               marginBottom: '1.25rem',
               lineHeight: 1.45,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+              flexWrap: 'wrap',
             }}
           >
-            {error}
+            <span>
+              {error}{' '}
+              {error.includes('Create one?') && (
+                <Link to="/register-institution" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'underline' }}>
+                  Register here
+                </Link>
+              )}
+            </span>
+            <Link
+              to="/help"
+              style={{
+                color: 'var(--app-text-muted, #64748B)',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textDecoration: 'underline',
+                whiteSpace: 'nowrap',
+                marginLeft: 'auto'
+              }}
+            >
+              Forgot Password?
+            </Link>
           </div>
         )}
 

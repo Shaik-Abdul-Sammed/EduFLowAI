@@ -210,6 +210,52 @@ export class LeadController {
       return res.status(500).json({ error: 'Failed to send pilot offer email' })
     }
   }
+
+  static async submitFromService(req, res) {
+    try {
+      const {
+        serviceId = 'accreditation',
+        institutionName,
+        contactName,
+        designation = 'Principal',
+        email,
+        phone,
+        cityState = '',
+        studentCount,
+        preferredTime = 'Anytime',
+        message = '',
+      } = req.body || {}
+
+      if (!institutionName || !contactName || !email || !phone) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          message: 'institutionName, contactName, email, and phone are required fields',
+        })
+      }
+
+      const formattedMessage = message || (preferredTime ? `Preferred contact time: ${preferredTime}` : '')
+
+      const lead = await LeadRepository.create({
+        collegeName: institutionName,
+        contactName,
+        designation,
+        email,
+        phone,
+        cityState,
+        studentCount: studentCount ? parseInt(studentCount, 10) : null,
+        message: formattedMessage,
+        source: 'service_pilot_modal',
+        automationType: serviceId,
+      })
+
+      logger.info({ leadId: lead.id, institutionName, email, serviceId }, 'New lead received from service pilot modal')
+      return res.status(201).json({ success: true, leadId: lead.id, lead })
+    } catch (err) {
+      logger.error('Error submitting lead from service:', err)
+      return res.status(500).json({ error: 'Failed to submit service lead request' })
+    }
+  }
 }
 
 export default LeadController
+

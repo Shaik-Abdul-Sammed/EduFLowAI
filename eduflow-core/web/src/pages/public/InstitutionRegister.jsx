@@ -8,6 +8,8 @@ import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
+import { getFullApiUrl } from '../../config/apiConfig';
+
 export default function InstitutionRegister() {
   const [formData, setFormData] = useState({
     institutionName: '',
@@ -22,9 +24,44 @@ export default function InstitutionRegister() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subdomainLocked, setSubdomainLocked] = useState(false);
+  const [subdomainStatus, setSubdomainStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
+  const [subdomainSuggestions, setSubdomainSuggestions] = useState([]);
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { register } = useAuth();
+
+  const generateSuggestions = (baseSlug) => {
+    const clean = (baseSlug || 'campus').replace(/-2$/, '').replace(/-hyd$/, '').replace(/-\d{4}$/, '');
+    const currentYear = new Date().getFullYear();
+    return [`${clean}-2`, `${clean}-hyd`, `${clean}-${currentYear}`];
+  };
+
+  const checkAvailability = async (slugToCheck) => {
+    const target = (slugToCheck || formData.subdomain || '').trim().toLowerCase();
+    if (!target) {
+      setErrors(prev => ({ ...prev, subdomain: 'Please enter a subdomain to check' }));
+      return;
+    }
+    setSubdomainStatus('checking');
+    try {
+      const res = await fetch(getFullApiUrl(`/v1/institutions/check-subdomain?slug=${encodeURIComponent(target)}`));
+      const data = await res.json();
+      if (data.available) {
+        setSubdomainStatus('available');
+        setSubdomainSuggestions([]);
+        setErrors(prev => ({ ...prev, subdomain: null }));
+      } else {
+        setSubdomainStatus('taken');
+        setSubdomainSuggestions(generateSuggestions(target));
+        setErrors(prev => ({
+          ...prev,
+          subdomain: 'This subdomain is already taken. Try adding a number or city, e.g., ssit-hyderabad-2.'
+        }));
+      }
+    } catch {
+      setSubdomainStatus(null);
+    }
+  };
 
   // All schema values MUST be functions so validateForm can call them
   const buildSchema = (data) => ({
@@ -94,7 +131,22 @@ export default function InstitutionRegister() {
       );
       navigate('/admin-dashboard');
     } catch (err) {
-      addToast(err.message || 'Registration failed. Please try again.', 'error');
+      const isSubdomainConflict =
+        err?.status === 409 ||
+        err?.message?.toLowerCase().includes('subdomain is already taken') ||
+        err?.message?.toLowerCase().includes('already taken');
+
+      if (isSubdomainConflict) {
+        setSubdomainStatus('taken');
+        setSubdomainSuggestions(generateSuggestions(formData.subdomain));
+        setErrors(prev => ({
+          ...prev,
+          subdomain: 'This subdomain is already taken. Try adding a number or city, e.g., ssit-hyderabad-2.'
+        }));
+        addToast('This subdomain is already taken. Please choose another.', 'error');
+      } else {
+        addToast(err.message || 'Registration failed. Please try again.', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -218,16 +270,63 @@ export default function InstitutionRegister() {
                             name="subdomain"
                             placeholder="yourschool"
                             value={formData.subdomain}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                              handleChange(e);
+                              setSubdomainStatus(null);
+                              setSubdomainSuggestions([]);
+                            }}
                           />
                           <span className="input-group-text bg-light text-muted small">.eduflow.app</span>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm px-3 d-flex align-items-center gap-1"
+                            disabled={!formData.subdomain || subdomainStatus === 'checking'}
+                            onClick={() => checkAvailability(formData.subdomain)}
+                          >
+                            {subdomainStatus === 'checking' ? (
+                              <span className="spinner-border spinner-border-sm" role="status" />
+                            ) : subdomainStatus === 'available' ? (
+                              <span className="text-success fw-bold">✓ Available</span>
+                            ) : subdomainStatus === 'taken' ? (
+                              <span className="text-danger fw-bold">✗ Taken</span>
+                            ) : (
+                              'Check availability'
+                            )}
+                          </button>
                         </div>
-                        {errors.subdomain
-                          ? <div className="text-danger small mt-1">⚠ {errors.subdomain}</div>
-                          : formData.subdomain
-                            ? <div className="text-success small mt-1">✓ Your URL: <strong>{formData.subdomain}.eduflow.app</strong></div>
-                            : <div className="text-muted small mt-1">Auto-generated from your name. Lowercase, numbers, hyphens only.</div>
-                        }
+                        {errors.subdomain ? (
+                          <div className="mt-1">
+                            <div className="text-danger small">⚠ {errors.subdomain}</div>
+                            {subdomainSuggestions.length > 0 && (
+                              <div className="mt-2 p-2 rounded bg-light border">
+                                <span className="small text-muted me-2">Suggested alternatives:</span>
+                                <div className="d-inline-flex flex-wrap gap-2 mt-1">
+                                  {subdomainSuggestions.map((sug) => (
+                                    <button
+                                      key={sug}
+                                      type="button"
+                                      className="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill font-monospace"
+                                      style={{ fontSize: '0.8rem' }}
+                                      onClick={() => {
+                                        setFormData((prev) => ({ ...prev, subdomain: sug }));
+                                        setErrors((prev) => ({ ...prev, subdomain: null }));
+                                        setSubdomainStatus(null);
+                                        setSubdomainSuggestions([]);
+                                        checkAvailability(sug);
+                                      }}
+                                    >
+                                      {sug}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : formData.subdomain ? (
+                          <div className="text-success small mt-1">✓ Your URL: <strong>{formData.subdomain}.eduflow.app</strong></div>
+                        ) : (
+                          <div className="text-muted small mt-1">Auto-generated from your name. Lowercase, numbers, hyphens only.</div>
+                        )}
                       </div>
                     </div>
 

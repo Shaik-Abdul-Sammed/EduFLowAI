@@ -7,6 +7,7 @@ export function createLeadRouter() {
 
   // PUBLIC: Submit lead interest from /for-colleges
   router.post('/', LeadController.submitPublicLead)
+  router.post('/from-service', LeadController.submitFromService)
 
   // ADMIN ONLY ROUTES
   const adminGuard = [authMiddleware, requireRole(['admin'])]

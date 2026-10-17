@@ -15,6 +15,7 @@ import {
   Sparkles,
   Building,
 } from 'lucide-react'
+import RequestPilotModal from '../../components/RequestPilotModal'
 
 const AUTOMATION_SERVICES = [
   {
@@ -105,6 +106,8 @@ const AUTOMATION_SERVICES = [
 
 export default function ServicesPage() {
   const [filter, setFilter] = useState('all')
+  const [selectedServiceForPilot, setSelectedServiceForPilot] = useState(null)
+  const [isPilotModalOpen, setIsPilotModalOpen] = useState(false)
 
   const filtered = AUTOMATION_SERVICES.filter((svc) => {
     if (filter === 'active') return !svc.comingSoon
@@ -182,9 +185,9 @@ export default function ServicesPage() {
                   <div
                     className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column"
                     style={{
-                      background: '#ffffff',
+                      background: 'var(--card-bg, #ffffff)',
                       transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border-color, #e2e8f0)',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-4px)'
@@ -232,7 +235,7 @@ export default function ServicesPage() {
                       </p>
 
                       {/* Pricing */}
-                      <div className="p-3 rounded-3 mb-4" style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                      <div className="p-3 rounded-3 mb-4" style={{ background: 'var(--surface-bg, #f8fafc)', border: '1px solid var(--border-color, #f1f5f9)' }}>
                         <div className="small text-muted mb-1">Starting Turnkey Pilot Price</div>
                         <div className="d-flex align-items-baseline gap-1">
                           <span className="fs-4 fw-bold text-dark">{service.price}</span>
@@ -257,13 +260,23 @@ export default function ServicesPage() {
                     </div>
 
                     {/* Bottom Action Footer */}
-                    <div className="p-4 pt-0 mt-auto">
+                    <div className="p-4 pt-0 mt-auto d-flex flex-column gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedServiceForPilot(service)
+                          setIsPilotModalOpen(true)
+                        }}
+                        className="btn btn-outline-primary w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                      >
+                        Request Pilot Access <Sparkles size={16} />
+                      </button>
                       {service.comingSoon ? (
                         <Link
                           to={`/for-colleges?service=${service.id}`}
                           className="btn btn-outline-secondary w-100 rounded-pill py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
                         >
-                          Request Pilot Access <ArrowRight size={16} />
+                          Join Waitlist <ArrowRight size={16} />
                         </Link>
                       ) : (
                         <Link
@@ -287,7 +300,10 @@ export default function ServicesPage() {
       </section>
 
       {/* Trust Footer */}
-      <footer className="py-4 bg-white border-top mt-auto">
+      <footer
+        className="py-4 border-top mt-auto"
+        style={{ background: 'var(--card-bg, #ffffff)', borderColor: 'var(--border-color, #e2e8f0)' }}
+      >
         <div className="container-xl d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-2 text-muted small">
             <ShieldCheck size={18} className="text-success" />
@@ -299,6 +315,12 @@ export default function ServicesPage() {
           </div>
         </div>
       </footer>
+
+      <RequestPilotModal
+        service={selectedServiceForPilot}
+        isOpen={isPilotModalOpen}
+        onClose={() => setIsPilotModalOpen(false)}
+      />
     </div>
   )
 }

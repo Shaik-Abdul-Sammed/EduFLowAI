@@ -66,7 +66,7 @@ export default function PublicReportViewer() {
           style={{
             display: 'inline-block',
             background: '#2563eb',
-            color: '#fff',
+            color: 'var(--text-on-primary, #ffffff)',
             padding: '0.25rem 0.75rem',
             borderRadius: '999px',
             fontSize: '0.8rem',
@@ -76,7 +76,7 @@ export default function PublicReportViewer() {
         >
           {report.report_type}
         </span>
-        <h1 style={{ fontSize: '1.8rem', margin: '0 0 0.5rem 0', color: '#ffffff' }}>
+        <h1 style={{ fontSize: '1.8rem', margin: '0 0 0.5rem 0', color: 'var(--app-text, #ffffff)' }}>
           {report.title}
         </h1>
         <div

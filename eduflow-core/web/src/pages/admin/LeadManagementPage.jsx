@@ -216,7 +216,7 @@ export default function LeadManagementPage() {
               zIndex: 9999,
               padding: '0.85rem 1.25rem',
               borderRadius: '0.5rem',
-              color: '#ffffff',
+              color: 'var(--toast-text, #ffffff)',
               background: toastMessage.isError ? '#EF4444' : '#10B981',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               fontWeight: 600,
@@ -523,11 +523,11 @@ export default function LeadManagementPage() {
                       style={{
                         marginTop: '0.75rem',
                         fontSize: '0.8rem',
-                        background: '#ffffff',
+                        background: 'var(--surface-bg, #ffffff)',
                         padding: '0.5rem',
                         borderRadius: '0.4rem',
-                        border: '1px solid #e2e8f0',
-                        color: '#334155',
+                        border: '1px solid var(--border-color, #e2e8f0)',
+                        color: 'var(--app-text, #334155)',
                       }}
                     >
                       <em>&ldquo;{selectedLead.message}&rdquo;</em>

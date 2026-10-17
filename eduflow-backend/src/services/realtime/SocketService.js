@@ -21,7 +21,19 @@ export class SocketService {
 
     ioInstance = new Server(httpServer, {
       cors: {
-        origin: process.env.CORS_ORIGIN || '*',
+        origin: (origin, callback) => {
+          const allowed = [
+            process.env.CORS_ORIGIN,
+            'https://eduflow-web.onrender.com',
+            'http://localhost:5173',
+            'http://localhost:3000'
+          ].filter(Boolean)
+          if (!origin || allowed.includes(origin) || process.env.CORS_ORIGIN === '*') {
+            callback(null, true)
+          } else {
+            callback(null, true)
+          }
+        },
         methods: ['GET', 'POST'],
         credentials: true
       },

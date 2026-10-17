@@ -165,7 +165,7 @@ export default function ReportDeliveryPage() {
               zIndex: 9999,
               padding: '0.85rem 1.25rem',
               borderRadius: '0.5rem',
-              color: '#ffffff',
+              color: 'var(--toast-text, #ffffff)',
               background: toastMessage.isError ? '#EF4444' : '#10B981',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               fontWeight: 600,

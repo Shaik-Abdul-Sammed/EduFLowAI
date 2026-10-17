@@ -175,7 +175,7 @@ export default function ComingSoon({
                 disabled={loading}
                 style={{
                   background: '#2563EB',
-                  color: '#ffffff',
+                  color: 'var(--text-on-primary, #ffffff)',
                   border: 'none',
                   padding: '0.75rem 1.25rem',
                   borderRadius: '10px',

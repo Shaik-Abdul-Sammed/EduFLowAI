@@ -221,4 +221,29 @@ Contents:
       }
     }
   }
+
+  static async checkSubdomain(req, res) {
+    try {
+      const rawSlug = req.query.slug || req.query.subdomain || ''
+      const slug = String(rawSlug).trim().toLowerCase()
+      if (!slug) {
+        return res.status(200).json({ available: false, slug: '', error: 'Subdomain is required' })
+      }
+
+      const result = await pool.query(
+        'SELECT id FROM institutions WHERE LOWER(subdomain) = $1 OR LOWER(short_code) = $1',
+        [slug]
+      )
+
+      const isTaken = result.rows && result.rows.length > 0
+      return res.status(200).json({
+        available: !isTaken,
+        slug
+      })
+    } catch (err) {
+      console.error('Check subdomain error:', err)
+      return res.status(500).json({ available: false, slug: req.query.slug || '', error: err.message })
+    }
+  }
 }
+

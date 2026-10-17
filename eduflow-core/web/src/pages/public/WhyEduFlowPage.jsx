@@ -149,7 +149,7 @@ export default function WhyEduFlowPage() {
                     <th style={{ width: '13%' }}>ChatGPT</th>
                     <th style={{ width: '18%' }}>Traditional ERP</th>
                     <th style={{ width: '15%' }}>Existing EdTech</th>
-                    <th style={{ width: '17%', backgroundColor: '#2563EB', color: '#fff' }}>EduFlow AI OS</th>
+                    <th style={{ width: '17%', backgroundColor: '#2563EB', color: 'var(--text-on-primary, #ffffff)' }}>EduFlow AI OS</th>
                   </tr>
                 </thead>
                 <tbody className="small">
