@@ -367,7 +367,7 @@ Estimated hours saved: 0.5 hrs | Administrative cost saved: ₹150`,
 Estimated hours saved: 4 hrs | Reconciled revenue saved: ₹3,200`
 }
 
-async function* simulateTokenStream(text, delayMs = 30) {
+async function* simulateTokenStream(text, delayMs = 12) {
   const chunks = text.split(/(\s+)/)
   for (const chunk of chunks) {
     if (chunk) {
@@ -423,6 +423,13 @@ export class AIService {
    * Processes a prompt through the AI model using OpenAI/Gemini/Fallback.
    */
   static async processPrompt(officerType, prompt, context = {}) {
+    if (process.env.NODE_ENV === 'production') {
+      const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
+      if (!apiKey && process.env.AI_PROVIDER !== 'mock' && process.env.AI_PROVIDER !== 'ollama' && process.env.AI_PROVIDER !== 'lmstudio') {
+        throw new Error('AI Provider is not configured. Please set AI_API_KEY in environment variables.')
+      }
+    }
+
     const liveHeader = await this.getLiveOfficerHeader(officerType)
     const liveFooter = this.getLiveOfficerFooter(officerType)
 
@@ -436,6 +443,9 @@ export class AIService {
         }
       } catch (err) {
         logger.error('AI Provider Error:', err)
+        if (process.env.NODE_ENV === 'production') {
+          throw err
+        }
       }
     }
 
@@ -459,6 +469,13 @@ export class AIService {
    * @returns {AsyncGenerator<string>} Token stream
    */
   static async *streamPrompt(officerType, prompt, context = {}) {
+    if (process.env.NODE_ENV === 'production') {
+      const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
+      if (!apiKey && process.env.AI_PROVIDER !== 'mock' && process.env.AI_PROVIDER !== 'ollama' && process.env.AI_PROVIDER !== 'lmstudio') {
+        throw new Error('AI Provider is not configured. Please set AI_API_KEY in environment variables.')
+      }
+    }
+
     const liveHeader = await this.getLiveOfficerHeader(officerType)
     const liveFooter = this.getLiveOfficerFooter(officerType)
 
@@ -489,15 +506,18 @@ export class AIService {
           return
         }
       } catch (err) {
-        logger.warn(`Streaming error with AI provider for ${officerType}, using rich demo stream:`, err)
+        logger.warn(`Streaming error with AI provider for ${officerType}:`, err)
+        if (process.env.NODE_ENV === 'production') {
+          throw err
+        }
       }
     }
 
-    // Stream rich demo template with realistic token intervals (30ms)
+    // Stream rich demo template with responsive token intervals (12ms)
     const fallbackText = officerType === 'accreditation'
       ? resolveAccreditationFallback(prompt, context)
       : (OFFICER_FALLBACK_TEXTS[officerType] || `[${officerType} AI Officer]: Analysis completed for "${prompt}". All constraints satisfied.`)
-    yield* simulateTokenStream(fallbackText, 30)
+    yield* simulateTokenStream(fallbackText, 12)
 
     // Yield verified live source citations at completion of stream
     yield liveFooter

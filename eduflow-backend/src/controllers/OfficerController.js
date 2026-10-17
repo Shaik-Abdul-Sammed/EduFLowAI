@@ -293,12 +293,19 @@ export class OfficerController {
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no')
     if (typeof res.flushHeaders === 'function') {
       res.flushHeaders()
+    }
+    if (typeof res.flush === 'function') {
+      res.flush()
     }
 
     const sendEvent = (data) => {
       res.write(`data: ${JSON.stringify(data)}\n\n`)
+      if (typeof res.flush === 'function') {
+        res.flush()
+      }
     }
 
     try {

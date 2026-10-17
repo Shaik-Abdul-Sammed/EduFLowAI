@@ -13,15 +13,22 @@ export class OpenAIProvider extends BaseProvider {
 
   async chat(messages, systemPrompt = '') {
     const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
-    const res = await this.client.chat.completions.create({ model: this.model, messages: allMessages })
+    const maxTokens = Number(process.env.AI_MAX_TOKENS) || 2000
+    const res = await this.client.chat.completions.create({
+      model: this.model,
+      messages: allMessages,
+      max_tokens: maxTokens,
+    })
     return res.choices[0].message.content
   }
 
   async *chatStream(messages, systemPrompt = '') {
     const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
+    const maxTokens = Number(process.env.AI_MAX_TOKENS) || 2000
     const stream = await this.client.chat.completions.create({
       model: this.model,
       messages: allMessages,
+      max_tokens: maxTokens,
       stream: true,
     })
     for await (const chunk of stream) {

@@ -40,11 +40,21 @@ class MockProvider extends BaseProvider {
  */
 export function createAIProvider() {
   const providerName = (process.env.AI_PROVIDER || 'fallback').toLowerCase()
+  const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
+  const isProduction = process.env.NODE_ENV === 'production'
+
+  if (isProduction && providerName !== 'mock') {
+    if (!apiKey && providerName !== 'ollama' && providerName !== 'lmstudio') {
+      throw new Error('AI Provider is not configured. Please set AI_API_KEY in environment variables.')
+    }
+  }
+
   switch (providerName) {
     case 'gemini':   return new GeminiProvider()
     case 'openai':   return new OpenAIProvider()
     case 'claude':   return new ClaudeProvider()
     case 'ollama':   return new OllamaProvider()
+    case 'mock':     return new MockProvider()
     case 'lmstudio': {
       // LM Studio exposes an OpenAI-compatible API
       process.env.AI_BASE_URL = process.env.AI_BASE_URL || 'http://localhost:1234/v1'
@@ -52,6 +62,9 @@ export function createAIProvider() {
       return new OpenAIProvider()
     }
     case 'fallback': {
+      if (isProduction && !apiKey) {
+        throw new Error('AI Provider is not configured. Please set AI_API_KEY in environment variables.')
+      }
       const providers = []
       
       // 1. OpenAI

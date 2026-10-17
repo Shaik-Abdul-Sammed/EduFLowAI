@@ -2,12 +2,19 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { io } from 'socket.io-client'
 import { getApiBaseURL } from '../config/apiConfig'
 
-function deriveSocketUrl() {
-  const apiBase = getApiBaseURL()
-  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:3000'
-  const url = new URL(apiBase, origin)
-  const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${url.host}`
+function getSocketUrl() {
+  const apiBase = getApiBaseURL() // e.g., "https://eduflow-backend-jvn8.onrender.com/api"
+  try {
+    const url = new URL(apiBase)
+    const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${url.host}` // e.g., "wss://eduflow-backend-jvn8.onrender.com"
+  } catch {
+    const fallbackHost = typeof window !== 'undefined' && (window.location?.hostname === 'localhost' || window.location?.hostname === '127.0.0.1')
+      ? 'localhost:3000'
+      : 'eduflow-backend-jvn8.onrender.com'
+    const isHttps = typeof window !== 'undefined' && window.location?.protocol === 'https:'
+    return `${isHttps ? 'wss:' : 'ws:'}//${fallbackHost}`
+  }
 }
 
 export function useSocketEvents() {
@@ -18,7 +25,7 @@ export function useSocketEvents() {
 
   useEffect(() => {
     const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
-    const socketUrl = deriveSocketUrl()
+    const socketUrl = getSocketUrl()
 
     const socket = io(socketUrl, {
       auth: { token },

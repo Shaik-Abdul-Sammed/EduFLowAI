@@ -367,10 +367,10 @@ export default function PortalConnectionPage() {
                     <td><span className="badge bg-secondary-subtle text-secondary">{s.source_type}</span></td>
                     <td>
                       <span className="badge bg-success-subtle text-success d-inline-flex align-items-center gap-1">
-                        <CheckCircle2 size={12} /> {s.status}
+                        <CheckCircle2 size={12} /> {s.status || 'Active'}
                       </span>
                     </td>
-                    <td><strong>{s.total_records.toLocaleString()}</strong> records</td>
+                    <td><strong>{(s.total_records ?? s.records_processed ?? 0).toLocaleString()}</strong> records</td>
                     <td className="text-muted">{s.last_synced_at ? new Date(s.last_synced_at).toLocaleString() : 'Never'}</td>
                     <td>
                       <div className="d-flex gap-2">
@@ -415,9 +415,9 @@ export default function PortalConnectionPage() {
                   <tr key={log.id}>
                     <td className="text-muted font-monospace">#{log.id}</td>
                     <td className="fw-semibold text-dark">{log.source_name}</td>
-                    <td>{log.records_synced} canonical entries</td>
-                    <td><span className="badge bg-success text-white">{log.status}</span></td>
-                    <td className="text-muted">{new Date(log.completed_at).toLocaleString()}</td>
+                    <td>{((log.records_synced ?? log.records_processed ?? 0)).toLocaleString()} canonical entries</td>
+                    <td><span className="badge bg-success text-white">{log.status || 'SUCCESS'}</span></td>
+                    <td className="text-muted">{log.completed_at ? new Date(log.completed_at).toLocaleString() : 'Just now'}</td>
                   </tr>
                 ))}
               </tbody>

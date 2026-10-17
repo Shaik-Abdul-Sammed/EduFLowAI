@@ -68,4 +68,60 @@ describe('PortalConnectionPage Component', () => {
       expect(syncButtons.length).toBeGreaterThan(0)
     })
   })
+
+  test('Renders safely without crash when API response has missing or undefined numeric fields', async () => {
+    global.fetch.mockImplementation((url) => {
+      if (url.includes('/v1/portal/sources')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sources: [
+                {
+                  id: 99,
+                  name: 'Incomplete Field Source',
+                  source_type: 'MYSQL',
+                  status: 'CONNECTED',
+                  last_synced_at: null,
+                  total_records: undefined,
+                  records_processed: undefined,
+                },
+              ],
+            }),
+        })
+      }
+      if (url.includes('/v1/portal/sync-logs')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              logs: [
+                {
+                  id: 999,
+                  source_name: 'Incomplete Field Source',
+                  status: 'SUCCESS',
+                  records_synced: undefined,
+                  records_processed: undefined,
+                  completed_at: null,
+                },
+              ],
+            }),
+        })
+      }
+      return Promise.resolve({ ok: false })
+    })
+
+    render(
+      <MemoryRouter>
+        <PortalConnectionPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Incomplete Field Source').length).toBeGreaterThan(0)
+    })
+    expect(screen.getByText(/0 canonical entries/i)).toBeInTheDocument()
+    expect(screen.getByText('Never')).toBeInTheDocument()
+    expect(screen.getByText('Just now')).toBeInTheDocument()
+  })
 })
