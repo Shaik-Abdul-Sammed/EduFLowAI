@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { io } from 'socket.io-client'
-import { getApiBaseURL } from '../config/apiConfig'
 
 function getSocketUrl() {
   // 1. Try environment variable first
