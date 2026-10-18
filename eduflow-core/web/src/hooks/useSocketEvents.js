@@ -3,17 +3,28 @@ import { io } from 'socket.io-client'
 import { getApiBaseURL } from '../config/apiConfig'
 
 function getSocketUrl() {
-  const apiBase = getApiBaseURL() // e.g., "https://eduflow-backend-jvn8.onrender.com/api"
+  // 1. Try environment variable first
+  let apiBase
   try {
+    apiBase = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
+      (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL)
+  } catch {
+    apiBase = undefined
+  }
+
+  // 2. Fallback to production backend if env is missing or relative
+  if (!apiBase || apiBase.startsWith('/')) {
+    apiBase = 'https://eduflow-backend-jvn8.onrender.com/api'
+  }
+
+  try {
+    // Create URL object to safely parse host and protocol
     const url = new URL(apiBase)
     const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${url.host}` // e.g., "wss://eduflow-backend-jvn8.onrender.com"
+    return `${protocol}//${url.host}`
   } catch {
-    const fallbackHost = typeof window !== 'undefined' && (window.location?.hostname === 'localhost' || window.location?.hostname === '127.0.0.1')
-      ? 'localhost:3000'
-      : 'eduflow-backend-jvn8.onrender.com'
-    const isHttps = typeof window !== 'undefined' && window.location?.protocol === 'https:'
-    return `${isHttps ? 'wss:' : 'ws:'}//${fallbackHost}`
+    // Ultimate fallback
+    return 'wss://eduflow-backend-jvn8.onrender.com'
   }
 }
 

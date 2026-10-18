@@ -34,10 +34,13 @@ describe('DocsPage Component', () => {
     // Check sidebar categories
     expect(screen.getByText('Getting Started')).toBeInTheDocument()
     expect(screen.getByText('AI Officers')).toBeInTheDocument()
+    expect(screen.getAllByText('API Reference')[0]).toBeInTheDocument()
+    expect(screen.getByText('Webhooks & Events')).toBeInTheDocument()
+    expect(screen.getByText('SSO & Identity')).toBeInTheDocument()
+    expect(screen.getByText('Security & Compliance')).toBeInTheDocument()
+    expect(screen.getByText('Billing & Invoices')).toBeInTheDocument()
     expect(screen.getByText('Data Integration')).toBeInTheDocument()
     expect(screen.getByText('Admin Guide')).toBeInTheDocument()
-    expect(screen.getByText('Security & Compliance')).toBeInTheDocument()
-    expect(screen.getAllByText('API Reference')[0]).toBeInTheDocument()
   })
 
   test('Navigates between sections on sidebar click', () => {
@@ -56,6 +59,38 @@ describe('DocsPage Component', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: /Accreditation Officer/i })).toBeInTheDocument()
     expect(screen.getByText(/Autonomous generation of 7-Criteria NAAC SSR/i)).toBeInTheDocument()
+  })
+
+  test('Navigates to new technical guides: Webhooks, SSO, Billing, and API Reference', () => {
+    render(
+      <MemoryRouter>
+        <DocsPage />
+      </MemoryRouter>
+    )
+
+    // 1. Webhooks
+    const webhooksBtn = screen.getByRole('button', { name: /Webhooks Overview/i })
+    fireEvent.click(webhooksBtn)
+    expect(screen.getByRole('heading', { level: 1, name: /Webhooks Overview/i })).toBeInTheDocument()
+    expect(screen.getByText(/X-EduFlow-Signature/i)).toBeInTheDocument()
+
+    // 2. SSO SAML
+    const samlBtn = screen.getByRole('button', { name: /SAML 2\.0 Integration/i })
+    fireEvent.click(samlBtn)
+    expect(screen.getByRole('heading', { level: 1, name: /SAML 2\.0 Integration/i })).toBeInTheDocument()
+    expect(screen.getByText(/Step-by-Step SAML Configuration/i)).toBeInTheDocument()
+
+    // 3. Billing & Invoices
+    const billingBtn = screen.getByRole('button', { name: /GST-Compliant Invoicing/i })
+    fireEvent.click(billingBtn)
+    expect(screen.getByRole('heading', { level: 1, name: /GST-Compliant Invoicing/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/SAC 9992/i).length).toBeGreaterThan(0)
+
+    // 4. API Rate Limits
+    const rateLimitsBtn = screen.getByRole('button', { name: /Rate Limits/i })
+    fireEvent.click(rateLimitsBtn)
+    expect(screen.getByRole('heading', { level: 1, name: /Rate Limits/i })).toBeInTheDocument()
+    expect(screen.getByText(/100 requests/i)).toBeInTheDocument()
   })
 
   test('Copy button works on code blocks', async () => {

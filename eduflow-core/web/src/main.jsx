@@ -29,6 +29,11 @@ console.warn = (...args) => { if (!isExtensionNoise(args)) _warn(...args) }
 console.log = (...args) => { if (!isExtensionNoise(args)) _log(...args) }
 
 if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    console.warn('Chunk load failed. Forcing reload...', event)
+    window.location.reload()
+  })
+
   window.addEventListener('error', (event) => {
     const src = event.filename || ''
     if (EXTENSION_PATTERNS.some((p) => src.includes(p))) {
