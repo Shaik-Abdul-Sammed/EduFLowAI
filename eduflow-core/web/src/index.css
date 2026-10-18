@@ -536,4 +536,48 @@ form > * + *, .form-group + .form-group {
   opacity: 0.7;
 }
 
+/* GLOBAL DARK MODE OVERRIDES */
+[data-theme='dark'] .accordion-item,
+[data-theme='dark'] .accordion-button,
+[data-theme='dark'] .accordion-body,
+[data-theme='dark'] .card,
+[data-theme='dark'] .modal-content,
+[data-theme='dark'] .dropdown-menu,
+[data-theme='dark'] .list-group-item {
+  background-color: var(--card-bg, #0f172a) !important;
+  color: var(--app-text, #e2e8f0) !important;
+  border-color: var(--border-color, #334155) !important;
+}
+
+[data-theme='dark'] .accordion-button:not(.collapsed) {
+  background-color: var(--surface-bg, #1e293b) !important;
+  color: var(--app-text, #e2e8f0) !important;
+}
+
+[data-theme='dark'] .accordion-button::after {
+  filter: invert(1); /* Fix the dropdown arrow color */
+}
+
+[data-theme='dark'] table,
+[data-theme='dark'] th,
+[data-theme='dark'] td {
+  background-color: transparent !important;
+  color: var(--app-text, #e2e8f0) !important;
+  border-color: var(--border-color, #334155) !important;
+}
+
+/* Fix any hardcoded text-dark or bg-white classes */
+[data-theme='dark'] .text-dark {
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .bg-white {
+  background-color: var(--card-bg) !important;
+}
+
+[data-theme='dark'] .bg-light {
+  background-color: var(--surface-bg) !important;
+}
+
+
 

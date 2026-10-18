@@ -21,32 +21,17 @@ export default function NotificationCenter() {
       })
       if (res.ok) {
         const data = await res.json()
-        setNotifications(data.notifications || [])
-        setUnreadCount(data.unreadCount ?? 0)
+        const list = Array.isArray(data.notifications) ? data.notifications : []
+        setNotifications(list)
+        setUnreadCount(list.length === 0 ? 0 : (data.unreadCount ?? list.filter(n => !n.read).length))
+      } else {
+        setNotifications([])
+        setUnreadCount(0)
       }
     } catch {
-      // Fallback notifications if offline
-      setNotifications([
-        {
-          id: 'notif-1',
-          title: 'Pending Timetable Approval',
-          message: 'Priya Sharma submitted draft schedule for CSE Dept',
-          type: 'approval',
-          link: '/hod-dashboard',
-          created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-          read: false,
-        },
-        {
-          id: 'notif-2',
-          title: 'New Institutional Lead',
-          message: 'MVJ College of Engineering requested NAAC SSR Gap Analysis',
-          type: 'lead',
-          link: '/admin-dashboard/leads',
-          created_at: new Date(Date.now() - 60 * 60000).toISOString(),
-          read: false,
-        },
-      ])
-      setUnreadCount(2)
+      // Clear notifications and badge if offline or error
+      setNotifications([])
+      setUnreadCount(0)
     }
   }
 
@@ -148,7 +133,7 @@ export default function NotificationCenter() {
         }}
       >
         <Bell size={18} />
-        {unreadCount > 0 && (
+        {unreadCount > 0 && notifications.length > 0 && (
           <span
             className="position-absolute badge rounded-pill bg-danger border border-white"
             style={{

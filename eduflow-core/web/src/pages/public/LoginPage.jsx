@@ -159,33 +159,58 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    try {
-      const res = await login({
-        email: email.trim(),
-        username: email.trim(),
-        password,
-        institutionId: institutionId || 'demo',
-      })
+    const isDemoEmail = ['admin@demo.edu', 's9010150809@gmail.com'].includes(email.trim().toLowerCase())
 
+    const attemptLogin = async (isRetry = false) => {
       try {
-        if (rememberMe) {
-          localStorage.setItem('eduflow_remembered_email', email.trim())
-          localStorage.setItem('eduflow_remember_me', 'true')
-        } else {
-          localStorage.removeItem('eduflow_remembered_email')
-        }
-      } catch {
-        // Ignore
-      }
+        const res = await login({
+          email: email.trim(),
+          username: email.trim(),
+          password,
+          institutionId: institutionId || 'demo',
+        })
 
-      const role = res?.user?.role || 'admin'
-      navigate(`/${role}-dashboard`, { replace: true })
-    } catch (err) {
-      const friendly = mapAuthError(err)
-      setError(friendly)
-    } finally {
-      setLoading(false)
+        try {
+          if (rememberMe) {
+            localStorage.setItem('eduflow_remembered_email', email.trim())
+            localStorage.setItem('eduflow_remember_me', 'true')
+          } else {
+            localStorage.removeItem('eduflow_remembered_email')
+          }
+        } catch {
+          // Ignore
+        }
+
+        const role = res?.user?.role || 'admin'
+        navigate(`/${role}-dashboard`, { replace: true })
+      } catch (err) {
+        const errMsg = (err?.message || '').toLowerCase()
+        const isDemoNotFound = isDemoEmail && (
+          errMsg.includes('no account found') ||
+          errMsg.includes('user not found') ||
+          errMsg.includes('waking up') ||
+          err?.code === 'USER_NOT_FOUND'
+        )
+
+        if (isDemoNotFound) {
+          setError('Server is waking up, retrying...')
+          if (!isRetry) {
+            setTimeout(() => {
+              attemptLogin(true)
+            }, 2500)
+            return
+          }
+          setLoading(false)
+          return
+        }
+
+        const friendly = mapAuthError(err)
+        setError(friendly)
+        setLoading(false)
+      }
     }
+
+    await attemptLogin(false)
   }
 
   return (

@@ -170,8 +170,10 @@ export default function HelpCenterPage() {
                 </button>
               </h2>
               <div id={`collapse${idx}`} className="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                <div className="accordion-body text-muted" style={{ lineHeight: '1.6' }}>
-                  {faq.a}
+                <div className="accordion-body" style={{ lineHeight: '1.6', color: 'var(--app-text)' }}>
+                  <div className="text-start" style={{ color: 'var(--app-text)' }}>
+                    {faq.a}
+                  </div>
                 </div>
               </div>
             </div>
