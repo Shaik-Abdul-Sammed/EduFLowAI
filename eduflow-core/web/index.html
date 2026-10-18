@@ -8,8 +8,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <title>EduFlow AI - Autonomous Institution Operating System</title>
+    <script>
+      (function() {
+        try {
+          var storedTheme = localStorage.getItem('eduflow-ai-theme') || 
+            (localStorage.getItem('eduflow-ai-dark-mode') === 'true' ? 'dark' : 
+             localStorage.getItem('eduflow-ai-dark-mode') === 'false' ? 'light' : null);
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = storedTheme || (prefersDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.setAttribute('data-bs-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

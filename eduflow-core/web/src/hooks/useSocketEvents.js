@@ -37,14 +37,19 @@ export function useSocketEvents() {
 
   useEffect(() => {
     const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+    if (!token) {
+      setIsConnected(false)
+      return
+    }
+
     const socketUrl = getSocketUrl()
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
-      timeout: 10000,
+      timeout: 20000,
     })
 
     const checkHealthFallback = () => {
@@ -63,8 +68,7 @@ export function useSocketEvents() {
 
     socket.on('connect', () => setIsConnected(true))
     socket.on('disconnect', () => setIsConnected(false))
-    socket.on('connect_error', (err) => {
-      console.warn('[socket] connection failed:', err.message)
+    socket.on('connect_error', () => {
       checkHealthFallback()
     })
 

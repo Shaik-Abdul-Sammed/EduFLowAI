@@ -120,6 +120,28 @@ body {
   color: var(--app-text-muted) !important;
 }
 
+[data-theme='dark'] .text-body {
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .bg-body {
+  background-color: var(--card-bg) !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .btn-light {
+  background-color: var(--surface-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme='dark'] .btn-light:hover,
+[data-theme='dark'] .btn-light:focus,
+[data-theme='dark'] .btn-light:active {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
 [data-theme='dark'] h1,
 [data-theme='dark'] h2,
 [data-theme='dark'] h3,

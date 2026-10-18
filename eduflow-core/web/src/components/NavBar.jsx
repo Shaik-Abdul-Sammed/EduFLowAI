@@ -17,7 +17,9 @@ export default function NavBar({ routes, onMenuClick }) {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.setAttribute('data-bs-theme', theme)
     localStorage.setItem('eduflow-ai-theme', theme)
+    localStorage.setItem('eduflow-ai-dark-mode', theme === 'dark' ? 'true' : 'false')
     localStorage.removeItem('sri-sudha-theme')
   }, [theme])
 

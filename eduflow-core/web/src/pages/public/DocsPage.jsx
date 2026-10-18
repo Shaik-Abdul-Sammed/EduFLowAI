@@ -11,7 +11,9 @@ import {
   Zap,
   Info,
   AlertTriangle,
-  Layers
+  Layers,
+  Sun,
+  Moon
 } from 'lucide-react'
 
 const DOC_SECTIONS = [
@@ -839,6 +841,33 @@ export default function DocsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef(null)
 
+  const [theme, setTheme] = useState(() => {
+    try {
+      const stored = localStorage.getItem('eduflow-ai-theme') ||
+        (localStorage.getItem('eduflow-ai-dark-mode') === 'true' ? 'dark' :
+         localStorage.getItem('eduflow-ai-dark-mode') === 'false' ? 'light' : null)
+      if (stored) return stored
+      return (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+    } catch {
+      return 'dark'
+    }
+  })
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-theme', theme)
+      document.documentElement.setAttribute('data-bs-theme', theme)
+      localStorage.setItem('eduflow-ai-theme', theme)
+      localStorage.setItem('eduflow-ai-dark-mode', theme === 'dark' ? 'true' : 'false')
+    } catch {
+      // Ignore if storage or DOM is unavailable
+    }
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  }
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === '/' && document.activeElement !== searchInputRef.current) {
@@ -944,6 +973,17 @@ export default function DocsPage() {
             >
               GitHub <ExternalLink size={13} />
             </a>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+              onClick={toggleTheme}
+              style={{ color: 'var(--app-text-muted)', borderColor: 'var(--border-color)' }}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun size={14} className="text-warning" /> : <Moon size={14} />}
+              <span className="d-none d-sm-inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
             <Link to="/login" className="btn btn-sm btn-primary d-flex align-items-center gap-1">
               <ArrowLeft size={14} /> Back to App
             </Link>
@@ -982,14 +1022,14 @@ export default function DocsPage() {
                         <li key={item.id} className="mb-1">
                           <button
                             type="button"
-                            className={`btn btn-sm w-100 text-start px-2 py-1 rounded d-flex align-items-center justify-content-between ${
+                            className={`btn btn-sm w-100 text-start px-2 py-1 rounded d-flex align-items-center justify-content-between border-0 ${
                               selectedId === item.id
                                 ? 'btn-primary text-white fw-semibold shadow-sm'
-                                : 'btn-light border-0'
+                                : ''
                             }`}
                             style={{
                               fontSize: '0.85rem',
-                              background: selectedId === item.id ? undefined : 'transparent',
+                              backgroundColor: selectedId === item.id ? '#0d6efd' : 'transparent',
                               color: selectedId === item.id ? '#ffffff' : 'var(--app-text, #cbd5e1)',
                             }}
                             onClick={() => setSelectedId(item.id)}

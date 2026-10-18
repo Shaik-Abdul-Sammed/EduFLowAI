@@ -30,8 +30,18 @@ console.log = (...args) => { if (!isExtensionNoise(args)) _log(...args) }
 
 if (typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', (event) => {
-    console.warn('Chunk load failed. Forcing reload...', event)
-    window.location.reload()
+    event.preventDefault()
+    try {
+      const reloadKey = 'eduflow_last_chunk_reload'
+      const now = Date.now()
+      const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10)
+      if (now - lastReload > 10000) {
+        sessionStorage.setItem(reloadKey, String(now))
+        window.location.reload()
+      }
+    } catch {
+      window.location.reload()
+    }
   })
 
   window.addEventListener('error', (event) => {

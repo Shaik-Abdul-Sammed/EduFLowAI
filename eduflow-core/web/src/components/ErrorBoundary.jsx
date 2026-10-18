@@ -10,22 +10,35 @@ export class ErrorBoundary extends Component {
   static getDerivedStateFromError(error) {
     const errorMsg = error?.message || String(error)
     const isChunkError =
-      errorMsg.includes('Failed to fetch dynamically imported module') ||
-      errorMsg.includes('Importing a module script failed') ||
-      errorMsg.includes('error loading dynamically imported module')
+      /failed to fetch dynamically imported module|loading chunk|chunkloaderror|importing a module script failed/i.test(errorMsg)
     return { hasError: true, error, isChunkError }
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an unhandled error:', error, errorInfo)
     const errorMsg = error?.message || String(error)
     const isChunkError =
-      errorMsg.includes('Failed to fetch dynamically imported module') ||
-      errorMsg.includes('Importing a module script failed') ||
-      errorMsg.includes('error loading dynamically imported module')
+      /failed to fetch dynamically imported module|loading chunk|chunkloaderror|importing a module script failed/i.test(errorMsg)
 
-    if (isChunkError && !this.state.isChunkError) {
-      this.setState({ isChunkError: true })
+    if (isChunkError) {
+      if (!this.state.isChunkError) {
+        this.setState({ isChunkError: true })
+      }
+      try {
+        const reloadKey = 'eduflow_last_chunk_reload'
+        const now = Date.now()
+        const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10)
+        if (now - lastReload > 10000) {
+          sessionStorage.setItem(reloadKey, String(now))
+          if (typeof window !== 'undefined') {
+            window.location.reload()
+            return
+          }
+        }
+      } catch {
+        // Continue to fallback UI
+      }
+    } else {
+      console.error('ErrorBoundary caught an unhandled error:', error, errorInfo)
     }
 
     try {
