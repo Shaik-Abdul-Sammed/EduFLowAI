@@ -6,7 +6,8 @@ function getSocketUrl() {
   // 1. Try environment variable first
   let apiBase
   try {
-    apiBase = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
+    const metaEnv = new Function('try { return import.meta.env } catch { return undefined }')()
+    apiBase = (metaEnv && metaEnv.VITE_API_BASE_URL) ||
       (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL)
   } catch {
     apiBase = undefined
