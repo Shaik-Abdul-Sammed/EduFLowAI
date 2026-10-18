@@ -579,5 +579,11 @@ form > * + *, .form-group + .form-group {
   background-color: var(--surface-bg) !important;
 }
 
-
-
+[data-theme='dark'] * {
+  border-color: var(--border-color) !important;
+}
+[data-theme='dark'] .accordion-body, 
+[data-theme='dark'] .card-body {
+  background-color: var(--card-bg) !important;
+  color: var(--app-text) !important;
+}

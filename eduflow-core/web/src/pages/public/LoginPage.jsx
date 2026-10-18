@@ -185,19 +185,19 @@ export default function LoginPage() {
         navigate(`/${role}-dashboard`, { replace: true })
       } catch (err) {
         const errMsg = (err?.message || '').toLowerCase()
-        const isDemoNotFound = isDemoEmail && (
+        const isNotFound =
           errMsg.includes('no account found') ||
           errMsg.includes('user not found') ||
-          errMsg.includes('waking up') ||
-          err?.code === 'USER_NOT_FOUND'
-        )
+          (err?.status === 401 && errMsg.includes('account')) ||
+          (err?.statusCode === 401 && errMsg.includes('account')) ||
+          (isDemoEmail && (errMsg.includes('not found') || errMsg.includes('waking up') || err?.code === 'USER_NOT_FOUND'))
 
-        if (isDemoNotFound) {
-          setError('Server is waking up, retrying...')
+        if (isNotFound) {
+          setError('Database is waking up and seeding. Please wait 5 seconds and try again.')
           if (!isRetry) {
             setTimeout(() => {
               attemptLogin(true)
-            }, 2500)
+            }, 5000)
             return
           }
           setLoading(false)

@@ -46,30 +46,16 @@ export function useSocketEvents() {
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['polling', 'websocket'],
+      transports: ['polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
       timeout: 20000,
     })
 
-    const checkHealthFallback = () => {
-      const apiBase = getApiBaseURL()
-      fetch(`${apiBase}/health`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data && data.ok) {
-            setIsConnected(true)
-          } else {
-            setIsConnected(false)
-          }
-        })
-        .catch(() => setIsConnected(false))
-    }
-
     socket.on('connect', () => setIsConnected(true))
     socket.on('disconnect', () => setIsConnected(false))
     socket.on('connect_error', () => {
-      checkHealthFallback()
+      setIsConnected(false)
     })
 
     const handleGenericEvent = (eventName) => (data) => {

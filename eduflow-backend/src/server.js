@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { fork } from 'child_process'
+import { fork, exec } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createApp } from './app.js'
@@ -59,6 +59,13 @@ async function autoHealDatabase() {
 
 function listenOnPort(port) {
   return new Promise((resolve, reject) => {
+    if (process.env.NODE_ENV !== 'test') {
+      exec('node scripts/seed-demo.js && node scripts/seed-dean-account.js', { cwd: path.join(__dirname, '..') }, (err, stdout, stderr) => {
+        if (err) console.error('Seed error:', err);
+        else console.log('Database auto-healed on startup.');
+      });
+    }
+
     const server = app.listen(port, '0.0.0.0', () => resolve(server))
 
     server.on('error', (error) => {

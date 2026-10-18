@@ -21,6 +21,18 @@ export default function HelpCenterPage() {
   const [submitting, setSubmitting] = useState(false)
   const [ticketSuccess, setTicketSuccess] = useState('')
   const [ticketError, setTicketError] = useState('')
+  const [openFaqs, setOpenFaqs] = useState(() => {
+    const init = {}
+    for (let i = 0; i < 30; i++) init[i] = true
+    return init
+  })
+
+  const toggleFaq = (idx) => {
+    setOpenFaqs((prev) => ({
+      ...prev,
+      [idx]: !prev[idx]
+    }))
+  }
 
   const faqs = [
     { q: 'How do I start onboarding my college?', a: 'Administrators can navigate to /admin-dashboard/onboarding to complete the 6-step setup covering profile, departments, faculty, and student roster imports.' },
@@ -101,7 +113,7 @@ export default function HelpCenterPage() {
       </div>
 
       {/* 5-Step Getting Started Walkthrough */}
-      <div className="card shadow-sm border-0 p-4 bg-white mb-5">
+      <div className="card shadow-sm border-0 p-4 mb-5" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)' }}>
         <h4 className="fw-bold mb-3 d-flex align-items-center">
           <BookOpen className="me-2 text-primary" /> Getting Started: 5-Step Quickstart
         </h4>
@@ -114,7 +126,7 @@ export default function HelpCenterPage() {
             { step: '5', title: 'Run AI Officers', desc: 'Draft NAAC SSR reports and generate conflict-free timetables.' }
           ].map((item) => (
             <div key={item.step} className="col-md">
-              <div className="p-3 border rounded h-100 bg-light">
+              <div className="p-3 border rounded h-100" style={{ backgroundColor: 'var(--surface-bg)', color: 'var(--app-text)' }}>
                 <div className="badge bg-primary mb-2">Step {item.step}</div>
                 <h6 className="fw-bold mb-1">{item.title}</h6>
                 <small className="text-muted">{item.desc}</small>
@@ -125,7 +137,7 @@ export default function HelpCenterPage() {
       </div>
 
       {/* Video Tutorials Grid */}
-      <div className="card shadow-sm border-0 p-4 bg-white mb-5">
+      <div className="card shadow-sm border-0 p-4 mb-5" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)' }}>
         <h4 className="fw-bold mb-3 d-flex align-items-center">
           <Video className="me-2 text-primary" /> Video Masterclasses
         </h4>
@@ -152,37 +164,77 @@ export default function HelpCenterPage() {
       </div>
 
       {/* FAQ Accordion */}
-      <div className="card shadow-sm border-0 p-4 bg-white mb-5">
-        <h4 className="fw-bold mb-3">Frequently Asked Questions ({filteredFaqs.length})</h4>
+      <div className="card shadow-sm border-0 p-4 mb-5" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)' }}>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h4 className="fw-bold mb-0" style={{ color: 'var(--app-text)' }}>Frequently Asked Questions ({filteredFaqs.length})</h4>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-primary"
+            onClick={() => {
+              const allOpen = filteredFaqs.every((_, i) => openFaqs[i])
+              const next = {}
+              filteredFaqs.forEach((_, i) => { next[i] = !allOpen })
+              setOpenFaqs(next)
+            }}
+          >
+            {filteredFaqs.every((_, i) => openFaqs[i]) ? 'Collapse All' : 'Expand All'}
+          </button>
+        </div>
         <div className="accordion" id="faqAccordion">
-          {filteredFaqs.map((faq, idx) => (
-            <div className="accordion-item" key={idx}>
-              <h2 className="accordion-header" id={`heading${idx}`}>
-                <button
-                  className="accordion-button collapsed fw-semibold"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target={`#collapse${idx}`}
-                  aria-expanded="false"
-                  aria-controls={`collapse${idx}`}
+          {filteredFaqs.map((faq, idx) => {
+            const isOpen = !!openFaqs[idx]
+            return (
+              <div
+                className="accordion-item mb-2"
+                key={idx}
+                style={{
+                  backgroundColor: 'var(--card-bg)',
+                  borderColor: 'var(--border-color)',
+                  borderRadius: '0.5rem',
+                  overflow: 'hidden'
+                }}
+              >
+                <h2
+                  className="accordion-header"
+                  id={`heading${idx}`}
+                  style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)' }}
                 >
-                  {faq.q}
-                </button>
-              </h2>
-              <div id={`collapse${idx}`} className="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                <div className="accordion-body" style={{ lineHeight: '1.6', color: 'var(--app-text)' }}>
-                  <div className="text-start" style={{ color: 'var(--app-text)' }}>
-                    {faq.a}
+                  <button
+                    className={`accordion-button ${isOpen ? '' : 'collapsed'} fw-semibold`}
+                    type="button"
+                    onClick={() => toggleFaq(idx)}
+                    data-bs-toggle="collapse"
+                    data-bs-target={`#collapse${idx}`}
+                    aria-expanded={isOpen ? 'true' : 'false'}
+                    aria-controls={`collapse${idx}`}
+                    style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)' }}
+                  >
+                    {faq.q}
+                  </button>
+                </h2>
+                <div
+                  id={`collapse${idx}`}
+                  className={`accordion-collapse collapse ${isOpen ? 'show' : ''}`}
+                  style={{ display: isOpen ? 'block' : 'none', backgroundColor: 'var(--card-bg)' }}
+                  data-bs-parent="#faqAccordion"
+                >
+                  <div
+                    className="accordion-body"
+                    style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)', lineHeight: '1.6' }}
+                  >
+                    <p style={{ color: 'var(--app-text)', fontSize: '16px', margin: 0 }}>
+                      {faq.a}
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
       {/* Support Ticket Submission */}
-      <div className="card shadow-sm border-0 p-4 bg-white">
+      <div className="card shadow-sm border-0 p-4" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--app-text)' }}>
         <h4 className="fw-bold mb-3 d-flex align-items-center">
           <MessageSquare className="me-2 text-primary" /> Contact Institutional Support
         </h4>
