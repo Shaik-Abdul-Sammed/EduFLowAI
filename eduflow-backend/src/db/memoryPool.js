@@ -266,6 +266,18 @@ export function createMemoryPool() {
         return { rows: user ? [user] : [], rowCount: user ? 1 : 0 }
       }
 
+      // 6b. User lookup by email / username
+      if (sql.includes('from users where email = $1') || sql.includes('from users where lower(email) = lower($1)')) {
+        const email = String(params[0] || '').toLowerCase()
+        const user = state.users.find(u => u.email && u.email.toLowerCase() === email)
+        return { rows: user ? [user] : [], rowCount: user ? 1 : 0 }
+      }
+      if (sql.includes('from users where username = $1') || sql.includes('from users where lower(username) = lower($1)')) {
+        const ident = String(params[0] || '').toLowerCase()
+        const user = state.users.find(u => (u.username && u.username.toLowerCase() === ident) || (u.email && u.email.toLowerCase() === ident))
+        return { rows: user ? [user] : [], rowCount: user ? 1 : 0 }
+      }
+
       // 7. Insert user
       if (sql.includes('insert into users')) {
         let institution_id, role, username, password_hash, name

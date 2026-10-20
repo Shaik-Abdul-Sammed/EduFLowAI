@@ -207,11 +207,11 @@ describe('LoginPage Component', () => {
     })
   })
 
-  test('401 response for unseeded admin shows "Database not seeded yet" with emergency seed link', async () => {
+  test('503 response shows "Database not seeded yet" with emergency seed link', async () => {
     const user = userEvent.setup()
-    const error401 = new Error('No account found for this email. Create one?')
-    error401.status = 401
-    mockLogin.mockRejectedValueOnce(error401)
+    const error503 = new Error('Service Unavailable: database unreachable')
+    error503.status = 503
+    mockLogin.mockRejectedValueOnce(error503)
 
     render(
       <MemoryRouter>
@@ -231,6 +231,27 @@ describe('LoginPage Component', () => {
         'https://eduflow-backend-jvn8.onrender.com/api/v1/auth/emergency-seed?secret=eduflow2026'
       )
       expect(link).toHaveAttribute('target', '_blank')
+    })
+  })
+
+  test('401 response shows wait 5 seconds retry message', async () => {
+    const user = userEvent.setup()
+    const error401 = new Error('Invalid credentials')
+    error401.status = 401
+    mockLogin.mockRejectedValueOnce(error401)
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: /fill admin credentials/i }))
+    await user.click(screen.getByRole('button', { name: /login securely/i }))
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert')
+      expect(alert).toHaveTextContent(/invalid email or password\. if you just seeded the database, wait 5 seconds and click login again\./i)
     })
   })
 })

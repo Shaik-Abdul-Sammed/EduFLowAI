@@ -7,6 +7,7 @@ import { rateLimit } from 'express-rate-limit'
 import { validateRequest, loginSchema, registerUserSchema } from '../middleware/validateRequest.js'
 import { seedDemoData } from '../../scripts/seed-demo.js'
 import { seedDeanAccount } from '../../scripts/seed-dean-account.js'
+import { AuthController } from '../controllers/AuthController.js'
 
 export function createAuthRouter() {
   const router = Router()
@@ -72,65 +73,7 @@ export function createAuthRouter() {
   /**
    * POST /api/v1/auth/login
    */
-  router.post('/login', validateRequest(loginSchema), async (req, res) => {
-    try {
-      const { institutionId, email, username, password, role } = req.body
-      const identifier = username || email
-
-      // Find user and join with institution
-      const user = await UserRepository.findByUsernameOrEmail(institutionId, identifier)
-      if (!user) {
-        await UserRepository.logAudit(institutionId, null, 'LOGIN_FAILED_USER_NOT_FOUND', req.ip, req.get('user-agent'), { identifier })
-        return res.status(401).json({ error: 'Invalid credentials', code: 'USER_NOT_FOUND', message: 'No account found for this email' })
-      }
-
-      // Optional: strict role check
-      if (role && user.role !== role) {
-        await UserRepository.logAudit(institutionId, user.id, 'LOGIN_FAILED_ROLE_MISMATCH', req.ip, req.get('user-agent'), { identifier, requestedRole: role })
-        return res.status(401).json({ error: 'Invalid credentials or role', code: 'ROLE_MISMATCH' })
-      }
-
-      // Verify password
-      const isMatch = await bcrypt.compare(password, user.password_hash)
-      if (!isMatch) {
-        await UserRepository.logAudit(institutionId, user.id, 'LOGIN_FAILED_INVALID_PASSWORD', req.ip, req.get('user-agent'), { email })
-        return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_PASSWORD', message: 'Wrong password for this email' })
-      }
-
-      // Generate tokens
-      const { accessToken, refreshToken } = generateTokens(user)
-
-      // Store refresh token in DB
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-      await UserRepository.saveRefreshToken(user.id, refreshToken, expiresAt)
-
-      // Log success
-      await UserRepository.logAudit(institutionId, user.id, 'LOGIN_SUCCESS', req.ip, req.get('user-agent'))
-
-      res.json({
-        accessToken,
-        refreshToken,
-        user: {
-          id: user.id,
-          role: user.role,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name,
-        },
-        institution: {
-          id: user.institution_id,
-          name: user.inst_name,
-          subscriptionTier: user.subscription_tier,
-          primaryColor: user.primary_color,
-          secondaryColor: user.secondary_color,
-          logoUrl: user.logo_url
-        }
-      })
-    } catch (err) {
-      console.error('Login error:', err)
-      res.status(500).json({ error: 'Internal server error' })
-    }
-  })
+  router.post('/login', validateRequest(loginSchema), AuthController.login)
 
   /**
    * POST /api/v1/auth/refresh

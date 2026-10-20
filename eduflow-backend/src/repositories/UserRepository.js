@@ -2,20 +2,21 @@ import { pool } from '../db/pool.js'
 
 export class UserRepository {
   static async findByUsernameOrEmail(institutionId, identifier) {
-    if (institutionId) {
+    const isNumericId = institutionId !== undefined && institutionId !== null && institutionId !== 'demo' && !isNaN(Number(institutionId))
+    if (isNumericId) {
       const result = await pool.query(
         `SELECT u.*, i.name as inst_name, i.subscription_tier, i.primary_color, i.secondary_color, i.logo_url 
          FROM users u 
-         JOIN institutions i ON u.institution_id = i.id 
+         LEFT JOIN institutions i ON u.institution_id = i.id 
          WHERE u.institution_id = $1 AND (LOWER(u.username) = LOWER($2) OR LOWER(u.email) = LOWER($2))`,
-        [institutionId, identifier]
+        [Number(institutionId), identifier]
       )
-      return result.rows[0]
+      if (result.rows[0]) return result.rows[0]
     }
     const result = await pool.query(
       `SELECT u.*, i.name as inst_name, i.subscription_tier, i.primary_color, i.secondary_color, i.logo_url 
        FROM users u 
-       JOIN institutions i ON u.institution_id = i.id 
+       LEFT JOIN institutions i ON u.institution_id = i.id 
        WHERE (LOWER(u.username) = LOWER($1) OR LOWER(u.email) = LOWER($1))`,
       [identifier]
     )

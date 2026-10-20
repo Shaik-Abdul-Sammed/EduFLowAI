@@ -151,15 +151,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
     if (!email.trim() || !password.trim()) {
       setError('Email and password are required')
       return
     }
 
     setLoading(true)
-    setError('')
-
-    const isDemoEmail = ['admin@demo.edu', 's9010150809@gmail.com'].includes(email.trim().toLowerCase())
 
     const attemptLogin = async () => {
       try {
@@ -184,19 +182,19 @@ export default function LoginPage() {
         const role = res?.user?.role || 'admin'
         navigate(`/${role}-dashboard`, { replace: true })
       } catch (err) {
+        const status = err?.status || err?.statusCode || (err?.cause && err.cause?.status)
         const errMsg = (err?.message || '').toLowerCase()
-        const isNotFound =
-          errMsg.includes('no account found') ||
-          errMsg.includes('user not found') ||
-          (err?.status === 401 && errMsg.includes('account')) ||
-          (err?.statusCode === 401 && errMsg.includes('account')) ||
-          (isDemoEmail && (errMsg.includes('not found') || errMsg.includes('waking up') || err?.code === 'USER_NOT_FOUND'))
+        const is503 = status === 503 || errMsg.includes('503') || errMsg.includes('service unavailable')
+        const is401 = status === 401 || errMsg.includes('401') || errMsg.includes('invalid credentials') || errMsg.includes('invalid email or password') || errMsg.includes('wrong password') || errMsg.includes('no account found')
 
-        const isAdmin = email.trim().toLowerCase() === 'admin@demo.edu'
-        const is401 = err?.status === 401 || err?.statusCode === 401
-
-        if ((isAdmin || isDemoEmail) && (isNotFound || is401) && !err?.message?.includes('Fill Admin Credentials')) {
+        if (is503) {
           setError('Database not seeded yet. Click here to seed now.')
+          setLoading(false)
+          return
+        }
+
+        if (is401) {
+          setError('Invalid email or password. If you just seeded the database, wait 5 seconds and click Login again.')
           setLoading(false)
           return
         }
@@ -681,6 +679,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
+            onClick={() => setError('')}
             style={{
               width: '100%',
               background: 'linear-gradient(135deg, var(--svc-navy, #0A2540) 0%, var(--svc-blue, #1E3A8A) 100%)',
