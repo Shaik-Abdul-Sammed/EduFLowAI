@@ -1,5 +1,4 @@
 import dotenv from 'dotenv'
-import { fork, exec } from 'child_process'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createApp } from './app.js'
@@ -19,55 +18,48 @@ const app = createApp()
 app.set('trust proxy', 1)
 const BASE_PORT = Number(process.env.PORT || 3000)
 
-async function autoHealDatabase() {
+// ─── Auto-Heal Database ────────────────────────────────────────────────────
+// Imports are dynamic so they don't fail if scripts have syntax errors at boot
+async function checkAndSeedDatabase() {
   if (process.env.NODE_ENV === 'test') return
 
   try {
     const res = await pool.query(
-      `SELECT id FROM users WHERE LOWER(email) = 'admin@demo.edu' LIMIT 1`
+      `SELECT id FROM users WHERE email = 'admin@demo.edu' LIMIT 1`
     ).catch(() => null)
 
-    if (!res || !res.rows || res.rows.length === 0) {
-      console.log('🔄 [Auto-Healing] admin@demo.edu not found. Auto-seeding database...')
-      const seedDemoPath = path.join(__dirname, '../scripts/seed-demo.js')
-      const seedDeanPath = path.join(__dirname, '../scripts/seed-dean-account.js')
+    const adminMissing = !res || !res.rows || res.rows.length === 0
 
-      const seedProc = fork(seedDemoPath, { stdio: 'inherit' })
-      seedProc.on('exit', () => {
-        const deanProc = fork(seedDeanPath, { stdio: 'inherit' })
-        deanProc.on('exit', () => {
-          console.log('✅ [Auto-Healing] Database auto-seeded with admin and dean accounts.')
-        })
-      })
-    } else {
-      const deanRes = await pool.query(
-        `SELECT id FROM users WHERE LOWER(email) = 's9010150809@gmail.com' LIMIT 1`
-      ).catch(() => null)
-      if (!deanRes || !deanRes.rows || deanRes.rows.length === 0) {
-        console.log('🔄 [Auto-Healing] Dean account missing. Auto-seeding dean...')
-        const seedDeanPath = path.join(__dirname, '../scripts/seed-dean-account.js')
-        const deanProc = fork(seedDeanPath, { stdio: 'inherit' })
-        deanProc.on('exit', () => {
-          console.log('✅ [Auto-Healing] Dean account auto-seeded successfully.')
-        })
-      }
+    if (adminMissing) {
+      console.log('⚠️ Admin account missing. Auto-seeding database...')
+      const { seedDemoData } = await import('../scripts/seed-demo.js')
+      const { seedDeanAccount } = await import('../scripts/seed-dean-account.js')
+      await seedDemoData(pool)
+      await seedDeanAccount(pool)
+      console.log('✅ Database auto-healed successfully.')
+      return
+    }
+
+    // Check dean account separately
+    const deanRes = await pool.query(
+      `SELECT id FROM users WHERE email = 's9010150809@gmail.com' LIMIT 1`
+    ).catch(() => null)
+
+    if (!deanRes || !deanRes.rows || deanRes.rows.length === 0) {
+      console.log('⚠️ Dean account missing. Seeding dean...')
+      const { seedDeanAccount } = await import('../scripts/seed-dean-account.js')
+      await seedDeanAccount(pool)
+      console.log('✅ Dean account auto-seeded.')
     }
   } catch (err) {
-    console.warn('⚠️ [Auto-Healing] Note during database auto-heal check:', err.message)
+    console.error('❌ [checkAndSeedDatabase] Auto-heal failed:', err.message)
   }
 }
 
-function listenOnPort(port) {
+async function listenOnPort(port) {
+  await checkAndSeedDatabase()
   return new Promise((resolve, reject) => {
-    if (process.env.NODE_ENV !== 'test') {
-      exec('node scripts/seed-demo.js && node scripts/seed-dean-account.js', { cwd: path.join(__dirname, '..') }, (err, stdout, stderr) => {
-        if (err) console.error('Seed error:', err);
-        else console.log('Database auto-healed on startup.');
-      });
-    }
-
     const server = app.listen(port, '0.0.0.0', () => resolve(server))
-
     server.on('error', (error) => {
       server.close(() => reject(error))
     })
@@ -165,9 +157,6 @@ async function startServer() {
 
       // eslint-disable-next-line no-console
       console.log(`Backend running on http://localhost:${port}`)
-
-      // Auto-heal database in background to ensure demo and dean accounts exist
-      autoHealDatabase().catch(() => {})
       return
     } catch (error) {
       if (error?.code !== 'EADDRINUSE' || offset === maxAttempts - 1) {

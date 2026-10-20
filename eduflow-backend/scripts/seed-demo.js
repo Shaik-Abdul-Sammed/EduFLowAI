@@ -294,11 +294,73 @@ async function seed() {
   } catch (err) {
     await client.query('ROLLBACK')
     console.error('❌ Seeding failed with error:', err.message)
-    process.exit(1)
+    throw err
   } finally {
     client.release()
-    await pool.end()
   }
 }
 
-seed()
+// Named export for use by server.js (uses the server's shared pool, no pool.end())
+export async function seedDemoData(sharedPool) {
+  const pg2 = sharedPool || pool
+  const client = await pg2.connect()
+  try {
+    // Apply schema
+    const schemaPath = path.join(__dirname, '../sql/schema.sql')
+    if (fs.existsSync(schemaPath)) {
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8')
+      await client.query(schemaSql)
+    }
+
+    await client.query('BEGIN')
+
+    // Upsert institution
+    const instRes = await client.query(`
+      INSERT INTO institutions (
+        name, slug, subdomain, type, short_code, subscription_tier,
+        primary_color, secondary_color, logo_url, admin_email, metadata
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      ON CONFLICT (subdomain) DO UPDATE SET
+        name = EXCLUDED.name,
+        subscription_tier = EXCLUDED.subscription_tier,
+        updated_at = NOW()
+      RETURNING id;
+    `, [
+      'Sri Sudha Institute of Technology', 'demo', 'demo', 'college', 'SSIT',
+      'enterprise', '#2563EB', '#1E40AF', '/assets/hero.png', 'admin@demo.edu',
+      JSON.stringify({ address: 'Hyderabad, Telangana', established: 2008 })
+    ])
+    const institutionId = instRes.rows[0].id
+
+    // Upsert admin
+    const adminPasswordHash = await bcrypt.hash('Demo@2026', 10)
+    await client.query(`
+      INSERT INTO users (institution_id, role, username, email, password_hash, name, first_name, last_name, metadata)
+      VALUES ($1,'admin','admin','admin@demo.edu',$2,'Dr. K. V. Ramanathan','Dr. K. V.','Ramanathan',$3)
+      ON CONFLICT (institution_id, username) DO UPDATE SET
+        email = EXCLUDED.email,
+        password_hash = EXCLUDED.password_hash,
+        updated_at = NOW()
+    `, [institutionId, adminPasswordHash, JSON.stringify({ designation: 'Principal' })])
+
+    await client.query('COMMIT')
+    console.log('✅ [seedDemoData] Institution + Admin seeded.')
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+// Direct CLI execution
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  seed()
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error(err.message)
+      pool.end().catch(() => {})
+      process.exit(1)
+    })
+}

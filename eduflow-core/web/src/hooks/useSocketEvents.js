@@ -43,18 +43,31 @@ export function useSocketEvents() {
 
     const socketUrl = getSocketUrl()
 
+    let failedAttempts = 0
+
     const socket = io(socketUrl, {
       auth: { token },
       transports: ['polling'],
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 3,
       reconnectionDelay: 2000,
-      timeout: 20000,
+      timeout: 10000,
     })
 
-    socket.on('connect', () => setIsConnected(true))
+    socket.on('connect', () => {
+      failedAttempts = 0
+      setIsConnected(true)
+    })
     socket.on('disconnect', () => setIsConnected(false))
     socket.on('connect_error', () => {
+      failedAttempts += 1
       setIsConnected(false)
+      if (failedAttempts >= 3) {
+        socket.disconnect()
+      }
+    })
+    socket.on('reconnect_failed', () => {
+      setIsConnected(false)
+      socket.disconnect()
     })
 
     const handleGenericEvent = (eventName) => (data) => {

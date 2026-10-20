@@ -5,7 +5,7 @@ import { getApiBaseURL } from '../config/apiConfig'
 import { useAuth } from '../hooks/useAuth'
 
 export default function NotificationCenter() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
@@ -14,10 +14,15 @@ export default function NotificationCenter() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
+      if (!token) {
+        setNotifications([])
+        setUnreadCount(0)
+        return
+      }
       const userId = user?.id || 'demo'
       const res = await fetch(`${getApiBaseURL()}/v1/notifications?userId=${userId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
         const data = await res.json()
@@ -36,11 +41,17 @@ export default function NotificationCenter() {
   }
 
   useEffect(() => {
+    const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
+    if (!token) {
+      setNotifications([])
+      setUnreadCount(0)
+      return
+    }
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, isAuthenticated])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -133,7 +144,7 @@ export default function NotificationCenter() {
         }}
       >
         <Bell size={18} />
-        {unreadCount > 0 && notifications.length > 0 && (
+        {isAuthenticated && unreadCount > 0 && notifications.length > 0 && (
           <span
             className="position-absolute badge rounded-pill bg-danger border border-white"
             style={{

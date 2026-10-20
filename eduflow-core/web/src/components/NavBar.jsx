@@ -12,6 +12,18 @@ export default function NavBar({ routes, onMenuClick }) {
   const [theme, setTheme] = useState(localStorage.getItem('eduflow-ai-theme') || localStorage.getItem('sri-sudha-theme') || 'light')
   const { t, locale, setLanguage } = useI18n()
   const { isConnected } = useSocketEvents()
+  const [connectionTimedOut, setConnectionTimedOut] = useState(false)
+
+  useEffect(() => {
+    if (isConnected) {
+      setConnectionTimedOut(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      setConnectionTimedOut(true)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [isConnected])
 
   const langRef = useRef(null)
 
@@ -119,34 +131,74 @@ export default function NavBar({ routes, onMenuClick }) {
             </Link>
 
             {/* Live Real-Time Connection Indicator */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.35rem 0.65rem',
-                borderRadius: '9999px',
-                background: isConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)',
-                border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.25)' : 'rgba(234, 179, 8, 0.25)'}`,
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: isConnected ? '#16a34a' : '#ca8a04',
-                whiteSpace: 'nowrap'
-              }}
-              title={isConnected ? 'Real-Time WebSocket Active' : 'Connecting to Real-Time Network...'}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: isConnected ? '#22c55e' : '#eab308',
-                  boxShadow: isConnected ? '0 0 8px #22c55e' : 'none',
-                  display: 'inline-block'
-                }}
-              />
-              <span className="d-none d-md-inline">{isConnected ? 'Live' : 'Connecting'}</span>
-            </div>
+            {(() => {
+              const status = isConnected
+                ? 'live'
+                : connectionTimedOut
+                  ? 'offline'
+                  : 'connecting'
+
+              const config = {
+                live: {
+                  bg: 'rgba(34, 197, 94, 0.1)',
+                  border: 'rgba(34, 197, 94, 0.25)',
+                  color: '#16a34a',
+                  dot: '#22c55e',
+                  shadow: '0 0 8px #22c55e',
+                  label: 'Live',
+                  title: 'Real-Time WebSocket Active'
+                },
+                connecting: {
+                  bg: 'rgba(234, 179, 8, 0.1)',
+                  border: 'rgba(234, 179, 8, 0.25)',
+                  color: '#ca8a04',
+                  dot: '#eab308',
+                  shadow: 'none',
+                  label: 'Connecting',
+                  title: 'Connecting to Real-Time Network...'
+                },
+                offline: {
+                  bg: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                  border: isDark ? 'rgba(148, 163, 184, 0.25)' : 'rgba(100, 116, 139, 0.25)',
+                  color: isDark ? '#94a3b8' : '#64748b',
+                  dot: '#94a3b8',
+                  shadow: 'none',
+                  label: 'Offline',
+                  title: 'Real-Time Network Offline'
+                }
+              }[status]
+
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '9999px',
+                    background: config.bg,
+                    border: `1px solid ${config.border}`,
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: config.color,
+                    whiteSpace: 'nowrap'
+                  }}
+                  title={config.title}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: config.dot,
+                      boxShadow: config.shadow,
+                      display: 'inline-block'
+                    }}
+                  />
+                  <span className="d-none d-md-inline">{config.label}</span>
+                </div>
+              )
+            })()}
 
             <Link
               to="/help"
