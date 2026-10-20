@@ -6,6 +6,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^recharts$': '<rootDir>/__mocks__/recharts.js',
   },
   collectCoverageFrom: [
     'src/**/*.{js,jsx}',

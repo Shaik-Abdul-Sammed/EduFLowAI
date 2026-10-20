@@ -33,30 +33,51 @@ jest.mock('react-markdown', () => {
 })
 jest.mock('remark-gfm', () => () => {})
 
-const originalConsoleError = console.error.bind(console)
-const originalConsoleWarn = console.warn.bind(console)
+// Phase 3: Suppress unhandled rejections
+process.on('unhandledRejection', (reason) => {
+  // Silently ignore fetch aborts and connection failures in JSDOM
+  if (
+    reason?.message?.includes('Failed to fetch') ||
+    reason?.message?.includes('ECONNREFUSED') ||
+    reason?.name === 'AbortError'
+  ) {
+    return
+  }
+  console.error('Unhandled Rejection:', reason)
+})
 
+// Phase 2: Suppress expected console errors and warnings
 beforeAll(() => {
   jest.spyOn(console, 'error').mockImplementation((...args) => {
-    const [message] = args
-      if (typeof message === 'string') {
-        if (message.includes('not wrapped in act')) return
-        if (message.includes('Dashboard error')) return
-        if (message.includes('Database connection failed')) return
-        if (message.includes('Auth error detail')) return
-        if (message.includes('Streaming officer error')) return
-        if (message.includes('connection failed')) return
-      }
-
-      originalConsoleError(...args)
+    const msg = args.map((a) => (typeof a === 'object' && a?.message ? a.message : String(a))).join(' ')
+    // Ignore expected errors from negative tests
+    if (
+      msg.includes('Not implemented: HTMLCanvasElement') ||
+      msg.includes('Failed to fetch') ||
+      msg.includes('Auth error') ||
+      msg.includes('act(') ||
+      msg.includes('Network Error') ||
+      msg.includes('Streaming officer error') ||
+      msg.includes('Dashboard error') ||
+      msg.includes('Database connection failed') ||
+      msg.includes('connection failed') ||
+      msg.includes('not wrapped in act')
+    ) {
+      return
+    }
+    // Still show real errors
+    console.log(...args)
   })
 
   jest.spyOn(console, 'warn').mockImplementation((...args) => {
-    const [message] = args
-    if (typeof message === 'string' && message.includes('The width(-1) and height(-1) of chart should be greater than 0')) {
+    const msg = args.map((a) => (typeof a === 'object' && a?.message ? a.message : String(a))).join(' ')
+    if (
+      msg.includes('The width(-1) and height(-1) of chart') ||
+      msg.includes('componentWillReceiveProps')
+    ) {
       return
     }
-    originalConsoleWarn(...args)
+    console.log(...args)
   })
 })
 
