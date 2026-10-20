@@ -206,4 +206,31 @@ describe('LoginPage Component', () => {
       expect(alert).toHaveTextContent(/invalid email or password/i)
     })
   })
+
+  test('401 response for unseeded admin shows "Database not seeded yet" with emergency seed link', async () => {
+    const user = userEvent.setup()
+    const error401 = new Error('No account found for this email. Create one?')
+    error401.status = 401
+    mockLogin.mockRejectedValueOnce(error401)
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    )
+
+    await user.click(screen.getByRole('button', { name: /fill admin credentials/i }))
+    await user.click(screen.getByRole('button', { name: /login securely/i }))
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert')
+      expect(alert).toHaveTextContent(/database not seeded yet\. click here to seed now\./i)
+      const link = screen.getByRole('link', { name: /click here to seed now\./i })
+      expect(link).toHaveAttribute(
+        'href',
+        'https://eduflow-backend-jvn8.onrender.com/api/v1/auth/emergency-seed?secret=eduflow2026'
+      )
+      expect(link).toHaveAttribute('target', '_blank')
+    })
+  })
 })

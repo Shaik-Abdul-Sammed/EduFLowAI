@@ -161,7 +161,7 @@ export default function LoginPage() {
 
     const isDemoEmail = ['admin@demo.edu', 's9010150809@gmail.com'].includes(email.trim().toLowerCase())
 
-    const attemptLogin = async (isRetry = false) => {
+    const attemptLogin = async () => {
       try {
         const res = await login({
           email: email.trim(),
@@ -192,14 +192,11 @@ export default function LoginPage() {
           (err?.statusCode === 401 && errMsg.includes('account')) ||
           (isDemoEmail && (errMsg.includes('not found') || errMsg.includes('waking up') || err?.code === 'USER_NOT_FOUND'))
 
-        if (isNotFound) {
-          setError('Database is waking up and seeding. Please wait 5 seconds and try again.')
-          if (!isRetry) {
-            setTimeout(() => {
-              attemptLogin(true)
-            }, 5000)
-            return
-          }
+        const isAdmin = email.trim().toLowerCase() === 'admin@demo.edu'
+        const is401 = err?.status === 401 || err?.statusCode === 401
+
+        if ((isAdmin || isDemoEmail) && (isNotFound || is401) && !err?.message?.includes('Fill Admin Credentials')) {
+          setError('Database not seeded yet. Click here to seed now.')
           setLoading(false)
           return
         }
@@ -210,7 +207,7 @@ export default function LoginPage() {
       }
     }
 
-    await attemptLogin(false)
+    await attemptLogin()
   }
 
   return (
@@ -414,11 +411,27 @@ export default function LoginPage() {
             }}
           >
             <span>
-              {error}{' '}
-              {error.includes('Create one?') && (
-                <Link to="/register-institution" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'underline' }}>
-                  Register here
-                </Link>
+              {typeof error === 'string' && error.includes('Database not seeded yet') ? (
+                <>
+                  Database not seeded yet.{' '}
+                  <a
+                    href="https://eduflow-backend-jvn8.onrender.com/api/v1/auth/emergency-seed?secret=eduflow2026"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'underline' }}
+                  >
+                    Click here to seed now.
+                  </a>
+                </>
+              ) : (
+                <>
+                  {error}{' '}
+                  {typeof error === 'string' && error.includes('Create one?') && (
+                    <Link to="/register-institution" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'underline' }}>
+                      Register here
+                    </Link>
+                  )}
+                </>
               )}
             </span>
             <Link

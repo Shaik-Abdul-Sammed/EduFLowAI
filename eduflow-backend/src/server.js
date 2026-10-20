@@ -18,46 +18,7 @@ const app = createApp()
 app.set('trust proxy', 1)
 const BASE_PORT = Number(process.env.PORT || 3000)
 
-// ─── Auto-Heal Database ────────────────────────────────────────────────────
-// Imports are dynamic so they don't fail if scripts have syntax errors at boot
-async function checkAndSeedDatabase() {
-  if (process.env.NODE_ENV === 'test') return
-
-  try {
-    const res = await pool.query(
-      `SELECT id FROM users WHERE email = 'admin@demo.edu' LIMIT 1`
-    ).catch(() => null)
-
-    const adminMissing = !res || !res.rows || res.rows.length === 0
-
-    if (adminMissing) {
-      console.log('⚠️ Admin account missing. Auto-seeding database...')
-      const { seedDemoData } = await import('../scripts/seed-demo.js')
-      const { seedDeanAccount } = await import('../scripts/seed-dean-account.js')
-      await seedDemoData(pool)
-      await seedDeanAccount(pool)
-      console.log('✅ Database auto-healed successfully.')
-      return
-    }
-
-    // Check dean account separately
-    const deanRes = await pool.query(
-      `SELECT id FROM users WHERE email = 's9010150809@gmail.com' LIMIT 1`
-    ).catch(() => null)
-
-    if (!deanRes || !deanRes.rows || deanRes.rows.length === 0) {
-      console.log('⚠️ Dean account missing. Seeding dean...')
-      const { seedDeanAccount } = await import('../scripts/seed-dean-account.js')
-      await seedDeanAccount(pool)
-      console.log('✅ Dean account auto-seeded.')
-    }
-  } catch (err) {
-    console.error('❌ [checkAndSeedDatabase] Auto-heal failed:', err.message)
-  }
-}
-
 async function listenOnPort(port) {
-  await checkAndSeedDatabase()
   return new Promise((resolve, reject) => {
     const server = app.listen(port, '0.0.0.0', () => resolve(server))
     server.on('error', (error) => {

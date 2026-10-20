@@ -5,6 +5,8 @@ import { UserRepository } from '../repositories/UserRepository.js'
 import { pool } from '../db/pool.js'
 import { rateLimit } from 'express-rate-limit'
 import { validateRequest, loginSchema, registerUserSchema } from '../middleware/validateRequest.js'
+import { seedDemoData } from '../../scripts/seed-demo.js'
+import { seedDeanAccount } from '../../scripts/seed-dean-account.js'
 
 export function createAuthRouter() {
   const router = Router()
@@ -47,6 +49,23 @@ export function createAuthRouter() {
       res.json({ id: result.rows[0].id, name: result.rows[0].name })
     } catch (err) {
       res.status(500).json({ error: 'Database error' })
+    }
+  })
+
+  /**
+   * GET /api/v1/auth/emergency-seed
+   * Triggers database seeding for demo institution and dean account
+   */
+  router.get('/emergency-seed', async (req, res) => {
+    if (req.query.secret !== 'eduflow2026') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+    try {
+      await seedDemoData(pool)
+      await seedDeanAccount(pool)
+      res.json({ success: true, message: 'Database seeded successfully. You can now log in.' })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
     }
   })
 
