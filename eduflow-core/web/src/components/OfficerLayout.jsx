@@ -119,12 +119,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, tokens]);
 
-  // ── Error toast ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (error) {
-      addToast('The officer is temporarily unavailable. Please try again.', 'danger');
-    }
-  }, [error, addToast]);
+  // ── Error handling ──────────────────────────────────────────────────────────
+  // Error state is displayed directly inside the chat UI, avoid toast spam.
 
   // ── Persist streamed response into messages when done ──────────────────────
   useEffect(() => {
@@ -586,6 +582,25 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             {status === 'connecting' && !tokens && (
               <div style={{ color: accentColor, fontSize: '0.82rem', fontStyle: 'italic', margin: '0.5rem 0' }}>
                 [{name}]: {connectingText}
+              </div>
+            )}
+
+            {(status === 'error' || error) && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.875rem 1.15rem',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '12px',
+                color: '#fca5a5',
+                fontSize: '0.85rem',
+                margin: '0.75rem 0',
+                maxWidth: '82%',
+              }}>
+                <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                <span>The AI Officer is currently offline. Please try again.</span>
               </div>
             )}
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, ShieldCheck, Mail, Lock, Sparkles, ArrowRight, KeyRound, Globe } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, Mail, Lock, Sparkles, ArrowRight, KeyRound, Globe, Copy, Check } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { DEMO_ACCOUNTS } from '../../config/demoCredentials'
 import { mapAuthError } from '../../services/authService'
@@ -36,6 +36,15 @@ export default function LoginPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copiedField, setCopiedField] = useState(null)
+
+  const handleCopy = (text, field) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    }
+  }
 
   useEffect(() => {
     // When URL contains ?institutionId=X or demo, fetch active SSO providers
@@ -271,11 +280,12 @@ export default function LoginPage() {
 
         {/* Section 2 - Demo Credentials Helper Card */}
         <div style={{
-          background: 'var(--surface-bg, linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%))',
-          border: '1px solid var(--border-color, #E2E8F0)',
+          background: 'var(--demo-card-bg, #EFF6FF)',
+          border: '1.5px solid var(--demo-card-border, #93C5FD)',
           borderRadius: '0.875rem',
           padding: '1.25rem',
           marginBottom: '1.75rem',
+          boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
         }}>
           <div style={{
             display: 'flex',
@@ -283,11 +293,11 @@ export default function LoginPage() {
             gap: '0.5rem',
             marginBottom: '0.875rem',
           }}>
-            <Sparkles size={16} color="var(--svc-blue, #2563EB)" />
+            <Sparkles size={16} color="#2563EB" />
             <h3 style={{
               fontSize: '0.95rem',
               fontWeight: 700,
-              color: 'var(--hero-text, var(--app-text, #0A2540))',
+              color: 'var(--demo-text, #1E3A8A)',
               margin: 0,
             }}>
               Try the Demo
@@ -296,7 +306,7 @@ export default function LoginPage() {
               fontSize: '0.7rem',
               fontWeight: 600,
               background: 'rgba(37, 99, 235, 0.15)',
-              color: 'var(--svc-blue, #1D4ED8)',
+              color: '#2563EB',
               padding: '0.15rem 0.5rem',
               borderRadius: '9999px',
               marginLeft: 'auto',
@@ -308,19 +318,83 @@ export default function LoginPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             {/* Admin option */}
             <div style={{
-              background: 'var(--card-bg, #FFFFFF)',
-              border: '1px solid var(--border-color, #E2E8F0)',
+              background: 'var(--demo-inner-bg, #FFFFFF)',
+              border: '1px solid var(--demo-inner-border, #BFDBFE)',
               borderRadius: '0.625rem',
-              padding: '0.75rem',
+              padding: '0.875rem',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--app-text, #1E293B)' }}>
-                  For Administrators <span style={{ color: 'var(--app-text-muted, #64748B)', fontWeight: 500 }}>(NAAC / NIRF / Insights)</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--demo-text, #1E3A8A)' }}>
+                  For Administrators <span style={{ color: 'var(--demo-text-muted, #1E40AF)', fontWeight: 500 }}>(NAAC / NIRF / Insights)</span>
                 </span>
               </div>
-              <div style={{ fontSize: '0.775rem', color: 'var(--app-text-muted, #475569)', marginBottom: '0.5rem', fontFamily: 'monospace' }}>
-                Email: <strong>admin@demo.edu</strong> • Password: <strong>Demo@2026</strong>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                marginBottom: '0.875rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--demo-text, #1E3A8A)' }}>
+                    <strong>Admin Email:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>admin@demo.edu</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('admin@demo.edu', 'email')}
+                    title="Copy Admin Email"
+                    aria-label="Copy Admin Email"
+                    style={{
+                      background: copiedField === 'email' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(37, 99, 235, 0.1)',
+                      border: '1px solid',
+                      borderColor: copiedField === 'email' ? '#10B981' : '#93C5FD',
+                      color: copiedField === 'email' ? '#059669' : '#2563EB',
+                      borderRadius: '6px',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copiedField === 'email' ? <Check size={13} /> : <Copy size={13} />}
+                    <span>{copiedField === 'email' ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--demo-text, #1E3A8A)' }}>
+                    <strong>Password:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>Demo@2026</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('Demo@2026', 'password')}
+                    title="Copy Password"
+                    aria-label="Copy Password"
+                    style={{
+                      background: copiedField === 'password' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(37, 99, 235, 0.1)',
+                      border: '1px solid',
+                      borderColor: copiedField === 'password' ? '#10B981' : '#93C5FD',
+                      color: copiedField === 'password' ? '#059669' : '#2563EB',
+                      borderRadius: '6px',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copiedField === 'password' ? <Check size={13} /> : <Copy size={13} />}
+                    <span>{copiedField === 'password' ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
               </div>
+
               <button
                 type="button"
                 onClick={handleFillAdmin}
@@ -330,26 +404,27 @@ export default function LoginPage() {
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '0.5rem',
-                  padding: '0.45rem 0.75rem',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
+                  padding: '0.6rem 0.875rem',
+                  fontSize: '0.825rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.35rem',
+                  gap: '0.4rem',
                   transition: 'background 0.15s ease',
+                  boxShadow: '0 2px 4px rgba(37, 99, 235, 0.25)',
                 }}
               >
                 <span>Fill Admin Credentials</span>
-                <ArrowRight size={13} />
+                <ArrowRight size={14} />
               </button>
             </div>
 
             {/* Dean option */}
             <div style={{
-              background: 'var(--card-bg, #FFFFFF)',
-              border: '1px solid var(--border-color, #E2E8F0)',
+              background: 'var(--demo-inner-bg, #FFFFFF)',
+              border: '1px solid var(--demo-inner-border, #BFDBFE)',
               borderRadius: '0.625rem',
               padding: '0.75rem',
             }}>

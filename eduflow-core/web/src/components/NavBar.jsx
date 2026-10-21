@@ -19,11 +19,16 @@ export default function NavBar({ routes, onMenuClick }) {
       setConnectionTimedOut(false)
       return
     }
+    const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
+    if (!user || !token) {
+      setConnectionTimedOut(true)
+      return
+    }
     const timer = setTimeout(() => {
       setConnectionTimedOut(true)
-    }, 5000)
+    }, 3000)
     return () => clearTimeout(timer)
-  }, [isConnected])
+  }, [isConnected, user])
 
   const langRef = useRef(null)
 
@@ -86,6 +91,20 @@ export default function NavBar({ routes, onMenuClick }) {
             </button>
           )}
 
+          {/* Mobile Brand (if logged in, next to hamburger) */}
+          {user && (
+            <Link to="/" className="d-lg-none" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}>
+              <img src="/logo.svg" alt="EduFlow AI Logo" style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover' }} />
+              <span style={{
+                fontSize: '1.05rem', fontWeight: 800,
+                background: 'linear-gradient(135deg,#2563EB,#06B6D4)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>
+                {t('brand')}
+              </span>
+            </Link>
+          )}
+
           {/* Desktop Brand (if not logged in, or alongside sidebar) */}
           {!user && (
             <Link to="/entry" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
@@ -104,7 +123,7 @@ export default function NavBar({ routes, onMenuClick }) {
           <div style={{ flex: 1 }} />
 
           {/* Right section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
 
             <div className="d-none d-md-block" style={{ width: 220 }}>
               <GlobalSearch routes={routes} currentRole={user?.role} />
