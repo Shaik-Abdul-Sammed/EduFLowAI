@@ -1,3 +1,37 @@
+// Unregister any existing service workers to prevent old routes from caching
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister()
+    }
+  }).catch(() => {})
+}
+
+async function checkAppVersion() {
+  try {
+    const res = await fetch('/version.json?t=' + Date.now())
+    if (!res.ok) return
+    const data = await res.json()
+    const fetchedVersion = data?.version
+    if (!fetchedVersion) return
+
+    const storedVersion = localStorage.getItem('app_version')
+    if (storedVersion) {
+      if (storedVersion !== fetchedVersion) {
+        localStorage.setItem('app_version', fetchedVersion)
+        window.location.reload(true)
+      }
+    } else {
+      localStorage.setItem('app_version', fetchedVersion)
+    }
+  } catch {
+    // Fail silently on network or parse error
+  }
+}
+
+checkAppVersion()
+setInterval(checkAppVersion, 60000)
+
 const EXTENSION_PATTERNS = [
   'chrome-extension://',
   'moz-extension://',
