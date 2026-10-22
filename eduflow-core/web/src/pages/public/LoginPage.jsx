@@ -335,8 +335,8 @@ export default function LoginPage() {
                 marginBottom: '0.875rem',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--demo-text, #1E3A8A)' }}>
-                    <strong>Admin Email:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>admin@demo.edu</span>
+                  <div style={{ fontSize: '0.925rem', color: 'var(--demo-text, #1E3A8A)' }}>
+                    <strong>Admin Email:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.01em' }}>admin@demo.edu</span>
                   </div>
                   <button
                     type="button"
@@ -349,24 +349,24 @@ export default function LoginPage() {
                       borderColor: copiedField === 'email' ? '#10B981' : '#93C5FD',
                       color: copiedField === 'email' ? '#059669' : '#2563EB',
                       borderRadius: '6px',
-                      padding: '0.2rem 0.5rem',
-                      fontSize: '0.75rem',
+                      padding: '0.25rem 0.6rem',
+                      fontSize: '0.8rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.25rem',
+                      gap: '0.3rem',
                       fontWeight: 600,
                       flexShrink: 0,
                     }}
                   >
-                    {copiedField === 'email' ? <Check size={13} /> : <Copy size={13} />}
+                    {copiedField === 'email' ? <Check size={14} /> : <Copy size={14} />}
                     <span>{copiedField === 'email' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--demo-text, #1E3A8A)' }}>
-                    <strong>Password:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>Demo@2026</span>
+                  <div style={{ fontSize: '0.925rem', color: 'var(--demo-text, #1E3A8A)' }}>
+                    <strong>Password:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.01em' }}>Demo@2026</span>
                   </div>
                   <button
                     type="button"
@@ -379,17 +379,17 @@ export default function LoginPage() {
                       borderColor: copiedField === 'password' ? '#10B981' : '#93C5FD',
                       color: copiedField === 'password' ? '#059669' : '#2563EB',
                       borderRadius: '6px',
-                      padding: '0.2rem 0.5rem',
-                      fontSize: '0.75rem',
+                      padding: '0.25rem 0.6rem',
+                      fontSize: '0.8rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.25rem',
+                      gap: '0.3rem',
                       fontWeight: 600,
                       flexShrink: 0,
                     }}
                   >
-                    {copiedField === 'password' ? <Check size={13} /> : <Copy size={13} />}
+                    {copiedField === 'password' ? <Check size={14} /> : <Copy size={14} />}
                     <span>{copiedField === 'password' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>

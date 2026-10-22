@@ -120,7 +120,18 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   }, [messages, tokens]);
 
   // ── Error handling ──────────────────────────────────────────────────────────
-  // Error state is displayed directly inside the chat UI, avoid toast spam.
+  const errorToastShownRef = useRef(false);
+
+  useEffect(() => {
+    if (error) {
+      if (!errorToastShownRef.current) {
+        errorToastShownRef.current = true;
+        addToast('The officer is temporarily unavailable. Please try again.', 'danger');
+      }
+    } else {
+      errorToastShownRef.current = false;
+    }
+  }, [error, addToast]);
 
   // ── Persist streamed response into messages when done ──────────────────────
   useEffect(() => {
@@ -141,6 +152,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
 
   // ── Send ───────────────────────────────────────────────────────────────────
   const handleSend = (text) => {
+    errorToastShownRef.current = false;
     const promptText = (text || inputValue).trim();
 
     // Phase 7: empty prompt guard
