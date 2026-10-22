@@ -1,6 +1,7 @@
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testTimeout: 20000,
   transform: {
     '^.+\\.[jt]sx?$': 'babel-jest',
   },

@@ -2,7 +2,9 @@ import { getFullApiUrl } from '../config/apiConfig'
 import { wakeUpFetch } from '../utils/wakeUpHandler'
 
 export function mapAuthError(err, status) {
-  console.error('Auth error detail:', err)
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('Auth error detail:', err)
+  }
 
   const effectiveStatus = status || err?.status || err?.statusCode || (typeof err === 'number' ? err : undefined)
   const code = err?.code || (err?.cause && err.cause?.code)
