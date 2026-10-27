@@ -61,7 +61,27 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const [uploadedFile, setUploadedFile] = useState(null);
   const [showWhyThis, setShowWhyThis] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [sessionHistory, setSessionHistory] = useState([]);
+  const [sessionHistory, setSessionHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`officer_history_${type || 'default'}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [connectionTimedOut, setConnectionTimedOut] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (status === 'connecting') {
+      timer = setTimeout(() => {
+        setConnectionTimedOut(true);
+      }, 3000);
+    } else {
+      setConnectionTimedOut(false);
+    }
+    return () => clearTimeout(timer);
+  }, [status]);
   const [shareOpen, setShareOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [shareContent, setShareContent] = useState('');
@@ -153,11 +173,18 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   // ── Send ───────────────────────────────────────────────────────────────────
   const handleSend = (text) => {
     errorToastShownRef.current = false;
-    const promptText = (text || inputValue).trim();
+    let promptText = (text || inputValue).trim();
+
+    if (!promptText && typeof payloadBuilder === 'function') {
+      const p = payloadBuilder('', uploadedFile);
+      if (p?.criterion) {
+        promptText = `Generate NAAC SSR Report for ${p.criterion}`;
+      }
+    }
 
     // Phase 7: empty prompt guard
     if (!promptText) {
-      addToast('Please enter a prompt or click a suggested prompt first.', 'warning');
+      addToast('Please enter a prompt or select a criterion first.', 'warning');
       textareaRef.current?.focus();
       return;
     }
@@ -166,12 +193,35 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     setInputValue('');
     setUploadedFile(null);
 
+    // Save prompt to session history & localStorage
+    setSessionHistory((prev) => {
+      const existing = prev.filter((item) => (typeof item === 'string' ? item : item.prompt) !== promptText);
+      const newEntry = {
+        id: Date.now(),
+        prompt: promptText,
+        preview: promptText.length > 60 ? promptText.slice(0, 60) + '…' : promptText,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      const updated = [newEntry, ...existing].slice(0, 15);
+      try {
+        localStorage.setItem(`officer_history_${type || 'default'}`, JSON.stringify(updated));
+      } catch {
+        // ignore storage errors
+      }
+      return updated;
+    });
+
     const fullEndpoint = `${getApiBaseURL()}${endpoint}`;
     const payload = payloadBuilder
       ? payloadBuilder(promptText, uploadedFile)
       : { reportType: promptText, action: promptText };
 
     start(fullEndpoint, payload);
+  };
+
+  const handleSelectPastPrompt = (pastPrompt) => {
+    setInputValue(pastPrompt);
+    handleSend(pastPrompt);
   };
 
   const handleKeyDown = (e) => {
@@ -449,9 +499,45 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '1.3rem' }}>{icon}</span>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 'bold', margin: 0 }}>{headerTitle}</h2>
-              <span style={{ background: status === 'streaming' ? 'rgba(16,185,129,0.15)' : accentLight, color: status === 'streaming' ? '#10B981' : accentColor, padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-                {status === 'idle' ? 'Ready' : status === 'connecting' ? 'Connecting…' : status === 'streaming' ? '● Streaming' : status === 'done' ? 'Done' : 'Error'}
-              </span>
+              {(() => {
+                const isOffline = status === 'connecting' && connectionTimedOut;
+                return (
+                  <span
+                    style={{
+                      background: isOffline
+                        ? 'rgba(156,163,175,0.15)'
+                        : status === 'streaming'
+                        ? 'rgba(16,185,129,0.15)'
+                        : status === 'error'
+                        ? 'rgba(239,68,68,0.15)'
+                        : accentLight,
+                      color: isOffline
+                        ? '#9CA3AF'
+                        : status === 'streaming'
+                        ? '#10B981'
+                        : status === 'error'
+                        ? '#EF4444'
+                        : accentColor,
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.7rem',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {isOffline
+                      ? 'Offline'
+                      : status === 'idle'
+                      ? 'Ready'
+                      : status === 'connecting'
+                      ? 'Connecting…'
+                      : status === 'streaming'
+                      ? '● Streaming'
+                      : status === 'done'
+                      ? 'Done'
+                      : 'Error'}
+                  </span>
+                );
+              })()}
               {isDeptScoped && (
                 <span style={{ fontSize: '0.72rem', background: 'rgba(59,130,246,0.15)', color: '#60a5fa', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600, border: '1px solid rgba(59,130,246,0.3)' }}>
                   Showing data for {deptName}
@@ -632,7 +718,80 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
           )}
 
           {/* topBarExtra (e.g. criterion selector) */}
-          {topBarExtra}
+          {typeof topBarExtra === 'function' ? topBarExtra({ setInputValue, handleSend }) : topBarExtra}
+
+          {/* Collapsible Session History above the input area */}
+          <div style={{ marginBottom: '0.65rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showHistory ? '0.4rem' : '0' }}>
+              <button
+                type="button"
+                onClick={() => setShowHistory((v) => !v)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '6px',
+                  color: 'rgba(255,255,255,0.7)',
+                  padding: '0.3rem 0.65rem',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+              >
+                <Clock size={13} />
+                <span>Session History ({sessionHistory.length})</span>
+                {showHistory ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              </button>
+            </div>
+            {showHistory && (
+              <div
+                style={{
+                  background: 'rgba(15,23,42,0.85)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '8px',
+                  padding: '0.6rem',
+                  maxHeight: '140px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.4rem',
+                }}
+              >
+                {sessionHistory.length === 0 ? (
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>No previous prompts in this session.</span>
+                ) : (
+                  sessionHistory.map((item) => {
+                    const pText = typeof item === 'string' ? item : item.prompt || item.preview;
+                    return (
+                      <button
+                        key={item.id || pText}
+                        type="button"
+                        onClick={() => handleSelectPastPrompt(pText)}
+                        title={pText}
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#e2e8f0',
+                          borderRadius: '6px',
+                          padding: '0.3rem 0.6rem',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          maxWidth: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        🕒 {item.preview || pText}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
 
           {user?.role === 'staff' && staffPermission?.permission_level === 'VIEW_ONLY' ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', color: '#9ca3af', fontSize: '0.82rem', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -657,8 +816,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter your prompt… (Ctrl+Enter to send)"
-                style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.6rem 0', fontSize: '0.92rem', resize: 'none', outline: 'none', minHeight: '40px', maxHeight: '110px' }}
-                rows={1}
+                style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.6rem 0', fontSize: '0.92rem', resize: 'vertical', outline: 'none', minHeight: '120px', maxHeight: '300px' }}
+                rows={4}
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, alignSelf: 'flex-end' }}>
                 <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)' }}>{inputValue.length}/2000</span>

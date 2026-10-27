@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   MessageSquare,
   CheckCircle,
@@ -37,7 +38,7 @@ export default function WhatsAppAttendancePage() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/v1/whatsapp/status')
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/status'))
       if (res.ok) {
         const data = await res.json()
         setStatus(data)
@@ -49,7 +50,7 @@ export default function WhatsAppAttendancePage() {
 
   const fetchStaged = async () => {
     try {
-      const res = await fetch('/api/v1/whatsapp/staged')
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/staged'))
       if (res.ok) {
         const data = await res.json()
         setStagedList(data.staged || [])
@@ -61,7 +62,7 @@ export default function WhatsAppAttendancePage() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch('/api/v1/whatsapp/logs')
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/logs'))
       if (res.ok) {
         const data = await res.json()
         setLogsList(data.logs || [])
@@ -73,7 +74,7 @@ export default function WhatsAppAttendancePage() {
 
   const fetchFaculty = async () => {
     try {
-      const res = await fetch('/api/v1/whatsapp/faculty')
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/faculty'))
       if (res.ok) {
         const data = await res.json()
         setFacultyList(data.faculty || [])
@@ -102,7 +103,7 @@ export default function WhatsAppAttendancePage() {
     setActionMsg('')
 
     try {
-      const res = await fetch('/api/v1/whatsapp/simulate-message', {
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/simulate-message'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,7 +123,7 @@ export default function WhatsAppAttendancePage() {
 
   const handleConfirmStaged = async (id) => {
     try {
-      const res = await fetch(`/api/v1/whatsapp/staged/${id}/confirm`, { method: 'POST' })
+      const res = await fetch(getFullApiUrl(`/v1/whatsapp/staged/${id}/confirm`), { method: 'POST' })
       if (res.ok) {
         setActionMsg(`Staged attendance #${id} confirmed and synced into official attendance records!`)
         await Promise.all([fetchStaged(), fetchLogs()])
@@ -134,7 +135,7 @@ export default function WhatsAppAttendancePage() {
 
   const handleRejectStaged = async (id) => {
     try {
-      const res = await fetch(`/api/v1/whatsapp/staged/${id}/reject`, { method: 'POST' })
+      const res = await fetch(getFullApiUrl(`/v1/whatsapp/staged/${id}/reject`), { method: 'POST' })
       if (res.ok) {
         setActionMsg(`Staged attendance #${id} cancelled.`)
         await Promise.all([fetchStaged(), fetchLogs()])

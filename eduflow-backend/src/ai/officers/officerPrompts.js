@@ -7,26 +7,62 @@ const BASE_CONTEXT = (twin) => twin && Object.keys(twin).length > 0
   ? `\n\nInstitution Context (Digital Twin):\n${JSON.stringify(twin, null, 2)}`
   : `\n\nNo institution data yet — ask the user to share their institution details.`
 
+export function extractCriterionNumber(text = '') {
+  if (!text) return null
+  const str = String(text)
+  const m = str.match(/Criterion\s*(\d)/i) || str.match(/Criteria\s*(\d)/i)
+  return m ? m[1] : null
+}
+
+const NAAC_CRITERIA_MAP = {
+  1: 'Criterion 1: Curricular Aspects (Weight: 100) — Planning, academic flexibility, curriculum enrichment, feedback system.',
+  2: 'Criterion 2: Teaching-Learning and Evaluation (Weight: 350) — Student enrollment, student diversity, Student-Faculty Ratio (SFR target ≤ 15:1), experiential learning, Ph.D. faculty ratio, continuous internal evaluation, CO-PO attainment.',
+  3: 'Criterion 3: Research, Innovations and Extension (Weight: 110/120) — Resource mobilization, seed money grants, innovation ecosystem/incubation, Scopus/WoS publications, faculty patents, extension activities, MoUs.',
+  4: 'Criterion 4: Infrastructure and Learning Resources (Weight: 100) — Physical facilities, ICT-enabled classrooms, automated ILMS library, bandwidth, IT maintenance.',
+  5: 'Criterion 5: Student Support and Progression (Weight: 140) — Government/institutional scholarships, competitive exam coaching, placement rate, higher education progression, alumni engagement.',
+  6: 'Criterion 6: Governance, Leadership and Management (Weight: 100) — Institutional vision, decentralization, e-governance, faculty welfare schemes, professional development grants, external financial audits, IQAC initiatives.',
+  7: 'Criterion 7: Institutional Values and Best Practices (Weight: 100) — Gender equity, solar/green campus audits, disabled-friendly environment, two institutional best practices, core distinctiveness.',
+}
+
 export const OFFICER_PROMPTS = {
-  accreditation: (twin) => `You are the Senior NAAC and NBA Peer Review Auditor and Accreditation Officer for EduFlow AI OS, possessing over 20 years of higher education accreditation leadership.
+  accreditation: (twin, userPrompt = '') => {
+    const isAllCriteria = /all\s*criteria/i.test(userPrompt) 
+      || /full\s*ssr/i.test(userPrompt)
+      || /all\s*criteria/i.test(typeof twin === 'string' ? twin : twin?.criterion || '')
+
+    const cNum = isAllCriteria ? null : (
+      extractCriterionNumber(userPrompt)
+      || extractCriterionNumber(typeof twin === 'string' ? twin : twin?.criterion || twin?.selectedCriterion || twin?.criterionNumber || '')
+    )
+
+    const criteriaBlock = cNum && NAAC_CRITERIA_MAP[cNum]
+      ? `The NAAC RAF Criterion ${cNum} Framework:
+${NAAC_CRITERIA_MAP[cNum]}
+
+HARD CONSTRAINT:
+You are generating data STRICTLY for Criterion ${cNum}. Do not output data for any other Criterion.`
+      : `The NAAC RAF Full SSR Assessment (All Criteria):
+1. ${NAAC_CRITERIA_MAP[1]}
+2. ${NAAC_CRITERIA_MAP[2]}
+3. ${NAAC_CRITERIA_MAP[3]}
+4. ${NAAC_CRITERIA_MAP[4]}
+5. ${NAAC_CRITERIA_MAP[5]}
+6. ${NAAC_CRITERIA_MAP[6]}
+7. ${NAAC_CRITERIA_MAP[7]}`
+
+    return `You are the Senior NAAC and NBA Peer Review Auditor and Accreditation Officer for EduFlow AI OS, possessing over 20 years of higher education accreditation leadership.
 
 Your mandate is to generate authoritative Self-Study Reports (SSR), gap analyses, and Internal Quality Assurance Cell (IQAC) documentation strictly conforming to the NAAC Revised Accreditation Framework (RAF) and NBA Outcome-Based Education (OBE) guidelines.
 
-The NAAC RAF 7 Criteria Framework:
-1. Criterion 1: Curricular Aspects (Weight: 100) — Planning, academic flexibility, curriculum enrichment, feedback system.
-2. Criterion 2: Teaching-Learning and Evaluation (Weight: 350) — Student enrollment, student diversity, Student-Faculty Ratio (SFR target ≤ 15:1), experiential learning, Ph.D. faculty ratio, continuous internal evaluation, CO-PO attainment.
-3. Criterion 3: Research, Innovations and Extension (Weight: 110/120) — Resource mobilization, seed money grants, innovation ecosystem/incubation, Scopus/WoS publications, faculty patents, extension activities, MoUs.
-4. Criterion 4: Infrastructure and Learning Resources (Weight: 100) — Physical facilities, ICT-enabled classrooms, automated ILMS library, bandwidth, IT maintenance.
-5. Criterion 5: Student Support and Progression (Weight: 140) — Government/institutional scholarships, competitive exam coaching, placement rate, higher education progression, alumni engagement.
-6. Criterion 6: Governance, Leadership and Management (Weight: 100) — Institutional vision, decentralization, e-governance, faculty welfare schemes, professional development grants, external financial audits, IQAC initiatives.
-7. Criterion 7: Institutional Values and Best Practices (Weight: 100) — Gender equity, solar/green campus audits, disabled-friendly environment, two institutional best practices, core distinctiveness.
+${criteriaBlock}
 
 Operational Directives:
 - Structure all analyses with exact Criterion and Metric numbers.
 - Provide quantitative benchmarks, institutional readiness percentages, and identified qualitative/quantitative gaps.
 - Include a Data Verification Checklist detailing mandatory documentary evidence (e.g. signed registers, syndicate approvals, geotagged photos).
 - Compute projected CGPA impact (out of 4.00) and target grade (A++, A+, A, B++).
-- Tone: Formal, rigorous, objective, and auditor-grade.${BASE_CONTEXT(twin)}`,
+- Tone: Formal, rigorous, objective, and auditor-grade.${BASE_CONTEXT(twin)}`
+  },
 
   timetable: (twin) => `You are the Lead Operations Research and Academic Scheduling Optimization Specialist for EduFlow AI OS.
 
@@ -105,16 +141,19 @@ export function calculateROI(officerType, actionType) {
     accreditation: {
       'generate_naac_report': { hours: 120, ratePerHour: 2500 },
       'generate_nba_report': { hours: 80, ratePerHour: 2500 },
+      'generate_report': { hours: 120, ratePerHour: 2500 },
       'gap_analysis': { hours: 16, ratePerHour: 2500 },
       'default': { hours: 8, ratePerHour: 2500 },
     },
     timetable: {
       'generate_timetable': { hours: 40, ratePerHour: 500 },
+      'generate': { hours: 40, ratePerHour: 500 },
       'resolve_conflict': { hours: 2, ratePerHour: 500 },
       'default': { hours: 5, ratePerHour: 500 },
     },
     admissions: {
       'process_application': { hours: 0.5, ratePerHour: 300 },
+      'predict_yield': { hours: 2, ratePerHour: 300 },
       'reply_enquiry': { hours: 0.25, ratePerHour: 300 },
       'default': { hours: 1, ratePerHour: 300 },
     },
@@ -125,6 +164,7 @@ export function calculateROI(officerType, actionType) {
     },
     'student-success': {
       'risk_analysis': { hours: 10, ratePerHour: 600 },
+      'predict_risk': { hours: 10, ratePerHour: 600 },
       'intervention_plan': { hours: 2, ratePerHour: 600 },
       'default': { hours: 3, ratePerHour: 600 },
     },

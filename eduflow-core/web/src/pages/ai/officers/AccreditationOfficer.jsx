@@ -80,17 +80,13 @@ const OFFICER_CONFIG = {
 export default function AccreditationOfficer() {
   const [selectedCriterion, setSelectedCriterion] = useState('');
 
-  const handleCriterionChange = (e) => {
-    setSelectedCriterion(e.target.value);
-  };
-
   const payloadBuilder = (promptText) => ({
     reportType: promptText,
     action: promptText,
     criterion: selectedCriterion,
   });
 
-  const topBarExtra = (
+  const renderTopBarExtra = ({ setInputValue } = {}) => (
     <div style={{ marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
       <label htmlFor="naac-criteria-select" style={{ fontSize: '0.78rem', color: '#c4b5fd', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
         <Sparkles size={13} color="#8B5CF6" /> NAAC Criterion:
@@ -99,7 +95,14 @@ export default function AccreditationOfficer() {
         id="naac-criteria-select"
         data-testid="naac-criteria-select"
         value={selectedCriterion}
-        onChange={handleCriterionChange}
+        onChange={(e) => {
+          const val = e.target.value;
+          setSelectedCriterion(val);
+          const opt = CRITERIA_OPTIONS.find((o) => o.value === val);
+          if (opt?.prompt && typeof setInputValue === 'function') {
+            setInputValue(opt.prompt);
+          }
+        }}
         style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '8px', color: '#f8fafc', padding: '0.4rem 0.7rem', fontSize: '0.82rem', outline: 'none', cursor: 'pointer' }}
       >
         {CRITERIA_OPTIONS.map((opt, idx) => (
@@ -113,7 +116,7 @@ export default function AccreditationOfficer() {
     <OfficerLayout
       config={OFFICER_CONFIG}
       payloadBuilder={payloadBuilder}
-      topBarExtra={topBarExtra}
+      topBarExtra={renderTopBarExtra}
     />
   );
 }

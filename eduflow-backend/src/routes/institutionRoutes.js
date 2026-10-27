@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { pool } from '../db/pool.js'
 import { UserRepository } from '../repositories/UserRepository.js'
 import { validateRequest, registerInstitutionSchema } from '../middleware/validateRequest.js'
+import { WhatsAppAttendance } from '../services/attendance/WhatsAppAttendance.js'
 
 export function createInstitutionRouter() {
   const router = Router()
@@ -36,6 +37,7 @@ export function createInstitutionRouter() {
       const adminName = req.body.adminName || 'Admin'
       const email = req.body.email || req.body.adminEmail
       const password = req.body.password || 'Demo@2026'
+      const phone = req.body.phone || req.body.adminPhone
 
       await client.query('BEGIN')
 
@@ -78,6 +80,19 @@ export function createInstitutionRouter() {
       `, [user.id, refreshToken, expiresAt])
 
       await client.query('COMMIT')
+
+      if (phone) {
+        try {
+          const message = `Welcome to EduFlow AI! Your institution ${institutionName} is ready.
+Login here: https://eduflow-web.onrender.com/login
+Email: ${email}
+Password: ${password}
+Please change your password after your first login.`
+          await WhatsAppAttendance.sendMessage(phone, message)
+        } catch (whatsappErr) {
+          console.warn('Failed to send WhatsApp registration credentials:', whatsappErr.message)
+        }
+      }
 
       res.status(201).json({
         accessToken,

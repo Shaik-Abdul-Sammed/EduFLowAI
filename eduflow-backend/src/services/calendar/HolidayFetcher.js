@@ -25,17 +25,40 @@ const STATIC_HOLIDAYS_2026 = [
 
 export class HolidayFetcher {
   static async fetchCentralGovernmentHolidays(year = 2026) {
-    return STATIC_HOLIDAYS_2026.filter((h) => h.year === year && h.state_code === 'ALL')
+    const targetYear = parseInt(year, 10) || 2026
+    return STATIC_HOLIDAYS_2026
+      .filter((h) => h.state_code === 'ALL')
+      .map((h) => ({
+        ...h,
+        year: targetYear,
+        date: `${targetYear}-${h.date.slice(5)}`,
+        end_date: h.end_date ? `${targetYear}-${h.end_date.slice(5)}` : null,
+      }))
   }
 
   static async fetchStateGovernmentHolidays(year = 2026, stateCode = 'KA') {
-    return STATIC_HOLIDAYS_2026.filter(
-      (h) => h.year === year && (h.state_code === 'ALL' || h.state_code.includes(stateCode))
+    const targetYear = parseInt(year, 10) || 2026
+    const baseHolidays = STATIC_HOLIDAYS_2026.filter(
+      (h) => !stateCode || stateCode === 'ALL' || h.state_code === 'ALL' || h.state_code.includes(stateCode)
     )
+    return baseHolidays.map((h) => ({
+      ...h,
+      year: targetYear,
+      date: `${targetYear}-${h.date.slice(5)}`,
+      end_date: h.end_date ? `${targetYear}-${h.end_date.slice(5)}` : null,
+    }))
   }
 
   static async fetchFestivalHolidays(year = 2026) {
-    return STATIC_HOLIDAYS_2026.filter((h) => h.year === year && h.type === 'FESTIVAL')
+    const targetYear = parseInt(year, 10) || 2026
+    return STATIC_HOLIDAYS_2026
+      .filter((h) => h.type === 'FESTIVAL')
+      .map((h) => ({
+        ...h,
+        year: targetYear,
+        date: `${targetYear}-${h.date.slice(5)}`,
+        end_date: h.end_date ? `${targetYear}-${h.end_date.slice(5)}` : null,
+      }))
   }
 
   static mergeAndDeduplicate(allHolidays) {

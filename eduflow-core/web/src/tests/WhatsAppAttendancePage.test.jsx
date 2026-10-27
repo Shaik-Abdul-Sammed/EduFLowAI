@@ -106,7 +106,7 @@ describe('WhatsAppAttendancePage Component Tests', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        '/api/v1/whatsapp/simulate-message',
+        expect.stringContaining('/api/v1/whatsapp/simulate-message'),
         expect.objectContaining({ method: 'POST' })
       )
     })

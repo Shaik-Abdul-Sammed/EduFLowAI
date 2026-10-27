@@ -120,4 +120,62 @@ describe('InstitutionRegister 3-Step Wizard Component', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/admin-dashboard');
     });
   });
+
+  test('Step 3: Checkbox controls submission disabled state', async () => {
+    render(
+      <MemoryRouter>
+        <InstitutionRegister />
+      </MemoryRouter>
+    );
+
+    // Fast-forward to Step 3
+    fireEvent.change(screen.getByPlaceholderText(/Sri Sudha Institute of Technology/i), { target: { name: 'institutionName', value: 'Test College' } });
+    fireEvent.change(screen.getByPlaceholderText(/Bangalore, Karnataka/i), { target: { name: 'cityState', value: 'Bangalore, KA' } });
+    fireEvent.click(screen.getByRole('button', { name: /Next: Admin Account/i }));
+
+    fireEvent.change(screen.getByPlaceholderText(/Dr\. Rajesh Kumar/i), { target: { name: 'adminName', value: 'Admin User' } });
+    fireEvent.change(screen.getByPlaceholderText(/principal@ssit\.edu\.in/i), { target: { name: 'email', value: 'admin@test.edu' } });
+    fireEvent.change(screen.getByPlaceholderText(/Min 8 characters/i), { target: { name: 'password', value: 'Password@2026' } });
+    fireEvent.change(screen.getByPlaceholderText(/Re-enter password/i), { target: { name: 'confirmPassword', value: 'Password@2026' } });
+    fireEvent.click(screen.getByRole('button', { name: /Next: Review & Launch/i }));
+
+    const termsCheckbox = screen.getByRole('checkbox', { name: /I agree to the Terms of Service/i });
+    const submitBtn = screen.getByRole('button', { name: /Create Campus Instance/i });
+
+    // Initially checked, so submit is enabled
+    expect(termsCheckbox).toBeChecked();
+    expect(submitBtn).not.toBeDisabled();
+
+    // Uncheck terms
+    fireEvent.click(termsCheckbox);
+    expect(termsCheckbox).not.toBeChecked();
+    expect(submitBtn).toBeDisabled();
+
+    // Re-check terms
+    fireEvent.click(termsCheckbox);
+    expect(termsCheckbox).toBeChecked();
+    expect(submitBtn).not.toBeDisabled();
+  });
+
+  test('Language switcher dynamically updates page text', async () => {
+    render(
+      <MemoryRouter>
+        <InstitutionRegister />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/Step 1: Campus Information/i)).toBeInTheDocument();
+
+    // Switch to Hindi
+    const hiBtn = screen.getByRole('button', { name: 'हिंदी' });
+    fireEvent.click(hiBtn);
+
+    expect(screen.getByText(/चरण 1: परिसर की जानकारी/i)).toBeInTheDocument();
+
+    // Switch back to English
+    const enBtn = screen.getByRole('button', { name: 'English' });
+    fireEvent.click(enBtn);
+
+    expect(screen.getByText(/Step 1: Campus Information/i)).toBeInTheDocument();
+  });
 });

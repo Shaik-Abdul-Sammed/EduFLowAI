@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import '../../i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -43,7 +45,13 @@ const STUDENT_STRENGTH_OPTIONS = [
 ];
 
 export default function InstitutionRegister() {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || 'en';
+
   const [currentStep, setCurrentStep] = useState(1); // 1: Campus Info, 2: Admin Account, 3: Review & Launch
+  const [agreedToTerms, setAgreedToTerms] = useState(true);
+  const [enableAiDeployment, setEnableAiDeployment] = useState(true);
+
   const [formData, setFormData] = useState({
     institutionName: '',
     subdomain: '',
@@ -65,7 +73,7 @@ export default function InstitutionRegister() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [subdomainLocked, setSubdomainLocked] = useState(false);
+  const [, setSubdomainLocked] = useState(false);
   const [subdomainStatus, setSubdomainStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
   const [subdomainSuggestions, setSubdomainSuggestions] = useState([]);
   const navigate = useNavigate();
@@ -81,7 +89,7 @@ export default function InstitutionRegister() {
   const checkAvailability = async (slugToCheck) => {
     const target = (slugToCheck || formData.subdomain || '').trim().toLowerCase();
     if (!target) {
-      setErrors((prev) => ({ ...prev, subdomain: 'Please enter a subdomain to check' }));
+      setErrors((prev) => ({ ...prev, subdomain: t('register.err_subdomain_required', 'Campus short code / subdomain is required') }));
       return;
     }
     setSubdomainStatus('checking');
@@ -97,7 +105,7 @@ export default function InstitutionRegister() {
         setSubdomainSuggestions(generateSuggestions(target));
         setErrors((prev) => ({
           ...prev,
-          subdomain: 'This subdomain is already taken. Try adding a number or city, e.g., ssit-hyderabad-2.',
+          subdomain: t('register.subdomain_taken', 'This subdomain is already taken. Try adding a number or city, e.g., ssit-hyderabad-2.'),
         }));
       }
     } catch {
@@ -114,8 +122,8 @@ export default function InstitutionRegister() {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
 
-    // Auto-generate subdomain from institution name while not manually edited
-    if (name === 'institutionName' && !subdomainLocked) {
+    // Auto-generate subdomain from institution name if not manually edited
+    if (name === 'institutionName' && currentStep === 1) {
       const generated = value
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '-')
@@ -132,26 +140,26 @@ export default function InstitutionRegister() {
   const validateStep1 = () => {
     const stepErrors = {};
     if (!formData.institutionName || !formData.institutionName.trim()) {
-      stepErrors.institutionName = 'Institution name is required';
+      stepErrors.institutionName = t('register.err_inst_name_required', 'Institution name is required');
     } else if (formData.institutionName.trim().length < 3) {
-      stepErrors.institutionName = 'Minimum 3 characters required';
+      stepErrors.institutionName = t('register.err_inst_name_min', 'Minimum 3 characters required');
     }
 
     if (!formData.subdomain || !formData.subdomain.trim()) {
-      stepErrors.subdomain = 'Campus short code / subdomain is required';
+      stepErrors.subdomain = t('register.err_subdomain_required', 'Campus short code / subdomain is required');
     } else if (formData.subdomain.trim().length < 3) {
-      stepErrors.subdomain = 'Minimum 3 characters required';
+      stepErrors.subdomain = t('register.err_subdomain_min', 'Minimum 3 characters required');
     } else if (!/^[a-z0-9-]+$/.test(formData.subdomain)) {
-      stepErrors.subdomain = 'Only lowercase letters, numbers, and hyphens allowed';
+      stepErrors.subdomain = t('register.err_subdomain_format', 'Only lowercase letters, numbers, and hyphens allowed');
     }
 
     if (!formData.cityState || !formData.cityState.trim()) {
-      stepErrors.cityState = 'City & State is required';
+      stepErrors.cityState = t('register.err_city_required', 'City & State is required');
     }
 
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
-      addToast('Please complete all required campus details.', 'error');
+      addToast(t('register.toast_fill_campus', 'Please complete all required campus details.'), 'error');
       return false;
     }
     return true;
@@ -160,30 +168,30 @@ export default function InstitutionRegister() {
   const validateStep2 = () => {
     const stepErrors = {};
     if (!formData.adminName || !formData.adminName.trim()) {
-      stepErrors.adminName = 'Administrator full name is required';
+      stepErrors.adminName = t('register.err_admin_name_required', 'Administrator full name is required');
     } else if (formData.adminName.trim().length < 3) {
-      stepErrors.adminName = 'Minimum 3 characters required';
+      stepErrors.adminName = t('register.err_admin_name_min', 'Minimum 3 characters required');
     }
 
     if (!formData.email || !formData.email.trim()) {
-      stepErrors.email = 'Official email address is required';
+      stepErrors.email = t('register.err_email_required', 'Official email address is required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      stepErrors.email = 'Please enter a valid email address';
+      stepErrors.email = t('register.err_email_invalid', 'Please enter a valid email address');
     }
 
     if (!formData.password) {
-      stepErrors.password = 'Password is required';
+      stepErrors.password = t('register.err_password_required', 'Password is required');
     } else if (formData.password.length < 8) {
-      stepErrors.password = 'Password must be at least 8 characters';
+      stepErrors.password = t('register.err_password_min', 'Password must be at least 8 characters');
     }
 
     if (formData.password !== formData.confirmPassword) {
-      stepErrors.confirmPassword = 'Passwords do not match';
+      stepErrors.confirmPassword = t('register.err_passwords_mismatch', 'Passwords do not match');
     }
 
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
-      addToast('Please complete all administrator credentials.', 'error');
+      addToast(t('register.toast_fill_admin', 'Please complete all administrator credentials.'), 'error');
       return false;
     }
     return true;
@@ -205,9 +213,9 @@ export default function InstitutionRegister() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.termsConsent) {
-      setErrors((prev) => ({ ...prev, termsConsent: 'You must accept terms to continue' }));
-      addToast('Please accept the Terms of Service and Privacy Policy.', 'error');
+    if (!agreedToTerms) {
+      setErrors((prev) => ({ ...prev, termsConsent: t('register.err_terms_required', 'You must accept terms to continue') }));
+      addToast(t('register.toast_accept_terms', 'Please accept the Terms of Service and Privacy Policy.'), 'error');
       return;
     }
 
@@ -228,6 +236,8 @@ export default function InstitutionRegister() {
         gstin: formData.gstin,
         phone: formData.phone,
         designation: formData.designation,
+        termsConsent: agreedToTerms,
+        enablePilot: enableAiDeployment,
       });
 
       addToast(`🎉 Workspace created! ${formData.subdomain}.eduflow.app is live.`, 'success');
@@ -244,9 +254,9 @@ export default function InstitutionRegister() {
         setSubdomainSuggestions(generateSuggestions(formData.subdomain));
         setErrors((prev) => ({
           ...prev,
-          subdomain: 'This subdomain is already taken. Try adding a number or city, e.g., ssit-hyderabad-2.',
+          subdomain: t('register.subdomain_taken', 'This subdomain is already taken. Try adding a number or city, e.g., ssit-hyderabad-2.'),
         }));
-        addToast('This subdomain is already taken. Please choose another.', 'error');
+        addToast(t('register.toast_subdomain_taken', 'This subdomain is already taken. Please choose another.'), 'error');
       } else {
         addToast(err.message || 'Registration failed. Please try again.', 'error');
       }
@@ -279,9 +289,33 @@ export default function InstitutionRegister() {
             </span>
           </Link>
           <div className="d-flex align-items-center gap-3">
-            <span className="text-muted d-none d-md-block small">Already registered?</span>
+            {/* Language Switcher */}
+            <div className="btn-group btn-group-sm" role="group" aria-label="Language selection">
+              <button
+                type="button"
+                className={`btn btn-sm ${currentLang === 'en' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => i18n.changeLanguage('en')}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${currentLang === 'hi' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => i18n.changeLanguage('hi')}
+              >
+                हिंदी
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${currentLang === 'te' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => i18n.changeLanguage('te')}
+              >
+                తెలుగు
+              </button>
+            </div>
+            <span className="text-muted d-none d-md-block small">{t('already_registered', 'Already registered?')}</span>
             <Link to="/login" className="btn btn-outline-primary rounded-pill px-4 btn-sm">
-              Sign In
+              {t('sign_in', 'Sign In')}
             </Link>
           </div>
         </div>
@@ -305,7 +339,7 @@ export default function InstitutionRegister() {
                   <div>
                     <div className="d-flex align-items-center gap-2 mb-3">
                       <span className="badge rounded-pill px-3 py-2 fw-semibold text-white" style={{ background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(8px)' }}>
-                        <Sparkles size={14} className="me-1 text-warning" /> Autonomous AI Campus OS
+                        <Sparkles size={14} className="me-1 text-warning" /> {t('register.autonomous_ai_os', 'Autonomous AI Campus OS')}
                       </span>
                     </div>
 
@@ -313,7 +347,7 @@ export default function InstitutionRegister() {
                       EduFlow AI OS
                     </h2>
                     <p className="text-white-50 small mb-4" style={{ lineHeight: '1.6' }}>
-                      Autonomous AI Operating System for Higher Education. Deploy 5 autonomous AI Officers across accreditation, scheduling, finance, admissions, and student retention.
+                      {t('register.branding_subtitle', 'Join forward-thinking colleges automating accreditation, timetable scheduling, and campus operations.')}
                     </p>
 
                     {/* Value propositions */}
@@ -323,8 +357,8 @@ export default function InstitutionRegister() {
                           <FileCheck size={18} />
                         </div>
                         <div>
-                          <div className="fw-bold small text-white">72-Hour NAAC SSR Drafts</div>
-                          <div className="text-white-50 small">Autonomous AI generation of Criterion 1–7 SSR reports with real-time audit gap scoring.</div>
+                          <div className="fw-bold small text-white">{t('register.naac_ssr_drafts', '72-Hour NAAC SSR Drafts')}</div>
+                          <div className="text-white-50 small">{t('register.naac_ssr_desc', 'Auto-generated Criteria 1–7 SSR drafts directly from campus data pipelines.')}</div>
                         </div>
                       </div>
 
@@ -333,8 +367,8 @@ export default function InstitutionRegister() {
                           <Database size={18} />
                         </div>
                         <div>
-                          <div className="fw-bold small text-white">Zero-Migration Data Connectors</div>
-                          <div className="text-white-50 small">Reads and normalizes live attendance and grades directly from existing ERP/DB replicas without data migration.</div>
+                          <div className="fw-bold small text-white">{t('register.zero_migration', 'Zero-Migration Data Connectors')}</div>
+                          <div className="text-white-50 small">{t('register.zero_migration_desc', 'Connects to existing ERP/SIS databases via encrypted read-only relays.')}</div>
                         </div>
                       </div>
 
@@ -343,8 +377,8 @@ export default function InstitutionRegister() {
                           <ShieldCheck size={18} />
                         </div>
                         <div>
-                          <div className="fw-bold small text-white">Full Data Sovereignty</div>
-                          <div className="text-white-50 small">Encrypted via AES-256 with institutional tenant isolation, fully DPDP Act 2023 compliant.</div>
+                          <div className="fw-bold small text-white">{t('register.data_sovereignty', 'Full Data Sovereignty')}</div>
+                          <div className="text-white-50 small">{t('register.data_sovereignty_desc', 'On-premise or sovereign cloud hosting with DPDP Act 2023 compliance.')}</div>
                         </div>
                       </div>
                     </div>
@@ -353,15 +387,15 @@ export default function InstitutionRegister() {
                   {/* Trust Testimonial */}
                   <div className="pt-3 border-top border-white border-opacity-20">
                     <p className="fst-italic text-white-50 small mb-2">
-                      &quot;EduFlow reduced our NAAC SSR preparation cycle from 4 months to 3 days across all 7 criteria.&quot;
+                      {t('register.testimonial_quote', '"EduFlow reduced our NAAC cycle compilation from 6 weeks to 3 days. The accreditation officer found 14 data discrepancies before the peer team arrived."')}
                     </p>
                     <div className="d-flex align-items-center gap-2">
                       <div className="rounded-circle bg-white text-dark fw-bold d-flex align-items-center justify-content-center small" style={{ width: 28, height: 28 }}>
                         RK
                       </div>
                       <div className="small">
-                        <strong className="text-white">Dr. K. Ramanathan</strong>
-                        <span className="text-white-50"> — Dean of IQAC, SSIT</span>
+                        <strong className="text-white">{t('register.testimonial_author', 'Dr. K. Ramanathan')}</strong>
+                        <span className="text-white-50"> — {t('register.testimonial_role', 'Principal & IQAC Director, SSIT')}</span>
                       </div>
                     </div>
                   </div>
@@ -375,17 +409,17 @@ export default function InstitutionRegister() {
                       <div className="d-flex align-items-center justify-content-between mb-2">
                         <div className={`small fw-bold d-flex align-items-center gap-1 ${currentStep === 1 ? 'text-primary' : currentStep > 1 ? 'text-success' : 'text-muted'}`}>
                           <span className={`badge rounded-circle p-1 ${currentStep === 1 ? 'bg-primary text-white' : currentStep > 1 ? 'bg-success text-white' : 'bg-light text-muted'}`}>1</span>
-                          <span>Campus Info</span>
+                          <span>{t('register.step1_badge', 'Campus Info')}</span>
                         </div>
                         <ChevronRight size={14} className="text-muted" />
                         <div className={`small fw-bold d-flex align-items-center gap-1 ${currentStep === 2 ? 'text-primary' : currentStep > 2 ? 'text-success' : 'text-muted'}`}>
                           <span className={`badge rounded-circle p-1 ${currentStep === 2 ? 'bg-primary text-white' : currentStep > 2 ? 'bg-success text-white' : 'bg-light text-muted'}`}>2</span>
-                          <span>Admin Account</span>
+                          <span>{t('register.step2_badge', 'Admin Account')}</span>
                         </div>
                         <ChevronRight size={14} className="text-muted" />
                         <div className={`small fw-bold d-flex align-items-center gap-1 ${currentStep === 3 ? 'text-primary' : 'text-muted'}`}>
                           <span className={`badge rounded-circle p-1 ${currentStep === 3 ? 'bg-primary text-white' : 'bg-light text-muted'}`}>3</span>
-                          <span>Review &amp; Launch</span>
+                          <span>{t('register.step3_badge', 'Review & Launch')}</span>
                         </div>
                       </div>
                       <div className="progress" style={{ height: 4 }}>
@@ -404,20 +438,20 @@ export default function InstitutionRegister() {
                       {currentStep === 1 && (
                         <div>
                           <div className="mb-3">
-                            <h4 className="fw-bold text-dark mb-1">Step 1: Campus Information</h4>
-                            <p className="text-muted small">Enter legal institution credentials and select your dedicated workspace subdomain.</p>
+                            <h4 className="fw-bold text-dark mb-1">{t('register.step1_title', 'Step 1: Campus Information')}</h4>
+                            <p className="text-muted small">{t('register.step1_desc', 'Enter legal institution credentials and select your dedicated workspace subdomain.')}</p>
                           </div>
 
                           {/* Institution Name */}
                           <div className="mb-3">
-                            <label className="form-label fw-semibold text-dark small mb-1">Institution Name *</label>
+                            <label className="form-label fw-semibold text-dark small mb-1">{t('register.inst_name_label', 'Institution Name *')}</label>
                             <div className="input-group">
                               <span className="input-group-text bg-light border-end-0 text-muted"><Building size={16} /></span>
                               <input
                                 type="text"
                                 className={`form-control border-start-0 ${errors.institutionName ? 'is-invalid' : ''}`}
                                 name="institutionName"
-                                placeholder="e.g. Sri Sudha Institute of Technology"
+                                placeholder={t('register.placeholder_inst_name', 'e.g. Sri Sudha Institute of Technology')}
                                 value={formData.institutionName}
                                 onChange={handleChange}
                                 autoFocus
@@ -428,14 +462,14 @@ export default function InstitutionRegister() {
 
                           {/* Subdomain URL */}
                           <div className="mb-3">
-                            <label className="form-label fw-semibold text-dark small mb-1">Campus Short Code / Subdomain *</label>
+                            <label className="form-label fw-semibold text-dark small mb-1">{t('register.subdomain_label', 'Campus Short Code / Subdomain *')}</label>
                             <div className="input-group">
                               <span className="input-group-text bg-light border-end-0 text-muted"><Globe size={16} /></span>
                               <input
                                 type="text"
                                 className={`form-control border-start-0 border-end-0 font-monospace ${errors.subdomain ? 'is-invalid' : ''}`}
                                 name="subdomain"
-                                placeholder="ssit"
+                                placeholder={t('register.placeholder_subdomain', 'ssit')}
                                 value={formData.subdomain}
                                 onChange={(e) => {
                                   handleChange(e);
@@ -467,7 +501,7 @@ export default function InstitutionRegister() {
                                 <div className="text-danger small">⚠ {errors.subdomain}</div>
                                 {subdomainSuggestions.length > 0 && (
                                   <div className="mt-2 p-2 rounded bg-light border">
-                                    <span className="small text-muted me-2">Suggested alternatives:</span>
+                                    <span className="small text-muted me-2">{t('register.subdomain_suggestions', 'Suggested available alternatives:')}</span>
                                     <div className="d-inline-flex flex-wrap gap-2 mt-1">
                                       {subdomainSuggestions.map((sug) => (
                                         <button
@@ -491,16 +525,16 @@ export default function InstitutionRegister() {
                                 )}
                               </div>
                             ) : formData.subdomain ? (
-                              <div className="text-success small mt-1">✓ Workspace URL: <strong>{formData.subdomain}.eduflow.app</strong></div>
+                              <div className="text-success small mt-1">✓ {t('register.subdomain_available', 'Available! Workspace URL:')} <strong>{formData.subdomain}.eduflow.app</strong></div>
                             ) : (
-                              <div className="text-muted small mt-1">Auto-generated from your institution name.</div>
+                              <div className="text-muted small mt-1">{t('register.subdomain_helper', 'Your workspace URL will be')} {formData.subdomain ? `${formData.subdomain}.eduflow.app` : 'your-campus.eduflow.app'}</div>
                             )}
                           </div>
 
                           <div className="row g-3 mb-3">
                             {/* Institution Type Dropdown */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Institution Type *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.inst_type_label', 'Institution Type *')}</label>
                               <select
                                 className="form-select"
                                 name="institutionType"
@@ -515,7 +549,7 @@ export default function InstitutionRegister() {
 
                             {/* Approximate Student Strength */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Approximate Student Strength *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.student_strength_label', 'Estimated Student Strength')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Users size={16} /></span>
                                 <select
@@ -535,14 +569,14 @@ export default function InstitutionRegister() {
                           <div className="row g-3 mb-3">
                             {/* City & State */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">City &amp; State *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.city_label', 'Campus Location (City, State) *')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><MapPin size={16} /></span>
                                 <input
                                   type="text"
                                   className={`form-control border-start-0 ${errors.cityState ? 'is-invalid' : ''}`}
                                   name="cityState"
-                                  placeholder="e.g. Bangalore, Karnataka"
+                                  placeholder={t('register.placeholder_city', 'e.g. Bangalore, Karnataka')}
                                   value={formData.cityState}
                                   onChange={handleChange}
                                 />
@@ -552,12 +586,12 @@ export default function InstitutionRegister() {
 
                             {/* GSTIN (Optional) */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">GSTIN (Optional)</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.gstin_label', 'GSTIN (Optional)')}</label>
                               <input
                                 type="text"
                                 className="form-control font-monospace"
                                 name="gstin"
-                                placeholder="29AAAAA0000A1Z5"
+                                placeholder={t('register.placeholder_gstin', '29AAAAA0000A1Z5')}
                                 value={formData.gstin}
                                 onChange={handleChange}
                               />
@@ -571,7 +605,7 @@ export default function InstitutionRegister() {
                               className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 fw-semibold shadow-sm"
                               onClick={handleNext}
                             >
-                              Next: Admin Account <ArrowRight size={16} />
+                              {t('register.next_admin_btn', 'Next: Admin Account')} <ArrowRight size={16} />
                             </button>
                           </div>
                         </div>
@@ -581,21 +615,21 @@ export default function InstitutionRegister() {
                       {currentStep === 2 && (
                         <div>
                           <div className="mb-3">
-                            <h4 className="fw-bold text-dark mb-1">Step 2: Administrator Account</h4>
-                            <p className="text-muted small">Configure credentials for the primary campus administrator or IQAC coordinator.</p>
+                            <h4 className="fw-bold text-dark mb-1">{t('register.step2_title', 'Step 2: Administrator Account')}</h4>
+                            <p className="text-muted small">{t('register.step2_desc', 'Configure your primary super-administrator credentials.')}</p>
                           </div>
 
                           <div className="row g-3 mb-3">
                             {/* Full Name */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Administrator Full Name *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.admin_name_label', 'Administrator Full Name *')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><User size={16} /></span>
                                 <input
                                   type="text"
                                   className={`form-control border-start-0 ${errors.adminName ? 'is-invalid' : ''}`}
                                   name="adminName"
-                                  placeholder="Dr. Rajesh Kumar"
+                                  placeholder={t('register.placeholder_admin_name', 'Dr. Rajesh Kumar')}
                                   value={formData.adminName}
                                   onChange={handleChange}
                                   autoFocus
@@ -606,14 +640,14 @@ export default function InstitutionRegister() {
 
                             {/* Designation */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Official Designation</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.designation_label', 'Designation')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Briefcase size={16} /></span>
                                 <input
                                   type="text"
                                   className="form-control border-start-0"
                                   name="designation"
-                                  placeholder="e.g. Principal / IQAC Director"
+                                  placeholder={t('register.placeholder_designation', 'e.g. Principal / IQAC Director')}
                                   value={formData.designation}
                                   onChange={handleChange}
                                 />
@@ -624,14 +658,14 @@ export default function InstitutionRegister() {
                           <div className="row g-3 mb-3">
                             {/* Email */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Official Email Address *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.email_label', 'Official Email Address *')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Mail size={16} /></span>
                                 <input
                                   type="email"
                                   className={`form-control border-start-0 ${errors.email ? 'is-invalid' : ''}`}
                                   name="email"
-                                  placeholder="principal@ssit.edu.in"
+                                  placeholder={t('register.placeholder_email', 'principal@ssit.edu.in')}
                                   value={formData.email}
                                   onChange={handleChange}
                                 />
@@ -641,32 +675,33 @@ export default function InstitutionRegister() {
 
                             {/* Phone */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Phone Number (10-Digit)</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.phone_label', 'Mobile Phone (for WhatsApp credentials dispatch)')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Phone size={16} /></span>
                                 <input
                                   type="tel"
                                   className="form-control border-start-0"
                                   name="phone"
-                                  placeholder="9876543210"
+                                  placeholder={t('register.placeholder_phone', '9876543210')}
                                   value={formData.phone}
                                   onChange={handleChange}
                                 />
                               </div>
+                              <div className="form-text small text-muted mt-1">{t('register.phone_helper', 'Your generated login credentials and deployment link will be sent to this WhatsApp number.')}</div>
                             </div>
                           </div>
 
                           <div className="row g-3 mb-3">
                             {/* Password */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Password *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.password_label', 'Create Password *')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={16} /></span>
                                 <input
                                   type={showPassword ? 'text' : 'password'}
                                   className={`form-control border-start-0 border-end-0 ${errors.password ? 'is-invalid' : ''}`}
                                   name="password"
-                                  placeholder="Min 8 characters"
+                                  placeholder={t('register.placeholder_password', 'Min 8 characters')}
                                   value={formData.password}
                                   onChange={handleChange}
                                 />
@@ -694,14 +729,14 @@ export default function InstitutionRegister() {
 
                             {/* Confirm Password */}
                             <div className="col-12 col-sm-6">
-                              <label className="form-label fw-semibold text-dark small mb-1">Confirm Password *</label>
+                              <label className="form-label fw-semibold text-dark small mb-1">{t('register.confirm_password_label', 'Confirm Password *')}</label>
                               <div className="input-group">
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={16} /></span>
                                 <input
                                   type={showConfirmPassword ? 'text' : 'password'}
                                   className={`form-control border-start-0 border-end-0 ${errors.confirmPassword ? 'is-invalid' : ''}`}
                                   name="confirmPassword"
-                                  placeholder="Re-enter password"
+                                  placeholder={t('register.placeholder_confirm_password', 'Re-enter password')}
                                   value={formData.confirmPassword}
                                   onChange={handleChange}
                                 />
@@ -730,14 +765,14 @@ export default function InstitutionRegister() {
                               className="btn btn-outline-secondary d-flex align-items-center gap-1 px-3"
                               onClick={handleBack}
                             >
-                              <ArrowLeft size={16} /> Back
+                              <ArrowLeft size={16} /> {t('register.back_btn', 'Back')}
                             </button>
                             <button
                               type="button"
                               className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 fw-semibold shadow-sm"
                               onClick={handleNext}
                             >
-                              Next: Review &amp; Launch <ArrowRight size={16} />
+                              {t('register.next_review_btn', 'Next: Review & Launch')} <ArrowRight size={16} />
                             </button>
                           </div>
                         </div>
@@ -747,22 +782,22 @@ export default function InstitutionRegister() {
                       {currentStep === 3 && (
                         <div>
                           <div className="mb-3">
-                            <h4 className="fw-bold text-dark mb-1">Step 3: Review &amp; Confirm</h4>
-                            <p className="text-muted small">Verify your institution workspace configuration before initial deployment.</p>
+                            <h4 className="fw-bold text-dark mb-1">{t('register.step3_title', 'Step 3: Review & Confirm')}</h4>
+                            <p className="text-muted small">{t('register.step3_desc', 'Verify your institution workspace configuration before initial deployment.')}</p>
                           </div>
 
                           {/* Summary Card */}
                           <div className="card border bg-light p-3 rounded-3 mb-4">
                             <div className="row g-3">
                               <div className="col-12 col-sm-6">
-                                <div className="text-muted small mb-1">Institution</div>
+                                <div className="text-muted small mb-1">{t('register.institution_summary', 'Institution')}</div>
                                 <div className="fw-bold text-dark">{formData.institutionName}</div>
                                 <div className="small font-monospace text-primary">{formData.subdomain}.eduflow.app</div>
                                 <div className="text-muted small mt-1">{formData.institutionType} • {formData.studentStrength}</div>
                                 <div className="text-muted small">{formData.cityState} {formData.gstin ? `• GSTIN: ${formData.gstin}` : ''}</div>
                               </div>
                               <div className="col-12 col-sm-6 border-start-sm">
-                                <div className="text-muted small mb-1">Administrator</div>
+                                <div className="text-muted small mb-1">{t('register.administrator_summary', 'Administrator')}</div>
                                 <div className="fw-bold text-dark">{formData.adminName}</div>
                                 <div className="text-muted small">{formData.designation}</div>
                                 <div className="small text-dark mt-1">{formData.email}</div>
@@ -771,34 +806,51 @@ export default function InstitutionRegister() {
                             </div>
                           </div>
 
-                          {/* Checkboxes */}
-                          <div className="mb-3 form-check text-start">
+                          {/* Checkboxes - PHASE 1 FIX: explicitly bound to React state, pointer-events and z-index enabled, click blockers removed */}
+                          <div className="mb-3 form-check text-start position-relative" style={{ zIndex: 10 }}>
                             <input
                               type="checkbox"
                               className="form-check-input"
                               id="termsConsent"
                               name="termsConsent"
-                              checked={formData.termsConsent}
-                              onChange={handleChange}
+                              checked={agreedToTerms}
+                              onChange={(e) => {
+                                setAgreedToTerms(e.target.checked);
+                                setFormData((prev) => ({ ...prev, termsConsent: e.target.checked }));
+                                if (errors.termsConsent) {
+                                  setErrors((prev) => ({ ...prev, termsConsent: null }));
+                                }
+                              }}
+                              style={{ cursor: 'pointer', zIndex: 20, position: 'relative' }}
                               required
                             />
-                            <label className="form-check-label small text-muted" htmlFor="termsConsent">
-                              I agree to the <a href="/terms" target="_blank" rel="noreferrer" className="text-primary fw-semibold">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary fw-semibold">Privacy Policy</a> (DPDP Act 2023 compliant).
+                            <label className="form-check-label small text-muted" htmlFor="termsConsent" style={{ cursor: 'pointer', pointerEvents: 'auto', userSelect: 'none' }}>
+                              {t('register.terms_prefix', 'I agree to the ')}
+                              <a href="/terms" target="_blank" rel="noreferrer" className="text-primary fw-semibold">{t('register.terms_of_service', 'Terms of Service')}</a>
+                              {t('register.terms_and', ' and ')}
+                              <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary fw-semibold">{t('register.privacy_policy', 'Privacy Policy')}</a>
+                              {t('register.terms_suffix', ' (DPDP Act 2023 compliant).')}
                             </label>
                             {errors.termsConsent && <div className="text-danger small mt-1">⚠ {errors.termsConsent}</div>}
                           </div>
 
-                          <div className="mb-4 form-check text-start">
+                          <div className="mb-4 form-check text-start position-relative" style={{ zIndex: 10 }}>
                             <input
                               type="checkbox"
                               className="form-check-input"
                               id="enablePilot"
                               name="enablePilot"
-                              checked={formData.enablePilot}
-                              onChange={handleChange}
+                              checked={enableAiDeployment}
+                              onChange={(e) => {
+                                setEnableAiDeployment(e.target.checked);
+                                setFormData((prev) => ({ ...prev, enablePilot: e.target.checked }));
+                              }}
+                              style={{ cursor: 'pointer', zIndex: 20, position: 'relative' }}
                             />
-                            <label className="form-check-label small text-muted" htmlFor="enablePilot">
-                              Enable automated AI Officer deployment for trial period (<strong>Free 30-day turnkey pilot</strong> with NAAC SSR generator).
+                            <label className="form-check-label small text-muted" htmlFor="enablePilot" style={{ cursor: 'pointer', pointerEvents: 'auto', userSelect: 'none' }}>
+                              {t('register.enable_pilot_label', 'Enable automated AI Officer deployment for trial period (')}
+                              <strong>{t('register.free_pilot_highlight', 'Free 30-day turnkey pilot')}</strong>
+                              {t('register.enable_pilot_suffix', ' with NAAC SSR generator).')}
                             </label>
                           </div>
 
@@ -810,18 +862,22 @@ export default function InstitutionRegister() {
                               onClick={handleBack}
                               disabled={isSubmitting}
                             >
-                              <ArrowLeft size={16} /> Back
+                              <ArrowLeft size={16} /> {t('register.back_btn', 'Back')}
                             </button>
                             <button
                               type="submit"
                               className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm"
-                              disabled={isSubmitting}
-                              style={{ background: 'linear-gradient(135deg,#2563EB,#7C3AED)', border: 'none' }}
+                              disabled={!agreedToTerms || isSubmitting}
+                              style={{
+                                background: 'linear-gradient(135deg,#2563EB,#7C3AED)',
+                                border: 'none',
+                                cursor: !agreedToTerms || isSubmitting ? 'not-allowed' : 'pointer'
+                              }}
                             >
                               {isSubmitting ? (
-                                <><span className="spinner-border spinner-border-sm me-2" />Creating Campus Instance...</>
+                                <><span className="spinner-border spinner-border-sm me-2" />{t('register.creating_instance', 'Creating Campus Instance...')}</>
                               ) : (
-                                '🚀 Create Campus Instance'
+                                t('register.create_instance_btn', '🚀 Create Campus Instance')
                               )}
                             </button>
                           </div>
@@ -831,7 +887,7 @@ export default function InstitutionRegister() {
                   </div>
 
                   <p className="text-center text-muted small mt-4 mb-0">
-                    Need help setting up your college? <a href="mailto:support@eduflow.ai" className="text-primary fw-semibold">Contact Engineering Support</a>
+                    {t('register.need_help', 'Need help setting up your college?')} <a href="mailto:support@eduflow.ai" className="text-primary fw-semibold">{t('register.contact_support', 'Contact Engineering Support')}</a>
                   </p>
                 </div>
 

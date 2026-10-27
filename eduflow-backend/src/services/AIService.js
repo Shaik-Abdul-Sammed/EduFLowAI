@@ -430,7 +430,7 @@ export class AIService {
     if (aiProvider) {
       try {
         const promptFn = OFFICER_PROMPTS[officerType]
-        const systemMessage = promptFn ? promptFn(context) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
+        const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
         const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage)
         if (response && !response.includes('mock response from the fallback chain')) {
           return `${liveHeader}${response}${liveFooter}`
@@ -468,7 +468,7 @@ export class AIService {
     yield liveHeader
 
     const promptFn = OFFICER_PROMPTS[officerType]
-    const systemMessage = promptFn ? promptFn(context) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
+    const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
 
     let streamedTokens = false
 

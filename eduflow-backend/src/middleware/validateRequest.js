@@ -44,7 +44,9 @@ export const registerUserSchema = z.object({
   username: z.string().min(1).optional(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   role: z.string().min(1, 'Role is required'),
-}).refine((data) => Boolean(data.email || data.username), {
+  phone: z.string().optional(),
+  adminPhone: z.string().optional(),
+}).passthrough().refine((data) => Boolean(data.email || data.username), {
   message: 'Email or username is required',
   path: ['email'],
 })
@@ -57,7 +59,16 @@ export const registerInstitutionSchema = z.object({
   adminEmail: z.string().email('Invalid admin email').optional(),
   email: z.string().email('Invalid email').optional(),
   password: z.string().min(6, 'Password must be at least 6 characters').optional(),
-}).refine((data) => Boolean(data.name || data.institutionName), {
+  phone: z.string().optional(),
+  adminPhone: z.string().optional(),
+  institutionType: z.string().optional(),
+  studentStrength: z.string().optional(),
+  cityState: z.string().optional(),
+  gstin: z.string().optional(),
+  designation: z.string().optional(),
+  termsConsent: z.boolean().optional(),
+  enablePilot: z.boolean().optional(),
+}).passthrough().refine((data) => Boolean(data.name || data.institutionName), {
   message: 'Institution name is required',
   path: ['name'],
 }).refine((data) => Boolean(data.adminEmail || data.email), {
@@ -70,9 +81,12 @@ export const officerPromptSchema = z.object({
   reportType: z.string().max(5000).optional(),
   action: z.string().max(5000).optional(),
   actionType: z.string().optional(),
+  criterion: z.union([z.string(), z.number()]).optional(),
+  criterionNumber: z.union([z.string(), z.number()]).optional(),
+  selectedCriterion: z.union([z.string(), z.number()]).optional(),
   messages: z.array(z.any()).optional(),
   digitalTwin: z.any().optional(),
-}).refine(
+}).passthrough().refine(
   (data) => {
     if ('prompt' in data && (typeof data.prompt !== 'string' || data.prompt.trim() === '')) {
       return false

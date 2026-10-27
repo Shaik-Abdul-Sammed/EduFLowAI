@@ -27,8 +27,12 @@ export default function AcademicCalendarPage() {
   const { user } = useAuth()
   const { addToast } = useToast()
 
-  const [academicYear, setAcademicYear] = useState('2026-2027')
-  const [stateCode, setStateCode] = useState('KA')
+  const [selectedYear, setSelectedYear] = useState('2026-2027')
+  const [selectedState, setSelectedState] = useState('KA')
+  const academicYear = selectedYear
+  const setAcademicYear = setSelectedYear
+  const stateCode = selectedState
+  const setStateCode = setSelectedState
   const [calendarData, setCalendarData] = useState(null)
   const [holidays, setHolidays] = useState(DEFAULT_HOLIDAYS)
   const [events, setEvents] = useState([])
@@ -93,12 +97,12 @@ export default function AcademicCalendarPage() {
   const fetchCalendar = async () => {
     try {
       const instId = user?.institutionId || 1
-      const res = await fetch(`${getApiBaseURL()}/v1/calendar/${instId}/${academicYear}`)
+      const res = await fetch(`${getApiBaseURL()}/v1/calendar/${instId}/${selectedYear}?stateCode=${selectedState}`)
       if (res.ok) {
         const data = await res.json()
         if (data.calendar) {
           setCalendarData(data.calendar)
-          setEvents(data.events || [])
+          setEvents(data.events || data.calendar.events || [])
           setAdjustments(data.adjustments || [])
           return
         }
@@ -112,8 +116,8 @@ export default function AcademicCalendarPage() {
 
   const fetchHolidays = async () => {
     try {
-      const year = academicYear.split('-')[0] || '2026'
-      const res = await fetch(`${getApiBaseURL()}/v1/calendar/holidays/${year}`)
+      const year = selectedYear.split('-')[0] || '2026'
+      const res = await fetch(`${getApiBaseURL()}/v1/calendar/holidays/${year}?stateCode=${selectedState}`)
       if (res.ok) {
         const data = await res.json()
         setHolidays(data.holidays || [])
@@ -129,7 +133,7 @@ export default function AcademicCalendarPage() {
     fetchCalendar()
     fetchHolidays()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [academicYear])
+  }, [selectedState, selectedYear])
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -150,6 +154,9 @@ export default function AcademicCalendarPage() {
       if (res.ok) {
         const data = await res.json()
         setCalendarData(data.calendar)
+        if (data.calendar?.events) {
+          setEvents(data.calendar.events)
+        }
         addToast('Academic calendar generated with government holiday sync!', 'success')
       } else {
         loadDefaultCalendar()

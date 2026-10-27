@@ -29,10 +29,11 @@ export class CalendarController {
   static async getCalendar(req, res) {
     try {
       const { institutionId = 1, academicYear = '2026-2027' } = req.params
+      const stateCode = req.query.stateCode || req.query.state || 'KA'
       const calendar = await CalendarGenerator.generateAcademicYear(
         Number(institutionId),
         academicYear,
-        'KA'
+        stateCode
       )
       return res.status(200).json({
         success: true,

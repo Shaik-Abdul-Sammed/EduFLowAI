@@ -8,6 +8,7 @@ import { validateRequest, loginSchema, registerUserSchema } from '../middleware/
 import { seedDemoData } from '../../scripts/seed-demo.js'
 import { seedDeanAccount } from '../../scripts/seed-dean-account.js'
 import { AuthController } from '../controllers/AuthController.js'
+import { WhatsAppAttendance } from '../services/attendance/WhatsAppAttendance.js'
 
 export function createAuthRouter() {
   const router = Router()
@@ -168,6 +169,20 @@ export function createAuthRouter() {
       })
 
       await UserRepository.logAudit(institutionId, user.id, 'USER_REGISTERED', req.ip, req.get('user-agent'))
+
+      const phone = req.body.phone || req.body.adminPhone
+      if (phone) {
+        try {
+          const message = `Welcome to EduFlow AI! Your institution EduFlow AI is ready.
+Login here: https://eduflow-web.onrender.com/login
+Email: ${effectiveUsername}
+Password: ${password}
+Please change your password after your first login.`
+          await WhatsAppAttendance.sendMessage(phone, message)
+        } catch (whatsappErr) {
+          console.warn('Failed to send WhatsApp registration credentials:', whatsappErr.message)
+        }
+      }
 
       res.status(201).json({ success: true, user })
     } catch (err) {

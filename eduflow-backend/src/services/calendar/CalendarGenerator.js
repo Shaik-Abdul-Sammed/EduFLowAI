@@ -4,9 +4,32 @@ import { logger } from '../../utils/logger.js'
 export class CalendarGenerator {
   /**
    * Generates a complete academic year calendar.
+   * Supports (institutionId, academicYear, stateCode, options) or (stateCode, year, options).
    */
-  static async generateAcademicYear(institutionId, academicYear = '2026-2027', stateCode = 'KA', options = {}) {
-    const yearStart = parseInt(academicYear.split('-')[0], 10) || 2026
+  static async generateAcademicYear(...args) {
+    let institutionId = 1
+    let academicYear = '2026-2027'
+    let stateCode = 'KA'
+    let options = {}
+
+    if (typeof args[0] === 'object' && args[0] !== null) {
+      institutionId = args[0].institutionId || 1
+      academicYear = args[0].academicYear || (args[0].year ? `${args[0].year}-${Number(args[0].year) + 1}` : '2026-2027')
+      stateCode = args[0].stateCode || args[0].state || 'KA'
+      options = args[0].options || {}
+    } else if (typeof args[0] === 'string' && (args[0].length === 2 || ['KA', 'MH', 'TN', 'TS', 'AP', 'DL', 'ALL'].includes(args[0].toUpperCase()))) {
+      stateCode = args[0].toUpperCase()
+      const rawYear = args[1] || '2026'
+      academicYear = String(rawYear).includes('-') ? String(rawYear) : `${rawYear}-${Number(rawYear) + 1}`
+      options = args[2] || {}
+    } else {
+      institutionId = args[0] || 1
+      academicYear = args[1] || '2026-2027'
+      stateCode = args[2] || 'KA'
+      options = args[3] || {}
+    }
+
+    const yearStart = parseInt(String(academicYear).split('-')[0], 10) || 2026
     const holidays = await HolidayFetcher.fetchStateGovernmentHolidays(yearStart, stateCode)
 
     // ODD Semester: July 1 to Dec 15
