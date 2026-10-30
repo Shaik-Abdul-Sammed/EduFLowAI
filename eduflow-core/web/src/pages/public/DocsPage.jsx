@@ -893,7 +893,7 @@ export default function DocsPage() {
   const activeDoc = SECTION_CONTENT[selectedId] || {
     title: 'Documentation',
     description: 'Select a guide from the sidebar to view technical documentation.',
-    content: <p style={{ color: 'var(--app-text-muted)' }}>Documentation chapter coming soon.</p>,
+    content: <p style={{ color: 'var(--app-text-muted)' }}>Select an active documentation chapter from the sidebar to review architectural specifications, deployment guides, or API endpoints.</p>,
   }
 
   return (

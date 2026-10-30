@@ -28,4 +28,17 @@ describe('NavBar', () => {
     expect(screen.getAllByTestId('global-search')[0]).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /logout/i })[0]).toBeInTheDocument()
   })
+
+  it('renders green Online badge for guest users when no token is present', () => {
+    localStorage.clear()
+    render(
+      <MemoryRouter initialEntries={['/entry']}>
+        <I18nProvider>
+          <NavBar routes={[]} />
+        </I18nProvider>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Online')).toBeInTheDocument()
+  })
 })

@@ -367,7 +367,7 @@ Estimated hours saved: 0.5 hrs | Administrative cost saved: ₹150`,
 Estimated hours saved: 4 hrs | Reconciled revenue saved: ₹3,200`
 }
 
-async function* simulateTokenStream(text, delayMs = 12) {
+async function* simulateTokenStream(text, delayMs = (process.env.NODE_ENV === 'test' ? 1 : 50)) {
   const chunks = text.split(/(\s+)/)
   for (const chunk of chunks) {
     if (chunk) {

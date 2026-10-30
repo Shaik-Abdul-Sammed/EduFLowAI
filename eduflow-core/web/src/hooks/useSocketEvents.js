@@ -31,6 +31,7 @@ function getSocketUrl() {
 export function useSocketEvents() {
   const socketRef = useRef(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [isFailed, setIsFailed] = useState(false)
   const [lastEvent, setLastEvent] = useState(null)
   const [recentUpdates, setRecentUpdates] = useState([])
 
@@ -38,6 +39,7 @@ export function useSocketEvents() {
     const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
     if (!token) {
       setIsConnected(false)
+      setIsFailed(false)
       return
     }
 
@@ -55,6 +57,7 @@ export function useSocketEvents() {
 
     socket.on('connect', () => {
       failedAttempts = 0
+      setIsFailed(false)
       setIsConnected(true)
     })
     socket.on('disconnect', () => setIsConnected(false))
@@ -62,11 +65,13 @@ export function useSocketEvents() {
       failedAttempts += 1
       setIsConnected(false)
       if (failedAttempts >= 3) {
+        setIsFailed(true)
         socket.disconnect()
       }
     })
     socket.on('reconnect_failed', () => {
       setIsConnected(false)
+      setIsFailed(true)
       socket.disconnect()
     })
 
@@ -101,6 +106,7 @@ export function useSocketEvents() {
 
   return {
     isConnected,
+    isFailed,
     lastEvent,
     recentUpdates,
     emitEvent,

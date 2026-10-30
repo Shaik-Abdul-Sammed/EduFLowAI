@@ -8,10 +8,23 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
 }
 
 async function checkAppVersion() {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return
+  }
+
   try {
-    const res = await fetch('/version.json?t=' + Date.now())
-    if (!res.ok) return
-    const data = await res.json()
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null
+
+    const res = await fetch('/version.json?t=' + Date.now(), {
+      signal: controller?.signal,
+      cache: 'no-store',
+    }).catch(() => null)
+
+    if (timeoutId) clearTimeout(timeoutId)
+    if (!res || !res.ok) return
+
+    const data = await res.json().catch(() => null)
     const fetchedVersion = data?.version
     if (!fetchedVersion) return
 
@@ -25,12 +38,18 @@ async function checkAppVersion() {
       localStorage.setItem('app_version', fetchedVersion)
     }
   } catch {
-    // Fail silently on network or parse error
+    // Silently ignore any network, timeout, or parse failure so no error is logged
   }
 }
 
 checkAppVersion()
 setInterval(checkAppVersion, 60000)
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    setTimeout(checkAppVersion, 2000)
+  })
+}
 
 const EXTENSION_PATTERNS = [
   'chrome-extension://',

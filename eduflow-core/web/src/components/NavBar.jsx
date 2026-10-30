@@ -11,8 +11,20 @@ export default function NavBar({ routes, onMenuClick }) {
   const [langOpen, setLangOpen] = useState(false)
   const [theme, setTheme] = useState(localStorage.getItem('eduflow-ai-theme') || localStorage.getItem('sri-sudha-theme') || 'light')
   const { t, locale, setLanguage } = useI18n()
-  const { isConnected } = useSocketEvents()
+  const { isConnected, isFailed } = useSocketEvents()
   const [connectionTimedOut, setConnectionTimedOut] = useState(false)
+  const [isBrowserOnline, setIsBrowserOnline] = useState(() => (typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : true))
+
+  useEffect(() => {
+    const handleOnline = () => setIsBrowserOnline(true)
+    const handleOffline = () => setIsBrowserOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     if (isConnected) {
@@ -21,12 +33,13 @@ export default function NavBar({ routes, onMenuClick }) {
     }
     const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
     if (!user || !token) {
-      setConnectionTimedOut(true)
+      setConnectionTimedOut(false)
       return
     }
+    // Give WebSocket 3 attempts (approx 6s) before flagging timed out
     const timer = setTimeout(() => {
       setConnectionTimedOut(true)
-    }, 3000)
+    }, 6000)
     return () => clearTimeout(timer)
   }, [isConnected, user])
 
@@ -151,13 +164,27 @@ export default function NavBar({ routes, onMenuClick }) {
 
             {/* Live Real-Time Connection Indicator */}
             {(() => {
-              const status = isConnected
-                ? 'live'
-                : connectionTimedOut
-                  ? 'offline'
-                  : 'connecting'
+              const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
+              const isLoggedIn = Boolean(user && token)
+
+              const status = !isLoggedIn
+                ? 'online'
+                : isConnected
+                  ? 'live'
+                  : (isFailed || connectionTimedOut)
+                    ? 'offline'
+                    : 'connecting'
 
               const config = {
+                online: {
+                  bg: 'rgba(34, 197, 94, 0.1)',
+                  border: 'rgba(34, 197, 94, 0.25)',
+                  color: '#16a34a',
+                  dot: '#22c55e',
+                  shadow: '0 0 8px #22c55e',
+                  label: 'Online',
+                  title: 'EduFlow AI Cloud Online'
+                },
                 live: {
                   bg: 'rgba(34, 197, 94, 0.1)',
                   border: 'rgba(34, 197, 94, 0.25)',

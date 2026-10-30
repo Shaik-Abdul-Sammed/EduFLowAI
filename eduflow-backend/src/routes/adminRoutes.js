@@ -1,12 +1,56 @@
 import { Router } from 'express'
 import fs from 'node:fs'
 import path from 'node:path'
+import jwt from 'jsonwebtoken'
 import { authMiddleware, requireRole } from '../middleware/auth.js'
 import { pool } from '../db/pool.js'
 import { logger } from '../utils/logger.js'
+import { resetDemoData } from '../../scripts/reset-demo-data.js'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
 
 export function createAdminRouter() {
   const router = Router()
+
+  /**
+   * POST /api/v1/admin/reset-demo-data
+   * Reset and re-seed all demo datasets to factory demo state.
+   * Protected with secret token (same as emergency-seed) or admin authentication.
+   */
+  router.post('/reset-demo-data', async (req, res) => {
+    const secret = req.query.secret || req.body?.secret
+    const isSecretValid = secret === 'eduflow2026'
+
+    if (!isSecretValid) {
+      // Check auth header if present
+      let isAdmin = false
+      const authHeader = req.headers.authorization
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.split(' ')[1]
+          const decoded = jwt.verify(token, JWT_SECRET)
+          if (decoded && (decoded.role === 'admin' || decoded.role === 'dean')) {
+            isAdmin = true
+          }
+        } catch {}
+      }
+      if (!isAdmin) {
+        return res.status(403).json({ error: 'Unauthorized: Invalid secret or missing admin credentials' })
+      }
+    }
+
+    try {
+      const result = await resetDemoData(pool)
+      return res.json({
+        success: true,
+        message: 'Demo dataset successfully wiped and re-seeded to factory demo state.',
+        details: result
+      })
+    } catch (err) {
+      logger.error('Failed to reset demo data:', err)
+      return res.status(500).json({ error: err.message || 'Failed to reset demo data' })
+    }
+  })
 
   router.use(authMiddleware)
   router.use(requireRole(['admin'])) // Restrict all admin routes to admin role
