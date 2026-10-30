@@ -13,11 +13,11 @@ export function createAdminRouter() {
   const router = Router()
 
   /**
-   * POST /api/v1/admin/reset-demo-data
+   * GET & POST /api/v1/admin/reset-demo-data
    * Reset and re-seed all demo datasets to factory demo state.
    * Protected with secret token (same as emergency-seed) or admin authentication.
    */
-  router.post('/reset-demo-data', async (req, res) => {
+  const handleResetDemoData = async (req, res) => {
     const secret = req.query.secret || req.body?.secret
     const isSecretValid = secret === 'eduflow2026'
 
@@ -35,7 +35,7 @@ export function createAdminRouter() {
         } catch {}
       }
       if (!isAdmin) {
-        return res.status(403).json({ error: 'Unauthorized: Invalid secret or missing admin credentials' })
+        return res.status(401).json({ error: 'Unauthorized: Invalid secret or missing admin credentials' })
       }
     }
 
@@ -50,7 +50,10 @@ export function createAdminRouter() {
       logger.error('Failed to reset demo data:', err)
       return res.status(500).json({ error: err.message || 'Failed to reset demo data' })
     }
-  })
+  }
+
+  router.get('/reset-demo-data', handleResetDemoData)
+  router.post('/reset-demo-data', handleResetDemoData)
 
   router.use(authMiddleware)
   router.use(requireRole(['admin'])) // Restrict all admin routes to admin role

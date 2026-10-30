@@ -7,11 +7,12 @@ Follow this 10-step protocol **10 minutes before** a live presentation to a Coll
 ## 📋 10-Step Pre-Demo Checklist
 
 1. **Verify & Reset Pristine Demo Data**
-   Trigger the demo lockdown reset to ensure all database tables (`demo_students`, `demo_faculty`, `demo_courses`, `invoices`, `leads`, `student_attendance`) are populated with consistent, factory-grade demo records:
+   Trigger the demo lockdown reset to ensure all database tables (`demo_students`, `demo_faculty`, `demo_courses`, `invoices`, `leads`, `student_attendance`) are populated with consistent, factory-grade demo records. You can open the URL directly in your browser or run curl (supports both GET and POST):
    ```bash
-   curl -X POST "https://eduflow-api.onrender.com/api/v1/admin/reset-demo-data?secret=eduflow2026"
+   # Open directly in browser or terminal:
+   curl "https://eduflow-backend-jvn8.onrender.com/api/v1/admin/reset-demo-data?secret=eduflow2026"
    # Or locally:
-   curl -X POST "http://localhost:5001/api/v1/admin/reset-demo-data?secret=eduflow2026"
+   curl "http://localhost:5001/api/v1/admin/reset-demo-data?secret=eduflow2026"
    ```
    *Expected Response:* `{"success": true, "message": "Demo dataset successfully wiped and re-seeded..."}`
 
