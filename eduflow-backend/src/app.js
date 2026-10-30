@@ -82,7 +82,7 @@ export function createApp({ db } = {}) {
   app.use(attachInstitutionContext)
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, service: 'eduflow-backend', version: '1.0.0', timestamp: new Date().toISOString() })
+    res.json({ ok: true, service: 'eduflow-backend', version: '1.0.1', build: 'demo-lockdown-v2', timestamp: new Date().toISOString() })
   })
 
   app.get('/api/health/render', (_req, res) => {

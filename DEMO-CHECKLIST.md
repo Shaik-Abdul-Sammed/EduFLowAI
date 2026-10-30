@@ -19,9 +19,9 @@ Follow this 10-step protocol **10 minutes before** a live presentation to a Coll
 2. **Verify Backend Health & Readiness**
    Ping the health check endpoint to verify database connectivity, uptime, and AI engine status:
    ```bash
-   curl -i https://eduflow-api.onrender.com/health
+   curl -i https://eduflow-backend-jvn8.onrender.com/api/health
    # Or locally:
-   curl -i http://localhost:5001/health
+   curl -i http://localhost:5001/api/health
    ```
    *Expected Response:* HTTP `200 OK` with status `online`.
 

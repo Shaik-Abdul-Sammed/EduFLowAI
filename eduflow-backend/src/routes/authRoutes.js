@@ -7,6 +7,7 @@ import { rateLimit } from 'express-rate-limit'
 import { validateRequest, loginSchema, registerUserSchema } from '../middleware/validateRequest.js'
 import { seedDemoData } from '../../scripts/seed-demo.js'
 import { seedDeanAccount } from '../../scripts/seed-dean-account.js'
+import { resetDemoData } from '../../scripts/reset-demo-data.js'
 import { AuthController } from '../controllers/AuthController.js'
 import { WhatsAppAttendance } from '../services/attendance/WhatsAppAttendance.js'
 
@@ -70,6 +71,29 @@ export function createAuthRouter() {
       res.status(500).json({ error: err.message })
     }
   })
+
+  /**
+   * GET & POST /api/v1/auth/reset-demo-data
+   * Reset and re-seed all demo datasets to factory demo state.
+   */
+  const handleAuthReset = async (req, res) => {
+    const secret = req.query?.secret || req.body?.secret
+    if (secret !== 'eduflow2026') {
+      return res.status(401).json({ error: 'Unauthorized: Invalid secret' })
+    }
+    try {
+      const result = await resetDemoData(pool)
+      return res.json({
+        success: true,
+        message: 'Demo dataset successfully wiped and re-seeded to factory demo state.',
+        details: result
+      })
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+  router.get('/reset-demo-data', handleAuthReset)
+  router.post('/reset-demo-data', handleAuthReset)
 
   /**
    * POST /api/v1/auth/login
