@@ -83,18 +83,26 @@ export async function safeJson(response, fallback = {}) {
       if (typeof text === 'string' && text.trim()) {
         try {
           return JSON.parse(text)
-        } catch {}
+        } catch (_err) {
+          // ignore parsing error
+        }
       }
     }
     if (typeof response.json === 'function') {
       try {
         return await response.json()
-      } catch {}
+      } catch (_err) {
+        // ignore json error
+      }
     }
     return typeof response === 'object' && response !== null && !('ok' in response && 'status' in response) ? response : fallback
-  } catch {
+  } catch (_err) {
     if (typeof response?.json === 'function') {
-      try { return await response.json() } catch {}
+      try {
+        return await response.json()
+      } catch (_e) {
+        // ignore fallback error
+      }
     }
     return fallback
   }

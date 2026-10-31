@@ -133,6 +133,26 @@ export function createAdminRouter() {
   })
 
   /**
+   * GET /api/v1/admin/system-stats
+   * System resource utilization and runtime diagnostics for admin portal.
+   */
+  router.get('/system-stats', async (_req, res) => {
+    try {
+      res.json({
+        success: true,
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage(),
+        nodeVersion: process.version,
+        platform: process.platform,
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
+
+  /**
    * GET /api/v1/admin/audit-logs
    * Fetch system audit logs for the institution.
    * Query params: limit, category (optional)

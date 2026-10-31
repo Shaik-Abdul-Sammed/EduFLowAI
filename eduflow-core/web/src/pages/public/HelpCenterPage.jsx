@@ -83,7 +83,7 @@ export default function HelpCenterPage() {
       let data = {}
       try {
         data = JSON.parse(text)
-      } catch (e) {
+      } catch (_e) {
         data = { error: 'Server returned an invalid response.' }
       }
       if (!res.ok) throw new Error(data.error || 'Failed to submit ticket')

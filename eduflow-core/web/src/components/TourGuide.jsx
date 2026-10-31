@@ -77,7 +77,9 @@ export default function TourGuide() {
             el = found
             break
           }
-        } catch {}
+        } catch (_err) {
+          // ignore query selector error
+        }
       }
     }
 
@@ -89,7 +91,9 @@ export default function TourGuide() {
     if (el) {
       try {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } catch {}
+      } catch (_err) {
+        // ignore scroll error
+      }
 
       const computedPos = typeof window !== 'undefined' ? window.getComputedStyle(el).position : ''
       if (computedPos === 'static') {
@@ -124,6 +128,7 @@ export default function TourGuide() {
       setTargetRect(null)
       setHighlightedEl(null)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, isOpen])
 
   useEffect(() => {

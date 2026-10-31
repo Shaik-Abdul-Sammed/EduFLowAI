@@ -167,13 +167,15 @@ export default function NavBar({ routes, onMenuClick }) {
               const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
               const isLoggedIn = Boolean(user && token)
 
-              const status = !isLoggedIn
-                ? 'online'
-                : isConnected
-                  ? 'live'
-                  : (isFailed || connectionTimedOut)
-                    ? 'offline'
-                    : 'connecting'
+              const status = !isBrowserOnline
+                ? 'offline'
+                : !isLoggedIn
+                  ? 'online'
+                  : isConnected
+                    ? 'live'
+                    : (isFailed || connectionTimedOut)
+                      ? 'offline'
+                      : 'connecting'
 
               const config = {
                 online: {
