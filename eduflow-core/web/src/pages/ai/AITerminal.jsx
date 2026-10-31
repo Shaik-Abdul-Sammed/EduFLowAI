@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Send, Paperclip, Bot, Building, Cpu, Database, Package, Settings, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const DEMO_ONBOARDING_REPLIES = [
   "Welcome to EduFlow AI OS! 🎓 I'm your institution's autonomous software engineer. I'll help you build and maintain a professional Flutter app for your institution — no developers needed.\n\nLet's start! **What is the name of your institution?**",
@@ -103,14 +104,24 @@ export default function AITerminal() {
     setIsTyping(true)
 
     try {
-      const res = await fetch('/api/v1/ai/chat', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/ai/chat'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ institutionId: 'demo', messages: [...messages, userMsg], digitalTwin: {} }),
       })
       if (res.ok) {
-        const data = await res.json()
-        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+        const text = await res.text()
+        let data = {}
+        try { data = JSON.parse(text) } catch { data = {} }
+        if (data.reply) {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+        } else {
+          throw new Error('No reply in response')
+        }
       } else throw new Error('API failed')
     } catch {
       // Fallback demo mode

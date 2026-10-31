@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function HodDashboardPage() {
   const { user } = useAuth()
@@ -28,42 +29,46 @@ export default function HodDashboardPage() {
   const deptName = user?.department || 'Computer Science & Engineering'
   const deptCode = user?.departmentCode || 'CSE'
 
-  const fetchPendingApprovals = async () => {
+  const fetchPendingApprovals = async (isMounted = true) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
       const res = await fetch(`${getApiBaseURL()}/v1/approvals/pending`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         const approvals = data.approvals || []
         const local = JSON.parse(localStorage.getItem('eduflow-demo-pending-approvals') || '[]')
-        setPendingApprovals(approvals.length > 0 ? approvals : (local.length > 0 ? local : [
-          {
-            id: 1,
-            staff_user_id: 105,
-            first_name: 'Priya',
-            last_name: 'Sharma',
-            staff_designation: 'Academic Coordinator',
-            officer_key: 'timetable',
-            prompt_text: 'Generate conflict-free timetable for CSE 3rd & 5th Semester',
-            created_at: new Date().toISOString(),
-          },
-        ]))
+        if (isMounted) {
+          setPendingApprovals(approvals.length > 0 ? approvals : (local.length > 0 ? local : [
+            {
+              id: 1,
+              staff_user_id: 105,
+              first_name: 'Priya',
+              last_name: 'Sharma',
+              staff_designation: 'Academic Coordinator',
+              officer_key: 'timetable',
+              prompt_text: 'Generate conflict-free timetable for CSE 3rd & 5th Semester',
+              created_at: new Date().toISOString(),
+            },
+          ]))
+        }
       } else {
         const local = JSON.parse(localStorage.getItem('eduflow-demo-pending-approvals') || '[]')
-        setPendingApprovals(local.length > 0 ? local : [
-          {
-            id: 1,
-            staff_user_id: 105,
-            first_name: 'Priya',
-            last_name: 'Sharma',
-            staff_designation: 'Academic Coordinator',
-            officer_key: 'timetable',
-            prompt_text: 'Generate conflict-free timetable for CSE 3rd & 5th Semester',
-            created_at: new Date().toISOString(),
-          },
-        ])
+        if (isMounted) {
+          setPendingApprovals(local.length > 0 ? local : [
+            {
+              id: 1,
+              staff_user_id: 105,
+              first_name: 'Priya',
+              last_name: 'Sharma',
+              staff_designation: 'Academic Coordinator',
+              officer_key: 'timetable',
+              prompt_text: 'Generate conflict-free timetable for CSE 3rd & 5th Semester',
+              created_at: new Date().toISOString(),
+            },
+          ])
+        }
       }
     } catch {
       // Fallback
@@ -95,15 +100,15 @@ export default function HodDashboardPage() {
     }
   ])
 
-  const fetchEscalations = async () => {
+  const fetchEscalations = async (isMounted = true) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
       const res = await fetch(`${getApiBaseURL()}/v1/escalations/hod/pending`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
-        if (data.pending?.length > 0) {
+        const data = await safeJson(res)
+        if (isMounted && data.pending?.length > 0) {
           setFinancialEscalations(data.pending)
         }
       }
@@ -154,8 +159,12 @@ export default function HodDashboardPage() {
   }
 
   useEffect(() => {
-    fetchPendingApprovals()
-    fetchEscalations()
+    let isMounted = true
+    fetchPendingApprovals(isMounted)
+    fetchEscalations(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleApprove = async (logId) => {

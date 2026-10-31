@@ -4,6 +4,8 @@ import { Eye, EyeOff, ShieldCheck, Mail, Lock, Sparkles, ArrowRight, KeyRound, G
 import { useAuth } from '../../hooks/useAuth'
 import { DEMO_ACCOUNTS } from '../../config/demoCredentials'
 import { mapAuthError } from '../../services/authService'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -47,19 +49,22 @@ export default function LoginPage() {
   }
 
   useEffect(() => {
+    let isMounted = true
     // When URL contains ?institutionId=X or demo, fetch active SSO providers
     const targetInstId = queryInstId || (institutionId !== 'demo' ? institutionId : '1')
     if (typeof fetch !== 'function') {
       return
     }
-    fetch(`/api/v1/sso/${targetInstId}/providers`)
-      .then(res => res.ok ? res.json() : null)
+    fetch(getFullApiUrl(`/v1/sso/${targetInstId}/providers`))
+      .then(res => res.ok ? safeJson(res) : null)
       .then(data => {
+        if (!isMounted) return
         if (data && data.providers && data.providers.length > 0) {
           setSsoProviders(data.providers)
         }
       })
       .catch(() => {
+        if (!isMounted) return
         // Fallback demo providers for UI responsiveness
         setSsoProviders([
           { id: 1, provider_type: 'OIDC', display_name: 'Login with Google Workspace' },
@@ -67,6 +72,10 @@ export default function LoginPage() {
           { id: 3, provider_type: 'LDAP', display_name: 'Login with Campus Active Directory / LDAP' }
         ])
       })
+
+    return () => {
+      isMounted = false
+    }
   }, [queryInstId, institutionId])
 
   const handleSSOLogin = async (provider) => {
@@ -75,16 +84,16 @@ export default function LoginPage() {
     try {
       const targetInstId = queryInstId || (institutionId !== 'demo' ? institutionId : '1')
       if (provider.provider_type === 'SAML') {
-        const res = await fetch(`/api/v1/sso/${targetInstId}/saml/login`, { method: 'POST' })
-        const json = await res.json()
+        const res = await fetch(getFullApiUrl(`/v1/sso/${targetInstId}/saml/login`), { method: 'POST' })
+        const json = await safeJson(res)
         if (json.redirectUrl) {
           // If in test/demo mode, simulate successful callback
-          const callbackRes = await fetch(`/api/v1/sso/${targetInstId}/saml/callback`, {
+          const callbackRes = await fetch(getFullApiUrl(`/v1/sso/${targetInstId}/saml/callback`), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ samlResponse: '<saml2:Assertion><saml2:NameID>dean@iitb.ac.in</saml2:NameID><saml2:Attribute Name="email"><saml2:AttributeValue>dean@iitb.ac.in</saml2:AttributeValue></saml2:Attribute><saml2:Attribute Name="role"><saml2:AttributeValue>admin</saml2:AttributeValue></saml2:Attribute></saml2:Assertion>' })
           })
-          const cbData = await callbackRes.json()
+          const cbData = await safeJson(callbackRes)
           if (cbData.token) {
             localStorage.setItem('accessToken', cbData.token)
             navigate('/admin-dashboard')
@@ -92,20 +101,20 @@ export default function LoginPage() {
           }
         }
       } else if (provider.provider_type === 'OIDC') {
-        const res = await fetch(`/api/v1/sso/${targetInstId}/oidc/login`, { method: 'POST' })
-        const json = await res.json()
+        const res = await fetch(getFullApiUrl(`/v1/sso/${targetInstId}/oidc/login`), { method: 'POST' })
+        const json = await safeJson(res)
         if (json.redirectUrl) {
           navigate('/admin-dashboard')
           return
         }
       } else {
         // LDAP
-        const res = await fetch(`/api/v1/sso/${targetInstId}/ldap/login`, {
+        const res = await fetch(getFullApiUrl(`/v1/sso/${targetInstId}/ldap/login`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: email || 'faculty.user', password: password || 'CampusPass@2026' })
         })
-        const json = await res.json()
+        const json = await safeJson(res)
         if (json.token) {
           localStorage.setItem('accessToken', json.token)
           navigate('/faculty-dashboard')

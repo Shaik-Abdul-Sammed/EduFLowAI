@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getRecentSearches, saveRecentSearch } from '../services/searchService'
 import { useI18n } from '../i18n'
 import { getApiBaseURL } from '../config/apiConfig'
+import { safeJson } from '../utils/wakeUpHandler'
 
 const RECENT_KEY = 'eduflow-ai-recent-searches'
 
@@ -69,7 +70,7 @@ export default function GlobalSearch({ routes = [], currentRole = 'student', cla
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
         if (res.ok) {
-          const data = await res.json()
+          const data = await safeJson(res)
           if (active && Array.isArray(data.results)) {
             setApiResults(data.results)
           }

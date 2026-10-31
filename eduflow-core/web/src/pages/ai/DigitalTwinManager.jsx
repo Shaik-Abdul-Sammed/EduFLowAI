@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Database, ArrowLeft, RefreshCw, CheckCircle, Circle, Upload, FileText } from 'lucide-react'
 import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 const DEMO_TWIN = {
   name: 'Springfield Engineering College',
@@ -69,7 +70,7 @@ export default function DigitalTwinManager() {
         body: formData
       })
 
-      const data = await res.json()
+      const data = await safeJson(res)
       if (!res.ok) throw new Error(data.error || 'Upload failed')
 
       setUploadMessage({ type: 'success', text: `Successfully ingested: ${file.name} (~${data.details.estimatedTokens} tokens)` })

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Share2, Copy, Check, MessageCircle, X } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
+import { safeJson } from '../utils/wakeUpHandler';
 
 export default function ShareReportModal({
   isOpen,
@@ -47,7 +48,7 @@ export default function ShareReportModal({
           throw new Error('Failed to generate secure share link');
         }
 
-        const data = await response.json();
+        const data = await safeJson(response);
         const url = data.shareUrl || `https://eduflow-web.onrender.com/r/${data.token}`;
         if (!ignore) {
           setShareUrl(url);

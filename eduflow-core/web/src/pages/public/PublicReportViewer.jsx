@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function PublicReportViewer() {
   const { token } = useParams()
@@ -9,23 +10,27 @@ export default function PublicReportViewer() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    let isMounted = true
     async function loadReport() {
       try {
-        setLoading(true)
+        if (isMounted) setLoading(true)
         const res = await fetch(`${getApiBaseURL()}/v1/reports/token/${token}`)
         if (!res.ok) {
           throw new Error('Report not found or link has expired.')
         }
-        const data = await res.json()
-        setReport(data)
+        const data = await safeJson(res)
+        if (isMounted) setReport(data)
       } catch (err) {
-        setError(err.message || 'Failed to load report')
+        if (isMounted) setError(err.message || 'Failed to load report')
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
     if (token) {
       loadReport()
+    }
+    return () => {
+      isMounted = false
     }
   }, [token])
 

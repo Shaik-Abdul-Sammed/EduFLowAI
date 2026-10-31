@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import {
   Activity,
   Database,
@@ -16,25 +18,31 @@ export default function SystemHealthPage() {
   const [verifyingBackup, setVerifyingBackup] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null)
 
-  const fetchHealth = async () => {
+  const fetchHealth = async (isMounted = true) => {
     try {
-      setLoading(true)
-      const res = await fetch('/api/v1/monitoring/health')
-      const data = await res.json()
-      setHealth(data)
+      if (isMounted) setLoading(true)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/monitoring/health'), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      const data = await safeJson(res)
+      if (isMounted && data) setHealth(data)
     } catch (err) {
       console.error(err)
     } finally {
-      setLoading(false)
+      if (isMounted) setLoading(false)
     }
   }
 
   const triggerBackupVerify = async () => {
     try {
       setVerifyingBackup(true)
-      const res = await fetch('/api/v1/admin/backup/verify')
-      const data = await res.json()
-      setVerifyResult(data.report)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/admin/backup/verify'), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      const data = await safeJson(res)
+      if (data) setVerifyResult(data.report)
     } catch (err) {
       console.error(err)
     } finally {
@@ -43,7 +51,11 @@ export default function SystemHealthPage() {
   }
 
   useEffect(() => {
-    fetchHealth()
+    let isMounted = true
+    fetchHealth(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   return (

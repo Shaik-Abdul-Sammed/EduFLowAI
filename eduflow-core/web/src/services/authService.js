@@ -1,5 +1,5 @@
 import { getFullApiUrl } from '../config/apiConfig'
-import { wakeUpFetch } from '../utils/wakeUpHandler'
+import { wakeUpFetch, safeJson } from '../utils/wakeUpHandler'
 
 export function mapAuthError(err, status) {
   if (process.env.NODE_ENV !== 'test') {
@@ -86,7 +86,7 @@ export async function loginWithRole({ role, username, email, password, instituti
       try {
         const instResponse = await wakeUpFetch(getFullApiUrl('/v1/auth/default-institution'))
         if (instResponse.ok) {
-          const instData = await instResponse.json()
+          const instData = await safeJson(instResponse)
           targetInstId = instData?.id
         }
       } catch {
@@ -126,7 +126,7 @@ export async function loginWithRole({ role, username, email, password, instituti
       throw errorObj
     }
 
-    const data = await loginResponse.json()
+    const data = await safeJson(loginResponse)
 
     // 3. Store tokens
     if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
@@ -166,7 +166,7 @@ export async function registerInstitution(registrationData) {
       body: JSON.stringify(registrationData)
     })
 
-    const data = await response.json()
+    const data = await safeJson(response)
 
     if (!response.ok) {
       const err = new Error(data.error || 'Registration failed')
@@ -227,7 +227,7 @@ export async function refreshSession() {
     throw new Error('Session expired')
   }
 
-  const data = await response.json()
+  const data = await safeJson(response)
   localStorage.setItem('accessToken', data.accessToken)
   localStorage.setItem('refreshToken', data.refreshToken)
   

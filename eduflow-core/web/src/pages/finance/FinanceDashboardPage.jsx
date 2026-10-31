@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function FinanceDashboardPage() {
   const { user } = useAuth()
@@ -110,15 +112,16 @@ export default function FinanceDashboardPage() {
   ])
 
   useEffect(() => {
-    // Simulated live query from backend fee reminders & invoices
+    let isMounted = true
     const loadData = async () => {
       try {
-        const res = await fetch('/api/v1/fee-reminders/pending', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` }
+        const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
+        const res = await fetch(getFullApiUrl('/v1/fee-reminders/pending'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         })
         if (res.ok) {
-          const json = await res.json()
-          if (json.summary) {
+          const json = await safeJson(res)
+          if (isMounted && json.summary) {
             setSnapshot(prev => ({
               ...prev,
               totalOverdue: json.summary.totalOverdueAmount || prev.totalOverdue
@@ -128,10 +131,13 @@ export default function FinanceDashboardPage() {
       } catch (err) {
         console.warn('Finance live metrics load failed:', err)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
     loadData()
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleGenerateBatch = (e) => {

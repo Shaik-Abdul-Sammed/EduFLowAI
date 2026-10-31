@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../i18n'
 import { instituteStats } from '../utils/mockData'
 import { getApiBaseURL } from '../config/apiConfig'
+import { safeJson } from '../utils/wakeUpHandler'
 import StudentAcademyPanel from './StudentAcademyPanel'
 
 const roleConfig = {
@@ -77,6 +78,7 @@ export default function DashboardHome({ role, routes = [] }) {
   })
 
   useEffect(() => {
+    let isMounted = true
     if (role === 'admin') {
       const fetchMetrics = async () => {
         try {
@@ -85,14 +87,17 @@ export default function DashboardHome({ role, routes = [] }) {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           })
           if (res.ok) {
-            const data = await res.json()
-            setAdminMetrics((prev) => ({ ...prev, ...data }))
+            const data = await safeJson(res)
+            if (isMounted) setAdminMetrics((prev) => ({ ...prev, ...data }))
           }
         } catch {
           // Graceful fallback to initial realistic metrics
         }
       }
       fetchMetrics()
+    }
+    return () => {
+      isMounted = false
     }
   }, [role])
 

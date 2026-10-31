@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck, Clock, ExternalLink } from 'lucide-react'
 import { getApiBaseURL } from '../config/apiConfig'
+import { safeJson } from '../utils/wakeUpHandler'
 import { useAuth } from '../hooks/useAuth'
 
 export default function NotificationCenter() {
@@ -12,12 +13,14 @@ export default function NotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef(null)
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isMounted = true) => {
     try {
       const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
       if (!token) {
-        setNotifications([])
-        setUnreadCount(0)
+        if (isMounted) {
+          setNotifications([])
+          setUnreadCount(0)
+        }
         return
       }
       const userId = user?.id || 'demo'
@@ -25,31 +28,41 @@ export default function NotificationCenter() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         const list = Array.isArray(data.notifications) ? data.notifications : []
-        setNotifications(list)
-        setUnreadCount(list.length === 0 ? 0 : (data.unreadCount ?? list.filter(n => !n.read).length))
+        if (isMounted) {
+          setNotifications(list)
+          setUnreadCount(list.length === 0 ? 0 : (data.unreadCount ?? list.filter(n => !n.read).length))
+        }
       } else {
-        setNotifications([])
-        setUnreadCount(0)
+        if (isMounted) {
+          setNotifications([])
+          setUnreadCount(0)
+        }
       }
     } catch {
       // Clear notifications and badge if offline or error
-      setNotifications([])
-      setUnreadCount(0)
+      if (isMounted) {
+        setNotifications([])
+        setUnreadCount(0)
+      }
     }
   }
 
   useEffect(() => {
+    let isMounted = true
     const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
     if (!token) {
       setNotifications([])
       setUnreadCount(0)
       return
     }
-    fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
+    fetchNotifications(isMounted)
+    const interval = setInterval(() => fetchNotifications(isMounted), 30000)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isAuthenticated])
 
@@ -196,9 +209,9 @@ export default function NotificationCenter() {
                 No notifications right now
               </div>
             ) : (
-              notifications.slice(0, 20).map((n) => (
+              notifications.slice(0, 20).map((n, idx) => (
                 <button
-                  key={n.id}
+                  key={n.id || idx}
                   type="button"
                   className={`list-group-item list-group-item-action text-start p-3 border-bottom ${
                     !n.read ? 'bg-light bg-opacity-75' : ''

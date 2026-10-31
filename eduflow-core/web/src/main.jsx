@@ -24,7 +24,9 @@ async function checkAppVersion() {
     if (timeoutId) clearTimeout(timeoutId)
     if (!res || !res.ok) return
 
-    const data = await res.json().catch(() => null)
+    const text = await res.text().catch(() => '')
+    let data = null
+    try { data = JSON.parse(text) } catch { data = null }
     const fetchedVersion = data?.version
     if (!fetchedVersion) return
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   HelpCircle,
   Search,
@@ -69,9 +70,13 @@ export default function HelpCenterPage() {
     setSubmitting(true)
 
     try {
-      const res = await fetch('/api/v1/support/ticket', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/support/ticket'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(ticket)
       })
       const text = await res.text()

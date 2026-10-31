@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function AttendanceIntegrationPage() {
   const { addToast } = useToast()
@@ -39,41 +40,45 @@ export default function AttendanceIntegrationPage() {
     ])
   }
 
-  const fetchStats = async () => {
+  const fetchStats = async (isMounted = true) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
       const res = await fetch(`${getApiBaseURL()}/v1/attendance/stats`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
-        setStats(data.stats || stats)
+        const data = await safeJson(res)
+        if (isMounted) setStats(data.stats || stats)
       }
     } catch {
       // Fallback to default stats
     }
   }
 
-  const fetchAtRisk = async () => {
+  const fetchAtRisk = async (isMounted = true) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
       const res = await fetch(`${getApiBaseURL()}/v1/attendance/at-risk`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
-        setAtRiskStudents(data.students || [])
+        const data = await safeJson(res)
+        if (isMounted) setAtRiskStudents(data.students || [])
       } else {
-        loadDefaultAtRisk()
+        if (isMounted) loadDefaultAtRisk()
       }
     } catch {
-      loadDefaultAtRisk()
+      if (isMounted) loadDefaultAtRisk()
     }
   }
 
   useEffect(() => {
-    fetchStats()
-    fetchAtRisk()
+    let isMounted = true
+    fetchStats(isMounted)
+    fetchAtRisk(isMounted)
+    return () => {
+      isMounted = false
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -154,7 +159,7 @@ export default function AttendanceIntegrationPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         addToast(`Loaded sample dataset! ${data.imported || 500} records processed across 20 students.`, 'success')
         if (data.stats) setStats(data.stats)
         if (data.analysis?.students) {

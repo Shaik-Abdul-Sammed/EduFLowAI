@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import { useAuth } from '../../hooks/useAuth'
 
 const PURPLE = '#7C3AED'
@@ -15,32 +16,36 @@ export default function Page() {
   const { user } = useAuth()
 
   useEffect(() => {
+    let isMounted = true
     const fetchLogs = async () => {
       if (!user) return
       
       try {
-        const token = localStorage.getItem('accessToken')
+        const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
         const url = new URL(getApiBaseURL() + '/v1/admin/audit-logs')
         if (filter !== 'All') {
           url.searchParams.append('category', filter)
         }
         
         const res = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         })
         
         if (res.ok) {
-          const data = await res.json()
-          setLogs(data)
+          const data = await safeJson(res)
+          if (isMounted) setLogs(Array.isArray(data) ? data : (data.logs || []))
         }
       } catch (err) {
         console.error('Failed to load audit logs:', err)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     fetchLogs()
+    return () => {
+      isMounted = false
+    }
   }, [filter, user])
 
   return (

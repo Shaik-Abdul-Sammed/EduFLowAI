@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 const OFFICER_CHOICES = [
   { key: 'timetable', name: 'Timetable Officer' },
@@ -40,19 +41,21 @@ export default function HodStaffManagementPage() {
   const [requiresApproval, setRequiresApproval] = useState(true)
   const [validUntil, setValidUntil] = useState('2026-12-31')
 
-  const fetchPendingApprovals = async () => {
+  const fetchPendingApprovals = async (isMounted = true) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
       const res = await fetch(`${getApiBaseURL()}/v1/approvals/pending`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
-        setPendingApprovals(data.approvals || [])
+        const data = await safeJson(res)
+        if (isMounted) setPendingApprovals(data.approvals || [])
       } else {
-        setPendingApprovals([
-          { id: 1, first_name: 'Priya', last_name: 'Sharma', officer_key: 'timetable', prompt_text: 'Generate CSE 5th Semester Lab Schedule', created_at: new Date().toISOString() },
-        ])
+        if (isMounted) {
+          setPendingApprovals([
+            { id: 1, first_name: 'Priya', last_name: 'Sharma', officer_key: 'timetable', prompt_text: 'Generate CSE 5th Semester Lab Schedule', created_at: new Date().toISOString() },
+          ])
+        }
       }
     } catch {
       // Fallback
@@ -60,7 +63,11 @@ export default function HodStaffManagementPage() {
   }
 
   useEffect(() => {
-    fetchPendingApprovals()
+    let isMounted = true
+    fetchPendingApprovals(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleLoadDemoScenario = async () => {

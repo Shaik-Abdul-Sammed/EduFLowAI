@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { getApiBaseURL } from '../../config/apiConfig'
-import { wakeUpFetch } from '../../utils/wakeUpHandler'
+import { wakeUpFetch, safeJson } from '../../utils/wakeUpHandler'
 import './LeadIntakePage.css'
 
 const SERVICE_OPTIONS = [
@@ -118,7 +118,7 @@ export default function LeadIntakePage() {
         }),
       })
 
-      const data = await response.json()
+      const data = await safeJson(response)
       if (!response.ok) {
         throw new Error(data.error || 'Submission failed. Please try again.')
       }

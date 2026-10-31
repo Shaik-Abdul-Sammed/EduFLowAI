@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { safeJson } from '../../utils/wakeUpHandler'
 import {
   Brain,
   RefreshCw,
@@ -232,7 +233,7 @@ export default function NaacAiAnalysisPage() {
         headers: getHeaders(),
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setInsights((prev) => ({
           ...prev,
           currentPredictedGrade: data.currentPredictedGrade || prev.currentPredictedGrade,
@@ -258,7 +259,7 @@ export default function NaacAiAnalysisPage() {
           headers: getHeaders(),
         })
         if (res.ok && isMounted) {
-          const data = await res.json()
+          const data = await safeJson(res)
           setInsights((prev) => ({
             ...prev,
             currentPredictedGrade: data.currentPredictedGrade || prev.currentPredictedGrade,
@@ -292,7 +293,7 @@ export default function NaacAiAnalysisPage() {
         }),
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setExplanationResult(data.explanation)
         setHistoryItems((prev) => [
           {
@@ -378,7 +379,7 @@ export default function NaacAiAnalysisPage() {
       })
 
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setChatMessages((prev) => [
           ...prev,
           {
@@ -423,7 +424,7 @@ export default function NaacAiAnalysisPage() {
         body: JSON.stringify({ institutionId: 1 }),
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         if (data.prediction) {
           setVisitPrediction(data.prediction)
           setInsights((prev) => ({
@@ -465,7 +466,7 @@ export default function NaacAiAnalysisPage() {
         }),
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         if (data.plan) {
           setImprovementPlan(data.plan)
           setHistoryItems((prev) => [

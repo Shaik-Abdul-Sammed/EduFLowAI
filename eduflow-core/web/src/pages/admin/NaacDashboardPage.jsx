@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { safeJson } from '../../utils/wakeUpHandler';
 import {
   Award,
   TrendingUp,
@@ -162,7 +163,7 @@ export default function NaacDashboardPage() {
         },
       });
       if (response.ok) {
-        const data = await response.json();
+        const data = await safeJson(response);
         if (data && data.grade) {
           setPrediction(data);
         }
@@ -186,7 +187,7 @@ export default function NaacDashboardPage() {
           },
         });
         if (response.ok && isMounted) {
-          const data = await response.json();
+          const data = await safeJson(response);
           if (data && data.grade) {
             setPrediction(data);
           }

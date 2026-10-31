@@ -5,7 +5,7 @@ import {
   ArrowUpRight, ArrowDownRight, ArrowRight, RefreshCw, AlertTriangle, CheckCircle 
 } from 'lucide-react'
 import { getFullApiUrl } from '../../config/apiConfig'
-import { wakeUpFetch } from '../../utils/wakeUpHandler'
+import { wakeUpFetch, safeJson } from '../../utils/wakeUpHandler'
 
 export default function InsightsDashboardPage() {
   const navigate = useNavigate()
@@ -43,14 +43,14 @@ export default function InsightsDashboardPage() {
       ])
 
       if (dashRes.ok) {
-        const dashJson = await dashRes.json()
+        const dashJson = await safeJson(dashRes)
         setData(dashJson)
       } else {
         throw new Error('Failed to fetch insights dashboard')
       }
 
       if (actRes.ok) {
-        const actJson = await actRes.json()
+        const actJson = await safeJson(actRes)
         setActivity(actJson.activity || [])
       }
     } catch (err) {
@@ -75,11 +75,11 @@ export default function InsightsDashboardPage() {
         ])
 
         if (dashRes.ok && isMounted) {
-          const dashJson = await dashRes.json()
+          const dashJson = await safeJson(dashRes)
           setData(dashJson)
         }
         if (actRes.ok && isMounted) {
-          const actJson = await actRes.json()
+          const actJson = await safeJson(actRes)
           setActivity(actJson.activity || [])
         }
       } catch (err) {

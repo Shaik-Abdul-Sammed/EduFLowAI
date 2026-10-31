@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import {
   Globe,
   Search,
@@ -29,18 +31,23 @@ export default function LiveDataPage() {
   const [searchResults, setSearchResults] = useState(null)
   const [message, setMessage] = useState('')
 
-  const fetchAllFeeds = async () => {
-    setLoading(true)
+  const fetchAllFeeds = async (isMounted = true) => {
+    if (isMounted) setLoading(true)
     try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
       const [resStatus, resNirf, resNaac, resAicte, resUgc, resHolidays, resNews] = await Promise.all([
-        fetch('/api/v1/live-data/status').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/live-data/nirf').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/live-data/naac').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/live-data/aicte').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/live-data/ugc').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/live-data/holidays').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/live-data/news').then(r => r.ok ? r.json() : null)
+        fetch(getFullApiUrl('/v1/live-data/status'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null),
+        fetch(getFullApiUrl('/v1/live-data/nirf'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null),
+        fetch(getFullApiUrl('/v1/live-data/naac'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null),
+        fetch(getFullApiUrl('/v1/live-data/aicte'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null),
+        fetch(getFullApiUrl('/v1/live-data/ugc'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null),
+        fetch(getFullApiUrl('/v1/live-data/holidays'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null),
+        fetch(getFullApiUrl('/v1/live-data/news'), { headers }).then(r => r.ok ? safeJson(r) : null).catch(() => null)
       ])
+
+      if (!isMounted) return
 
       if (resStatus) setStatusData(resStatus)
       if (resNirf) setNirfData(resNirf)
@@ -52,20 +59,28 @@ export default function LiveDataPage() {
     } catch (e) {
       console.warn('Live data fetch fallback:', e)
     } finally {
-      setLoading(false)
+      if (isMounted) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchAllFeeds()
+    let isMounted = true
+    fetchAllFeeds(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleRefresh = async () => {
     setLoading(true)
     setMessage('')
     try {
-      const res = await fetch('/api/v1/live-data/refresh', { method: 'POST' })
-      await res.json()
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/live-data/refresh'), {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      await safeJson(res)
       setMessage('All 6 external regulatory and ranking channels refreshed in real time.')
       await fetchAllFeeds()
     } catch (e) {
@@ -80,12 +95,16 @@ export default function LiveDataPage() {
     if (!q.trim()) return
     setSearchLoading(true)
     try {
-      const res = await fetch('/api/v1/live-data/search', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/live-data/search'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ query: q, num: 4 })
       })
-      const data = await res.json()
+      const data = await safeJson(res)
       setSearchResults(data)
     } catch (e) {
       console.error('Search error:', e)

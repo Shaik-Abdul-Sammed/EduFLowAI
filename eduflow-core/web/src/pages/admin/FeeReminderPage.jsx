@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function FeeReminderPage() {
   const { user } = useAuth()
@@ -39,57 +41,63 @@ export default function FeeReminderPage() {
   const [testPhone, setTestPhone] = useState('+919876543201')
   const [testSending, setTestSending] = useState(false)
 
-  const token = localStorage.getItem('token') || ''
+  const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
   const authHeaders = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   }
 
-  const fetchData = async () => {
-    setLoading(true)
+  const fetchData = async (isMounted = true) => {
+    if (isMounted) setLoading(true)
     try {
       const [pendingRes, historyRes, settingsRes] = await Promise.all([
-        fetch('/api/v1/fee-reminders/pending', { headers: authHeaders }),
-        fetch('/api/v1/fee-reminders/history?limit=100', { headers: authHeaders }),
-        fetch('/api/v1/fee-reminders/settings', { headers: authHeaders })
+        fetch(getFullApiUrl('/v1/fee-reminders/pending'), { headers: authHeaders }).catch(() => ({ ok: false })),
+        fetch(getFullApiUrl('/v1/fee-reminders/history?limit=100'), { headers: authHeaders }).catch(() => ({ ok: false })),
+        fetch(getFullApiUrl('/v1/fee-reminders/settings'), { headers: authHeaders }).catch(() => ({ ok: false }))
       ])
 
-      if (pendingRes.ok) {
-        const pJson = await pendingRes.json()
-        setPendingData(pJson)
+      if (!isMounted) return
+
+      if (pendingRes && pendingRes.ok) {
+        const pJson = await safeJson(pendingRes, {})
+        if (isMounted && pJson && pJson.tiers) setPendingData(pJson)
       }
-      if (historyRes.ok) {
-        const hJson = await historyRes.json()
-        setHistory(hJson.history || [])
+      if (historyRes && historyRes.ok) {
+        const hJson = await safeJson(historyRes, {})
+        if (isMounted) setHistory(hJson.history || [])
       }
-      if (settingsRes.ok) {
-        const sJson = await settingsRes.json()
-        setSettings(sJson.settings || {})
+      if (settingsRes && settingsRes.ok) {
+        const sJson = await safeJson(settingsRes, {})
+        if (isMounted) setSettings(sJson.settings || {})
       }
     } catch (err) {
       console.error('Failed to load fee reminders data:', err)
-      setFeedback({ type: 'danger', message: 'Could not load data from backend server.' })
+      if (isMounted) setFeedback({ type: 'danger', message: 'Could not load data from backend server.' })
     } finally {
-      setLoading(false)
+      if (isMounted) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchData()
+    let isMounted = true
+    fetchData(isMounted)
+    return () => {
+      isMounted = false
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Flattened invoices list
   const allInvoices = [
-    ...(pendingData.tiers.tier1 || []),
-    ...(pendingData.tiers.tier2 || []),
-    ...(pendingData.tiers.tier3 || []),
-    ...(pendingData.tiers.tier4 || [])
+    ...(pendingData?.tiers?.tier1 || []),
+    ...(pendingData?.tiers?.tier2 || []),
+    ...(pendingData?.tiers?.tier3 || []),
+    ...(pendingData?.tiers?.tier4 || [])
   ]
 
   const filteredInvoices = activeTierTab === 'ALL'
     ? allInvoices
-    : (pendingData.tiers[activeTierTab.toLowerCase()] || [])
+    : (pendingData?.tiers?.[activeTierTab.toLowerCase()] || [])
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
@@ -113,12 +121,12 @@ export default function FeeReminderPage() {
         invoiceIds: invoiceIds || (selectedInvoices.length > 0 ? selectedInvoices : undefined),
         channels: settings.channels || ['EMAIL', 'WHATSAPP']
       }
-      const res = await fetch('/api/v1/fee-reminders/send-now', {
+      const res = await fetch(getFullApiUrl('/v1/fee-reminders/send-now'), {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify(body)
       })
-      const result = await res.json()
+      const result = await safeJson(res, {})
       if (res.ok) {
         setFeedback({
           type: 'success',
@@ -141,12 +149,12 @@ export default function FeeReminderPage() {
     setSavingSettings(true)
     setFeedback(null)
     try {
-      const res = await fetch('/api/v1/fee-reminders/settings', {
+      const res = await fetch(getFullApiUrl('/v1/fee-reminders/settings'), {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify(settings)
       })
-      const result = await res.json()
+      const result = await safeJson(res, {})
       if (res.ok) {
         setFeedback({ type: 'success', message: 'Fee reminder automation settings updated successfully!' })
       } else {
@@ -163,7 +171,7 @@ export default function FeeReminderPage() {
     setTestSending(true)
     setFeedback(null)
     try {
-      const res = await fetch('/api/v1/fee-reminders/test-preview', {
+      const res = await fetch(getFullApiUrl('/v1/fee-reminders/test-preview'), {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
@@ -172,7 +180,7 @@ export default function FeeReminderPage() {
           tier: tierName
         })
       })
-      const result = await res.json()
+      const result = await safeJson(res, {})
       if (res.ok) {
         setFeedback({
           type: 'success',
@@ -423,8 +431,8 @@ export default function FeeReminderPage() {
                   </td>
                 </tr>
               ) : (
-                filteredInvoices.map((inv) => (
-                  <tr key={inv.id}>
+                filteredInvoices.map((inv, idx) => (
+                  <tr key={inv.id || idx}>
                     <td>
                       <input
                         type="checkbox"
@@ -747,8 +755,8 @@ export default function FeeReminderPage() {
                   </td>
                 </tr>
               ) : (
-                history.map((log) => (
-                  <tr key={log.id}>
+                history.map((log, idx) => (
+                  <tr key={log.id || idx}>
                     <td className="small text-muted">
                       {new Date(log.created_at || Date.now()).toLocaleString()}
                     </td>

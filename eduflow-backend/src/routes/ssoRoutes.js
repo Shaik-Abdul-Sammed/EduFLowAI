@@ -16,6 +16,10 @@ export function createSSORouter() {
   router.post('/admin/config', SSOController.saveSSOConfig)
   router.post('/admin/config/:id/test', SSOController.testSSOConfig)
   router.get('/admin/logs', SSOController.getSSOLogs)
+  // Aliases when mounted under /api/v1/admin/sso
+  router.post('/config', SSOController.saveSSOConfig)
+  router.post('/config/:id/test', SSOController.testSSOConfig)
+  router.get('/logs', SSOController.getSSOLogs)
 
   return router
 }

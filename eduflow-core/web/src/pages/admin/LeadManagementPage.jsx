@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import { useAuth } from '../../hooks/useAuth'
 import './LeadManagementPage.css'
 
@@ -68,7 +69,7 @@ export default function LeadManagementPage() {
         throw new Error(`Failed to load leads (${res.status})`)
       }
 
-      const data = await res.json()
+      const data = await safeJson(res)
       setLeads(data.leads || [])
     } catch (err) {
       setError(err.message || 'Error fetching leads')
@@ -138,9 +139,11 @@ export default function LeadManagementPage() {
       })
 
       if (!res.ok) throw new Error('Status update failed')
-      const data = await res.json()
-      setSelectedLead(data.lead)
-      setLeads((prev) => prev.map((l) => (l.id === data.lead.id ? data.lead : l)))
+      const data = await safeJson(res)
+      if (data.lead) {
+        setSelectedLead(data.lead)
+        setLeads((prev) => prev.map((l) => (l.id === data.lead.id ? data.lead : l)))
+      }
       showToast(`Status updated to ${newStatus}`)
     } catch (err) {
       showToast(err.message, true)
@@ -163,9 +166,11 @@ export default function LeadManagementPage() {
       })
 
       if (!res.ok) throw new Error('Failed to autosave notes')
-      const data = await res.json()
-      setSelectedLead(data.lead)
-      setLeads((prev) => prev.map((l) => (l.id === data.lead.id ? data.lead : l)))
+      const data = await safeJson(res)
+      if (data.lead) {
+        setSelectedLead(data.lead)
+        setLeads((prev) => prev.map((l) => (l.id === data.lead.id ? data.lead : l)))
+      }
       showToast('Notes saved')
     } catch (err) {
       showToast(err.message, true)
@@ -188,10 +193,12 @@ export default function LeadManagementPage() {
       )
 
       if (!res.ok) throw new Error('Failed to send pilot offer email')
-      const data = await res.json()
-      setSelectedLead(data.lead)
-      setNotesDraft(data.lead?.notes || '')
-      setLeads((prev) => prev.map((l) => (l.id === data.lead.id ? data.lead : l)))
+      const data = await safeJson(res)
+      if (data.lead) {
+        setSelectedLead(data.lead)
+        setNotesDraft(data.lead?.notes || '')
+        setLeads((prev) => prev.map((l) => (l.id === data.lead.id ? data.lead : l)))
+      }
       showToast(`Pilot offer dispatched to ${selectedLead.email}`)
     } catch (err) {
       showToast(err.message, true)

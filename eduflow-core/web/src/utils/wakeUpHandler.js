@@ -8,7 +8,7 @@
 
 let wakeUpBannerElement = null
 
-function showWakeUpBanner(message = 'Waking up the server. This may take 30-45 seconds on initial request...') {
+export function showWakeUpBanner(message = 'Server is waking up... Please wait a moment.') {
   if (typeof document === 'undefined') return
   if (!wakeUpBannerElement) {
     wakeUpBannerElement = document.createElement('div')
@@ -60,7 +60,7 @@ function showWakeUpBanner(message = 'Waking up the server. This may take 30-45 s
   wakeUpBannerElement.style.display = 'flex'
 }
 
-function hideWakeUpBanner() {
+export function hideWakeUpBanner() {
   if (wakeUpBannerElement) {
     wakeUpBannerElement.style.opacity = '0'
     setTimeout(() => {
@@ -70,19 +70,61 @@ function hideWakeUpBanner() {
 }
 
 /**
- * Executes a fetch with automatic cold start detection and single 5s retry.
+ * Safely parse JSON from a fetch Response, falling back cleanly if empty or invalid HTML.
+ * @param {Response} response
+ * @param {*} [fallback={}]
+ * @returns {Promise<*>}
+ */
+export async function safeJson(response, fallback = {}) {
+  if (!response) return fallback
+  try {
+    if (typeof response.text === 'function') {
+      const text = await response.text()
+      if (typeof text === 'string' && text.trim()) {
+        try {
+          return JSON.parse(text)
+        } catch {}
+      }
+    }
+    if (typeof response.json === 'function') {
+      try {
+        return await response.json()
+      } catch {}
+    }
+    return typeof response === 'object' && response !== null && !('ok' in response && 'status' in response) ? response : fallback
+  } catch {
+    if (typeof response?.json === 'function') {
+      try { return await response.json() } catch {}
+    }
+    return fallback
+  }
+}
+
+/**
+ * Executes a fetch with automatic cold start detection and single 3s retry.
  * @param {string} url 
  * @param {RequestInit} [options] 
  * @returns {Promise<Response>}
  */
 export async function wakeUpFetch(url, options = {}) {
+  const mergedOptions = { ...options }
+  if (typeof localStorage !== 'undefined') {
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+    if (token) {
+      mergedOptions.headers = {
+        Authorization: `Bearer ${token}`,
+        ...(mergedOptions.headers || {})
+      }
+    }
+  }
+
   try {
-    const res = await fetch(url, options)
-    // Render returns 502/503 while warming up
+    const res = await fetch(url, mergedOptions)
+    // Render returns 502/503/504 while warming up
     if (res.status === 502 || res.status === 503 || res.status === 504) {
-      showWakeUpBanner()
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-      const retryRes = await fetch(url, options)
+      showWakeUpBanner('Server is waking up... Please wait a moment.')
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      const retryRes = await fetch(url, mergedOptions)
       hideWakeUpBanner()
       return retryRes
     }
@@ -90,10 +132,10 @@ export async function wakeUpFetch(url, options = {}) {
     return res
   } catch {
     // Network error or offline
-    showWakeUpBanner('Server waking up... Retrying connection in 5 seconds.')
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+    showWakeUpBanner('Server is waking up... Please wait a moment.')
+    await new Promise((resolve) => setTimeout(resolve, 3000))
     try {
-      const retryRes = await fetch(url, options)
+      const retryRes = await fetch(url, mergedOptions)
       hideWakeUpBanner()
       return retryRes
     } catch (retryErr) {

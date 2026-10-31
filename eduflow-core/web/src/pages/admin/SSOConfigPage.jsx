@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   ShieldCheck,
   KeyRound,
@@ -61,17 +62,30 @@ export default function SSOConfigPage() {
     { ssoGroup: 'ou=undergrad_students', mappedRole: 'student' }
   ])
 
+  const safeParse = async (res) => {
+    try {
+      const text = await res.text()
+      return JSON.parse(text)
+    } catch {
+      return {}
+    }
+  }
+
   const handleTestConnection = async (type) => {
     setLoading(true)
     setTestResult(null)
     setError('')
     try {
-      const res = await fetch('/api/v1/admin/sso/config/1/test', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/admin/sso/config/1/test'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ type })
       })
-      const data = await res.json()
+      const data = await safeParse(res)
       setTestResult(data)
       setMessage(data.message || 'Connection test successful!')
     } catch (err) {
@@ -96,9 +110,13 @@ export default function SSOConfigPage() {
         displayName = ldapConfig.displayName
       }
 
-      const res = await fetch('/api/v1/admin/sso/config', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/admin/sso/config'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           institutionId: 1,
           providerType,

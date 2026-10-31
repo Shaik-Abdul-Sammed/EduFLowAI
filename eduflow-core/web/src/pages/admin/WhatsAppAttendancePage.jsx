@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getFullApiUrl } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import {
   MessageSquare,
   CheckCircle,
@@ -36,62 +37,74 @@ export default function WhatsAppAttendancePage() {
   const [loading, setLoading] = useState(true)
   const [actionMsg, setActionMsg] = useState('')
 
-  const fetchStatus = async () => {
+  const getAuthHeaders = () => {
+    const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+  }
+
+  const fetchStatus = async (isMounted = true) => {
     try {
-      const res = await fetch(getFullApiUrl('/v1/whatsapp/status'))
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/status'), { headers: getAuthHeaders() })
       if (res.ok) {
-        const data = await res.json()
-        setStatus(data)
+        const data = await safeJson(res)
+        if (isMounted) setStatus(data)
       }
     } catch {
       // Use defaults
     }
   }
 
-  const fetchStaged = async () => {
+  const fetchStaged = async (isMounted = true) => {
     try {
-      const res = await fetch(getFullApiUrl('/v1/whatsapp/staged'))
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/staged'), { headers: getAuthHeaders() })
       if (res.ok) {
-        const data = await res.json()
-        setStagedList(data.staged || [])
+        const data = await safeJson(res)
+        if (isMounted) setStagedList(data.staged || [])
       }
     } catch (err) {
       console.warn('Failed to fetch staged WhatsApp attendance:', err)
     }
   }
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (isMounted = true) => {
     try {
-      const res = await fetch(getFullApiUrl('/v1/whatsapp/logs'))
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/logs'), { headers: getAuthHeaders() })
       if (res.ok) {
-        const data = await res.json()
-        setLogsList(data.logs || [])
+        const data = await safeJson(res)
+        if (isMounted) setLogsList(data.logs || [])
       }
     } catch (err) {
       console.warn('Failed to fetch WhatsApp logs:', err)
     }
   }
 
-  const fetchFaculty = async () => {
+  const fetchFaculty = async (isMounted = true) => {
     try {
-      const res = await fetch(getFullApiUrl('/v1/whatsapp/faculty'))
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/faculty'), { headers: getAuthHeaders() })
       if (res.ok) {
-        const data = await res.json()
-        setFacultyList(data.faculty || [])
+        const data = await safeJson(res)
+        if (isMounted) setFacultyList(data.faculty || [])
       }
     } catch (err) {
       console.warn('Failed to fetch WhatsApp faculty:', err)
     }
   }
 
-  const refreshAll = async () => {
-    setLoading(true)
-    await Promise.all([fetchStatus(), fetchStaged(), fetchLogs(), fetchFaculty()])
-    setLoading(false)
+  const refreshAll = async (isMounted = true) => {
+    if (isMounted) setLoading(true)
+    await Promise.all([fetchStatus(isMounted), fetchStaged(isMounted), fetchLogs(isMounted), fetchFaculty(isMounted)])
+    if (isMounted) setLoading(false)
   }
 
   useEffect(() => {
-    refreshAll()
+    let isMounted = true
+    refreshAll(isMounted)
+    return () => {
+      isMounted = false
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -105,13 +118,13 @@ export default function WhatsAppAttendancePage() {
     try {
       const res = await fetch(getFullApiUrl('/v1/whatsapp/simulate-message'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           from: simPhone,
           body: simMessage
         })
       })
-      const data = await res.json()
+      const data = await safeJson(res)
       setSimResult(data)
       await Promise.all([fetchStaged(), fetchLogs()])
     } catch (err) {
@@ -123,7 +136,10 @@ export default function WhatsAppAttendancePage() {
 
   const handleConfirmStaged = async (id) => {
     try {
-      const res = await fetch(getFullApiUrl(`/v1/whatsapp/staged/${id}/confirm`), { method: 'POST' })
+      const res = await fetch(getFullApiUrl(`/v1/whatsapp/staged/${id}/confirm`), {
+        method: 'POST',
+        headers: getAuthHeaders()
+      })
       if (res.ok) {
         setActionMsg(`Staged attendance #${id} confirmed and synced into official attendance records!`)
         await Promise.all([fetchStaged(), fetchLogs()])
@@ -135,7 +151,10 @@ export default function WhatsAppAttendancePage() {
 
   const handleRejectStaged = async (id) => {
     try {
-      const res = await fetch(getFullApiUrl(`/v1/whatsapp/staged/${id}/reject`), { method: 'POST' })
+      const res = await fetch(getFullApiUrl(`/v1/whatsapp/staged/${id}/reject`), {
+        method: 'POST',
+        headers: getAuthHeaders()
+      })
       if (res.ok) {
         setActionMsg(`Staged attendance #${id} cancelled.`)
         await Promise.all([fetchStaged(), fetchLogs()])

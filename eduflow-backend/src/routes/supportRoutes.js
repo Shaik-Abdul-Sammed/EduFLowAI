@@ -5,6 +5,7 @@ export function createSupportRouter() {
   const router = express.Router()
 
   router.post('/ticket', SupportController.createTicket)
+  router.post('/tickets', SupportController.createTicket)
   router.get('/tickets', SupportController.getTickets)
   router.patch('/tickets/:id', SupportController.updateTicket)
 

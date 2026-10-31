@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 const PORTAL_TYPES = [
   { id: 'MYSQL', name: 'MySQL Database', icon: Server, desc: 'Direct relational database connector' },
@@ -79,38 +80,40 @@ export default function PortalConnectionPage() {
     ])
   }
 
-  const fetchSources = async () => {
+  const fetchSources = async (isMounted = true) => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
       const res = await fetch(`${getApiBaseURL()}/v1/portal/sources`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
-        setSources(data.sources || [])
+        const data = await safeJson(res)
+        if (isMounted) setSources(data.sources || [])
       } else {
-        loadDefaultSources()
+        if (isMounted) loadDefaultSources()
       }
     } catch {
-      loadDefaultSources()
+      if (isMounted) loadDefaultSources()
     }
   }
 
-  const fetchSyncLogs = async () => {
+  const fetchSyncLogs = async (isMounted = true) => {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
       const res = await fetch(`${getApiBaseURL()}/v1/portal/sync-logs`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
-        const data = await res.json()
-        setSyncLogs(data.logs || [])
+        const data = await safeJson(res)
+        if (isMounted) setSyncLogs(data.logs || [])
       } else {
-        setSyncLogs([
-          { id: 101, source_name: 'Main Campus BioTime Device Server', status: 'SUCCESS', records_synced: 1420, completed_at: new Date().toISOString() },
-          { id: 102, source_name: 'Department Faculty Attendance Sheet', status: 'SUCCESS', records_synced: 240, completed_at: new Date(Date.now() - 14400000).toISOString() },
-          { id: 103, source_name: 'Legacy Examination Oracle DB', status: 'SUCCESS', records_synced: 450, completed_at: new Date(Date.now() - 86400000).toISOString() },
-        ])
+        if (isMounted) {
+          setSyncLogs([
+            { id: 101, source_name: 'Main Campus BioTime Device Server', status: 'SUCCESS', records_synced: 1420, completed_at: new Date().toISOString() },
+            { id: 102, source_name: 'Department Faculty Attendance Sheet', status: 'SUCCESS', records_synced: 240, completed_at: new Date(Date.now() - 14400000).toISOString() },
+            { id: 103, source_name: 'Legacy Examination Oracle DB', status: 'SUCCESS', records_synced: 450, completed_at: new Date(Date.now() - 86400000).toISOString() },
+          ])
+        }
       }
     } catch {
       // Fallback
@@ -118,8 +121,12 @@ export default function PortalConnectionPage() {
   }
 
   useEffect(() => {
-    fetchSources()
-    fetchSyncLogs()
+    let isMounted = true
+    fetchSources(isMounted)
+    fetchSyncLogs(isMounted)
+    return () => {
+      isMounted = false
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -160,7 +167,7 @@ export default function PortalConnectionPage() {
         },
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         addToast('Connected to Demo Fedena ERP! Loaded live institutional student records.', 'success')
         if (data.source) {
           setSources((prev) => [data.source, ...prev])

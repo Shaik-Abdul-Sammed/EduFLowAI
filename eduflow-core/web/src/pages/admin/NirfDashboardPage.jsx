@@ -5,7 +5,7 @@ import {
   Compass, ArrowUpRight, Users, BookOpen
 } from 'lucide-react'
 import { getFullApiUrl } from '../../config/apiConfig'
-import { wakeUpFetch } from '../../utils/wakeUpHandler'
+import { wakeUpFetch, safeJson } from '../../utils/wakeUpHandler'
 
 export default function NirfDashboardPage() {
   const [category, setCategory] = useState('Engineering')
@@ -70,15 +70,15 @@ export default function NirfDashboardPage() {
         ])
 
         if (scoreRes.ok) {
-          const s = await scoreRes.json()
+          const s = await safeJson(scoreRes)
           if (isMounted) setScoreData(s)
         }
         if (peersRes.ok) {
-          const p = await peersRes.json()
+          const p = await safeJson(peersRes)
           if (isMounted) setPeersList(p.peers || [])
         }
         if (naacRes.ok) {
-          const n = await naacRes.json()
+          const n = await safeJson(naacRes)
           if (isMounted) setNaacCompare(n)
         }
       } catch {
@@ -100,7 +100,7 @@ export default function NirfDashboardPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setPrediction(data)
       }
     } catch {
@@ -137,7 +137,7 @@ export default function NirfDashboardPage() {
           body: JSON.stringify({ parameter: paramKey }),
         })
         if (res.ok) {
-          const data = await res.json()
+          const data = await safeJson(res)
           setParamDetails((prev) => ({ ...prev, [paramKey]: data }))
         }
       } catch {
@@ -159,7 +159,7 @@ export default function NirfDashboardPage() {
         body: JSON.stringify({ targetRank: Number(targetRank), category }),
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setPlan(data)
       }
     } catch {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   ShieldCheck,
   FileCheck2,
@@ -24,16 +25,34 @@ export default function CompliancePage() {
   const [_purgeStatus, setPurgeStatus] = useState(null)
   const [message, setMessage] = useState('')
 
-  const fetchComplianceData = async () => {
-    setLoading(true)
+  const safeParse = async (r) => {
     try {
+      if (!r || !r.ok) return null
+      const text = await r.text()
+      return JSON.parse(text)
+    } catch {
+      return null
+    }
+  }
+
+  const fetchComplianceData = async (isMounted = true) => {
+    if (isMounted) setLoading(true)
+    try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+
       const [resAccess, resChanges, resIncidents, resInventory, resDpia] = await Promise.all([
-        fetch('/api/v1/compliance/access-review').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/compliance/change-log').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/compliance/incidents').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/compliance/data-inventory').then(r => r.ok ? r.json() : null),
-        fetch('/api/v1/compliance/dpia').then(r => r.ok ? r.json() : null)
+        fetch(getFullApiUrl('/v1/compliance/access-review'), { headers }).then(safeParse).catch(() => null),
+        fetch(getFullApiUrl('/v1/compliance/change-log'), { headers }).then(safeParse).catch(() => null),
+        fetch(getFullApiUrl('/v1/compliance/incidents'), { headers }).then(safeParse).catch(() => null),
+        fetch(getFullApiUrl('/v1/compliance/data-inventory'), { headers }).then(safeParse).catch(() => null),
+        fetch(getFullApiUrl('/v1/compliance/dpia'), { headers }).then(safeParse).catch(() => null)
       ])
+
+      if (!isMounted) return
 
       if (resAccess) setAccessData(resAccess)
       if (resChanges) setChangeLogData(resChanges)
@@ -43,27 +62,35 @@ export default function CompliancePage() {
     } catch (e) {
       console.warn('Compliance fetch fallback:', e)
     } finally {
-      setLoading(false)
+      if (isMounted) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchComplianceData()
+    let isMounted = true
+    fetchComplianceData(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleExportZip = () => {
-    window.location.href = '/api/v1/compliance/export-audit-package'
+    window.location.href = getFullApiUrl('/v1/compliance/export-audit-package')
   }
 
   const handleTriggerPurge = async () => {
     try {
       setMessage('')
-      const res = await fetch('/api/v1/compliance/purge', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/compliance/purge'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ institutionId: 1 })
       })
-      const data = await res.json()
+      const data = (await safeParse(res)) || {}
       setPurgeStatus(data)
       setMessage(`Data retention purge executed successfully. Purged ${data.recordsPurged || 0} records across ${data.policiesProcessed || 4} policies.`)
     } catch (e) {

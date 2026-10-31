@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   QrCode,
   Copy,
@@ -36,9 +37,13 @@ export default function UPICollectionPage() {
     setManualStatus('')
 
     try {
-      const res = await fetch(`/api/v1/invoices/1/mark-paid-manual`, {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/invoices/1/mark-paid-manual'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           referenceNumber: manualRef,
           paymentMode: 'UPI_DIRECT'

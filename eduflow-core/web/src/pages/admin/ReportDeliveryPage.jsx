@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import { useAuth } from '../../hooks/useAuth'
 
 const SAMPLE_TEMPLATE = `EXECUTIVE SUMMARY & GAP ANALYSIS REPORT
@@ -61,7 +62,7 @@ export default function ReportDeliveryPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (resReports.ok) {
-        const data = await resReports.json()
+        const data = await safeJson(resReports)
         setReports(data.reports || [])
       }
 
@@ -70,7 +71,7 @@ export default function ReportDeliveryPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (resLeads.ok) {
-        const data = await resLeads.json()
+        const data = await safeJson(resLeads)
         setLeads(data.leads || [])
       }
     } catch (err) {
@@ -129,11 +130,11 @@ export default function ReportDeliveryPage() {
       })
 
       if (!res.ok) {
-        const errData = await res.json()
+        const errData = await safeJson(res)
         throw new Error(errData.error || 'Delivery failed')
       }
 
-      await res.json()
+      await safeJson(res)
       showToast(`Report successfully delivered to ${contactEmail}!`)
       fetchData()
     } catch (err) {

@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 const DEFAULT_HOLIDAYS = [
   { name: 'Republic Day', date: '2026-01-26', type: 'CENTRAL' },
@@ -94,13 +95,16 @@ export default function AcademicCalendarPage() {
     ])
   }
 
-  const fetchCalendar = async () => {
+  const fetchCalendar = async (isMounted = true) => {
     try {
       const instId = user?.institutionId || 1
-      const res = await fetch(`${getApiBaseURL()}/v1/calendar/${instId}/${selectedYear}?stateCode=${selectedState}`)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(`${getApiBaseURL()}/v1/calendar/${instId}/${selectedYear}?stateCode=${selectedState}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
       if (res.ok) {
-        const data = await res.json()
-        if (data.calendar) {
+        const data = await safeJson(res)
+        if (isMounted && data.calendar) {
           setCalendarData(data.calendar)
           setEvents(data.events || data.calendar.events || [])
           setAdjustments(data.adjustments || [])
@@ -108,30 +112,37 @@ export default function AcademicCalendarPage() {
         }
       }
       // Demo fallback if backend has no saved calendar yet
-      loadDefaultCalendar()
+      if (isMounted) loadDefaultCalendar()
     } catch {
-      loadDefaultCalendar()
+      if (isMounted) loadDefaultCalendar()
     }
   }
 
-  const fetchHolidays = async () => {
+  const fetchHolidays = async (isMounted = true) => {
     try {
       const year = selectedYear.split('-')[0] || '2026'
-      const res = await fetch(`${getApiBaseURL()}/v1/calendar/holidays/${year}?stateCode=${selectedState}`)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(`${getApiBaseURL()}/v1/calendar/holidays/${year}?stateCode=${selectedState}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
       if (res.ok) {
-        const data = await res.json()
-        setHolidays(data.holidays || [])
+        const data = await safeJson(res)
+        if (isMounted) setHolidays(data.holidays || [])
       } else {
-        setHolidays(DEFAULT_HOLIDAYS)
+        if (isMounted) setHolidays(DEFAULT_HOLIDAYS)
       }
     } catch {
-      setHolidays(DEFAULT_HOLIDAYS)
+      if (isMounted) setHolidays(DEFAULT_HOLIDAYS)
     }
   }
 
   useEffect(() => {
-    fetchCalendar()
-    fetchHolidays()
+    let isMounted = true
+    fetchCalendar(isMounted)
+    fetchHolidays(isMounted)
+    return () => {
+      isMounted = false
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedState, selectedYear])
 
@@ -152,7 +163,7 @@ export default function AcademicCalendarPage() {
         }),
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setCalendarData(data.calendar)
         if (data.calendar?.events) {
           setEvents(data.calendar.events)

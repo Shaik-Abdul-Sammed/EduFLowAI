@@ -6,6 +6,7 @@ import {
   Sparkles, Printer,
 } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
+import { safeJson } from '../utils/wakeUpHandler';
 import { useStreamingOfficer } from '../hooks/useStreamingOfficer';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../hooks/useAuth';
@@ -101,6 +102,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const isDeptScoped = ['hod', 'faculty', 'staff'].includes(user?.role);
 
   useEffect(() => {
+    let isMounted = true;
     if (user?.role === 'staff') {
       const fetchPerms = async () => {
         try {
@@ -108,27 +110,31 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
           const res = await fetch(`${getApiBaseURL()}/v1/staff/my-permissions`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
+          if (!isMounted) return;
           if (res.ok) {
-            const data = await res.json();
+            const data = await safeJson(res);
             const perm = (data.permissions || []).find((p) => p.officer_key === type);
-            setStaffPermission(perm || null);
+            if (isMounted) setStaffPermission(perm || null);
           } else {
-            if (type === 'timetable') {
+            if (type === 'timetable' && isMounted) {
               setStaffPermission({ permission_level: 'DRAFT', is_active: true });
             }
           }
         } catch {
-          if (type === 'timetable') {
+          if (type === 'timetable' && isMounted) {
             setStaffPermission({ permission_level: 'DRAFT', is_active: true });
           }
         } finally {
-          setHasCheckedPermission(true);
+          if (isMounted) setHasCheckedPermission(true);
         }
       };
       fetchPerms();
     } else {
       setHasCheckedPermission(true);
     }
+    return () => {
+      isMounted = false;
+    };
   }, [user, type]);
 
   // Latest assistant message for share/email/export

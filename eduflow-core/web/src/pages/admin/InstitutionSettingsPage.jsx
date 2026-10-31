@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   Settings,
   Building,
@@ -61,11 +62,19 @@ export default function InstitutionSettingsPage() {
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (isMounted = true) => {
     try {
-      const res = await fetch('/api/v1/institution/settings')
-      const data = await res.json()
-      if (data.settings) {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/institution/settings'), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      })
+      const text = await res.text()
+      let data = {}
+      try { data = JSON.parse(text) } catch { data = {} }
+      if (isMounted && data.settings) {
         setSettings({
           ...data.settings,
           security: {
@@ -82,7 +91,11 @@ export default function InstitutionSettingsPage() {
   }
 
   useEffect(() => {
-    fetchSettings()
+    let isMounted = true
+    fetchSettings(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleSave = async (e) => {
@@ -102,9 +115,13 @@ export default function InstitutionSettingsPage() {
         }
       }
 
-      const res = await fetch('/api/v1/institution/settings', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/institution/settings'), {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       })
       if (!res.ok) throw new Error('Failed to update settings')

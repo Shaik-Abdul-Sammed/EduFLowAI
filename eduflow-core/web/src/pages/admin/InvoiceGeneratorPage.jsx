@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 import { useAuth } from '../../hooks/useAuth'
 
 const PACKAGES = [
@@ -56,7 +57,7 @@ export default function InvoiceGeneratorPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
-        const data = await res.json()
+        const data = await safeJson(res)
         setInvoices(data.invoices || [])
       }
     } catch (err) {
@@ -148,12 +149,12 @@ export default function InvoiceGeneratorPage() {
       })
 
       if (!res.ok) {
-        const errData = await res.json()
+        const errData = await safeJson(res)
         throw new Error(errData.error || 'Failed to generate invoice')
       }
 
-      const data = await res.json()
-      showToast(`Invoice ${data.invoice.invoice_number} created successfully!`)
+      const data = await safeJson(res)
+      showToast(`Invoice ${data.invoice?.invoice_number || 'created'} created successfully!`)
       fetchInvoices()
     } catch (err) {
       showToast(err.message, true)

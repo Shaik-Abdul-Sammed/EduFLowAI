@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { getFullApiUrl } from '../config/apiConfig'
+import { safeJson } from '../utils/wakeUpHandler'
 
 function getAuthToken() {
   try {
@@ -55,7 +56,7 @@ async function getOrRefreshToken() {
           body: JSON.stringify({ refreshToken }),
         })
         if (res.ok) {
-          const data = await res.json()
+          const data = await safeJson(res)
           const newToken = data.accessToken || data.token
           if (newToken) {
             localStorage.setItem('accessToken', newToken)
@@ -177,7 +178,7 @@ export function useStreamingOfficer() {
               body: JSON.stringify({ refreshToken }),
             })
             if (res.ok) {
-              const data = await res.json()
+              const data = await safeJson(res)
               const newToken = data.accessToken || data.token
               if (newToken) {
                 localStorage.setItem('accessToken', newToken)

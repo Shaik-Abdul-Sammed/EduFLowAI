@@ -19,6 +19,11 @@ router.get(
   requireRole('hod', 'admin', 'finance_officer'),
   AcademicEscalationController.getPendingHOD
 )
+router.get(
+  '/pending',
+  requireRole('hod', 'admin', 'finance_officer'),
+  AcademicEscalationController.getPendingHOD
+)
 
 // Approve consequence: hod, admin
 router.post(

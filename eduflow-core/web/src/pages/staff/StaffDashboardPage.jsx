@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
+import { safeJson } from '../../utils/wakeUpHandler'
 
 const ALL_OFFICERS = [
   { key: 'timetable', name: 'Timetable Officer', icon: '🗓️', path: '/officer/timetable', desc: 'Classroom scheduling, faculty constraint optimization' },
@@ -32,9 +33,9 @@ export default function StaffDashboardPage() {
   const [requestReason, setRequestReason] = useState('')
   const [submittingRequest, setSubmittingRequest] = useState(false)
 
-  const fetchStaffData = async () => {
+  const fetchStaffData = async (isMounted = true) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
       const [permRes, actRes] = await Promise.all([
@@ -42,30 +43,36 @@ export default function StaffDashboardPage() {
         fetch(`${getApiBaseURL()}/v1/staff/activity?limit=20`, { headers }).catch(() => null),
       ])
 
+      if (!isMounted) return
+
       if (permRes?.ok) {
-        const data = await permRes.json()
-        setPermissions(data.permissions || [])
+        const data = await safeJson(permRes)
+        if (isMounted) setPermissions(data.permissions || [])
       } else {
         // Fallback default mock permission for demo staff user
-        setPermissions([
-          { officer_key: 'timetable', permission_level: 'DRAFT', max_requests_per_day: 15, current_usage: 2 },
-        ])
+        if (isMounted) {
+          setPermissions([
+            { officer_key: 'timetable', permission_level: 'DRAFT', max_requests_per_day: 15, current_usage: 2 },
+          ])
+        }
       }
 
       if (actRes?.ok) {
-        const actData = await actRes.json()
-        setActivity(actData.activity || [])
+        const actData = await safeJson(actRes)
+        if (isMounted) setActivity(actData.activity || [])
       } else {
-        setActivity([
-          { id: 1, officer_key: 'timetable', action_type: 'GENERATE', prompt_text: 'Draft 2026 odd semester schedule', approval_status: 'PENDING', created_at: new Date().toISOString() },
-        ])
+        if (isMounted) {
+          setActivity([
+            { id: 1, officer_key: 'timetable', action_type: 'GENERATE', prompt_text: 'Draft 2026 odd semester schedule', approval_status: 'PENDING', created_at: new Date().toISOString() },
+          ])
+        }
       }
 
       const storedScenario = localStorage.getItem('eduflow-demo-staff-scenario')
       if (storedScenario) {
         try {
           const parsed = JSON.parse(storedScenario)
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (isMounted && Array.isArray(parsed) && parsed.length > 0) {
             setPermissions(parsed)
           }
         } catch {
@@ -78,7 +85,11 @@ export default function StaffDashboardPage() {
   }
 
   useEffect(() => {
-    fetchStaffData()
+    let isMounted = true
+    fetchStaffData(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleSimulatePriya = () => {

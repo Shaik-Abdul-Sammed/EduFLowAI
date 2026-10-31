@@ -5,7 +5,7 @@ import {
   ArrowLeft, Play, Sparkles, HelpCircle, FileText 
 } from 'lucide-react'
 import { getFullApiUrl } from '../../../config/apiConfig'
-import { wakeUpFetch } from '../../../utils/wakeUpHandler'
+import { wakeUpFetch, safeJson } from '../../../utils/wakeUpHandler'
 
 const DOMAIN_METADATA = {
   accreditation: {
@@ -90,7 +90,7 @@ export default function DomainInsightPage() {
           },
         })
         if (res.ok && isMounted) {
-          const json = await res.json()
+          const json = await safeJson(res)
           setHistory(json.history || [])
         }
       } catch {
@@ -112,7 +112,7 @@ export default function DomainInsightPage() {
         headers: getAuthHeader(),
         body: JSON.stringify({ institutionId: 1 }),
       })
-      const json = await res.json()
+      const json = await safeJson(res)
       if (json.success) {
         setPredictResult(json)
       }
@@ -135,7 +135,7 @@ export default function DomainInsightPage() {
         headers: getAuthHeader(),
         body: JSON.stringify({ institutionId: 1, target }),
       })
-      const json = await res.json()
+      const json = await safeJson(res)
       if (json.success) {
         setImproveResult(json)
       }
@@ -158,7 +158,7 @@ export default function DomainInsightPage() {
         headers: getAuthHeader(),
         body: JSON.stringify({ text: explainText, context: {} }),
       })
-      const json = await res.json()
+      const json = await safeJson(res)
       if (json.success) {
         setExplainResult(json)
       }
@@ -187,7 +187,7 @@ export default function DomainInsightPage() {
         headers: getAuthHeader(),
         body: JSON.stringify({ text: explainText, question: currentQ }),
       })
-      const json = await res.json()
+      const json = await safeJson(res)
       const answer = json?.details?.answer || json?.summary || 'Response generated.'
       setChatHistory((prev) => [...prev, { role: 'ai', text: answer }])
     } catch {

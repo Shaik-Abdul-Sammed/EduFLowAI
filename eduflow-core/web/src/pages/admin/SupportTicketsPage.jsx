@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   LifeBuoy,
   CheckCircle
@@ -11,32 +12,46 @@ export default function SupportTicketsPage() {
   const [responseMsg, setResponseMsg] = useState('')
   const [statusVal, setStatusVal] = useState('resolved')
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (isMounted = true) => {
     try {
-      setLoading(true)
-      const res = await fetch('/api/v1/support/tickets')
+      if (isMounted) setLoading(true)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/support/tickets'), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      })
       const text = await res.text()
       let data = {}
       try { data = JSON.parse(text) } catch { data = {} }
-      if (data.tickets) setTickets(data.tickets)
+      if (isMounted && data.tickets) setTickets(data.tickets)
     } catch (err) {
       console.error(err)
     } finally {
-      setLoading(false)
+      if (isMounted) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchTickets()
+    let isMounted = true
+    fetchTickets(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleUpdate = async (e) => {
     e.preventDefault()
     if (!selectedTicket) return
     try {
-      const res = await fetch(`/api/v1/support/tickets/${selectedTicket.id}`, {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl(`/v1/support/tickets/${selectedTicket.id}`), {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ status: statusVal, response: responseMsg })
       })
       if (res.ok) {

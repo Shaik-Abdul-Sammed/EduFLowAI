@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
+import { safeJson } from '../../utils/wakeUpHandler';
 import {
   ShieldCheck,
   Building,
@@ -95,7 +96,7 @@ export default function InstitutionRegister() {
     setSubdomainStatus('checking');
     try {
       const res = await fetch(getFullApiUrl(`/v1/institutions/check-subdomain?slug=${encodeURIComponent(target)}`));
-      const data = await res.json();
+      const data = await safeJson(res);
       if (data.available) {
         setSubdomainStatus('available');
         setSubdomainSuggestions([]);

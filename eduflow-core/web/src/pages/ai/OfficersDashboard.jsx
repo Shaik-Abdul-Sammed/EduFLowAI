@@ -20,13 +20,25 @@ export default function OfficersDashboard() {
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    const safeParse = async (res) => {
+      try {
+        const text = await res.text();
+        return JSON.parse(text);
+      } catch {
+        return {};
+      }
+    };
+
     const fetchData = async () => {
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || '';
       
       if (!token) {
-        setSessionExpired(true);
-        setTimeout(() => navigate('/login'), 2000);
-        setLoading(false);
+        if (isMounted) {
+          setSessionExpired(true);
+          setLoading(false);
+        }
+        setTimeout(() => { if (isMounted) navigate('/login'); }, 2000);
         return;
       }
 
@@ -43,33 +55,37 @@ export default function OfficersDashboard() {
           fetch(getFullApiUrl('/v1/activity'), { headers }).catch(() => null)
         ]);
 
+        if (!isMounted) return;
+
         if (officersRes.status === 401 || roiRes.status === 401 || naacRes?.status === 401 || activityRes?.status === 401) {
           setSessionExpired(true);
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => { if (isMounted) navigate('/login'); }, 2000);
           return;
         }
 
         if (officersRes.ok) {
-          const oData = await officersRes.json();
-          if (oData.officers) setOfficers(oData.officers);
-          if (oData.recentActivity) setRecentActivity(oData.recentActivity);
+          const oData = await safeParse(officersRes);
+          if (isMounted) {
+            if (oData.officers) setOfficers(oData.officers);
+            if (oData.recentActivity) setRecentActivity(oData.recentActivity);
+          }
         }
 
         if (roiRes.ok) {
-          const rData = await roiRes.json();
-          setRoi(rData);
+          const rData = await safeParse(roiRes);
+          if (isMounted) setRoi(rData);
         }
 
         if (activityRes && activityRes.ok) {
-          const actData = await activityRes.json();
-          if (actData.activity && actData.activity.length > 0) {
+          const actData = await safeParse(activityRes);
+          if (isMounted && actData.activity && actData.activity.length > 0) {
             setRecentActivity(actData.activity);
           }
         }
 
         if (naacRes && naacRes.ok) {
-          const nData = await naacRes.json();
-          if (nData.summary) {
+          const nData = await safeParse(naacRes);
+          if (isMounted && nData.summary) {
             setRoi((prev) => ({
               ...prev,
               accreditationScore: nData.summary.readinessScore || prev?.accreditationScore || 88
@@ -78,16 +94,21 @@ export default function OfficersDashboard() {
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
-        if (err.message && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
+        if (isMounted && err.message && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
           setSessionExpired(true);
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => { if (isMounted) navigate('/login'); }, 2000);
         }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   return (
@@ -262,11 +283,11 @@ export default function OfficersDashboard() {
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '3rem'
         }}>
-          {loading ? <div>Loading Officers...</div> : officers.map(officer => {
+          {loading ? <div>Loading Officers...</div> : officers.map((officer, idx) => {
             const meta = OFFICER_META[officer.id];
             const officerRoi = roi?.byOfficer?.find(o => o.type === officer.id);
             return (
-              <div key={officer.id} className="glass-card officer-card" style={{
+              <div key={officer.id || idx} className="glass-card officer-card" style={{
                 padding: '1.5rem', display: 'flex', flexDirection: 'column', '--hover-color': meta.color
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
@@ -339,7 +360,7 @@ export default function OfficersDashboard() {
             {recentActivity.map((activity, idx) => {
               const meta = OFFICER_META[activity.officer.toLowerCase()] || {};
               return (
-                <React.Fragment key={idx}>
+                <React.Fragment key={activity.id || idx}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '1rem 0' }}>
                     <div style={{
                       width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,

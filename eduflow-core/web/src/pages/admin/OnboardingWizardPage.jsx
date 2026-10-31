@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getFullApiUrl } from '../../config/apiConfig'
 import {
   Building2,
   Users,
@@ -95,11 +96,13 @@ export default function OnboardingWizardPage() {
     setError('')
     setExtracting(true)
     try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {}
       let res
       if (isSample) {
-        res = await fetch('/api/v1/onboarding/ai-extract', {
+        res = await fetch(getFullApiUrl('/v1/onboarding/ai-extract'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeader },
           body: JSON.stringify({ sample: true })
         })
       } else {
@@ -110,18 +113,21 @@ export default function OnboardingWizardPage() {
         }
         const formData = new FormData()
         formData.append('prospectus', pdfFile)
-        res = await fetch('/api/v1/onboarding/ai-extract', {
+        res = await fetch(getFullApiUrl('/v1/onboarding/ai-extract'), {
           method: 'POST',
+          headers: authHeader,
           body: formData
         })
       }
 
+      const text = await res.text()
+      let data = {}
+      try { data = JSON.parse(text) } catch { data = {} }
+
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || 'Failed to extract data from prospectus')
+        throw new Error(data.error || 'Failed to extract data from prospectus')
       }
 
-      const data = await res.json()
       if (data.extracted) {
         setExtractedData(data.extracted)
         setConfidenceScores(data.confidence || {})
@@ -160,9 +166,12 @@ export default function OnboardingWizardPage() {
         setDepartments(extractedData.departments)
       }
 
-      await fetch('/api/v1/onboarding/ai-apply', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {}
+
+      await fetch(getFullApiUrl('/v1/onboarding/ai-apply'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ extractedData })
       }).catch(() => {})
 
@@ -205,45 +214,49 @@ export default function OnboardingWizardPage() {
     setLoading(true)
 
     try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {}
+      const jsonHeaders = { 'Content-Type': 'application/json', ...authHeader }
+
       if (step === 1) {
-        const res = await fetch('/api/v1/onboarding/step1-profile', {
+        const res = await fetch(getFullApiUrl('/v1/onboarding/step1-profile'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify(profile)
         })
         if (!res.ok) throw new Error('Failed to save profile')
       } else if (step === 2) {
-        const res = await fetch('/api/v1/onboarding/step2-departments', {
+        const res = await fetch(getFullApiUrl('/v1/onboarding/step2-departments'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ departments })
         })
         if (!res.ok) throw new Error('Failed to save departments')
       } else if (step === 3) {
-        const res = await fetch('/api/v1/onboarding/step3-faculty', {
+        const res = await fetch(getFullApiUrl('/v1/onboarding/step3-faculty'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ faculty: [{ employee_id: 'EMP101', full_name: 'Dr. Ramesh Kumar', email: 'ramesh@ssit.edu.in', department_code: 'CSE' }] })
         })
         if (!res.ok) throw new Error('Failed to stage faculty')
       } else if (step === 4) {
-        const res = await fetch('/api/v1/onboarding/step4-students', {
+        const res = await fetch(getFullApiUrl('/v1/onboarding/step4-students'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ students: [{ roll_number: 'STU202601', full_name: 'Aarav Patel', email: 'aarav@student.edu', department_code: 'CSE' }] })
         })
         if (!res.ok) throw new Error('Failed to stage students')
       } else if (step === 5) {
-        const res = await fetch('/api/v1/onboarding/step5-academic', {
+        const res = await fetch(getFullApiUrl('/v1/onboarding/step5-academic'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify(academic)
         })
         if (!res.ok) throw new Error('Failed to save academic parameters')
       } else if (step === 6) {
-        const res = await fetch('/api/v1/onboarding/step6-financial', {
+        const res = await fetch(getFullApiUrl('/v1/onboarding/step6-financial'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify(financial)
         })
         if (!res.ok) throw new Error('Failed to save financial structure')
@@ -261,9 +274,13 @@ export default function OnboardingWizardPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/v1/onboarding/finish', {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/onboarding/finish'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ institutionId: 1, financial })
       })
       if (!res.ok) throw new Error('Failed to finalize onboarding')
