@@ -25,6 +25,7 @@ import { createInvoiceRouter } from './routes/invoiceRoutes.js'
 import { createDemoRouter } from './routes/demoRoutes.js'
 import { createNaacInsightsRouter } from './routes/naacInsightsRoutes.js'
 import { createInsightsRouter } from './routes/insightsRoutes.js'
+import { InsightsController } from './controllers/InsightsController.js'
 import { createNirfRouter } from './routes/nirfRoutes.js'
 import staffRouter from './routes/staffRoutes.js'
 import approvalRouter from './routes/approvalRoutes.js'
@@ -42,6 +43,7 @@ import academicEscalationRouter from './routes/academicEscalationRoutes.js'
 import { createSSORouter } from './routes/ssoRoutes.js'
 import { createComplianceRouter } from './routes/complianceRoutes.js'
 import { createLiveDataRouter } from './routes/liveDataRoutes.js'
+import { authMiddleware } from './middleware/auth.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
 import { rateLimitPerUser } from './middleware/rateLimitPerUser.js'
@@ -163,6 +165,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/compliance', createComplianceRouter())
   app.use('/api/v1/admin/compliance', createComplianceRouter())
   app.use('/api/v1/live-data', createLiveDataRouter())
+  app.get('/api/v1/activity', authMiddleware, InsightsController.activity)
 
   // Manual Backup Verification trigger
   app.get('/api/v1/admin/backup/verify', async (_req, res) => {

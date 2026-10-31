@@ -15,7 +15,9 @@ export default function SupportTicketsPage() {
     try {
       setLoading(true)
       const res = await fetch('/api/v1/support/tickets')
-      const data = await res.json()
+      const text = await res.text()
+      let data = {}
+      try { data = JSON.parse(text) } catch { data = {} }
       if (data.tickets) setTickets(data.tickets)
     } catch (err) {
       console.error(err)

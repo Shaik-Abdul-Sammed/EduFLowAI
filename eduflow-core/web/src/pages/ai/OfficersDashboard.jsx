@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { getApiBaseURL } from '../../config/apiConfig';
+import { getFullApiUrl } from '../../config/apiConfig';
 
 const OFFICER_META = {
   'accreditation': { icon: '🏛️', color: '#8B5CF6', name: 'AI Accreditation Officer', desc: 'NAAC, NBA, AICTE & UGC report generation, gap analysis, readiness scoring', statLabel: 'Reports Generated' },
@@ -12,40 +12,83 @@ const OFFICER_META = {
 };
 
 export default function OfficersDashboard() {
+  const navigate = useNavigate();
   const [roi, setRoi] = useState(null);
   const [officers, setOfficers] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem('accessToken');
-      const headers = { 'Authorization': `Bearer ${token}` };
-      const baseUrl = getApiBaseURL() + '/v1/officers';
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || '';
       
+      if (!token) {
+        setSessionExpired(true);
+        setTimeout(() => navigate('/login'), 2000);
+        setLoading(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
       try {
-        const [officersRes, roiRes] = await Promise.all([
-          fetch(baseUrl, { headers }),
-          fetch(`${baseUrl}/roi/summary`, { headers })
+        const [officersRes, roiRes, naacRes, activityRes] = await Promise.all([
+          fetch(getFullApiUrl('/v1/officers'), { headers }).catch(() => ({ status: 500, ok: false })),
+          fetch(getFullApiUrl('/v1/officers/roi/summary'), { headers }).catch(() => ({ status: 500, ok: false })),
+          fetch(getFullApiUrl('/v1/naac/dashboard-insights'), { headers }).catch(() => null),
+          fetch(getFullApiUrl('/v1/activity'), { headers }).catch(() => null)
         ]);
 
-        if (officersRes.ok && roiRes.ok) {
+        if (officersRes.status === 401 || roiRes.status === 401 || naacRes?.status === 401 || activityRes?.status === 401) {
+          setSessionExpired(true);
+          setTimeout(() => navigate('/login'), 2000);
+          return;
+        }
+
+        if (officersRes.ok) {
           const oData = await officersRes.json();
+          if (oData.officers) setOfficers(oData.officers);
+          if (oData.recentActivity) setRecentActivity(oData.recentActivity);
+        }
+
+        if (roiRes.ok) {
           const rData = await roiRes.json();
-          
-          setOfficers(oData.officers);
-          setRecentActivity(oData.recentActivity);
           setRoi(rData);
+        }
+
+        if (activityRes && activityRes.ok) {
+          const actData = await activityRes.json();
+          if (actData.activity && actData.activity.length > 0) {
+            setRecentActivity(actData.activity);
+          }
+        }
+
+        if (naacRes && naacRes.ok) {
+          const nData = await naacRes.json();
+          if (nData.summary) {
+            setRoi((prev) => ({
+              ...prev,
+              accreditationScore: nData.summary.readinessScore || prev?.accreditationScore || 88
+            }));
+          }
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
+        if (err.message && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
+          setSessionExpired(true);
+          setTimeout(() => navigate('/login'), 2000);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   return (
     <div style={{
@@ -133,6 +176,32 @@ export default function OfficersDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Session Expired Alert Banner */}
+      {sessionExpired && (
+        <div
+          role="alert"
+          style={{
+            background: 'rgba(239, 68, 68, 0.2)',
+            border: '1.5px solid #ef4444',
+            color: '#fca5a5',
+            padding: '1rem 1.5rem',
+            margin: '1.5rem auto 0',
+            maxWidth: '1280px',
+            width: 'calc(100% - 4rem)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            fontWeight: 600,
+            fontSize: '0.95rem',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+          }}
+        >
+          <ShieldAlert size={20} color="#ef4444" />
+          <span>Session expired. Please log in again. Redirecting to login...</span>
+        </div>
+      )}
 
       <div style={{ padding: '2rem', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
         

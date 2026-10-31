@@ -40,17 +40,19 @@ export class SupportController {
            RETURNING *`,
           [institutionId, userId, subject, description, category, priority]
         )
-        if (result.rows.length > 0) {
+        if (result && result.rows && result.rows.length > 0) {
           return res.status(201).json({ success: true, ticket: result.rows[0] })
         }
-      } catch (err) {
-        // memory fallback
+      } catch (dbErr) {
+        // Memory fallback on table omission or db failure
+        memoryTickets.unshift(ticket)
+        return res.status(201).json({ success: true, ticket })
       }
 
       memoryTickets.unshift(ticket)
       return res.status(201).json({ success: true, ticket })
     } catch (err) {
-      return res.status(500).json({ error: err.message })
+      return res.status(500).json({ error: err.message || 'Failed to create support ticket' })
     }
   }
 

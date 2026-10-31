@@ -21,6 +21,7 @@ export function authMiddleware(req, res, next) {
     req.user = decoded
     next()
   } catch (error) {
+    console.log('[AuthMiddleware] JWT Verification Error:', error.name, error.message)
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' })
     }

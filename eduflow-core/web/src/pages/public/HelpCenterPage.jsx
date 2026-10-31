@@ -74,7 +74,13 @@ export default function HelpCenterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ticket)
       })
-      const data = await res.json()
+      const text = await res.text()
+      let data = {}
+      try {
+        data = JSON.parse(text)
+      } catch (e) {
+        data = { error: 'Server returned an invalid response.' }
+      }
       if (!res.ok) throw new Error(data.error || 'Failed to submit ticket')
 
       setTicketSuccess(`Support ticket #${data.ticket?.id || 'SUBMITTED'} created successfully! Our team will respond shortly.`)

@@ -271,7 +271,7 @@ export class SSOService {
     }
 
     // Generate JWT access token for EduFlow
-    const jwtSecret = process.env.JWT_SECRET || 'eduflow-secret-test-key'
+    const jwtSecret = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
     const token = jwt.sign(
       {
         id: user.id,
