@@ -18,19 +18,25 @@ function safeParseJson(text, fallback = null) {
   if (!text || typeof text !== 'string') return fallback
   try {
     return JSON.parse(text)
-  } catch {}
+  } catch (error) {
+    void error
+  }
   const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
   if (match) {
     try {
       return JSON.parse(match[1])
-    } catch {}
+    } catch (error) {
+      void error
+    }
   }
   const firstBrace = text.indexOf('{')
   const lastBrace = text.lastIndexOf('}')
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     try {
       return JSON.parse(text.slice(firstBrace, lastBrace + 1))
-    } catch {}
+    } catch (error) {
+      void error
+    }
   }
   return fallback
 }
@@ -146,7 +152,8 @@ export class BaseInsightService {
         const aiProvider = createAIProvider()
         const rawAi = await aiProvider.generateText(prompt, {
           systemPrompt: `You are the ${domain.displayName}. Answer professionally and specifically based on institutional best practices.`,
-          temperature: 0.3,
+          temperature: 0.1,
+          maxTokens: 2000,
         })
         const parsed = safeParseJson(rawAi, null)
         if (parsed?.answer) {

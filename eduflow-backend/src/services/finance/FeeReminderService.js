@@ -330,7 +330,9 @@ export class FeeReminderService {
       if (res.rows?.[0]) {
         return res.rows[0]
       }
-    } catch {}
+    } catch (error) {
+      logger.debug(`Database fee reminder settings fallback: ${error?.message}`)
+    }
     return reminderSettingsStore
   }
 
@@ -359,7 +361,9 @@ export class FeeReminderService {
           reminderSettingsStore.enabled
         ]
       )
-    } catch {}
+    } catch (error) {
+      logger.debug(`Database fee reminder settings save fallback: ${error?.message}`)
+    }
 
     return reminderSettingsStore
   }
@@ -373,7 +377,9 @@ export class FeeReminderService {
       if (res.rows && res.rows.length > 0) {
         return res.rows
       }
-    } catch {}
+    } catch (error) {
+      logger.debug(`Database fee reminder history fallback: ${error?.message}`)
+    }
 
     return [...reminderLogStore].reverse().slice(0, limit)
   }

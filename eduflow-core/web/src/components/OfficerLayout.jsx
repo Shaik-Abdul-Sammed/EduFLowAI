@@ -559,9 +559,9 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               {latestAssistantContent && (
                 <>
-                  <button type="button" onClick={() => openShare()} title="Share report" style={iconBtnStyle}><Share2 size={15} /></button>
-                  <button type="button" onClick={() => openEmail()} title="Email report" style={iconBtnStyle}><Mail size={15} /></button>
-                  <button type="button" onClick={handlePrint} title="Print report" style={iconBtnStyle}><Printer size={15} /></button>
+                  <button type="button" onClick={() => openShare()} title="Share report" aria-label="Share report" style={iconBtnStyle}><Share2 size={15} /></button>
+                  <button type="button" onClick={() => openEmail()} title="Email report" aria-label="Email report" style={iconBtnStyle}><Mail size={15} /></button>
+                  <button type="button" onClick={handlePrint} title="Print report" aria-label="Print report" style={iconBtnStyle}><Printer size={15} /></button>
                 </>
               )}
             </div>
@@ -810,15 +810,16 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
           ) : (
             <div style={{ display: 'flex', alignItems: 'flex-end', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '0.4rem 0.5rem 0.4rem 0.75rem', gap: '0.4rem' }}>
               {/* File upload button */}
-              <button type="button" title="Attach file (PDF, Excel, CSV, TXT)" onClick={() => fileInputRef.current?.click()}
+              <button type="button" title="Attach file (PDF, Excel, CSV, TXT)" aria-label="Attach file (PDF, Excel, CSV, TXT)" onClick={() => fileInputRef.current?.click()}
                 style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.4rem', borderRadius: '6px', flexShrink: 0, alignSelf: 'flex-end' }}>
                 <Paperclip size={17} />
               </button>
-              <input ref={fileInputRef} type="file" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt" style={{ display: 'none' }} onChange={handleFileChange} />
+              <input ref={fileInputRef} type="file" aria-label="Attach file" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt" style={{ display: 'none' }} onChange={handleFileChange} />
 
               <textarea
                 ref={textareaRef}
                 value={inputValue}
+                aria-label="Officer prompt input"
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter your prompt… (Ctrl+Enter to send)"
@@ -833,12 +834,12 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                   </span>
                 )}
                 {(status === 'streaming' || status === 'connecting') && (
-                  <button type="button" onClick={stop} title="Stop streaming (Esc)"
+                  <button type="button" onClick={stop} title="Stop streaming (Esc)" aria-label="Stop streaming"
                     style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', width: '38px', height: '38px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                     <X size={16} />
                   </button>
                 )}
-                <button type="button" onClick={() => handleSend()}
+                <button type="button" onClick={() => handleSend()} aria-label="Send prompt"
                   disabled={status === 'streaming' || status === 'connecting'}
                   style={{ background: status === 'streaming' || status === 'connecting' ? 'rgba(255,255,255,0.08)' : accentColor, color: status === 'streaming' || status === 'connecting' ? 'rgba(255,255,255,0.3)' : 'white', border: 'none', width: '38px', height: '38px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: status === 'streaming' || status === 'connecting' ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
                   <Send size={16} />

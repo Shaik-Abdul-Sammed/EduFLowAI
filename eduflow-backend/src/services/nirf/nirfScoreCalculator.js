@@ -50,19 +50,27 @@ export class NirfScoreCalculator {
 
       try {
         courses = (await DemoDataRepository.getCourses()) || []
-      } catch {}
+      } catch (e) {
+        logger.debug(`Could not load courses for NIRF: ${e.message}`)
+      }
 
       try {
         placements = (await DemoDataRepository.getPlacements()) || []
-      } catch {}
+      } catch (e) {
+        logger.debug(`Could not load placements for NIRF: ${e.message}`)
+      }
 
       try {
         research = (await DemoDataRepository.getResearch()) || []
-      } catch {}
+      } catch (e) {
+        logger.debug(`Could not load research for NIRF: ${e.message}`)
+      }
 
       try {
         infrastructure = (await DemoDataRepository.getInfrastructure()) || []
-      } catch {}
+      } catch (e) {
+        logger.debug(`Could not load infrastructure for NIRF: ${e.message}`)
+      }
 
       // Fallback defaults if tables are sparse
       const studentCount = students.length || 1000

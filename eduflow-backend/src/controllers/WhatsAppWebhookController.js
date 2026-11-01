@@ -252,7 +252,9 @@ export class WhatsAppWebhookController {
         `UPDATE whatsapp_staged_attendance SET status = 'CONFIRMED' WHERE id = $1`,
         [id]
       )
-    } catch {}
+    } catch (error) {
+      console.error('Database update error for confirmStaged:', error)
+    }
 
     await processConfirmedStagedAttendance().catch(() => {})
 
@@ -272,7 +274,9 @@ export class WhatsAppWebhookController {
         `UPDATE whatsapp_staged_attendance SET status = 'REJECTED' WHERE id = $1`,
         [id]
       )
-    } catch {}
+    } catch (error) {
+      console.error('Database update error for rejectStaged:', error)
+    }
 
     return res.status(200).json({ success: true, message: 'Staged attendance rejected' })
   }

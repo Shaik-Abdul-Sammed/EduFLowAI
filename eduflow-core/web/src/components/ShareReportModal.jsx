@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Share2, Copy, Check, MessageCircle, X } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
@@ -19,8 +19,29 @@ export default function ShareReportModal({
     setShareUrl('');
     setCopied(false);
     setError('');
-    onClose();
+    onClose?.();
   };
+
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const focusable = modalRef.current.querySelector('button, input, [tabindex]:not([tabindex="-1"])');
+      focusable?.focus();
+    }
+  }, [isOpen, shareUrl]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -94,6 +115,7 @@ export default function ShareReportModal({
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="share-report-modal-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -108,6 +130,7 @@ export default function ShareReportModal({
       onClick={handleClose}
     >
       <div
+        ref={modalRef}
         style={{
           backgroundColor: '#111827',
           border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -126,7 +149,7 @@ export default function ShareReportModal({
               <Share2 size={20} color="#60A5FA" />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>Share Institutional Report</h3>
+              <h3 id="share-report-modal-title" style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>Share Institutional Report</h3>
               <p style={{ fontSize: '0.8rem', color: '#9CA3AF', margin: 0 }}>Secure, read-only link for administrators and auditors</p>
             </div>
           </div>

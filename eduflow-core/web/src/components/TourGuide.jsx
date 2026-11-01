@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Sparkles,
   Shield,
@@ -131,6 +131,27 @@ export default function TourGuide() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, isOpen])
 
+  const modalRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleComplete()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const focusable = modalRef.current.querySelector('button, [href], input, [tabindex]:not([tabindex="-1"])')
+      focusable?.focus()
+    }
+  }, [isOpen, step])
+
   useEffect(() => {
     return () => {
       if (highlightedEl) {
@@ -216,6 +237,10 @@ export default function TourGuide() {
       />
 
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tour-heading"
         className="p-0 shadow-lg border rounded-3 bg-white"
         style={tooltipStyle}
       >
@@ -244,7 +269,7 @@ export default function TourGuide() {
             >
               <Icon size={24} />
             </div>
-            <h5 className="h6 fw-bold mb-0 text-dark">{current.title}</h5>
+            <h5 id="tour-heading" className="h6 fw-bold mb-0 text-dark">{current.title}</h5>
           </div>
           <p className="small text-muted mb-4">{current.desc}</p>
 

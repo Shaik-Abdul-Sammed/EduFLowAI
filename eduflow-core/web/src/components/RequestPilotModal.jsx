@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, MessageSquare, Mail, Copy, CheckCircle, Sparkles } from 'lucide-react'
 import { useToast } from '../context/ToastContext'
 import { getFullApiUrl } from '../config/apiConfig'
@@ -19,6 +19,22 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
   const [errors, setErrors] = useState({})
   const [copied, setCopied] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const instInputRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  useEffect(() => {
+    if (isOpen) {
+      instInputRef.current?.focus()
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (isOpen) {
@@ -126,6 +142,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="request-pilot-modal-heading"
       style={{
         position: 'fixed',
         inset: 0,
@@ -166,7 +183,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
               </span>
               <span className="small text-muted">{servicePrice} package</span>
             </div>
-            <h2 className="h4 fw-bold mb-0" style={{ color: 'var(--app-text, #0f172a)' }}>
+            <h2 id="request-pilot-modal-heading" className="h4 fw-bold mb-0" style={{ color: 'var(--app-text, #0f172a)' }}>
               Request a Free Pilot
             </h2>
           </div>
@@ -213,6 +230,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                   Institution Name <span className="text-danger">*</span>
                 </label>
                 <input
+                  ref={instInputRef}
                   type="text"
                   className={`form-control ${errors.institutionName ? 'is-invalid' : ''}`}
                   placeholder="e.g. Sri Siddhartha Institute of Tech"

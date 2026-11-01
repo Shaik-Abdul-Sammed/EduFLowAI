@@ -11,24 +11,28 @@ export class OpenAIProvider extends BaseProvider {
     this.model = process.env.AI_MODEL || 'gpt-4o'
   }
 
-  async chat(messages, systemPrompt = '') {
+  async chat(messages, systemPrompt = '', options = {}) {
     const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
-    const maxTokens = Number(process.env.AI_MAX_TOKENS) || 2000
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
     const res = await this.client.chat.completions.create({
       model: this.model,
       messages: allMessages,
       max_tokens: maxTokens,
+      temperature,
     })
     return res.choices[0].message.content
   }
 
-  async *chatStream(messages, systemPrompt = '') {
+  async *chatStream(messages, systemPrompt = '', options = {}) {
     const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
-    const maxTokens = Number(process.env.AI_MAX_TOKENS) || 2000
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
     const stream = await this.client.chat.completions.create({
       model: this.model,
       messages: allMessages,
       max_tokens: maxTokens,
+      temperature,
       stream: true,
     })
     for await (const chunk of stream) {

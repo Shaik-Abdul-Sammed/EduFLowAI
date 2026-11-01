@@ -9,10 +9,12 @@ export class GeminiProvider extends BaseProvider {
     this.modelName = process.env.AI_MODEL || 'gemini-3.5-flash'
   }
 
-  async chat(messages, systemPrompt = '') {
+  async chat(messages, systemPrompt = '', options = {}) {
     const apiKey = process.env.AI_API_KEY
     const model = this.modelName
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
 
     const contents = messages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
@@ -21,6 +23,10 @@ export class GeminiProvider extends BaseProvider {
 
     const payload = {
       contents,
+      generationConfig: {
+        temperature,
+        maxOutputTokens: maxTokens,
+      },
       ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {})
     }
 
@@ -51,10 +57,12 @@ export class GeminiProvider extends BaseProvider {
     return result.response.text()
   }
 
-  async *chatStream(messages, systemPrompt = '') {
+  async *chatStream(messages, systemPrompt = '', options = {}) {
     const apiKey = process.env.AI_API_KEY
     const model = this.modelName
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
 
     const contents = messages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
@@ -63,6 +71,10 @@ export class GeminiProvider extends BaseProvider {
 
     const payload = {
       contents,
+      generationConfig: {
+        temperature,
+        maxOutputTokens: maxTokens,
+      },
       ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {})
     }
 
@@ -95,14 +107,16 @@ export class GeminiProvider extends BaseProvider {
                 const json = JSON.parse(trimmed.slice(5).trim())
                 const text = json.candidates?.[0]?.content?.parts?.[0]?.text
                 if (text) yield text
-              } catch {}
+              } catch (error) {
+                console.error('Gemini SSE line parse error:', error)
+              }
             }
           }
         }
         return
       }
-    } catch {
-      // Fall through to SDK fallback
+    } catch (error) {
+      console.error('Gemini direct streaming failed, falling back to SDK:', error)
     }
 
     const genModel = this.client.getGenerativeModel({ model: this.modelName, systemInstruction: systemPrompt })

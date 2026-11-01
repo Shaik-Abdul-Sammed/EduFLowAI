@@ -431,7 +431,7 @@ export class AIService {
       try {
         const promptFn = OFFICER_PROMPTS[officerType]
         const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
-        const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage)
+        const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 2000 })
         if (response && !response.includes('mock response from the fallback chain')) {
           return `${liveHeader}${response}${liveFooter}`
         }
@@ -477,7 +477,7 @@ export class AIService {
         let firstChunk = true
         let isMock = false
 
-        for await (const chunk of aiProvider.chatStream([{ role: 'user', content: prompt }], systemMessage)) {
+        for await (const chunk of aiProvider.chatStream([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 2000 })) {
           if (firstChunk && chunk.includes('mock response from the fallback chain')) {
             isMock = true
             break

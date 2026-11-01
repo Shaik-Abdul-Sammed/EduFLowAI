@@ -63,6 +63,15 @@ export default function NavBar({ routes, onMenuClick }) {
     return () => document.removeEventListener('mousedown', onDoc)
   }, [])
 
+  useEffect(() => {
+    if (!langOpen) return
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setLangOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [langOpen])
+
   const languages = [
     { code: 'en', name: 'English', flag: '🇬🇧' },
     { code: 'hi', name: 'हिंदी',   flag: '🇮🇳' },
@@ -268,6 +277,7 @@ export default function NavBar({ routes, onMenuClick }) {
 
             <button
               onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
+              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
               style={{
                 background: isDark ? 'rgba(148,163,184,0.1)' : 'rgba(37,99,235,0.08)',
                 color: isDark ? '#94a3b8' : '#2563EB',
@@ -281,6 +291,9 @@ export default function NavBar({ routes, onMenuClick }) {
             <div style={{ position: 'relative' }} ref={langRef} className="d-none d-sm-block">
               <button
                 onClick={() => setLangOpen(o => !o)}
+                aria-label="Select language"
+                aria-expanded={langOpen}
+                aria-haspopup="true"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.35rem',
                   background: 'rgba(37,99,235,0.08)', color: '#2563EB',
@@ -300,6 +313,7 @@ export default function NavBar({ routes, onMenuClick }) {
                   {languages.map(lang => (
                     <button
                       key={lang.code}
+                      aria-label={`Select ${lang.name}`}
                       onClick={() => {
                         setLanguage(lang.code);
                         setLangOpen(false);
@@ -323,6 +337,7 @@ export default function NavBar({ routes, onMenuClick }) {
             {user ? (
               <button
                 onClick={logout}
+                aria-label="Logout"
                 style={{
                   background: 'linear-gradient(135deg,#DC2626,#EF4444)', color: 'white',
                   border: 'none', borderRadius: '0.625rem', padding: '0.45rem 0.85rem',

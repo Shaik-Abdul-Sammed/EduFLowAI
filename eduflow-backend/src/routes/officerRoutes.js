@@ -17,7 +17,11 @@ const VALID_OFFICERS = ['accreditation', 'timetable', 'admissions', 'finance', '
 
 const uploadDir = path.join(os.tmpdir(), 'eduflow-uploads')
 if (!fs.existsSync(uploadDir)) {
-  try { fs.mkdirSync(uploadDir, { recursive: true }) } catch {}
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true })
+  } catch (error) {
+    console.error('Failed to create uploadDir:', error)
+  }
 }
 const upload = multer({
   dest: uploadDir,

@@ -32,7 +32,9 @@ export function createAdminRouter() {
           if (decoded && (decoded.role === 'admin' || decoded.role === 'dean')) {
             isAdmin = true
           }
-        } catch {}
+        } catch (error) {
+          logger.debug('Token verification failed in reset-demo-data:', error?.message)
+        }
       }
       if (!isAdmin) {
         return res.status(401).json({ error: 'Unauthorized: Invalid secret or missing admin credentials' })
@@ -77,33 +79,45 @@ export function createAdminRouter() {
       try {
         const sRes = await pool.query('SELECT count(*) FROM demo_students')
         if (sRes.rows[0]?.count) totalStudents = parseInt(sRes.rows[0].count, 10)
-      } catch {}
+      } catch (error) {
+        logger.debug('Dashboard student count fallback:', error?.message)
+      }
 
       try {
         const fRes = await pool.query('SELECT count(*) FROM demo_faculty')
         if (fRes.rows[0]?.count) totalFaculty = parseInt(fRes.rows[0].count, 10)
-      } catch {}
+      } catch (error) {
+        logger.debug('Dashboard faculty count fallback:', error?.message)
+      }
 
       try {
         const cRes = await pool.query('SELECT count(*) FROM demo_courses')
         if (cRes.rows[0]?.count) totalCourses = parseInt(cRes.rows[0].count, 10)
-      } catch {}
+      } catch (error) {
+        logger.debug('Dashboard course count fallback:', error?.message)
+      }
 
       try {
         const aRes = await pool.query("SELECT count(*) FROM staff_activity_log WHERE approval_status = 'PENDING'")
         if (aRes.rows[0]?.count) pendingApprovals = parseInt(aRes.rows[0].count, 10)
-      } catch {}
+      } catch (error) {
+        logger.debug('Dashboard pending approvals fallback:', error?.message)
+      }
 
       try {
         const lRes = await pool.query("SELECT count(*) FROM leads WHERE status = 'NEW'")
         if (lRes.rows[0]?.count) unreadLeads = parseInt(lRes.rows[0].count, 10)
-      } catch {}
+      } catch (error) {
+        logger.debug('Dashboard leads fallback:', error?.message)
+      }
 
       try {
         const invRes = await pool.query("SELECT count(*), coalesce(sum(total_amount), 0) as total FROM invoices WHERE status = 'UNPAID'")
         if (invRes.rows[0]?.count) unpaidInvoices = parseInt(invRes.rows[0].count, 10)
         if (invRes.rows[0]?.total) unpaidInvoicesAmount = parseFloat(invRes.rows[0].total)
-      } catch {}
+      } catch (error) {
+        logger.debug('Dashboard unpaid invoices fallback:', error?.message)
+      }
 
       res.json({
         totalStudents,

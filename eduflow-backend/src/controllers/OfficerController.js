@@ -9,6 +9,9 @@ import { CacheService } from '../services/CacheService.js'
 import { calculateROI } from '../ai/officers/officerPrompts.js'
 import { logger } from '../utils/logger.js'
 import DemoDataRepository from '../models/DemoDataRepository.js'
+import { DataNormalizer } from '../services/ai/DataNormalizer.js'
+import { IntentClassifier } from '../services/ai/IntentClassifier.js'
+import { AdvancedRagService } from '../services/ai/AdvancedRagService.js'
 
 export async function enrichPromptWithDatabaseData(prompt = '', institutionId = 1) {
   let enriched = prompt
@@ -27,15 +30,18 @@ export async function enrichPromptWithDatabaseData(prompt = '', institutionId = 
       const courseRows = await pool.query('SELECT program_name, total_seats, filled_seats FROM demo_courses LIMIT 10').catch(() => null)
       const breakdown = courseRows?.rows?.map(c => `- ${c.program_name}: ${c.filled_seats || 0}/${c.total_seats || 0} seats`).join('\n') || ''
 
+      const normalizedIntake = DataNormalizer.normalizeIntake({ totalSanctioned, totalFilled, totalStudents })
+
       enriched += `\n\n[VERIFIED DATABASE DATA - SANCTIONED INTAKE]:
 Total Sanctioned Intake: ${totalSanctioned} seats across all approved programs.
 Total Enrolled Students: ${totalFilled} (Database Student Count: ${totalStudents}).
 Program Breakdown:
-${breakdown}`
+${breakdown}` + DataNormalizer.formatStrictJsonPromptBlock('sanctioned_intake_metrics', normalizedIntake)
     } catch (err) {
       logger.warn('Failed to query intake from database:', err.message)
+      const fallbackIntake = DataNormalizer.normalizeIntake({ totalSanctioned: 480, totalFilled: 440, totalStudents: 1250 })
       enriched += `\n\n[VERIFIED DATABASE DATA - SANCTIONED INTAKE]:
-Total Sanctioned Intake: 480 seats. Total Enrolled Students: 440 (Database Student Count: 1250).`
+Total Sanctioned Intake: 480 seats. Total Enrolled Students: 440 (Database Student Count: 1250).` + DataNormalizer.formatStrictJsonPromptBlock('sanctioned_intake_metrics', fallbackIntake)
     }
   }
 
@@ -52,14 +58,16 @@ Total Sanctioned Intake: 480 seats. Total Enrolled Students: 440 (Database Stude
 
       if (atRiskRes && atRiskRes.rows && atRiskRes.rows.length > 0) {
         const studentList = atRiskRes.rows.map((s, i) => `${i + 1}. ${s.full_name} (${s.roll_number}) - Dept: ${s.department}, Sem: ${s.current_semester}, Att: ${s.attendance_percentage}%, CGPA: ${s.cgpa}`).join('\n')
-        enriched += `\n\n[DATABASE QUERY RESULTS - TOP AT-RISK STUDENTS]:\n${studentList}`
+        const normalizedAtRisk = DataNormalizer.normalizeAtRiskStudents(atRiskRes.rows)
+        enriched += `\n\n[DATABASE QUERY RESULTS - TOP AT-RISK STUDENTS]:\n${studentList}` + DataNormalizer.formatStrictJsonPromptBlock('at_risk_students_verified', normalizedAtRisk)
       } else {
+        const normalizedAtRisk = DataNormalizer.normalizeAtRiskStudents()
         enriched += `\n\n[DATABASE QUERY RESULTS - TOP AT-RISK STUDENTS]:
 1. Rahul Sharma (CS-042) - Dept: CSE, Sem: 4, Att: 48%, CGPA: 5.2
 2. Pooja Verma (EC-019) - Dept: ECE, Sem: 4, Att: 54%, CGPA: 5.8
 3. Karthik Nair (ME-031) - Dept: ME, Sem: 4, Att: 58%, CGPA: 5.5
 4. Sneha Patel (CS-088) - Dept: CSE, Sem: 4, Att: 61%, CGPA: 6.0
-5. Amit Kumar (CV-012) - Dept: Civil, Sem: 4, Att: 63%, CGPA: 5.9`
+5. Amit Kumar (CV-012) - Dept: Civil, Sem: 4, Att: 63%, CGPA: 5.9` + DataNormalizer.formatStrictJsonPromptBlock('at_risk_students_verified', normalizedAtRisk)
       }
     } catch (err) {
       logger.warn('Failed to query at-risk students:', err.message)
@@ -81,12 +89,13 @@ Constraint: Maximum 18 contact hours/week per faculty; Zero overlapping section 
   // 4. Admissions: yield & funnel data
   if (lowerPrompt.includes('yield') || lowerPrompt.includes('admission') || lowerPrompt.includes('funnel') || lowerPrompt.includes('b.tech')) {
     try {
+      const normalizedAdmissions = DataNormalizer.normalizeAdmissionsFunnel()
       enriched += `\n\n[DATABASE ADMISSIONS FUNNEL DATA]:
 Total Inquiries: 450 candidates.
 Verified Applications: 380 candidates.
 Seats Allotted: 290 candidates across B.Tech and MCA programs.
 Fee Deposited (Confirmed): 275 candidates (Conversion Yield: 72.4%).
-Waitlisted Pool: 65 candidates.`
+Waitlisted Pool: 65 candidates.` + DataNormalizer.formatStrictJsonPromptBlock('admissions_funnel_verified', normalizedAdmissions)
     } catch (err) {
       logger.warn('Failed to query admissions funnel data:', err.message)
     }
@@ -95,6 +104,7 @@ Waitlisted Pool: 65 candidates.`
   // 5. Finance: fee defaulters & aging data
   if (lowerPrompt.includes('defaulter') || lowerPrompt.includes('arrear') || lowerPrompt.includes('aging') || lowerPrompt.includes('over 60 days') || lowerPrompt.includes('reconcil')) {
     try {
+      const normalizedFinance = DataNormalizer.normalizeFinancialMetrics()
       enriched += `\n\n[DATABASE INVOICE AGING & DEFAULTER DATA]:
 Total Outstanding Overdue (>60 Days): ₹1,80,000 across 14 student ledger accounts.
 Aging Buckets:
@@ -106,7 +116,7 @@ Top Defaulters (>60 days):
 2. Priya M. (EC-034): ₹20,000 (78 days)
 3. Suresh K. (ME-011): ₹20,000 (72 days)
 4. Deepa N. (CS-092): ₹18,000 (70 days)
-5. Vikram S. (EE-043): ₹15,000 (68 days)`
+5. Vikram S. (EE-043): ₹15,000 (68 days)` + DataNormalizer.formatStrictJsonPromptBlock('financial_aging_verified', normalizedFinance)
     } catch (err) {
       logger.warn('Failed to query invoice aging data:', err.message)
     }
@@ -134,6 +144,8 @@ export async function buildInstitutionalDataContext(institutionId = 1) {
     const hostels = infra.filter(i => i.type === 'Hostel');
     const hostelCap = hostels.reduce((sum, h) => sum + (h.capacity || 0), 0) || 800;
 
+    const normalizedAcademic = DataNormalizer.normalizeAcademicMetrics(stats || {})
+
     return `INSTITUTIONAL DATA
 ==================
 Institution: Sri Sudha Institute of Technology
@@ -154,10 +166,12 @@ Labs: ${labs}
 Library: ${libraryArea}
 Hostel: ${hostelCap} capacity
 
+${DataNormalizer.formatStrictJsonPromptBlock('institutional_academic_metrics', normalizedAcademic)}
 Use this data to generate the report.
 `;
   } catch (err) {
     logger.warn('Failed to build institutional data context:', err);
+    const fallbackAcademic = DataNormalizer.normalizeAcademicMetrics()
     return `INSTITUTIONAL DATA
 ==================
 Institution: Sri Sudha Institute of Technology
@@ -179,6 +193,7 @@ Labs: 45
 Library: 12,000 sqft
 Hostel: 800 capacity
 
+${DataNormalizer.formatStrictJsonPromptBlock('institutional_academic_metrics', fallbackAcademic)}
 Use this data to generate the report.
 `;
   }
@@ -424,7 +439,16 @@ export class OfficerController {
     }
 
     try {
-      sendEvent({ type: 'thinking', message: `Analyzing institutional data for ${officerType}...` })
+      // Phase 1: Intent Classification & Sub-Agent Routing
+      const intentInfo = IntentClassifier.classify(prompt, { officerType, ...extraContext })
+      sendEvent({
+        type: 'thinking',
+        message: `Analyzing institutional data for ${officerType}...`,
+        intent: intentInfo.intent,
+        targetDomain: intentInfo.targetDomain,
+        subAgent: intentInfo.subAgent,
+        confidence: intentInfo.confidence,
+      })
 
       const roi = calculateROI(officerType, actionType)
       let accumulatedText = ''
@@ -432,10 +456,24 @@ export class OfficerController {
       const context = {
         institutionId: req.user?.institutionId,
         userRole: req.user?.role,
+        intent: intentInfo.intent,
+        subAgent: intentInfo.subAgent,
         ...extraContext,
       }
 
-      const enrichedPrompt = await enrichPromptWithDatabaseData(prompt, req.user?.institutionId || 1)
+      let enrichedPrompt = await enrichPromptWithDatabaseData(prompt, req.user?.institutionId || 1)
+
+      // Phase 1: Advanced RAG vector search with cosine similarity and re-ranking
+      try {
+        const ragChunks = await AdvancedRagService.searchKnowledgeBase(prompt, req.user?.institutionId || 1, { topK: 3 })
+        if (Array.isArray(ragChunks) && ragChunks.length > 0) {
+          const ragBlock = '\n\n[RELEVANT RETRIEVED KNOWLEDGE BASE CONTEXT (RERANKED)]:\n' +
+            ragChunks.map((c, i) => `[Source ${i + 1} - ${c.sourceName || 'Institutional Knowledge'} (Re-Rank Score: ${c.reRankScore})]:\n${c.text}`).join('\n\n')
+          enrichedPrompt += ragBlock
+        }
+      } catch (ragErr) {
+        logger.warn(`Advanced RAG search skipped: ${ragErr.message}`)
+      }
 
       for await (const token of AIService.streamPrompt(officerType, enrichedPrompt, context)) {
         accumulatedText += token
@@ -602,7 +640,11 @@ export class OfficerController {
 
       // Clean up temp file safely in background
       setTimeout(() => {
-        try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath) } catch {}
+        try {
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+        } catch (error) {
+          logger.debug('Temp file cleanup error:', error?.message)
+        }
       }, 5000)
 
       return res.status(200).json({

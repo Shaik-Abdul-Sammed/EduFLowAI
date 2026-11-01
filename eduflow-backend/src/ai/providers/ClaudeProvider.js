@@ -8,11 +8,14 @@ export class ClaudeProvider extends BaseProvider {
     this.model = process.env.AI_MODEL || 'claude-3-5-sonnet-20241022'
   }
 
-  async chat(messages, systemPrompt = '') {
+  async chat(messages, systemPrompt = '', options = {}) {
     const claudeMessages = messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
     const res = await this.client.messages.create({
       model: this.model,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
+      temperature,
       system: systemPrompt || undefined,
       messages: claudeMessages,
     })

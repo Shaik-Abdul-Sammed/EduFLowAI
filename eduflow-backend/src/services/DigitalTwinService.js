@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { AdvancedRagService } from './ai/AdvancedRagService.js'
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
 
@@ -36,12 +37,10 @@ export class DigitalTwinService {
         embeddings = response.data[0].embedding
       } catch (err) {
         console.error('OpenAI Embedding Error:', err)
-        // Fallback to empty embedding on error
-        embeddings = new Array(1536).fill(0)
+        embeddings = AdvancedRagService.generateFastEmbedding(extractedText, 1536)
       }
     } else {
-      // Fallback empty embedding for local dev without OpenAI Key
-      embeddings = new Array(1536).fill(0.123) // Mock vector
+      embeddings = AdvancedRagService.generateFastEmbedding(extractedText, 1536)
     }
 
     return {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mail, Send, X, Check } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 
@@ -13,6 +13,22 @@ export default function EmailReportModal({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const emailInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      emailInputRef.current?.focus();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -63,6 +79,7 @@ export default function EmailReportModal({
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="email-report-modal-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -95,7 +112,7 @@ export default function EmailReportModal({
               <Mail size={20} color="#A78BFA" />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>Email Institutional Report</h3>
+              <h3 id="email-report-modal-title" style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>Email Institutional Report</h3>
               <p style={{ fontSize: '0.8rem', color: '#9CA3AF', margin: 0 }}>Send formal PDF analysis to stakeholders</p>
             </div>
           </div>
@@ -129,12 +146,15 @@ export default function EmailReportModal({
               </div>
             )}
             <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#D1D5DB', marginBottom: '0.4rem' }}>
+              <label htmlFor="recipient-email" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#D1D5DB', marginBottom: '0.4rem' }}>
                 Recipient Email Address
               </label>
               <input
+                id="recipient-email"
+                ref={emailInputRef}
                 type="email"
                 required
+                aria-required="true"
                 placeholder="principal@institution.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

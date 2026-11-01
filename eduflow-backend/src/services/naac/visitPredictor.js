@@ -8,13 +8,17 @@ function safeParseJson(text, fallback = null) {
   if (!text || typeof text !== 'string') return fallback
   try {
     return JSON.parse(text)
-  } catch {}
+  } catch (error) {
+    void error
+  }
 
   const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
   if (match) {
     try {
       return JSON.parse(match[1])
-    } catch {}
+    } catch (error) {
+      void error
+    }
   }
 
   const firstBrace = text.indexOf('{')
@@ -22,7 +26,9 @@ function safeParseJson(text, fallback = null) {
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     try {
       return JSON.parse(text.slice(firstBrace, lastBrace + 1))
-    } catch {}
+    } catch (error) {
+      void error
+    }
   }
 
   return fallback

@@ -185,7 +185,9 @@ export const pool = {
         } finally {
           try {
             await client.query("SET app.bypass_rls = 'off'")
-          } catch {}
+          } catch (error) {
+            console.error('Reset bypass_rls error:', error)
+          }
           client.release()
         }
       }
