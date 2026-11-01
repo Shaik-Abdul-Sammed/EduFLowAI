@@ -450,7 +450,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem', fontWeight: 'bold' }}>Quick Actions</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             {leftActions.map((action, idx) => (
-              <button key={idx} onClick={() => handleSend(action.label)}
+              <button key={action.id || action.label || `act-${idx}`} onClick={() => handleSend(action.label)}
                 style={{ background: accentLight, border: `1px solid ${accentBorder}`, color: 'white', padding: '0.65rem 0.9rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', textAlign: 'left', fontSize: '0.875rem', transition: 'opacity 0.2s' }}>
                 {action.icon} {action.label}
               </button>
@@ -572,7 +572,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
           <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', alignSelf: 'center' }}>Try:</span>
             {suggestedPrompts.map((prompt, idx) => (
-              <button key={idx} type="button" onClick={() => handleSend(prompt)}
+              <button key={prompt.id || prompt || `prompt-${idx}`} type="button" onClick={() => handleSend(prompt)}
                 style={{ background: accentLight, border: `1px solid ${accentBorder}`, color: accentColor, padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.75rem', cursor: 'pointer', transition: 'opacity 0.2s' }}>
                 {prompt}
               </button>
@@ -589,7 +589,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               {showWhyThis && (
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '0.6rem', padding: '0.85rem 1rem', background: accentLight, border: `1px solid ${accentBorder}`, borderRadius: '10px', flexWrap: 'wrap' }}>
                   {whyStats.map((s, i) => (
-                    <div key={i} style={{ minWidth: '120px' }}>
+                    <div key={s.id || s.label || `stat-${i}`} style={{ minWidth: '120px' }}>
                       <div style={{ fontWeight: 'bold', fontSize: '1rem', color: accentColor }}>{s.value}</div>
                       <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', marginTop: '0.2rem' }}>{s.label}</div>
                     </div>
@@ -654,7 +654,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
         ) : (
           <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
             {messages.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', gap: '0.9rem', marginBottom: '1.4rem', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+              <div key={msg.id || msg.timestamp || `msg-${i}`} style={{ display: 'flex', gap: '0.9rem', marginBottom: '1.4rem', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', background: msg.role === 'user' ? '#2563EB' : accentLight, border: msg.role === 'user' ? 'none' : `1px solid ${accentBorder}` }}>
                   {msg.role === 'user' ? 'U' : icon}
                 </div>

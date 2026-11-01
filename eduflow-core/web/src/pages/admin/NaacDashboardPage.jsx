@@ -661,7 +661,7 @@ export default function NaacDashboardPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {prediction.strengths.slice(0, 3).map((st, idx) => (
-              <div key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+              <div key={st.id || `strength-${idx}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <span style={{ color: '#10B981', fontWeight: 700, fontSize: '0.9rem' }}>0{idx + 1}.</span>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: '#E5E7EB', lineHeight: 1.5 }}>
                   {st}
@@ -692,7 +692,7 @@ export default function NaacDashboardPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {prediction.weaknesses.slice(0, 3).map((wk, idx) => (
-              <div key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+              <div key={wk.id || `weakness-${idx}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <span style={{ color: '#EF4444', fontWeight: 700, fontSize: '0.9rem' }}>0{idx + 1}.</span>
                 <div>
                   <p style={{ margin: 0, fontSize: '0.9rem', color: '#E5E7EB', lineHeight: 1.5, fontWeight: 500 }}>
@@ -755,7 +755,7 @@ export default function NaacDashboardPage() {
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {PROVIDED_METRICS.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#D1D5DB' }}>
+                <div key={item || `provided-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#D1D5DB' }}>
                   <CheckCircle size={14} color="#10B981" style={{ flexShrink: 0 }} />
                   <span>{item}</span>
                 </div>
@@ -770,7 +770,7 @@ export default function NaacDashboardPage() {
             </span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {MISSING_METRICS.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#9CA3AF' }}>
+                <div key={item || `missing-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#9CA3AF' }}>
                   <XCircle size={14} color="#F59E0B" style={{ flexShrink: 0 }} />
                   <span>{item}</span>
                 </div>

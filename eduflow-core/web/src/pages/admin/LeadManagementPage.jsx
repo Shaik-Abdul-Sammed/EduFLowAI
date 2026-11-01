@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
+import { formatDate, formatDateTime } from '../../utils/formatters'
 import { useAuth } from '../../hooks/useAuth'
 import './LeadManagementPage.css'
 
@@ -383,40 +384,41 @@ export default function LeadManagementPage() {
                 {error}
               </div>
             ) : (
-              <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface-bg)' }}>
-                    {['Date', 'College', 'Service', 'Contact', 'Email', 'Phone', 'Status', 'Actions'].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            color: '#64748b',
-                            padding: '0.75rem 1rem',
-                          }}
-                        >
-                          {h}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.length === 0 ? (
-                    <tr>
-                      <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-                        No leads found matching current filter criteria.
-                      </td>
+              <div className="table-responsive">
+                <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface-bg)' }}>
+                      {['Date', 'College', 'Service', 'Contact', 'Email', 'Phone', 'Status', 'Actions'].map(
+                        (h) => (
+                          <th
+                            key={h}
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              color: '#64748b',
+                              padding: '0.75rem 1rem',
+                            }}
+                          >
+                            {h}
+                          </th>
+                        )
+                      )}
                     </tr>
-                  ) : (
-                    filteredLeads.map((lead) => (
-                      <tr key={lead.id}>
-                        <td style={{ fontSize: '0.8rem', color: '#64748b', padding: '0.75rem 1rem' }}>
-                          {new Date(lead.created_at).toLocaleDateString()}
+                  </thead>
+                  <tbody>
+                    {filteredLeads.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                          No leads found matching current filter criteria.
                         </td>
+                      </tr>
+                    ) : (
+                      filteredLeads.map((lead) => (
+                        <tr key={lead.id}>
+                          <td style={{ fontSize: '0.8rem', color: '#64748b', padding: '0.75rem 1rem' }}>
+                            {formatDate(lead.created_at)}
+                          </td>
                         <td style={{ fontWeight: 700, fontSize: '0.85rem', padding: '0.75rem 1rem' }}>
                           <div>{lead.college_name}</div>
                           <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
@@ -469,6 +471,7 @@ export default function LeadManagementPage() {
                   )}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </div>
@@ -487,7 +490,7 @@ export default function LeadManagementPage() {
                     Lead Workspace
                   </h4>
                   <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                    ID: #{selectedLead.id} &bull; Submitted {new Date(selectedLead.created_at).toLocaleString()}
+                    ID: #{selectedLead.id} &bull; Submitted {formatDateTime(selectedLead.created_at)}
                   </span>
                 </div>
                 <button

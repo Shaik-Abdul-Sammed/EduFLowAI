@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
+import { formatDate } from '../../utils/formatters'
 
 export default function FeeReminderPage() {
   const { user } = useAuth()
@@ -432,7 +433,7 @@ export default function FeeReminderPage() {
                 </tr>
               ) : (
                 filteredInvoices.map((inv, idx) => (
-                  <tr key={inv.id || idx}>
+                  <tr key={inv.id || `inv-${idx}`}>
                     <td>
                       <input
                         type="checkbox"
@@ -443,7 +444,7 @@ export default function FeeReminderPage() {
                     </td>
                     <td>
                       <span className="fw-semibold text-primary">{inv.invoice_number}</span>
-                      <div className="text-muted small">Due: {inv.due_date}</div>
+                      <div className="text-muted small">Due: {formatDate(inv.due_date)}</div>
                     </td>
                     <td>
                       <div className="fw-semibold">{inv.contact_person}</div>
@@ -790,7 +791,7 @@ export default function FeeReminderPage() {
 
       {/* Preview Modal */}
       {previewModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999 }}>
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content border-0 shadow">
               <div className="modal-header">

@@ -538,7 +538,7 @@ export default function NirfDashboardPage() {
                               </h6>
                               <ul className="small text-muted ps-3 mb-0">
                                 {details.rootCauses?.map((rc, i) => (
-                                  <li key={i} className="mb-1">{rc}</li>
+                                  <li key={rc.slice?.(0, 30) || `rc-${i}`} className="mb-1">{rc}</li>
                                 ))}
                               </ul>
                             </div>
@@ -549,7 +549,7 @@ export default function NirfDashboardPage() {
                               </h6>
                               <ul className="small text-muted ps-3 mb-0">
                                 {details.quickFixes?.map((qf, i) => (
-                                  <li key={i} className="mb-1">{qf}</li>
+                                  <li key={qf.slice?.(0, 30) || `qf-${i}`} className="mb-1">{qf}</li>
                                 ))}
                               </ul>
                             </div>
@@ -689,7 +689,7 @@ export default function NirfDashboardPage() {
                 <div className="p-3 border border-success border-opacity-25 rounded-3 bg-white h-100">
                   <h6 className="fw-bold small text-success mb-2">Phase 1: Quick Wins (0 - 90 Days)</h6>
                   <ul className="small text-muted ps-3 mb-0">
-                    {plan.quickWins?.map((q, i) => <li key={i} className="mb-1">{q}</li>)}
+                    {plan.quickWins?.map((q, i) => <li key={q.slice?.(0, 30) || `qw-${i}`} className="mb-1">{q}</li>)}
                   </ul>
                 </div>
               </div>
@@ -698,7 +698,7 @@ export default function NirfDashboardPage() {
                 <div className="p-3 border border-primary border-opacity-25 rounded-3 bg-white h-100">
                   <h6 className="fw-bold small text-primary mb-2">Phase 2: Medium Term (3 - 12 Months)</h6>
                   <ul className="small text-muted ps-3 mb-0">
-                    {plan.mediumTerm?.map((m, i) => <li key={i} className="mb-1">{m}</li>)}
+                    {plan.mediumTerm?.map((m, i) => <li key={m.slice?.(0, 30) || `mt-${i}`} className="mb-1">{m}</li>)}
                   </ul>
                 </div>
               </div>
@@ -707,7 +707,7 @@ export default function NirfDashboardPage() {
                 <div className="p-3 border border-purple border-opacity-25 rounded-3 bg-white h-100" style={{ borderColor: '#7c3aed40' }}>
                   <h6 className="fw-bold small text-purple mb-2" style={{ color: '#7c3aed' }}>Phase 3: Long Term (12 - 24 Months)</h6>
                   <ul className="small text-muted ps-3 mb-0">
-                    {plan.longTerm?.map((l, i) => <li key={i} className="mb-1">{l}</li>)}
+                    {plan.longTerm?.map((l, i) => <li key={l.slice?.(0, 30) || `lt-${i}`} className="mb-1">{l}</li>)}
                   </ul>
                 </div>
               </div>
@@ -731,7 +731,7 @@ export default function NirfDashboardPage() {
             { year: '2023', rank: 58, score: 70.5, tlr: 73.8, rp: 62.4 },
             { year: '2024 (Current)', rank: 51, score: 72.8, tlr: 75.4, rp: 64.2 },
           ].map((item, idx) => (
-            <div key={idx} className="col">
+            <div key={item.year || `year-${idx}`} className="col">
               <div className="p-3 bg-light rounded-3">
                 <span className="small text-muted fw-semibold">{item.year}</span>
                 <h4 className="fw-bold text-primary my-1">#{item.rank}</h4>

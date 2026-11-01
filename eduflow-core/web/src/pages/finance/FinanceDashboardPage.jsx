@@ -279,7 +279,7 @@ export default function FinanceDashboardPage() {
                 </thead>
                 <tbody>
                   {overdueBreakdown.deptWise.map((d, i) => (
-                    <tr key={i}>
+                    <tr key={d.code || d.dept || `dept-${i}`}>
                       <td className="fw-semibold">{d.dept}</td>
                       <td><span className="badge bg-secondary">{d.code}</span></td>
                       <td>{d.count} Students</td>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
+import { formatDate } from '../../utils/formatters'
 import { useAuth } from '../../hooks/useAuth'
 
 const SAMPLE_TEMPLATE = `EXECUTIVE SUMMARY & GAP ANALYSIS REPORT
@@ -316,72 +317,74 @@ export default function ReportDeliveryPage() {
             ) : reports.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>No reports delivered yet. Use the form above to dispatch your first report.</div>
             ) : (
-              <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface-bg)' }}>
-                    {['Delivered On', 'College', 'Recipient Email', 'Type', 'Views', 'Actions'].map((h) => (
-                      <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', padding: '0.75rem 1rem' }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {reports.map((r) => (
-                    <tr key={r.id}>
-                      <td style={{ fontSize: '0.8rem', color: '#64748b', padding: '0.75rem 1rem' }}>
-                        {new Date(r.created_at).toLocaleDateString()}
-                      </td>
-                      <td style={{ fontWeight: 700, fontSize: '0.85rem', padding: '0.75rem 1rem' }}>
-                        <div>{r.college_name}</div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 400 }}>{r.title}</div>
-                      </td>
-                      <td style={{ fontSize: '0.82rem', padding: '0.75rem 1rem' }}>
-                        <a href={`mailto:${r.contact_email}`} style={{ color: '#2563EB', textDecoration: 'none' }}>
-                          {r.contact_email}
-                        </a>
-                      </td>
-                      <td style={{ padding: '0.75rem 1rem' }}>
-                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.72rem', fontWeight: 700 }}>
-                          {r.report_type}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: '0.82rem', padding: '0.75rem 1rem' }}>
-                        <span style={{ fontWeight: 700, color: r.views_count > 0 ? '#10B981' : '#64748b' }}>
-                          👁️ {r.views_count} views
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.75rem 1rem' }}>
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <a
-                            href={`/r/${r.token}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-sm btn-outline-primary"
-                            style={{ fontSize: '0.75rem', fontWeight: 600 }}
-                          >
-                            Open Link
-                          </a>
-                          <button
-                            className="btn btn-sm btn-light border"
-                            onClick={() => copyLink(r.token)}
-                            style={{ fontSize: '0.75rem', fontWeight: 600 }}
-                          >
-                            📋 Copy
-                          </button>
-                          <a
-                            href={`/r/${r.token}/pdf`}
-                            className="btn btn-sm btn-outline-secondary"
-                            style={{ fontSize: '0.75rem', fontWeight: 600 }}
-                          >
-                            📥 PDF
-                          </a>
-                        </div>
-                      </td>
+              <div className="table-responsive">
+                <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface-bg)' }}>
+                      {['Delivered On', 'College', 'Recipient Email', 'Type', 'Views', 'Actions'].map((h) => (
+                        <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', padding: '0.75rem 1rem' }}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {reports.map((r) => (
+                      <tr key={r.id}>
+                        <td style={{ fontSize: '0.8rem', color: '#64748b', padding: '0.75rem 1rem' }}>
+                          {formatDate(r.created_at)}
+                        </td>
+                        <td style={{ fontWeight: 700, fontSize: '0.85rem', padding: '0.75rem 1rem' }}>
+                          <div>{r.college_name}</div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 400 }}>{r.title}</div>
+                        </td>
+                        <td style={{ fontSize: '0.82rem', padding: '0.75rem 1rem' }}>
+                          <a href={`mailto:${r.contact_email}`} style={{ color: '#2563EB', textDecoration: 'none' }}>
+                            {r.contact_email}
+                          </a>
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <span className="badge bg-light text-dark border" style={{ fontSize: '0.72rem', fontWeight: 700 }}>
+                            {r.report_type}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.82rem', padding: '0.75rem 1rem' }}>
+                          <span style={{ fontWeight: 700, color: r.views_count > 0 ? '#10B981' : '#64748b' }}>
+                            👁️ {r.views_count} views
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <a
+                              href={`/r/${r.token}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-sm btn-outline-primary"
+                              style={{ fontSize: '0.75rem', fontWeight: 600 }}
+                            >
+                              Open Link
+                            </a>
+                            <button
+                              className="btn btn-sm btn-light border"
+                              onClick={() => copyLink(r.token)}
+                              style={{ fontSize: '0.75rem', fontWeight: 600 }}
+                            >
+                              📋 Copy
+                            </button>
+                            <a
+                              href={`/r/${r.token}/pdf`}
+                              className="btn btn-sm btn-outline-secondary"
+                              style={{ fontSize: '0.75rem', fontWeight: 600 }}
+                            >
+                              📥 PDF
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
+import { formatDate, formatCurrency } from '../../utils/formatters'
 import { useAuth } from '../../hooks/useAuth'
 
 const PACKAGES = [
@@ -318,7 +319,7 @@ export default function InvoiceGeneratorPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {items.map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div key={item.id || `line-${idx}`} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <input
                       type="text"
                       className="form-control form-control-sm"
@@ -426,72 +427,74 @@ export default function InvoiceGeneratorPage() {
             ) : invoices.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>No invoices generated yet.</div>
             ) : (
-              <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface-bg)' }}>
-                    {['Invoice #', 'Date', 'Institution', 'Amount (INR)', 'Status', 'Actions'].map((h) => (
-                      <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', padding: '0.75rem 1rem' }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoices.map((inv) => (
-                    <tr key={inv.id}>
-                      <td style={{ fontWeight: 800, fontSize: '0.85rem', color: '#4F46E5', padding: '0.75rem 1rem' }}>
-                        {inv.invoice_number}
-                      </td>
-                      <td style={{ fontSize: '0.8rem', color: '#64748b', padding: '0.75rem 1rem' }}>
-                        {new Date(inv.created_at).toLocaleDateString()}
-                      </td>
-                      <td style={{ fontWeight: 700, fontSize: '0.85rem', padding: '0.75rem 1rem' }}>
-                        <div>{inv.institution_name}</div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 400 }}>{inv.contact_email}</div>
-                      </td>
-                      <td style={{ fontWeight: 800, fontSize: '0.9rem', padding: '0.75rem 1rem' }}>
-                        ₹{Number(inv.total_amount).toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ padding: '0.75rem 1rem' }}>
-                        <span
-                          style={{
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.72rem',
-                            fontWeight: 800,
-                            background: inv.status === 'PAID' ? '#DCFCE7' : '#FEF3C7',
-                            color: inv.status === 'PAID' ? '#166534' : '#92400E',
-                          }}
-                        >
-                          {inv.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.75rem 1rem' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <a
-                            href={`${getApiBaseURL()}/v1/invoices/${inv.id}/pdf`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-sm btn-outline-primary"
-                            style={{ fontSize: '0.75rem', fontWeight: 600 }}
+              <div className="table-responsive">
+                <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface-bg)' }}>
+                      {['Invoice #', 'Date', 'Institution', 'Amount (INR)', 'Status', 'Actions'].map((h) => (
+                        <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', padding: '0.75rem 1rem' }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoices.map((inv) => (
+                      <tr key={inv.id}>
+                        <td style={{ fontWeight: 800, fontSize: '0.85rem', color: '#4F46E5', padding: '0.75rem 1rem' }}>
+                          {inv.invoice_number}
+                        </td>
+                        <td style={{ fontSize: '0.8rem', color: '#64748b', padding: '0.75rem 1rem' }}>
+                          {formatDate(inv.created_at)}
+                        </td>
+                        <td style={{ fontWeight: 700, fontSize: '0.85rem', padding: '0.75rem 1rem' }}>
+                          <div>{inv.institution_name}</div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 400 }}>{inv.contact_email}</div>
+                        </td>
+                        <td style={{ fontWeight: 800, fontSize: '0.9rem', padding: '0.75rem 1rem' }}>
+                          {formatCurrency(inv.total_amount)}
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <span
+                            style={{
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              background: inv.status === 'PAID' ? '#DCFCE7' : '#FEF3C7',
+                              color: inv.status === 'PAID' ? '#166534' : '#92400E',
+                            }}
                           >
-                            📥 PDF
-                          </a>
-                          {inv.status !== 'PAID' && (
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => handleMarkPaid(inv.id)}
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem 1rem' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <a
+                              href={`${getApiBaseURL()}/v1/invoices/${inv.id}/pdf`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-sm btn-outline-primary"
                               style={{ fontSize: '0.75rem', fontWeight: 600 }}
                             >
-                              ✓ Mark Paid
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              📥 PDF
+                            </a>
+                            {inv.status !== 'PAID' && (
+                              <button
+                                className="btn btn-sm btn-success"
+                                onClick={() => handleMarkPaid(inv.id)}
+                                style={{ fontSize: '0.75rem', fontWeight: 600 }}
+                              >
+                                ✓ Mark Paid
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>

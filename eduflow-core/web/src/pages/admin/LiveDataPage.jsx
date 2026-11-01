@@ -248,7 +248,7 @@ export default function LiveDataPage() {
             </div>
             <div className="row g-3">
               {searchResults.items?.map((item, idx) => (
-                <div key={idx} className="col-12 col-md-6">
+                <div key={item.id || item.link || item.title || `search-item-${idx}`} className="col-12 col-md-6">
                   <div className="p-3 border rounded h-100 bg-light-subtle">
                     <div className="d-flex justify-content-between">
                       <a href={item.link} target="_blank" rel="noreferrer" className="fw-bold text-decoration-none text-primary d-flex align-items-center gap-1">
@@ -351,7 +351,7 @@ export default function LiveDataPage() {
                   description: 'Accredited institutions can achieve Level 1 through Level 5 rankings.'
                 }
               ]).map((a, i) => (
-                <div key={i} className="p-3 border rounded mb-2 bg-light-subtle">
+                <div key={a.id || a.title || `announcement-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
                   <div className="fw-bold text-dark">{a.title}</div>
                   <div className="small text-muted">{a.description}</div>
                 </div>
@@ -377,7 +377,7 @@ export default function LiveDataPage() {
               { refNo: 'AICTE/AB/APH/2024-25', title: 'Mandatory Student-Faculty Ratio 1:20 for UG Engineering', summary: '1:20 cadre ratio with minimum 80% regular faculty.' },
               { refNo: 'AICTE/Adv/Internship/2024', title: 'National Internship Portal Minimum Credit Norms', summary: 'Minimum 14-20 credits for industrial internships.' }
             ]).map((c, i) => (
-              <div key={i} className="p-3 border rounded mb-2 bg-light-subtle">
+              <div key={c.refNo || c.title || `circular-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
                 <div className="badge bg-secondary mb-1">{c.refNo}</div>
                 <div className="fw-semibold text-dark">{c.title}</div>
                 <div className="small text-muted">{c.summary}</div>
@@ -400,7 +400,7 @@ export default function LiveDataPage() {
               { title: 'Curriculum & Credit Framework for UG Programmes', mandate: 'Four-year UG degree with flexible entry/exit and ABC integration.' },
               { title: 'Minimum Qualifications for Appointment of Teachers', mandate: 'PhD mandatory for Associate Professor; NET/SET for Assistant Professor.' }
             ]).map((u, i) => (
-              <div key={i} className="p-3 border rounded mb-2 bg-light-subtle">
+              <div key={u.id || u.title || `ugc-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
                 <div className="fw-semibold text-dark">{u.title}</div>
                 <div className="small text-muted">{u.mandate}</div>
               </div>
@@ -428,7 +428,7 @@ export default function LiveDataPage() {
                     { name: 'Dr. B.R. Ambedkar Jayanti', date: '2026-04-14', type: 'National Observance' },
                     { name: 'Independence Day', date: '2026-08-15', type: 'National Holiday' }
                   ]).map((h, i) => (
-                    <tr key={i}>
+                    <tr key={h.name || h.date || `holiday-${i}`}>
                       <td className="fw-semibold">{h.name}</td>
                       <td><code>{h.date}</code></td>
                       <td><span className="badge bg-light text-dark border">{h.type}</span></td>
@@ -454,8 +454,8 @@ export default function LiveDataPage() {
               { title: 'UGC mandates digital degree deposition on DigiLocker National Academic Depository', source: 'education.gov.in', summary: 'All autonomous institutes instructed to upload student credentials to NAD.' },
               { title: 'Ministry of Education launches AI Research Centre Grants for Tier-2 engineering colleges', source: 'pib.gov.in', summary: 'Applications invited for ₹5 Crore multi-institutional research clusters.' }
             ]).map((art, i) => (
-              <div key={i} className="p-3 border rounded mb-2 bg-light-subtle">
-                <a href={art.url || '#'} target="_blank" rel="noreferrer" className="fw-semibold text-primary text-decoration-none">
+              <div key={art.id || art.title || `article-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
+                <a href={art.url || 'https://education.gov.in'} target="_blank" rel="noreferrer" className="fw-semibold text-primary text-decoration-none">
                   {art.title}
                 </a>
                 <div className="small text-muted">{art.source} — {art.summary}</div>

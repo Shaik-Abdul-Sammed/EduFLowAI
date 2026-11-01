@@ -223,21 +223,23 @@ npm run dev`}
     content: (
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Hardware &amp; OS Requirements</h4>
-        <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
-          <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
-            <tr>
-              <th>Component</th>
-              <th>Minimum</th>
-              <th>Recommended</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>CPU</td><td>2 Cores</td><td>4+ Cores (ARM64 or x86_64)</td></tr>
-            <tr><td>Memory</td><td>4 GB RAM</td><td>8 GB RAM (16 GB if running Ollama)</td></tr>
-            <tr><td>Storage</td><td>20 GB SSD</td><td>50 GB NVMe</td></tr>
-            <tr><td>Network</td><td>10 Mbps egress</td><td>100 Mbps with WSS support</td></tr>
-          </tbody>
-        </table>
+        <div className="table-responsive">
+          <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+            <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
+              <tr>
+                <th>Component</th>
+                <th>Minimum</th>
+                <th>Recommended</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>CPU</td><td>2 Cores</td><td>4+ Cores (ARM64 or x86_64)</td></tr>
+              <tr><td>Memory</td><td>4 GB RAM</td><td>8 GB RAM (16 GB if running Ollama)</td></tr>
+              <tr><td>Storage</td><td>20 GB SSD</td><td>50 GB NVMe</td></tr>
+              <tr><td>Network</td><td>10 Mbps egress</td><td>100 Mbps with WSS support</td></tr>
+            </tbody>
+          </table>
+        </div>
       </>
     ),
   },
@@ -369,21 +371,23 @@ npm run dev`}
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Traffic Quotas</h4>
         <p style={{ color: 'var(--app-text)' }}>To ensure high availability across campus tenants, the API enforces tiered rate limiting:</p>
-        <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
-          <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
-            <tr>
-              <th>Tier</th>
-              <th>Quota Window</th>
-              <th>Max Requests</th>
-              <th>Response on Exceeded</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Authenticated User</td><td>15 Minutes</td><td>100 requests</td><td>HTTP 429 Too Many Requests</td></tr>
-            <tr><td>Public / Unauthenticated</td><td>15 Minutes</td><td>20 requests</td><td>HTTP 429 Too Many Requests</td></tr>
-            <tr><td>AI Officer Streaming</td><td>15 Minutes</td><td>30 active streams</td><td>HTTP 429 Stream Limit</td></tr>
-          </tbody>
-        </table>
+        <div className="table-responsive">
+          <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+            <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
+              <tr>
+                <th>Tier</th>
+                <th>Quota Window</th>
+                <th>Max Requests</th>
+                <th>Response on Exceeded</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Authenticated User</td><td>15 Minutes</td><td>100 requests</td><td>HTTP 429 Too Many Requests</td></tr>
+              <tr><td>Public / Unauthenticated</td><td>15 Minutes</td><td>20 requests</td><td>HTTP 429 Too Many Requests</td></tr>
+              <tr><td>AI Officer Streaming</td><td>15 Minutes</td><td>30 active streams</td><td>HTTP 429 Stream Limit</td></tr>
+            </tbody>
+          </table>
+        </div>
         <h4 className="fw-bold mt-4 mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Response Headers</h4>
         <p style={{ color: 'var(--app-text)' }}>Each response includes headers indicating your current quota status:</p>
         <CodeBlock
@@ -468,23 +472,25 @@ data: {"type": "done", "officerType": "accreditation", "roi": {"hoursSaved": 40,
     content: (
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Error Code Matrix</h4>
-        <table className="table table-bordered small align-middle" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
-          <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
-            <tr>
-              <th>Status</th>
-              <th>Code</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>400</td><td><code>VALIDATION_ERROR</code></td><td>Request body failed Zod schema checks</td></tr>
-            <tr><td>401</td><td><code>UNAUTHORIZED</code></td><td>Missing or expired Bearer JWT token</td></tr>
-            <tr><td>403</td><td><code>FORBIDDEN</code></td><td>Insufficient role permissions for endpoint</td></tr>
-            <tr><td>409</td><td><code>SUBDOMAIN_CONFLICT</code></td><td>Requested campus short code is taken</td></tr>
-            <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Too many requests within 15-minute window</td></tr>
-            <tr><td>500</td><td><code>INTERNAL_ERROR</code></td><td>Unexpected backend exception (alert logged)</td></tr>
-          </tbody>
-        </table>
+        <div className="table-responsive">
+          <table className="table table-bordered small align-middle" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+            <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
+              <tr>
+                <th>Status</th>
+                <th>Code</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>400</td><td><code>VALIDATION_ERROR</code></td><td>Request body failed Zod schema checks</td></tr>
+              <tr><td>401</td><td><code>UNAUTHORIZED</code></td><td>Missing or expired Bearer JWT token</td></tr>
+              <tr><td>403</td><td><code>FORBIDDEN</code></td><td>Insufficient role permissions for endpoint</td></tr>
+              <tr><td>409</td><td><code>SUBDOMAIN_CONFLICT</code></td><td>Requested campus short code is taken</td></tr>
+              <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Too many requests within 15-minute window</td></tr>
+              <tr><td>500</td><td><code>INTERNAL_ERROR</code></td><td>Unexpected backend exception (alert logged)</td></tr>
+            </tbody>
+          </table>
+        </div>
       </>
     ),
   },
@@ -686,21 +692,23 @@ function verifySignature(payload, signatureHeader, secret) {
     content: (
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Cryptographic Framework</h4>
-        <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
-          <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
-            <tr>
-              <th>Layer</th>
-              <th>Protocol / Cipher</th>
-              <th>Key Management</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Data at Rest</td><td>AES-256-GCM</td><td>Hardware Security Module (HSM) with 90-day rotation</td></tr>
-            <tr><td>Data in Transit</td><td>TLS 1.3 / Perfect Forward Secrecy</td><td>Automated Let&apos;s Encrypt &amp; Cloudflare ECC Certificates</td></tr>
-            <tr><td>User Passwords</td><td>bcrypt (12 rounds)</td><td>Salted per user instance</td></tr>
-            <tr><td>API Signatures</td><td>HMAC-SHA256</td><td>Institution-specific rotating secrets</td></tr>
-          </tbody>
-        </table>
+        <div className="table-responsive">
+          <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+            <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
+              <tr>
+                <th>Layer</th>
+                <th>Protocol / Cipher</th>
+                <th>Key Management</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Data at Rest</td><td>AES-256-GCM</td><td>Hardware Security Module (HSM) with 90-day rotation</td></tr>
+              <tr><td>Data in Transit</td><td>TLS 1.3 / Perfect Forward Secrecy</td><td>Automated Let&apos;s Encrypt &amp; Cloudflare ECC Certificates</td></tr>
+              <tr><td>User Passwords</td><td>bcrypt (12 rounds)</td><td>Salted per user instance</td></tr>
+              <tr><td>API Signatures</td><td>HMAC-SHA256</td><td>Institution-specific rotating secrets</td></tr>
+            </tbody>
+          </table>
+        </div>
       </>
     ),
   },

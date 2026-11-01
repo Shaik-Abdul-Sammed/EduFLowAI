@@ -217,7 +217,7 @@ export default function InsightsDashboardPage() {
             <h5 className="fw-bold mb-3">Top Priorities</h5>
             <div className="row g-3" data-testid="top-priorities-list">
               {(data?.topPriorities || []).map((priority, index) => (
-                <div key={index} className="col-12" data-testid={`priority-card-${index}`}>
+                <div key={priority.id || `${priority.domain}-${priority.issue}` || `priority-${index}`} className="col-12" data-testid={`priority-card-${index}`}>
                   <div className="p-3 rounded border border-warning-subtle bg-warning-subtle bg-opacity-25 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
                     <div>
                       <div className="d-flex align-items-center gap-2 mb-1">
@@ -258,7 +258,7 @@ export default function InsightsDashboardPage() {
             <tbody className="small">
               {activity.length > 0 ? (
                 activity.slice(0, 20).map((act, idx) => (
-                  <tr key={act.id || idx}>
+                  <tr key={act.id || `act-${idx}`}>
                     <td className="fw-semibold text-capitalize">
                       <span className="badge bg-light text-dark border me-1">{act.officer_domain}</span>
                     </td>

@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 import { instituteStats } from '../utils/mockData'
 import { getApiBaseURL } from '../config/apiConfig'
 import { safeJson } from '../utils/wakeUpHandler'
+import { safeText } from '../utils/formatters'
 import StudentAcademyPanel from './StudentAcademyPanel'
 
 const roleConfig = {
@@ -358,11 +359,11 @@ export default function DashboardHome({ role, routes = [] }) {
               >
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <span className="fw-bold small text-muted text-uppercase">Predicted NAAC SSR Grade</span>
-                  <span className="badge bg-success text-white px-2 py-1">Grade {adminMetrics.predictedNaacGrade}</span>
+                  <span className="badge bg-success text-white px-2 py-1">Grade {safeText(adminMetrics.predictedNaacGrade, 'N/A')}</span>
                 </div>
                 <div className="d-flex align-items-baseline gap-3 mb-2">
-                  <div className="display-6 fw-bold text-success">{adminMetrics.predictedNaacGrade}</div>
-                  <div className="text-muted fw-semibold">CGPA {adminMetrics.predictedNaacCgpa} / 4.00</div>
+                  <div className="display-6 fw-bold text-success">{safeText(adminMetrics.predictedNaacGrade, 'N/A')}</div>
+                  <div className="text-muted fw-semibold">CGPA {safeText(adminMetrics.predictedNaacCgpa, 'N/A')} / 4.00</div>
                 </div>
                 <p className="text-muted small mb-3">
                   Based on automated Criteria 1–7 metrics compilation.
@@ -397,10 +398,10 @@ export default function DashboardHome({ role, routes = [] }) {
               >
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <span className="fw-bold small text-muted text-uppercase">Predicted NIRF Rank</span>
-                  <span className="badge bg-primary text-white px-2 py-1">Band {adminMetrics.nirfRankBand}</span>
+                  <span className="badge bg-primary text-white px-2 py-1">Band {safeText(adminMetrics.nirfRankBand, 'N/A')}</span>
                 </div>
                 <div className="d-flex align-items-baseline gap-3 mb-2">
-                  <div className="display-6 fw-bold text-primary">#{adminMetrics.predictedNirfRank}</div>
+                  <div className="display-6 fw-bold text-primary">#{safeText(adminMetrics.predictedNirfRank, 'N/A')}</div>
                   <div className="text-muted fw-semibold">Engineering Category</div>
                 </div>
                 <p className="text-muted small mb-2">
@@ -408,7 +409,7 @@ export default function DashboardHome({ role, routes = [] }) {
                 </p>
                 <div className="d-flex flex-column gap-1">
                   {adminMetrics.nirfPeers.map((p, idx) => (
-                    <div key={idx} className="d-flex align-items-center justify-content-between small" style={{ fontSize: '0.78rem' }}>
+                    <div key={p.name || `peer-${p.rank || idx}`} className="d-flex align-items-center justify-content-between small" style={{ fontSize: '0.78rem' }}>
                       <span className={p.name.includes('You') ? 'fw-bold text-primary' : 'text-muted'}>{p.name}</span>
                       <span className="badge bg-secondary-subtle text-dark">Rank #{p.rank}</span>
                     </div>
@@ -456,12 +457,12 @@ export default function DashboardHome({ role, routes = [] }) {
         <div className="col-12 col-lg-4">
           <div style={{ display: 'grid', gap: '1rem', height: '100%' }}>
             {config.widgets.map((widget, i) => (
-              <div key={i} className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', flex: 1 }}>
+              <div key={widget.title || `widget-${i}`} className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', flex: 1 }}>
                 <div className="card-body p-4">
                   <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1rem', color: config.accentColor }}>{widget.title}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {widget.data.map((item, j) => (
-                      <div key={j} style={{ 
+                      <div key={typeof item === 'string' ? item : `item-${j}`} style={{ 
                         padding: '0.6rem 0.875rem', borderRadius: '0.625rem', 
                         background: 'var(--surface-bg)', borderLeft: `3px solid ${config.accentColor}`,
                         fontSize: '0.82rem', fontWeight: 500, color: 'var(--app-text)'

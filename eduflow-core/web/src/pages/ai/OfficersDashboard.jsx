@@ -287,7 +287,7 @@ export default function OfficersDashboard() {
             const meta = OFFICER_META[officer.id];
             const officerRoi = roi?.byOfficer?.find(o => o.type === officer.id);
             return (
-              <div key={officer.id || idx} className="glass-card officer-card" style={{
+              <div key={officer.id || `officer-${idx}`} className="glass-card officer-card" style={{
                 padding: '1.5rem', display: 'flex', flexDirection: 'column', '--hover-color': meta.color
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
@@ -360,7 +360,7 @@ export default function OfficersDashboard() {
             {recentActivity.map((activity, idx) => {
               const meta = OFFICER_META[activity.officer.toLowerCase()] || {};
               return (
-                <React.Fragment key={activity.id || idx}>
+                <React.Fragment key={activity.id || `activity-${idx}`}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '1rem 0' }}>
                     <div style={{
                       width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
