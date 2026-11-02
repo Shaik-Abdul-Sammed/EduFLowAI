@@ -7,13 +7,29 @@ export class CalendarController {
   static async generate(req, res) {
     try {
       const institutionId = req.user?.institutionId || 1
-      const { academicYear = '2026-2027', stateCode = 'KA', options = {} } = req.body || {}
+      const {
+        academicYear = '2026-2027',
+        stateCode = 'KA',
+        options = {},
+        applySecondSaturday,
+        midTermStartDate,
+        examGapDays,
+        extendHolidayDays,
+      } = req.body || {}
+
+      const mergedOptions = {
+        ...options,
+        applySecondSaturday: applySecondSaturday ?? options.applySecondSaturday,
+        midTermStartDate: midTermStartDate ?? options.midTermStartDate,
+        examGapDays: examGapDays ?? options.examGapDays,
+        extendHolidayDays: extendHolidayDays ?? options.extendHolidayDays,
+      }
 
       const calendar = await CalendarGenerator.generateAcademicYear(
         institutionId,
         academicYear,
         stateCode,
-        options
+        mergedOptions
       )
 
       return res.status(200).json({

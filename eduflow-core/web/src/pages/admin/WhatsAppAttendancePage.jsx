@@ -37,6 +37,7 @@ export default function WhatsAppAttendancePage() {
   // Staged queue & Logs & Faculty
   const [stagedList, setStagedList] = useState([])
   const [logsList, setLogsList] = useState([])
+  const [visibleLogsCount, setVisibleLogsCount] = useState(8)
   const [facultyList, setFacultyList] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionMsg, setActionMsg] = useState('')
@@ -454,7 +455,15 @@ export default function WhatsAppAttendancePage() {
       <div className="row g-4 mb-4">
         {/* Messages Log */}
         <div className="col-md-7">
-          <div className="card shadow-sm border-0 p-4 h-100">
+          <div
+            className="card shadow-sm border-0 p-4"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              minHeight: '500px',
+            }}
+          >
             <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
               <h5 className="fw-bold mb-0 d-flex align-items-center">
                 <MessageSquare size={18} className="me-2 text-primary" /> Recent WhatsApp Messages
@@ -466,7 +475,14 @@ export default function WhatsAppAttendancePage() {
                 <Sparkles size={14} /> Load Demo Reports
               </button>
             </div>
-            <div style={{ overflowX: 'auto', width: '100%', maxHeight: '350px', overflowY: 'auto' }}>
+            <div
+              style={{
+                flexGrow: 1,
+                overflowY: 'auto',
+                overflowX: 'auto',
+                width: '100%',
+              }}
+            >
               <table className="table table-sm align-middle mb-0" style={{ minWidth: '720px', tableLayout: 'fixed' }}>
                 <thead className="table-light small text-uppercase">
                   <tr>
@@ -480,7 +496,7 @@ export default function WhatsAppAttendancePage() {
                   {logsList.length === 0 ? (
                     <tr><td colSpan="4" className="text-center text-muted py-3">No messages logged yet. Click "Load Demo Reports" to view sample interactions.</td></tr>
                   ) : (
-                    logsList.slice(0, 15).map(l => (
+                    logsList.slice(0, visibleLogsCount).map(l => (
                       <tr key={l.id}>
                         <td>
                           {l.direction === 'INBOUND' ? (
@@ -501,6 +517,28 @@ export default function WhatsAppAttendancePage() {
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="d-flex justify-content-between align-items-center pt-3 mt-auto border-top">
+              <span className="small text-muted">
+                Showing {Math.min(visibleLogsCount, logsList.length)} of {logsList.length} messages
+              </span>
+              {logsList.length > visibleLogsCount ? (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => setVisibleLogsCount(prev => prev + 8)}
+                >
+                  Load More Messages
+                </button>
+              ) : visibleLogsCount > 8 ? (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-link text-decoration-none p-0"
+                  onClick={() => setVisibleLogsCount(8)}
+                >
+                  Show Less
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

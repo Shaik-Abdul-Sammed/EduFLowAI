@@ -215,13 +215,16 @@ export class NirfScoreCalculator {
       const peersAhead = peers.filter((p) => Number(p.totalScore || p.total_score) > totalScore)
       const predictedRank = peersAhead.length + 1
 
+      const currentYr = new Date().getFullYear()
+      const currentAcademicYr = `${currentYr}-${String(currentYr + 1).slice(2)}`
+
       // -------------------------------------------------------------
       // Save calculated score to database
       // -------------------------------------------------------------
       const savedRecord = await NirfRepository.saveScore({
         institutionId,
         category,
-        academicYear: '2024-25',
+        academicYear: currentAcademicYr,
         tlrScore,
         rpScore,
         goScore,
@@ -235,7 +238,7 @@ export class NirfScoreCalculator {
       return {
         success: true,
         category,
-        academicYear: '2024-25',
+        academicYear: currentAcademicYr,
         totalScore,
         parameterScores: {
           TLR: {
@@ -278,10 +281,11 @@ export class NirfScoreCalculator {
       logger.error(`Error calculating NIRF score: ${err.message}`)
       // Graceful fallback response
       const fallbackTotal = 68.45
+      const fbYr = new Date().getFullYear()
       return {
         success: true,
         category,
-        academicYear: '2024-25',
+        academicYear: `${fbYr}-${String(fbYr + 1).slice(2)}`,
         totalScore: fallbackTotal,
         parameterScores: {
           TLR: { score: 72.50, weight: 0.30, subMetrics: { SS: 72.0, FSR: 74.5, FQE: 70.0, FRU: 73.5 } },

@@ -30,7 +30,40 @@ export class CalendarGenerator {
     }
 
     const yearStart = parseInt(String(academicYear).split('-')[0], 10) || 2026
-    const holidays = await HolidayFetcher.fetchStateGovernmentHolidays(yearStart, stateCode)
+    const baseHolidays = await HolidayFetcher.fetchStateGovernmentHolidays(yearStart, stateCode)
+    const holidays = [...baseHolidays]
+
+    // Rule 1: applySecondSaturday (AP/Telangana Rule)
+    const applySecondSaturday =
+      options.applySecondSaturday === true ||
+      options.applySecondSaturday === 'true' ||
+      stateCode === 'AP' ||
+      stateCode === 'TS'
+    if (applySecondSaturday) {
+      // Academic year spans 12 months: July of yearStart to June of yearStart + 1
+      for (let m = 6; m < 18; m++) {
+        const yr = m < 12 ? yearStart : yearStart + 1
+        const monthIndex = m % 12
+        // Find 2nd Saturday of this month
+        for (let day = 8; day <= 14; day++) {
+          const testDate = new Date(yr, monthIndex, day)
+          if (testDate.getDay() === 6) {
+            const pad = (n) => String(n).padStart(2, '0')
+            const dateStr = `${yr}-${pad(monthIndex + 1)}-${pad(day)}`
+            if (!holidays.some((h) => h.date === dateStr)) {
+              holidays.push({
+                name: 'Second Saturday Holiday (AP/Telangana Rule)',
+                date: dateStr,
+                type: 'STATE_GAZETTED',
+                significance: 'Mandatory State Rule for Educational Institutions',
+              })
+            }
+            break
+          }
+        }
+      }
+      holidays.sort((a, b) => (a.date > b.date ? 1 : -1))
+    }
 
     // ODD Semester dates: customizable or standard
     const oddStart = options.startDate || `${yearStart}-07-01`
@@ -69,15 +102,44 @@ export class CalendarGenerator {
     const oddWorkingDays = calculateWorkingDays(oddStart, oddEnd)
     const evenWorkingDays = calculateWorkingDays(evenStart, evenEnd)
 
+    // Rule 2: Mid-Term Start Date
+    let mid1Start = `${yearStart}-08-25`
+    let mid1End = `${yearStart}-08-29`
+    if (options.midTermStartDate && /^\d{4}-\d{2}-\d{2}$/.test(options.midTermStartDate)) {
+      mid1Start = options.midTermStartDate
+      const d = new Date(options.midTermStartDate)
+      d.setDate(d.getDate() + 4)
+      mid1End = d.toISOString().slice(0, 10)
+    }
+
+    // Rule 4: extendHolidayDays (Dussehra / Diwali vacation blocks)
+    const extendDays = Number(options.extendHolidayDays) || 0
+    let dussehraEnd = `${yearStart}-10-25`
+    if (extendDays > 0) {
+      const d = new Date(dussehraEnd)
+      d.setDate(d.getDate() + extendDays)
+      dussehraEnd = d.toISOString().slice(0, 10)
+    }
+
+    // Rule 3: examGapDays between Lab and Semester exams
+    const examGap = Number(options.examGapDays ?? 2)
+    const oddLabEnd = `${yearStart}-11-28`
+    const oddEndExamStartObj = new Date(oddLabEnd)
+    oddEndExamStartObj.setDate(oddEndExamStartObj.getDate() + examGap + 1)
+    const oddEndExamStart = oddEndExamStartObj.toISOString().slice(0, 10)
+    const oddEndExamEndObj = new Date(oddEndExamStartObj)
+    oddEndExamEndObj.setDate(oddEndExamEndObj.getDate() + 14)
+    const oddEndExamEnd = oddEndExamEndObj.toISOString().slice(0, 10)
+
     // Schedule Milestones & Events
     const events = [
       // ODD Semester
       { event_type: 'SEMESTER_START', name: 'Commencement of ODD Semester Classes', start_date: oddStart, end_date: oddStart, is_mandatory: true },
-      { event_type: 'MID_EXAM', name: 'Continuous Internal Assessment - Mid Term 1', start_date: `${yearStart}-08-25`, end_date: `${yearStart}-08-29`, is_mandatory: true },
-      { event_type: 'VACATION', name: 'Dussehra / Autumn Break', start_date: `${yearStart}-10-18`, end_date: `${yearStart}-10-25`, is_mandatory: false },
+      { event_type: 'MID_EXAM', name: 'Continuous Internal Assessment - Mid Term 1', start_date: mid1Start, end_date: mid1End, is_mandatory: true },
+      { event_type: 'VACATION', name: 'Dussehra / Autumn Break', start_date: `${yearStart}-10-18`, end_date: dussehraEnd, is_mandatory: false },
       { event_type: 'MID_EXAM', name: 'Continuous Internal Assessment - Mid Term 2', start_date: `${yearStart}-11-02`, end_date: `${yearStart}-11-06`, is_mandatory: true },
-      { event_type: 'LAB_EXAM', name: 'Practical & Laboratory End Examinations', start_date: `${yearStart}-11-23`, end_date: `${yearStart}-11-28`, is_mandatory: true },
-      { event_type: 'END_EXAM', name: 'Semester End Theory Examinations (ODD)', start_date: `${yearStart}-12-01`, end_date: `${yearStart}-12-15`, is_mandatory: true },
+      { event_type: 'LAB_EXAM', name: 'Practical & Laboratory End Examinations', start_date: `${yearStart}-11-23`, end_date: oddLabEnd, is_mandatory: true },
+      { event_type: 'END_EXAM', name: 'Semester End Theory Examinations (ODD)', start_date: oddEndExamStart, end_date: oddEndExamEnd, is_mandatory: true },
       { event_type: 'VACATION', name: 'Winter Vacation / Semester Break', start_date: `${yearStart}-12-16`, end_date: `${yearStart + 1}-01-04`, is_mandatory: false },
 
       // EVEN Semester

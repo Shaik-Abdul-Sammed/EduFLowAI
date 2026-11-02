@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Info,
   ShieldAlert,
-  CalendarCheck
+  CalendarCheck,
+  Settings
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -144,6 +145,12 @@ export default function AcademicCalendarPage() {
   const [totalWorkingDaysRequired, setTotalWorkingDaysRequired] = useState(90)
   const [collegeStartDate, setCollegeStartDate] = useState('2026-07-15')
   const [collegeEndDate, setCollegeEndDate] = useState('2026-11-30')
+
+  // Calendar Configuration custom rules
+  const [applySecondSaturday, setApplySecondSaturday] = useState(true)
+  const [midTermStartDate, setMidTermStartDate] = useState('2026-10-15')
+  const [examGapDays, setExamGapDays] = useState(2)
+  const [extendHolidayDays, setExtendHolidayDays] = useState(3)
 
   const [vacations, setVacations] = useState([
     { id: 'summer', name: 'Summer Vacation', startDate: '2026-05-01', endDate: '2026-07-10', baseDays: 70, deltaDays: 0, semester: 'EVEN' },
@@ -282,7 +289,15 @@ export default function AcademicCalendarPage() {
         body: JSON.stringify({
           academicYear,
           stateCode,
+          applySecondSaturday,
+          midTermStartDate,
+          examGapDays: Number(examGapDays) || 2,
+          extendHolidayDays: Number(extendHolidayDays) || 0,
           options: {
+            applySecondSaturday,
+            midTermStartDate,
+            examGapDays: Number(examGapDays) || 2,
+            extendHolidayDays: Number(extendHolidayDays) || 0,
             targetWorkingDays: totalWorkingDaysRequired,
             startDate: collegeStartDate,
             endDate: collegeEndDate,
@@ -610,20 +625,98 @@ export default function AcademicCalendarPage() {
         </div>
       </div>
 
-      {/* Custom Academic Calendar Settings */}
+      {/* Calendar Configuration */}
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-header bg-white border-bottom p-3">
-          <h5 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-            <Clock size={18} className="text-primary" />
-            Custom Academic Calendar Settings
-          </h5>
-          <span className="small text-muted">
-            Configure institutional working day thresholds, semester commencement, and term conclusion dates to dynamically calculate exam and vacation milestones.
-          </span>
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h5 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <Settings size={18} className="text-primary" />
+                Calendar Configuration
+              </h5>
+              <span className="small text-muted">
+                State-specific holiday rules, examination timelines, inter-exam buffer intervals, and vacation adjustments.
+              </span>
+            </div>
+            <button
+              className="btn btn-primary btn-sm px-3 d-flex align-items-center gap-1 shadow-sm"
+              onClick={handleGenerate}
+              disabled={isGenerating}
+            >
+              <Sparkles size={14} className={isGenerating ? 'spinner-border spinner-border-sm' : ''} />
+              {isGenerating ? 'Applying Configuration...' : 'Apply & Recalculate'}
+            </button>
+          </div>
         </div>
         <div className="card-body p-3">
-          <div className="row g-3 align-items-end">
-            <div className="col-12 col-md-3">
+          <div className="row g-3">
+            {/* Checkbox: Apply 2nd Saturday as Holiday */}
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label small fw-bold text-muted mb-2 d-block">State Holiday Rule</label>
+              <div className="form-check form-switch pt-1">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="applySecondSaturday"
+                  checked={applySecondSaturday}
+                  onChange={(e) => setApplySecondSaturday(e.target.checked)}
+                />
+                <label className="form-check-label small fw-semibold text-dark" htmlFor="applySecondSaturday">
+                  Apply 2nd Saturday as Holiday (AP/Telangana Rule)
+                </label>
+              </div>
+            </div>
+
+            {/* Date picker: Mid-Term Start Date */}
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label small fw-bold text-muted mb-1" htmlFor="midTermStartDate">
+                Mid-Term Start Date
+              </label>
+              <input
+                id="midTermStartDate"
+                type="date"
+                className="form-control form-control-sm"
+                value={midTermStartDate}
+                onChange={(e) => setMidTermStartDate(e.target.value)}
+              />
+            </div>
+
+            {/* Number input: Days Gap Between Exams */}
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label small fw-bold text-muted mb-1" htmlFor="examGapDays">
+                Days Gap Between Exams
+              </label>
+              <input
+                id="examGapDays"
+                type="number"
+                min="0"
+                max="14"
+                className="form-control form-control-sm"
+                value={examGapDays}
+                onChange={(e) => setExamGapDays(Number(e.target.value))}
+                placeholder="e.g. 2"
+              />
+            </div>
+
+            {/* Number input: Extend Holiday (Days) */}
+            <div className="col-12 col-md-6 col-lg-3">
+              <label className="form-label small fw-bold text-muted mb-1" htmlFor="extendHolidayDays">
+                Extend Holiday (Days)
+              </label>
+              <input
+                id="extendHolidayDays"
+                type="number"
+                min="0"
+                max="14"
+                className="form-control form-control-sm"
+                value={extendHolidayDays}
+                onChange={(e) => setExtendHolidayDays(Number(e.target.value))}
+                placeholder="e.g. +3"
+              />
+            </div>
+
+            {/* College Semester Working Dates & Target Days */}
+            <div className="col-12 col-md-4">
               <label className="form-label small fw-bold text-muted mb-1">Required Working Days (Target)</label>
               <input
                 type="number"
@@ -635,7 +728,7 @@ export default function AcademicCalendarPage() {
                 placeholder="e.g. 90"
               />
             </div>
-            <div className="col-12 col-md-3">
+            <div className="col-12 col-md-4">
               <label className="form-label small fw-bold text-muted mb-1">Start Date of College</label>
               <input
                 type="date"
@@ -644,7 +737,7 @@ export default function AcademicCalendarPage() {
                 onChange={(e) => setCollegeStartDate(e.target.value)}
               />
             </div>
-            <div className="col-12 col-md-3">
+            <div className="col-12 col-md-4">
               <label className="form-label small fw-bold text-muted mb-1">End Date of Working Days</label>
               <input
                 type="date"
@@ -652,16 +745,6 @@ export default function AcademicCalendarPage() {
                 value={collegeEndDate}
                 onChange={(e) => setCollegeEndDate(e.target.value)}
               />
-            </div>
-            <div className="col-12 col-md-3">
-              <button
-                className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-                onClick={handleGenerate}
-                disabled={isGenerating}
-              >
-                <Sparkles size={14} className={isGenerating ? 'spinner-border spinner-border-sm' : ''} />
-                {isGenerating ? 'Recalculating...' : 'Recalculate & Apply'}
-              </button>
             </div>
           </div>
         </div>

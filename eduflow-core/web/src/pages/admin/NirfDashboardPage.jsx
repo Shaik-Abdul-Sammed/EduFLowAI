@@ -254,13 +254,13 @@ export default function NirfDashboardPage() {
                 fontWeight: 600,
               }}
             >
-              2024 Framework
+              {new Date().getFullYear()} Framework
             </span>
           </div>
-          <h2 className="h3 fw-bold mb-1" style={{ color: 'var(--app-text, #FFFFFF)', fontWeight: 800 }}>
+          <h2 className="h3 fw-bold mb-1" style={{ color: '#ffffff', fontWeight: 800, opacity: 1 }}>
             NIRF Ranking Analysis &amp; Peer Benchmarking
           </h2>
-          <p className="small mb-0" style={{ color: 'var(--app-text-muted, #94A3B8)', opacity: 0.95, fontWeight: 500, fontSize: '0.925rem' }}>
+          <p className="small mb-0" style={{ color: '#cbd5e1', opacity: 1, fontWeight: 500, fontSize: '0.925rem' }}>
             National Institutional Ranking Framework analytics, comparative benchmarking, and rank advancement roadmaps.
           </p>
         </div>
@@ -744,19 +744,22 @@ export default function NirfDashboardPage() {
         </h5>
 
         <div className="row g-3 text-center">
-          {[
-            { year: '2020', rank: 78, score: 62.4, tlr: 68.2, rp: 54.1 },
-            { year: '2021', rank: 71, score: 65.1, tlr: 70.4, rp: 57.3 },
-            { year: '2022', rank: 64, score: 68.0, tlr: 72.1, rp: 60.5 },
-            { year: '2023', rank: 58, score: 70.5, tlr: 73.8, rp: 62.4 },
-            { year: '2024 (Current)', rank: 51, score: 72.8, tlr: 75.4, rp: 64.2 },
-          ].map((item, idx) => (
+          {(() => {
+            const curYr = new Date().getFullYear();
+            return [
+              { year: String(curYr - 4), rank: 78, score: 62.4, tlr: 68.2, rp: 54.1 },
+              { year: String(curYr - 3), rank: 71, score: 65.1, tlr: 70.4, rp: 57.3 },
+              { year: String(curYr - 2), rank: 64, score: 68.0, tlr: 72.1, rp: 60.5 },
+              { year: String(curYr - 1), rank: 58, score: 70.5, tlr: 73.8, rp: 62.4 },
+              { year: `${curYr} (Current)`, rank: 51, score: 72.8, tlr: 75.4, rp: 64.2 },
+            ];
+          })().map((item, idx) => (
             <div key={item.year || `year-${idx}`} className="col">
-              <div className="p-3 bg-light rounded-3">
-                <span className="small text-muted fw-semibold">{item.year}</span>
+              <div className="p-3 bg-light rounded-3 border" style={{ color: '#1e293b' }}>
+                <span className="small fw-semibold" style={{ color: '#475569' }}>{item.year}</span>
                 <h4 className="fw-bold text-primary my-1">#{item.rank}</h4>
-                <div className="small text-muted">
-                  Score: <strong>{item.score}</strong>
+                <div className="small" style={{ color: '#334155' }}>
+                  Score: <strong style={{ color: '#0f172a' }}>{item.score}</strong>
                 </div>
                 <span className="badge bg-success bg-opacity-10 text-success small mt-1">
                   +{(item.score - 60).toFixed(1)} pts
