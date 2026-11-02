@@ -108,6 +108,11 @@ export function createApp({ db } = {}) {
   // API v1 routes
   app.use('/api/v1/search', createSearchRouter(db))
   app.use('/api/v1/auth', createAuthRouter())
+  app.use('/api/auth', createAuthRouter())
+  app.use('/auth', createAuthRouter())
+  app.get(['/api/v1/default-institution', '/api/default-institution', '/default-institution'], (req, res) => {
+    res.json({ id: 1, name: 'EduFlow Campus' })
+  })
   app.use('/api/v1/backup', backupRouter)
   // Backward compatibility: also mount on /api/search
   app.use('/api/search', createSearchRouter(db))

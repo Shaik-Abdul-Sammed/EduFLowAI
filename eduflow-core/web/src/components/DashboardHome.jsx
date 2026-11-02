@@ -474,7 +474,7 @@ export default function DashboardHome({ role, routes = [] }) {
               </div>
               <div style={{ height: 240, width: '100%', minWidth: 0, position: 'relative' }}>
                 {chartData && chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={240}>
+                  <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={240} initialDimension={{ width: 500, height: 240 }}>
                     <LineChart
                       data={chartData}
                       margin={{ top: 10, right: 20, left: -10, bottom: 0 }}

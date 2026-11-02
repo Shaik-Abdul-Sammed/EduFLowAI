@@ -538,7 +538,7 @@ export default function NaacDashboardPage() {
                         Student-Faculty Ratio (Target &le; 15:1)
                       </div>
                       <div style={{ width: '100%', height: 110 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110} initialDimension={{ width: 250, height: 110 }}>
                           <BarChart data={CRITERION_2_CHART_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                             <XAxis dataKey="department" stroke="#6B7280" fontSize={10} />
                             <YAxis stroke="#6B7280" fontSize={10} />
@@ -556,7 +556,7 @@ export default function NaacDashboardPage() {
                         5-Year Research Publications
                       </div>
                       <div style={{ width: '100%', height: 110 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110} initialDimension={{ width: 250, height: 110 }}>
                           <LineChart data={CRITERION_3_CHART_DATA} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
                             <XAxis dataKey="year" stroke="#6B7280" fontSize={10} />
                             <YAxis stroke="#6B7280" fontSize={10} />
@@ -574,7 +574,7 @@ export default function NaacDashboardPage() {
                         Infrastructure Resource Allocation
                       </div>
                       <div style={{ width: '100%', height: 110 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110} initialDimension={{ width: 250, height: 110 }}>
                           <PieChart>
                             <Pie data={CRITERION_4_CHART_DATA} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={42} innerRadius={22}>
                               {CRITERION_4_CHART_DATA.map((entry, index) => (
@@ -594,7 +594,7 @@ export default function NaacDashboardPage() {
                         Department Placement Rate (%)
                       </div>
                       <div style={{ width: '100%', height: 110 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110} initialDimension={{ width: 250, height: 110 }}>
                           <BarChart data={CRITERION_5_CHART_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                             <XAxis dataKey="department" stroke="#6B7280" fontSize={10} />
                             <YAxis stroke="#6B7280" fontSize={10} />
@@ -612,7 +612,7 @@ export default function NaacDashboardPage() {
                         Institutional Values & Best Practices Radar
                       </div>
                       <div style={{ width: '100%', height: 110 }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={110} initialDimension={{ width: 250, height: 110 }}>
                           <RadarChart data={CRITERION_7_CHART_DATA} cx="50%" cy="50%" outerRadius={38}>
                             <PolarGrid stroke="#374151" />
                             <PolarAngleAxis dataKey="metric" stroke="#9CA3AF" fontSize={8} />
