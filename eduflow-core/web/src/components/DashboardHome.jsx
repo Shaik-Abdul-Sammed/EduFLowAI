@@ -109,6 +109,11 @@ export default function DashboardHome({ role, routes = [] }) {
           const res = await fetch(`${getApiBaseURL()}/v1/admin/dashboard-metrics`, {
             headers: { Authorization: `Bearer ${token}` },
           })
+          if (res.status === 401) {
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('token')
+            return
+          }
           if (res.ok) {
             const data = await safeJson(res)
             if (isMounted) setAdminMetrics((prev) => ({ ...prev, ...data }))
@@ -468,8 +473,8 @@ export default function DashboardHome({ role, routes = [] }) {
                 </span>
               </div>
               <div style={{ height: 240, width: '100%', minWidth: 0, position: 'relative' }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
-                  {chartData && chartData.length > 0 ? (
+                {chartData && chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={240}>
                     <LineChart
                       data={chartData}
                       margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
@@ -491,12 +496,12 @@ export default function DashboardHome({ role, routes = [] }) {
                       <Line type="monotone" dataKey="grades" name="Grades Score" stroke="#10B981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                       <Line type="monotone" dataKey="classAvg" name="Class Average" stroke="#F59E0B" strokeWidth={2} strokeDasharray="4 4" dot={false} />
                     </LineChart>
-                  ) : (
-                    <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--app-text-muted)' }}>
-                      Loading chart...
-                    </div>
-                  )}
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--app-text-muted)' }}>
+                    Loading chart...
+                  </div>
+                )}
               </div>
             </div>
           </div>

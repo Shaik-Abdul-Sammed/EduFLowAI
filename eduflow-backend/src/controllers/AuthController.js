@@ -55,7 +55,7 @@ export class AuthController {
       const accessToken = jwt.sign(
         { id: user.id, role: user.role, institutionId: user.institution_id, username: user.username || user.email },
         JWT_SECRET,
-        { expiresIn: '15m' }
+        { expiresIn: '7d' }
       )
       const refreshToken = jwt.sign(
         { id: user.id },

@@ -1,5 +1,6 @@
 import { useState, Suspense } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar'
 import TourGuide from './TourGuide'
@@ -9,7 +10,21 @@ import { useAuth } from '../hooks/useAuth'
 export default function Layout({ routes }) {
   const { user } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const isDashboardRoot = [
+    '/',
+    '/login',
+    '/register-institution',
+    '/signup',
+    '/admin-dashboard',
+    '/student-dashboard',
+    '/faculty-dashboard',
+    '/parent-dashboard',
+    '/hod-dashboard',
+    '/staff-dashboard',
+  ].includes(location.pathname)
 
   // Explicitly hide Sidebar, Navbar, and Dashboard components on public authentication pages
   if (
@@ -62,6 +77,35 @@ export default function Layout({ routes }) {
         <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
         
         <main style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
+          {!isDashboardRoot && (
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    navigate(-1)
+                  } else {
+                    navigate(user?.role ? `/${user.role}-dashboard` : '/')
+                  }
+                }}
+                className="btn btn-sm d-inline-flex align-items-center gap-1.5 shadow-sm"
+                style={{
+                  borderRadius: '8px',
+                  padding: '0.35rem 0.8rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  backgroundColor: 'var(--card-bg, #ffffff)',
+                  border: '1px solid var(--border-color, rgba(148, 163, 184, 0.3))',
+                  color: 'var(--app-text, #1e293b)',
+                  cursor: 'pointer',
+                }}
+                title="Back to previous page"
+                aria-label="Back to previous page"
+              >
+                <ArrowLeft size={14} /> Back
+              </button>
+            </div>
+          )}
           <Suspense fallback={<div className="container-fluid py-3"><SkeletonLoader variant="card" /></div>}>
             <Outlet />
           </Suspense>

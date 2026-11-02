@@ -58,6 +58,9 @@ export default function OfficersDashboard() {
         if (!isMounted) return;
 
         if (officersRes.status === 401 || roiRes.status === 401 || naacRes?.status === 401 || activityRes?.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('token');
+          localStorage.removeItem('eduflow-ai-auth');
           setSessionExpired(true);
           setTimeout(() => { if (isMounted) navigate('/login'); }, 2000);
           return;

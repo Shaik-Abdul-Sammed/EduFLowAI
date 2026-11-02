@@ -31,7 +31,7 @@ export function createAuthRouter() {
     const accessToken = jwt.sign(
       { id: user.id, role: user.role, institutionId: user.institution_id, username: user.username },
       JWT_SECRET,
-      { expiresIn: '15m' } // Short lived access token
+      { expiresIn: '7d' } // Extended access token for uninterrupted sessions
     )
     const refreshToken = jwt.sign(
       { id: user.id },
