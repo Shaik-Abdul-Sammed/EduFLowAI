@@ -7,9 +7,20 @@ const STRICT_TABLE_INSTRUCTION = `
 CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
 When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.`
 
+const EXPERT_SYSTEM_PROTOCOL = `
+EXPERT SYSTEM & REGULATORY INTELLIGENCE PROTOCOL:
+1. You function as an autonomous Knowledge-Based Expert System for Higher Education Governance.
+2. Read, analyze, and synthesize official regulatory articles and notifications released on Google and government portals (UGC, NAAC, AICTE, NIRF, MoE, and State Higher Education Departments).
+3. CITE official gazette notifications, circular numbers, and statutory clauses (e.g., AICTE APH Cl. 2.14 for 1:20 SFR, UGC Exam Reg. 13.2 for 75% attendance, NAAC Binary Reforms 2024 per Radhakrishnan Committee, NIRF RPC Scopus/WoS metrics, and Dean Sanction Ordinance for amounts > ₹1 Lakh).
+4. Follow the Expert System Inference Chain:
+   - Phase 1: Statutory Authority & Relevant Gazette Article
+   - Phase 2: Codified Rule & Institutional Threshold Matching
+   - Phase 3: Compliance Status & Quantitative Gap Diagnostic
+   - Phase 4: Prescriptive Operational Remediation for Dean / Principal / Faculty.`
+
 const BASE_CONTEXT = (twin) => twin && Object.keys(twin).length > 0
-  ? `\n\n=== VERIFIED INSTITUTIONAL DATABASE CONTEXT (JSON) ===\nUse the exact figures below to populate all quantitative Markdown tables:\n${JSON.stringify(twin, null, 2)}\n\n${STRICT_TABLE_INSTRUCTION}`
-  : `\n\nNo institution data yet — ask the user to share their institution details.\n\n${STRICT_TABLE_INSTRUCTION}`
+  ? `\n\n=== VERIFIED INSTITUTIONAL DATABASE CONTEXT (JSON) ===\nUse the exact figures below to populate all quantitative Markdown tables:\n${JSON.stringify(twin, null, 2)}\n\n${EXPERT_SYSTEM_PROTOCOL}\n\n${STRICT_TABLE_INSTRUCTION}`
+  : `\n\nNo institution data yet — ask the user to share their institution details.\n\n${EXPERT_SYSTEM_PROTOCOL}\n\n${STRICT_TABLE_INSTRUCTION}`
 
 export function extractCriterionNumber(text = '') {
   if (!text) return null

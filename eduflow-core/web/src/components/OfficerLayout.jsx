@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Send, Download, Copy, Check, Share2, Mail,
   Paperclip, X, ChevronDown, ChevronUp, Clock, FileJson,
-  Sparkles, Printer, Eye, Edit,
+  Sparkles, Printer, Eye, Edit, Brain, ShieldCheck, CheckCircle, AlertTriangle,
 } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
 import { useStreamingOfficer } from '../hooks/useStreamingOfficer';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../hooks/useAuth';
+import { evaluateExpertSystem } from '../services/expertSystemRules';
 import MarkdownRenderer from './MarkdownRenderer';
 import ShareReportModal from './ShareReportModal';
 import EmailReportModal from './EmailReportModal';
@@ -93,6 +94,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
   const [shareContent, setShareContent] = useState('');
+  const [expertSystemOpen, setExpertSystemOpen] = useState(false);
+  const expertDomain = evaluateExpertSystem(type);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -567,7 +570,28 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               )}
             </div>
             {/* Top-right actions */}
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setExpertSystemOpen((v) => !v)}
+                title="Toggle Expert System Rules & Diagnostic Engine"
+                aria-label="Toggle Expert System Rules & Diagnostic Engine"
+                style={{
+                  background: expertSystemOpen ? 'rgba(139,92,246,0.3)' : accentLight,
+                  border: `1px solid ${accentBorder}`,
+                  color: accentColor,
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <Brain size={14} /> Expert System ({expertDomain.compliancePercentage}%)
+              </button>
               {latestAssistantContent && (
                 <>
                   <button type="button" onClick={() => openShare()} title="Share report" aria-label="Share report" style={iconBtnStyle}><Share2 size={15} /></button>
@@ -578,6 +602,54 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             </div>
           </div>
           <p style={{ margin: 0, fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)' }}>{headerDesc}</p>
+
+          {/* Expert System Rules Panel */}
+          {expertSystemOpen && (
+            <div style={{ marginTop: '0.85rem', padding: '1rem', background: 'rgba(17, 24, 39, 0.95)', border: `1px solid ${accentBorder}`, borderRadius: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldCheck size={16} color={accentColor} />
+                  <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{expertDomain.systemName}</strong>
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>({expertDomain.authority})</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#10B981', background: 'rgba(16,185,129,0.15)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                    Score: {expertDomain.summaryScore}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const auditPrompt = `Run a comprehensive Expert System audit on ${name} metrics. Evaluate against statutory thresholds (${expertDomain.frameworkVersion}), cite all relevant regulatory clauses, identify quantitative gaps, and generate full Markdown data tables with prescriptive remediations.`;
+                      handleSend(auditPrompt);
+                      setExpertSystemOpen(false);
+                    }}
+                    style={{ background: accentColor, color: '#fff', border: 'none', padding: '0.25rem 0.65rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    ⚡ Run Full Diagnostic Audit
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.5rem' }}>
+                {expertDomain.rules.map((rule) => {
+                  const isOk = rule.status === 'COMPLIANT';
+                  return (
+                    <div key={rule.id} style={{ padding: '0.5rem 0.65rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                        <span style={{ fontWeight: 600, color: '#f3f4f6' }}>{rule.name}</span>
+                        <span style={{ color: isOk ? '#10b981' : '#f59e0b', fontSize: '0.68rem', fontWeight: 'bold' }}>
+                          {isOk ? '● COMPLIANT' : '▲ ATTENTION'}
+                        </span>
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.68rem' }}>{rule.statutoryClause}</div>
+                      <div style={{ marginTop: '0.25rem', color: accentColor, fontSize: '0.7rem' }}>
+                        Threshold: {rule.statutoryThreshold}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Suggested prompts */}
           <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>

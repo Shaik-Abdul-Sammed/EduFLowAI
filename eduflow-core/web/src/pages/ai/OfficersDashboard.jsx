@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert, CheckCircle2, Brain } from 'lucide-react';
 import { getFullApiUrl } from '../../config/apiConfig';
+import { EXPERT_SYSTEMS, evaluateExpertSystem } from '../../services/expertSystemRules';
 
 const OFFICER_META = {
   'accreditation': { icon: '🏛️', color: '#8B5CF6', name: 'AI Accreditation Officer', desc: 'NAAC, NBA, AICTE & UGC report generation, gap analysis, readiness scoring', statLabel: 'Reports Generated' },
@@ -278,6 +279,55 @@ export default function OfficersDashboard() {
             </div>
           </div>
           )}
+        </div>
+
+        {/* Institutional Expert Systems Live Status */}
+        <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2.5rem', background: 'rgba(59, 130, 246, 0.05)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ padding: '0.45rem', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.2)' }}>
+                <Brain size={20} color="#8B5CF6" />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Institutional Expert Systems Network</h3>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>
+                  Continuous knowledge-based rule validation across UGC, NAAC, AICTE &amp; NIRF statutory mandates
+                </p>
+              </div>
+            </div>
+            <span style={{ fontSize: '0.75rem', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '0.25rem 0.65rem', borderRadius: '999px', fontWeight: 600, border: '1px solid rgba(16,185,129,0.3)' }}>
+              ● 5 Active Domain Inference Engines
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem' }}>
+            {Object.keys(EXPERT_SYSTEMS).map((sysKey) => {
+              const sys = evaluateExpertSystem(sysKey);
+              const isOk = sys.overallStatus === 'OPTIMAL';
+              return (
+                <Link
+                  key={sysKey}
+                  to={`/ai/officers/${sysKey}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', transition: 'all 0.2s', height: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#fff' }}>{sys.systemName.split(' ')[0]} {sys.systemName.split(' ')[1]}</span>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '4px', background: isOk ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)', color: isOk ? '#10b981' : '#f59e0b' }}>
+                        {sys.compliancePercentage}%
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.65rem' }}>
+                      {sys.authority.split('&')[0]}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <span>Inspect Rules &amp; Inference →</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {/* Your AI Officers */}

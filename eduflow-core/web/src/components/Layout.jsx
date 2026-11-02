@@ -1,10 +1,11 @@
 import { useState, Suspense } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Brain } from 'lucide-react'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar'
 import TourGuide from './TourGuide'
 import SkeletonLoader from './SkeletonLoader'
+import ExpertSystemsModal from './ExpertSystemsModal'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
@@ -12,6 +13,7 @@ export default function Layout({ routes }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [expertModalOpen, setExpertModalOpen] = useState(false)
 
   const isDashboardRoot = [
     '/',
@@ -77,8 +79,8 @@ export default function Layout({ routes }) {
         <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
         
         <main style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
-          {!isDashboardRoot && (
-            <div className="d-flex align-items-center gap-2 mb-3">
+          <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
+            {!isDashboardRoot ? (
               <button
                 type="button"
                 onClick={() => {
@@ -104,8 +106,28 @@ export default function Layout({ routes }) {
               >
                 <ArrowLeft size={14} /> Back
               </button>
-            </div>
-          )}
+            ) : <div />}
+            <button
+              type="button"
+              onClick={() => setExpertModalOpen(true)}
+              className="btn btn-sm d-inline-flex align-items-center gap-1.5 shadow-sm ms-auto"
+              style={{
+                borderRadius: '8px',
+                padding: '0.35rem 0.85rem',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.2))',
+                border: '1px solid rgba(139, 92, 246, 0.4)',
+                color: 'var(--app-text, #ffffff)',
+                cursor: 'pointer',
+              }}
+              title="Open Institutional Expert Systems Knowledge & Inference Hub"
+              aria-label="Open Institutional Expert Systems Knowledge & Inference Hub"
+            >
+              <Brain size={14} color="#8B5CF6" /> Expert Systems
+            </button>
+          </div>
+          <ExpertSystemsModal isOpen={expertModalOpen} onClose={() => setExpertModalOpen(false)} />
           <Suspense fallback={<div className="container-fluid py-3"><SkeletonLoader variant="card" /></div>}>
             <Outlet />
           </Suspense>

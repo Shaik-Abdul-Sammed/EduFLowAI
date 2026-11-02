@@ -12,6 +12,7 @@ export function createLiveDataRouter() {
   router.get('/holidays', LiveDataController.getHolidays)
   router.get('/news', LiveDataController.getNews)
   router.post('/search', LiveDataController.search)
+  router.post('/analyze-article', LiveDataController.analyzeArticle)
   router.post('/refresh', LiveDataController.refreshAll)
 
   return router

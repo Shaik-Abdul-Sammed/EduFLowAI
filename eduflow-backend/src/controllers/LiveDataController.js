@@ -113,6 +113,20 @@ export class LiveDataController {
     }
   }
 
+  static async analyzeArticle(req, res) {
+    try {
+      const { article, query } = req.body || {}
+      const analysis = GoogleSearchService.analyzeRegulatoryArticle(article || {}, query || '')
+      return res.status(200).json({
+        success: true,
+        analysis
+      })
+    } catch (err) {
+      console.error('[LiveDataController] AnalyzeArticle error:', err)
+      return res.status(500).json({ error: 'Failed to analyze regulatory article' })
+    }
+  }
+
   static async refreshAll(req, res) {
     try {
       const institutionId = req.user?.institutionId || 1
