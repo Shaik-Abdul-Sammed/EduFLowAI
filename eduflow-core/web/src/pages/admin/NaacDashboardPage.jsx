@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { safeJson } from '../../utils/wakeUpHandler';
+import { useToast } from '../../context/ToastContext';
 import {
   Award,
   TrendingUp,
@@ -127,6 +128,7 @@ const RECENT_REPORTS_DEFAULT = [
 
 export default function NaacDashboardPage() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -229,11 +231,11 @@ export default function NaacDashboardPage() {
         a.remove();
         window.URL.revokeObjectURL(url);
       } else {
-        alert('Failed to generate PDF. Please try again.');
+        addToast('Failed to generate PDF. Please try again.', 'danger');
       }
     } catch (err) {
       console.error('PDF download error:', err);
-      alert('Network error downloading PDF report.');
+      addToast('Network error downloading PDF report.', 'danger');
     } finally {
       setDownloadingPdf(false);
     }

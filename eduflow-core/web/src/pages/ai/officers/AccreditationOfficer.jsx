@@ -123,7 +123,15 @@ export default function AccreditationOfficer() {
           setSelectedCriterion(val);
           const opt = CRITERIA_OPTIONS.find((o) => o.value === val);
           if (opt?.prompt && typeof setInputValue === 'function') {
-            setInputValue(opt.prompt);
+            // Only auto-fill prompt if the user hasn't typed anything custom yet
+            // (i.e. field is empty or still contains a previous suggestion prompt)
+            const currentVal = (typeof document !== 'undefined'
+              ? (document.getElementById('naac-criteria-select')?.closest('form')?.querySelector('textarea')?.value || '')
+              : '');
+            const isPrevSuggestion = CRITERIA_OPTIONS.some((o) => o.prompt === currentVal);
+            if (!currentVal.trim() || isPrevSuggestion) {
+              setInputValue(opt.prompt);
+            }
           }
         }}
         style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '8px', color: '#f8fafc', padding: '0.4rem 0.7rem', fontSize: '0.82rem', outline: 'none', cursor: 'pointer' }}

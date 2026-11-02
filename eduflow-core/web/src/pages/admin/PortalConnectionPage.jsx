@@ -146,12 +146,12 @@ export default function PortalConnectionPage() {
         setTestStatus('success')
         addToast('Connection test verified successfully!', 'success')
       } else {
-        setTestStatus('success') // in demo sandbox mock success
-        addToast('Connection test successful (verified handshake)', 'success')
+        setTestStatus('failed')
+        addToast(`Connection refused (HTTP ${res.status}). Check credentials and portal URL.`, 'danger')
       }
-    } catch {
-      setTestStatus('success')
-      addToast('Connection test verified', 'success')
+    } catch (err) {
+      setTestStatus('failed')
+      addToast('Cannot reach portal server. Check URL and network.', 'danger')
     }
   }
 

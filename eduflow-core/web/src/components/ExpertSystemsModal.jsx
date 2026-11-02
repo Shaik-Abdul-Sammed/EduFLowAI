@@ -7,11 +7,11 @@ import {
 import { EXPERT_SYSTEMS, evaluateExpertSystem } from '../services/expertSystemRules';
 
 const OFFICER_ROUTES = {
-  accreditation: '/ai/officers/accreditation',
-  'student-success': '/ai/officers/student-success',
-  timetable: '/ai/officers/timetable',
-  admissions: '/ai/officers/admissions',
-  finance: '/ai/officers/finance'
+  accreditation: '/officer/accreditation',
+  'student-success': '/officer/student-success',
+  timetable: '/officer/timetable',
+  admissions: '/officer/admissions',
+  finance: '/officer/finance'
 };
 
 const SYSTEM_ICONS = {
@@ -279,7 +279,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
               className="btn btn-sm btn-primary d-flex align-items-center gap-1"
               onClick={() => {
                 onClose();
-                const route = OFFICER_ROUTES[activeTab] || '/ai/officers';
+                const route = OFFICER_ROUTES[activeTab] || '/officers-dashboard';
                 navigate(route);
               }}
             >

@@ -112,6 +112,8 @@ export default function DashboardHome({ role, routes = [] }) {
           if (res.status === 401) {
             localStorage.removeItem('accessToken')
             localStorage.removeItem('token')
+            localStorage.removeItem('eduflow_auth')
+            navigate('/login', { replace: true })
             return
           }
           if (res.ok) {

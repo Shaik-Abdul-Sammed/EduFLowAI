@@ -83,7 +83,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     if (status === 'connecting') {
       timer = setTimeout(() => {
         setConnectionTimedOut(true);
-      }, 3000);
+      }, 12000);
     } else {
       setConnectionTimedOut(false);
     }

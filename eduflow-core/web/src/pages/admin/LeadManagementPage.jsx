@@ -194,11 +194,9 @@ export default function LeadManagementPage() {
       setLeads((prev) => prev.filter((l) => l.id !== id))
       if (selectedLead?.id === id) setSelectedLead(null)
       showToast('Lead deleted successfully')
-    } catch {
-      // Optimistically remove if backend in mock mode or error
-      setLeads((prev) => prev.filter((l) => l.id !== id))
-      if (selectedLead?.id === id) setSelectedLead(null)
-      showToast('Lead deleted successfully')
+    } catch (err) {
+      // Do NOT optimistically remove — show real error so ghost leads don't appear on reload
+      showToast(err?.message || 'Failed to delete lead. Please try again.', true)
     } finally {
       setActionLoading(false)
     }
