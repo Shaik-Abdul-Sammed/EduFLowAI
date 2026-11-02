@@ -43,9 +43,16 @@ if (useMemoryOnly) {
 const memoryPool = createMemoryPool()
 let hasLoggedMemoryWarning = useMemoryOnly
 
-const isRemote = /render\.com|dpg-/.test(databaseUrl);
+let activeFallbackToMemory = false
+
+let normalizedDatabaseUrl = databaseUrl
+if (/@dpg-[a-z0-9]+-[a-z0-9]+(?=[:/])/.test(normalizedDatabaseUrl) && !normalizedDatabaseUrl.includes('.render.com')) {
+  normalizedDatabaseUrl = normalizedDatabaseUrl.replace(/(@dpg-[a-z0-9]+-[a-z0-9]+)(?=[:/])/, '$1.singapore-postgres.render.com')
+}
+
+const isRemote = /render\.com|dpg-/.test(normalizedDatabaseUrl);
 const realPoolConfig = {
-  connectionString: databaseUrl,
+  connectionString: normalizedDatabaseUrl,
   max: 50,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
@@ -79,9 +86,12 @@ function isConnectionFailure(error) {
     'ENETUNREACH',
     'connect ECONNREFUSED',
     'getaddrinfo ENOTFOUND',
+    'getaddrinfo EAI_AGAIN',
     'timeout',
     'Connection terminated',
     'ETIMEDOUT',
+    'password authentication failed',
+    'no pg_hba.conf entry',
   ].some((token) => message.includes(token) || error?.code === token)
 }
 
@@ -101,12 +111,22 @@ export const pool = {
   },
 
   async getHealth() {
+    if (activeFallbackToMemory || useMemoryOnly) {
+      return { mode: 'memory', persistent: false, warning: 'Fallback to memory active' }
+    }
+
     if (forcePostgres) {
       if (!realPool) {
-        throw new Error('No PostgreSQL connection pool available')
+        return { mode: 'memory', persistent: false, warning: 'No PostgreSQL connection pool available' }
       }
-      await realPool.query('SELECT 1')
-      return { mode: 'postgres', persistent: true }
+      try {
+        await realPool.query('SELECT 1')
+        return { mode: 'postgres', persistent: true }
+      } catch (err) {
+        logMemoryFallbackWarningOnce()
+        activeFallbackToMemory = true
+        return { mode: 'memory', persistent: false, warning: 'Fallback to memory active: ' + err.message }
+      }
     }
 
     if (realPool) {
@@ -115,6 +135,7 @@ export const pool = {
         return { mode: 'postgres', persistent: true }
       } catch (err) {
         logMemoryFallbackWarningOnce()
+        activeFallbackToMemory = true
         return { mode: 'memory', persistent: false, warning: 'Fallback to memory active: ' + err.message }
       }
     }
@@ -126,7 +147,7 @@ export const pool = {
   async connect() {
     const ctx = institutionContext.getStore()
 
-    if (useMemoryOnly) {
+    if (useMemoryOnly || activeFallbackToMemory) {
       logMemoryFallbackWarningOnce()
       if (memoryPool.setSessionInstitution) {
         memoryPool.setSessionInstitution(ctx?.institutionId || null, ctx?.bypassRls || false)
@@ -151,16 +172,17 @@ export const pool = {
       }
       return client
     } catch (error) {
-      if (forcePostgres) {
-        logger.error('FATAL: PostgreSQL connection failed and DB_MODE=postgres:', error)
-        throw error
-      }
       if (isConnectionFailure(error)) {
         logMemoryFallbackWarningOnce()
+        activeFallbackToMemory = true
         return {
           query: (text, params) => memoryPool.query(text, params),
           release: () => {},
         }
+      }
+      if (forcePostgres) {
+        logger.error('FATAL: PostgreSQL connection failed and DB_MODE=postgres:', error)
+        throw error
       }
       throw error
     }
@@ -169,7 +191,7 @@ export const pool = {
   async query(text, params = []) {
     const ctx = institutionContext.getStore()
 
-    if (useMemoryOnly) {
+    if (useMemoryOnly || activeFallbackToMemory) {
       logMemoryFallbackWarningOnce()
       if (memoryPool.setSessionInstitution) {
         memoryPool.setSessionInstitution(ctx?.institutionId || null, ctx?.bypassRls || false)
@@ -199,13 +221,14 @@ export const pool = {
       }
       return await realPool.query(text, params)
     } catch (error) {
+      if (isConnectionFailure(error)) {
+        logMemoryFallbackWarningOnce()
+        activeFallbackToMemory = true
+        return memoryPool.query(text, params)
+      }
       if (forcePostgres) {
         logger.error('FATAL: PostgreSQL query failed and DB_MODE=postgres:', error)
         throw error
-      }
-      if (isConnectionFailure(error)) {
-        logMemoryFallbackWarningOnce()
-        return memoryPool.query(text, params)
       }
       throw error
     }

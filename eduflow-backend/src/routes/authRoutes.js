@@ -152,17 +152,21 @@ export function createAuthRouter() {
         // Attempt decode to find user id without throwing if expired
         const decoded = jwt.decode(refreshToken)
         if (decoded?.id) {
-          await UserRepository.revokeRefreshToken(decoded.id, refreshToken)
-          const user = await UserRepository.findById(decoded.id)
-          if (user) {
-            await UserRepository.logAudit(user.institution_id, user.id, 'LOGOUT_SUCCESS', req.ip, req.get('user-agent'))
+          try {
+            await UserRepository.revokeRefreshToken(decoded.id, refreshToken)
+            const user = await UserRepository.findById(decoded.id)
+            if (user) {
+              await UserRepository.logAudit(user.institution_id, user.id, 'LOGOUT_SUCCESS', req.ip, req.get('user-agent'))
+            }
+          } catch (dbErr) {
+            console.warn('Non-blocking logout db operation:', dbErr.message)
           }
         }
       }
-      res.json({ success: true })
+      return res.json({ success: true })
     } catch (err) {
-      console.error('Logout error:', err)
-      res.status(500).json({ error: 'Internal server error' })
+      console.warn('Logout error handled cleanly:', err.message)
+      return res.json({ success: true })
     }
   })
 

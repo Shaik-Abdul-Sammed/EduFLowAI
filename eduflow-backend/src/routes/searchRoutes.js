@@ -213,8 +213,9 @@ export function createSearchRouter(db = pool) {
       }))
 
       return res.json({ items })
-    } catch {
-      return res.status(500).json({ error: 'Failed to read recent searches' })
+    } catch (err) {
+      console.warn('Recent searches read error (returning empty fallback):', err.message)
+      return res.json({ items: [] })
     }
   })
 

@@ -121,6 +121,9 @@ export default function GlobalSearch({ routes = [], currentRole = 'student', cla
       const local = loadLocalRecent(currentRole)
       if (mounted) setRecent(local)
 
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null
+      if (!token) return
+
       try {
         const serverItems = await getRecentSearches(currentRole)
         if (mounted && Array.isArray(serverItems) && serverItems.length) {
