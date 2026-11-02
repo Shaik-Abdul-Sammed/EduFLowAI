@@ -14,10 +14,13 @@ import {
   ShieldCheck,
   Check,
   X,
-  Sparkles
+  Sparkles,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 export default function WhatsAppAttendancePage() {
+  const [demoMode, setDemoMode] = useState(false)
   const [status, setStatus] = useState({
     configured: false,
     service: 'Console Simulator Mode',
@@ -180,6 +183,7 @@ export default function WhatsAppAttendancePage() {
       })
       const data = await safeJson(res)
       setSimResult(data)
+      setSimMessage('')
       await Promise.all([fetchStaged(), fetchLogs()])
     } catch (err) {
       setSimResult({ error: err.message })
@@ -230,10 +234,31 @@ export default function WhatsAppAttendancePage() {
             Allow teaching faculty to mark class attendance via natural WhatsApp messages without installing another app.
           </p>
         </div>
-        <button className="btn btn-outline-secondary d-flex align-items-center" onClick={refreshAll} disabled={loading}>
-          <RefreshCw size={14} className={`me-1 ${loading ? 'spinner-border spinner-border-sm' : ''}`} /> Refresh
-        </button>
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            className={`btn btn-sm ${demoMode ? 'btn-danger' : 'btn-outline-primary'} d-flex align-items-center gap-1 shadow-sm`}
+            onClick={() => setDemoMode(!demoMode)}
+            title={demoMode ? 'Exit full-screen demo presentation mode' : 'Hide navbar for distraction-free demo'}
+          >
+            {demoMode ? <><EyeOff size={14} /> Exit Demo Mode</> : <><Eye size={14} /> Demo Mode (Hide Navbar)</>}
+          </button>
+          <button className="btn btn-outline-secondary btn-sm d-flex align-items-center shadow-sm" onClick={refreshAll} disabled={loading}>
+            <RefreshCw size={14} className={`me-1 ${loading ? 'spinner-border spinner-border-sm' : ''}`} /> Refresh
+          </button>
+        </div>
       </div>
+
+      {demoMode && (
+        <style>{`
+          nav, header, .navbar, .main-navbar, .sidebar, .main-content-wrapper > nav {
+            display: none !important;
+          }
+          .main-content-wrapper {
+            margin-left: 0 !important;
+          }
+        `}</style>
+      )}
 
       {actionMsg && (
         <div className="alert alert-success d-flex align-items-center mb-3">
@@ -299,11 +324,11 @@ export default function WhatsAppAttendancePage() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="e.g. CSE 3A present 45 absent 5 or CS301 23/30 or YES"
+                  placeholder="Type attendance command (e.g. 'CSE 3A present 45 absent 5' or 'YES')..."
                   value={simMessage}
                   onChange={(e) => setSimMessage(e.target.value)}
                 />
-                <div className="d-flex gap-1 mt-1">
+                <div className="d-flex gap-1 mt-1 flex-wrap">
                   <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-muted" onClick={() => setSimMessage('CSE 3A present 45 absent 5')}>
                     Format 1 (45p 5a)
                   </button>
@@ -319,7 +344,7 @@ export default function WhatsAppAttendancePage() {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-sm d-flex align-items-center" disabled={simulating}>
+              <button type="submit" className="btn btn-primary btn-sm d-flex align-items-center" disabled={simulating || !simMessage.trim()}>
                 <Send size={14} className="me-1" /> {simulating ? 'Processing...' : 'Send Simulated Message'}
               </button>
             </form>
@@ -441,19 +466,19 @@ export default function WhatsAppAttendancePage() {
                 <Sparkles size={14} /> Load Demo Reports
               </button>
             </div>
-            <div style={{ overflowX: 'auto', width: '100%', maxHeight: '320px', overflowY: 'auto' }}>
-              <table className="table table-sm align-middle mb-0" style={{ minWidth: '600px' }}>
-                <thead className="table-light small">
+            <div style={{ overflowX: 'auto', width: '100%', maxHeight: '350px', overflowY: 'auto' }}>
+              <table className="table table-sm align-middle mb-0" style={{ minWidth: '720px', tableLayout: 'fixed' }}>
+                <thead className="table-light small text-uppercase">
                   <tr>
-                    <th>Dir</th>
-                    <th>Number</th>
-                    <th>Message</th>
-                    <th>Status</th>
+                    <th style={{ width: '85px' }}>Dir</th>
+                    <th style={{ width: '145px' }}>Number</th>
+                    <th style={{ width: '380px' }}>Message</th>
+                    <th style={{ width: '110px' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logsList.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center text-muted py-2">No messages logged yet. Click "Load Demo Reports" to view sample interactions.</td></tr>
+                    <tr><td colSpan="4" className="text-center text-muted py-3">No messages logged yet. Click "Load Demo Reports" to view sample interactions.</td></tr>
                   ) : (
                     logsList.slice(0, 15).map(l => (
                       <tr key={l.id}>
@@ -469,7 +494,7 @@ export default function WhatsAppAttendancePage() {
                           )}
                         </td>
                         <td className="small font-monospace">{l.direction === 'INBOUND' ? l.from_number : l.to_number}</td>
-                        <td className="small" style={{ maxWidth: '280px', wordBreak: 'break-word' }}>{l.body}</td>
+                        <td className="small text-truncate" style={{ maxWidth: '380px' }} title={l.body}>{l.body}</td>
                         <td><span className="badge bg-light text-dark border small">{l.status || 'SENT'}</span></td>
                       </tr>
                     ))

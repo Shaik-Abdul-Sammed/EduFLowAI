@@ -9,7 +9,7 @@ import ExpertSystemsModal from './ExpertSystemsModal'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -43,11 +43,11 @@ export default function Layout({ routes }) {
     )
   }
 
-  // If no user, just render navbar and content (for entry/login)
-  if (!user) {
+  // If not authenticated, render without sidebar (app shell)
+  if (!isAuthenticated || !user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
+        <NavBar routes={routes} onMenuClick={() => {}} />
         <main style={{ flex: 1 }}>
           <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>
             <Outlet />
@@ -60,7 +60,9 @@ export default function Layout({ routes }) {
   // If user is logged in, show Sidebar + Content area + TourGuide
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--app-bg)' }}>
-      <Sidebar routes={routes} isOpen={sidebarOpen} setOpen={setSidebarOpen} />
+      {isAuthenticated && user && (
+        <Sidebar routes={routes} isOpen={sidebarOpen} setOpen={setSidebarOpen} />
+      )}
       
       <div style={{ 
         flex: 1, 

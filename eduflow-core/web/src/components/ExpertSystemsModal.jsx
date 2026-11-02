@@ -164,7 +164,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
         </div>
 
         {/* Tab Content Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(85vh - 145px)', padding: '1.25rem 1.5rem' }}>
           {/* Framework Banner */}
           <div
             className="p-3 rounded mb-4"
@@ -173,21 +173,21 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
               border: '1px solid rgba(59, 130, 246, 0.25)'
             }}
           >
-            <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
-              <div>
+            <div className="d-flex justify-content-between align-items-start flex-wrap gap-3">
+              <div style={{ flex: '1 1 340px', minWidth: 0 }}>
                 <h6 className="fw-bold mb-1 text-primary d-flex align-items-center gap-2">
-                  <ShieldCheck size={18} /> {currentSystem.systemName}
+                  <ShieldCheck size={18} className="flex-shrink-0" /> {currentSystem.systemName}
                 </h6>
                 <div className="small text-muted mb-2">
                   <strong>Statutory Authority:</strong> {currentSystem.authority} • <strong>Framework:</strong> {currentSystem.frameworkVersion}
                 </div>
-                <div className="small" style={{ lineHeight: 1.5 }}>
+                <div className="small" style={{ lineHeight: 1.5, wordBreak: 'break-word' }}>
                   {currentSystem.description}
                 </div>
               </div>
-              <div className="text-end">
+              <div className="text-sm-end text-start flex-shrink-0 pt-1">
                 <div className="fs-4 fw-bold text-success">{currentSystem.compliancePercentage}%</div>
-                <span className="badge bg-success-subtle text-success border border-success">
+                <span className="badge bg-success-subtle text-success border border-success d-inline-block text-wrap" style={{ maxWidth: '180px' }}>
                   {currentSystem.readinessGrade || 'Statutory Benchmark Met'}
                 </span>
               </div>
@@ -211,9 +211,9 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
                     borderColor: isCompliant ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.3)'
                   }}
                 >
-                  <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <div>
-                      <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex justify-content-between align-items-start gap-2 mb-2 flex-wrap">
+                    <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                      <div className="d-flex align-items-center gap-2 flex-wrap">
                         <span className="badge bg-secondary" style={{ fontSize: '0.7rem' }}>{rule.id}</span>
                         <strong style={{ fontSize: '0.95rem' }}>{rule.name}</strong>
                       </div>
@@ -222,19 +222,19 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
                       </div>
                     </div>
                     <span
-                      className={`badge ${isCompliant ? 'bg-success' : 'bg-warning text-dark'}`}
+                      className={`badge ${isCompliant ? 'bg-success' : 'bg-warning text-dark'} d-inline-flex align-items-center flex-shrink-0`}
                       style={{ fontSize: '0.72rem', padding: '0.35rem 0.65rem' }}
                     >
                       {isCompliant ? <><CheckCircle size={12} className="me-1" /> COMPLIANT</> : <><AlertTriangle size={12} className="me-1" /> WARNING</>}
                     </span>
                   </div>
 
-                  <div className="row g-2 small my-2 p-2 rounded bg-dark-subtle">
-                    <div className="col-12 col-md-6">
+                  <div className="row g-2 small my-2 p-2 rounded bg-dark-subtle align-items-center">
+                    <div className="col-12 col-md-6 d-flex align-items-center justify-content-between justify-content-md-start gap-2">
                       <span className="text-muted">Statutory Threshold:</span>{' '}
                       <span className="fw-semibold text-info">{rule.statutoryThreshold}</span>
                     </div>
-                    <div className="col-12 col-md-6">
+                    <div className="col-12 col-md-6 d-flex align-items-center justify-content-between justify-content-md-start gap-2">
                       <span className="text-muted">Measured Value:</span>{' '}
                       <span className="fw-semibold text-warning">{rule.currentValue}</span>
                     </div>

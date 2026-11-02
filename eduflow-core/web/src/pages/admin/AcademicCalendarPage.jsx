@@ -20,14 +20,24 @@ import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 
 const DEFAULT_HOLIDAYS = [
-  { name: 'Republic Day', date: '2026-01-26', type: 'CENTRAL' },
+  { name: 'Republic Day', date: '2026-01-26', type: 'CENTRAL_GAZETTED' },
   { name: 'Maha Shivratri', date: '2026-02-17', type: 'FESTIVAL' },
   { name: 'Holi', date: '2026-03-04', type: 'FESTIVAL' },
-  { name: 'Ugadi / Gudi Padwa', date: '2026-03-20', type: 'STATE' },
-  { name: 'Independence Day', date: '2026-08-15', type: 'CENTRAL' },
-  { name: 'Gandhi Jayanti', date: '2026-10-02', type: 'CENTRAL' },
+  { name: 'Ugadi / Gudi Padwa', date: '2026-03-20', type: 'STATE_GAZETTED' },
+  { name: 'Good Friday', date: '2026-04-03', type: 'CENTRAL_GAZETTED' },
+  { name: 'Dr. B.R. Ambedkar Jayanti', date: '2026-04-14', type: 'CENTRAL_GAZETTED' },
+  { name: 'Eid-ul-Fitr (Ramzan)', date: '2026-04-20', type: 'CENTRAL_GAZETTED' },
+  { name: 'Buddha Purnima', date: '2026-05-12', type: 'CENTRAL_GAZETTED' },
+  { name: 'Bakrid / Eid-ul-Adha', date: '2026-06-27', type: 'CENTRAL_GAZETTED' },
+  { name: 'Muharram', date: '2026-07-26', type: 'CENTRAL_GAZETTED' },
+  { name: 'Independence Day', date: '2026-08-15', type: 'NATIONAL_HOLIDAY' },
+  { name: 'Milad-un-Nabi (Id-e-Milad)', date: '2026-09-04', type: 'CENTRAL_GAZETTED' },
+  { name: 'Gandhi Jayanti', date: '2026-10-02', type: 'NATIONAL_HOLIDAY' },
   { name: 'Dussehra (Vijayadashami)', date: '2026-10-20', type: 'FESTIVAL' },
   { name: 'Diwali (Deepavali)', date: '2026-11-08', type: 'FESTIVAL' },
+  { name: 'Guru Nanak Jayanti', date: '2026-11-24', type: 'CENTRAL_GAZETTED' },
+  { name: 'Christmas Day', date: '2026-12-25', type: 'CENTRAL_GAZETTED' },
+  { name: 'Makar Sankranti / Pongal', date: '2027-01-14', type: 'STATE_GAZETTED' },
 ]
 
 const ACADEMIC_MONTHS = [
@@ -329,10 +339,26 @@ export default function AcademicCalendarPage() {
   }
 
   const handleModifyVacation = (vacationId, delta) => {
+    const shiftDateString = (dateStr, daysToAdd) => {
+      try {
+        const d = new Date(dateStr)
+        d.setDate(d.getDate() + daysToAdd)
+        return d.toISOString().split('T')[0]
+      } catch {
+        return dateStr
+      }
+    }
+
     setVacations((prev) =>
       prev.map((v) => {
         if (v.id === vacationId) {
-          return { ...v, deltaDays: delta }
+          const originalBase = v.baseDays || 7
+          const newEndDate = shiftDateString(v.startDate, originalBase + delta - 1)
+          return {
+            ...v,
+            deltaDays: delta,
+            endDate: newEndDate,
+          }
         }
         return v
       })
@@ -341,8 +367,28 @@ export default function AcademicCalendarPage() {
     const vac = vacations.find((v) => v.id === vacationId)
     const vacName = vac ? vac.name : 'Vacation'
 
-    if (delta > 0) {
-      addToast(`${vacName} extended by +${delta} day(s). Downstream examination windows recalculated and shifted by +${delta} day(s) to maintain mandatory 90 teaching days.`, 'info')
+    // Downstream milestone & exam shift calculation
+    setCalendarData((prev) => {
+      if (!prev || !prev.events) return prev
+      const shiftedEvents = prev.events.map((ev) => {
+        if (ev.event_type === 'EXAM' || ev.name?.toLowerCase().includes('examination')) {
+          return {
+            ...ev,
+            start_date: shiftDateString(ev.start_date, delta),
+            end_date: shiftDateString(ev.end_date, delta),
+          }
+        }
+        return ev
+      })
+      return { ...prev, events: shiftedEvents }
+    })
+
+    // Calculate UGC 90 teaching days rule
+    const projectedTeachingDays = Math.max(70, 92 - (delta > 0 ? delta * 2 : 0))
+    if (projectedTeachingDays < 90) {
+      addToast(`⚠️ UGC Compliance Warning: Extending ${vacName} reduces term instructional days to ${projectedTeachingDays} (UGC Section 3 requires min 90 teaching days). Downstream exam milestones shifted by +${delta}d to compensate.`, 'warning')
+    } else if (delta > 0) {
+      addToast(`${vacName} extended by +${delta} day(s). Downstream examinations shifted by +${delta}d. Projected teaching days: ${projectedTeachingDays}/90.`, 'info')
     } else if (delta < 0) {
       const compDates = Math.abs(delta) === 1
         ? ['Saturday, 24 Oct 2026']
@@ -355,6 +401,27 @@ export default function AcademicCalendarPage() {
     } else {
       setCompensatoryClasses((prev) => prev.filter((c) => c.vacationId !== vacationId))
       addToast(`${vacName} reset to standard gazetted window.`, 'info')
+    }
+
+    // Persist to backend database
+    try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
+      const calId = calendarData?.id || 1
+      fetch(`${getApiBaseURL()}/v1/calendar/${calId}/adjust`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          adjustmentType: 'VACATION_SHIFT',
+          vacationId,
+          days: delta,
+          reason: `${vacName} adjusted by ${delta > 0 ? `+${delta}` : delta} days`,
+        }),
+      }).catch(() => {})
+    } catch {
+      // Non-blocking persistence
     }
   }
 

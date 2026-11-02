@@ -218,19 +218,61 @@ export default function EntryPage() {
       </div>
 
       {/* ── Automation Services Banner ── */}
-      <div className="mb-5 card border-0 p-4 p-lg-5 rounded-4 shadow-sm" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #eef2ff 100%)', border: '1px solid #e0e7ff', animation: 'fadeInUp 0.7s ease 0.15s both' }}>
+      <div
+        className="mb-5 card border-0 p-4 p-lg-5 rounded-4 shadow-sm"
+        style={{
+          background: 'linear-gradient(135deg, #090e1a 0%, #171d36 50%, #1e293b 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.4)',
+          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35)',
+          animation: 'fadeInUp 0.7s ease 0.15s both',
+          color: '#ffffff',
+        }}
+      >
         <div className="row align-items-center g-4">
           <div className="col-12 col-lg-8">
-            <span className="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2 fw-bold" style={{ fontSize: '0.8rem' }}>
+            <span
+              className="badge rounded-pill px-3 py-1 mb-3 fw-bold"
+              style={{
+                fontSize: '0.85rem',
+                background: 'rgba(99, 102, 241, 0.25)',
+                color: '#a5b4fc',
+                border: '1px solid rgba(99, 102, 241, 0.5)',
+              }}
+            >
               🛠️ Standalone Automation Workflows
             </span>
-            <h2 className="fw-bold fs-2 text-dark mb-2">Buyable AI Services for Every College Need</h2>
-            <p className="text-muted mb-0" style={{ maxWidth: 640 }}>
+            <h2
+              className="fw-bold fs-2 mb-2"
+              style={{
+                color: '#ffffff',
+                fontWeight: 900,
+                textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Buyable AI Services for Every College Need
+            </h2>
+            <p
+              style={{
+                color: 'rgba(241, 245, 249, 0.9)',
+                maxWidth: 640,
+                fontSize: '1rem',
+                lineHeight: 1.6,
+              }}
+            >
               Solve your institution's acute bottlenecks today. From NAAC accreditation packages to conflict-free timetable synthesis and student dropout alerts — buy turnkey automation packages starting at ₹10,000.
             </p>
           </div>
           <div className="col-12 col-lg-4 text-lg-end">
-            <Link to="/services" className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+            <Link
+              to="/services"
+              className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm"
+              style={{
+                background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                border: 'none',
+                boxShadow: '0 4px 14px rgba(37,99,235,0.4)',
+              }}
+            >
               Explore All 7 Automation Services →
             </Link>
           </div>

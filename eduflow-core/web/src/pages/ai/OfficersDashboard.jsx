@@ -307,7 +307,7 @@ export default function OfficersDashboard() {
               return (
                 <Link
                   key={sysKey}
-                  to={`/ai/officers/${sysKey}`}
+                  to={`/officer/${sysKey}`}
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
                   <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', transition: 'all 0.2s', height: '100%' }}>
