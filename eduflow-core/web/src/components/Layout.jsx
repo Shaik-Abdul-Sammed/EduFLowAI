@@ -1,5 +1,5 @@
 import { useState, Suspense } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar'
 import TourGuide from './TourGuide'
@@ -8,7 +8,19 @@ import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
   const { user } = useAuth()
+  const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Explicitly hide Sidebar and Navbar on public authentication pages
+  if (['/login', '/register-institution', '/signup'].includes(location.pathname)) {
+    return (
+      <main style={{ minHeight: '100vh', width: '100%' }}>
+        <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>
+          <Outlet />
+        </Suspense>
+      </main>
+    )
+  }
 
   // If no user, just render navbar and content (for entry/login)
   if (!user) {

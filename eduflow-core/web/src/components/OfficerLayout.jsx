@@ -55,6 +55,11 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     institutionName = 'Sri Siddhartha Institute of Technology',
   } = config;
 
+  // ── Context & Custom Hooks (moved to top to prevent TDZ ReferenceError) ───
+  const { addToast } = useToast();
+  const { user } = useAuth();
+  const { tokens, status, error, start, stop } = useStreamingOfficer();
+
   // ── State ──────────────────────────────────────────────────────────────────
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -89,10 +94,6 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
-
-  const { addToast } = useToast();
-  const { user } = useAuth();
-  const { tokens, status, error, start, stop } = useStreamingOfficer();
 
   const [staffPermission, setStaffPermission] = useState(null);
   const [hasCheckedPermission, setHasCheckedPermission] = useState(false);

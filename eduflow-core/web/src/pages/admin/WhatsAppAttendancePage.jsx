@@ -13,7 +13,8 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Check,
-  X
+  X,
+  Sparkles
 } from 'lucide-react'
 
 export default function WhatsAppAttendancePage() {
@@ -97,6 +98,59 @@ export default function WhatsAppAttendancePage() {
     if (isMounted) setLoading(true)
     await Promise.all([fetchStatus(isMounted), fetchStaged(isMounted), fetchLogs(isMounted), fetchFaculty(isMounted)])
     if (isMounted) setLoading(false)
+  }
+
+  const handleLoadDemoReports = () => {
+    const demoLogs = [
+      {
+        id: 101,
+        direction: 'OUTBOUND',
+        to_number: '+91 98765 43210',
+        from_number: '+91 80012 34567',
+        body: 'Attendance Alert: Student Rahul Verma (2023CSE045) attendance has dropped to 62.5%, below UGC 75% statutory norm.',
+        status: 'DELIVERED',
+        created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+      },
+      {
+        id: 102,
+        direction: 'OUTBOUND',
+        to_number: '+91 98765 43211',
+        from_number: '+91 80012 34567',
+        body: 'Fee Reminder: Term 2 tuition fee balance of ₹45,000 for Ananya Deshmukh is due by Nov 15, 2026.',
+        status: 'DELIVERED',
+        created_at: new Date(Date.now() - 45 * 60000).toISOString(),
+      },
+      {
+        id: 103,
+        direction: 'INBOUND',
+        from_number: '+91 98765 43212',
+        to_number: '+91 80012 34567',
+        body: 'Leave Application: Request medical leave sanction for Siddharth Nair from Oct 28 to Oct 30.',
+        status: 'RECEIVED',
+        created_at: new Date(Date.now() - 90 * 60000).toISOString(),
+      },
+      {
+        id: 104,
+        direction: 'OUTBOUND',
+        to_number: '+91 98765 43212',
+        from_number: '+91 80012 34567',
+        body: 'Leave Approval: Medical leave request for Siddharth Nair (2023ME033) has been sanctioned by HOD.',
+        status: 'DELIVERED',
+        created_at: new Date(Date.now() - 75 * 60000).toISOString(),
+      },
+      {
+        id: 105,
+        direction: 'OUTBOUND',
+        to_number: '+91 98765 43214',
+        from_number: '+91 80012 34567',
+        body: 'Defaulter Warning: Aditya Kulkarni (59.1% attendance) must meet Academic Dean before exam hall ticket issuance.',
+        status: 'DELIVERED',
+        created_at: new Date(Date.now() - 120 * 60000).toISOString(),
+      },
+    ]
+    setLogsList(demoLogs)
+    setActionMsg('Loaded demo reports: Attendance alerts, Fee reminders, and Leave approvals.')
+    setTimeout(() => setActionMsg(''), 4000)
   }
 
   useEffect(() => {
@@ -376,11 +430,19 @@ export default function WhatsAppAttendancePage() {
         {/* Messages Log */}
         <div className="col-md-7">
           <div className="card shadow-sm border-0 p-4 h-100">
-            <h5 className="fw-bold mb-3 d-flex align-items-center">
-              <MessageSquare size={18} className="me-2 text-primary" /> Recent WhatsApp Messages
-            </h5>
-            <div className="table-responsive" style={{ maxHeight: '320px', overflowY: 'auto' }}>
-              <table className="table table-sm align-middle mb-0">
+            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h5 className="fw-bold mb-0 d-flex align-items-center">
+                <MessageSquare size={18} className="me-2 text-primary" /> Recent WhatsApp Messages
+              </h5>
+              <button
+                className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm"
+                onClick={handleLoadDemoReports}
+              >
+                <Sparkles size={14} /> Load Demo Reports
+              </button>
+            </div>
+            <div style={{ overflowX: 'auto', width: '100%', maxHeight: '320px', overflowY: 'auto' }}>
+              <table className="table table-sm align-middle mb-0" style={{ minWidth: '600px' }}>
                 <thead className="table-light small">
                   <tr>
                     <th>Dir</th>
@@ -391,7 +453,7 @@ export default function WhatsAppAttendancePage() {
                 </thead>
                 <tbody>
                   {logsList.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center text-muted py-2">No messages logged yet.</td></tr>
+                    <tr><td colSpan="4" className="text-center text-muted py-2">No messages logged yet. Click "Load Demo Reports" to view sample interactions.</td></tr>
                   ) : (
                     logsList.slice(0, 15).map(l => (
                       <tr key={l.id}>
@@ -407,7 +469,7 @@ export default function WhatsAppAttendancePage() {
                           )}
                         </td>
                         <td className="small font-monospace">{l.direction === 'INBOUND' ? l.from_number : l.to_number}</td>
-                        <td className="small text-truncate" style={{ maxWidth: '240px' }}>{l.body}</td>
+                        <td className="small" style={{ maxWidth: '280px', wordBreak: 'break-word' }}>{l.body}</td>
                         <td><span className="badge bg-light text-dark border small">{l.status || 'SENT'}</span></td>
                       </tr>
                     ))

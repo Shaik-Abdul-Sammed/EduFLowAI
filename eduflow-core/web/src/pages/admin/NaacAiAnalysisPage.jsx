@@ -55,6 +55,48 @@ function getGradeBadgeColor(grade) {
   }
 }
 
+const NAAC_CHECKLIST_FALLBACK = `### 📋 Comprehensive NAAC SSR Documentation & Evidence Checklist
+
+To assemble a high-scoring, A++ compliant Self-Study Report (SSR) for your college, ensure you involve and upload documentation across all 7 NAAC criteria:
+
+#### 1. Criterion 1: Curricular Aspects
+- **Curriculum Planning:** Approved Board of Studies (BoS) and Academic Council resolutions.
+- **Feedback System:** Structured feedback collected from Students, Teachers, Employers, and Alumni with signed Action Taken Reports (ATR).
+
+#### 2. Criterion 2: Teaching-Learning & Evaluation
+- **Student Profile:** Sanctioned intake vs. admitted list with reservation certificates.
+- **Faculty Credentials:** Full-time appointment orders, PhD/NET/SET proof, and Student-Faculty Ratio (1:15 or 1:20).
+- **Outcomes:** Mentor-mentee logs, CO-PO attainment matrices, and evaluation registers.
+
+#### 3. Criterion 3: Research, Innovations & Extension
+- **Research:** Seed money sanction orders, sponsored grants, and Scopus/Web of Science publications.
+- **Extension:** NSS/NCC camp reports with GeoTagged photos and community impact awards.
+
+#### 4. Criterion 4: Infrastructure & Learning Resources
+- **Facilities:** GeoTagged photos of ICT smart classrooms, labs, and campus Wi-Fi infrastructure.
+- **Library:** ILMS software invoices, e-journal subscriptions (DELNET/N-LIST), and footfall logs.
+
+#### 5. Criterion 5: Student Support & Progression
+- **Student Welfare:** Scholarships, competitive exam coaching rosters, and placement offer letters.
+
+#### 6. Criterion 6: Governance, Leadership & Management
+- **IQAC & Finance:** IQAC minutes, Action Taken Reports, and certified audited balance sheets.
+
+#### 7. Criterion 7: Institutional Values & Best Practices
+- **Green Campus:** Green/Energy/Environment audit certificates and two institutional best practice case studies.`
+
+function isGeneralGuidanceQuery(q = '') {
+  const lower = q.toLowerCase()
+  return (
+    /what\s+(should\s+i|to)\s+(involve|include|upload|prepare|attach)/i.test(lower) ||
+    /my\s+(clg|college)\s+report/i.test(lower) ||
+    /how\s+to\s+prepare/i.test(lower) ||
+    /checklist/i.test(lower) ||
+    /documents?\s+(to\s+upload|needed|required|should)/i.test(lower) ||
+    /(what|how)\s+.*(involve|include).*report/i.test(lower)
+  )
+}
+
 export default function NaacAiAnalysisPage() {
   const [loadingInsights, setLoadingInsights] = useState(false)
   const [insights, setInsights] = useState({
@@ -380,33 +422,46 @@ export default function NaacAiAnalysisPage() {
 
       if (res.ok) {
         const data = await safeJson(res)
+        const isGeneral = isGeneralGuidanceQuery(userText)
+        let answer = data.answer || 'Analysis complete.'
+        let citations = data.citedSections || []
+
+        if (isGeneral && answer.toLowerCase().includes('not present in the current report')) {
+          answer = NAAC_CHECKLIST_FALLBACK
+          citations = ['Criterion 1 to 7 SSR Preparation Guidelines']
+        }
+
         setChatMessages((prev) => [
           ...prev,
           {
             role: 'assistant',
-            content: data.answer || 'Analysis complete.',
-            citedSections: data.citedSections || [],
+            content: answer,
+            citedSections: citations,
           },
         ])
       } else {
+        const isGeneral = isGeneralGuidanceQuery(userText)
         setChatMessages((prev) => [
           ...prev,
           {
             role: 'assistant',
-            content:
-              'Based on your report context, Criterion metrics indicate solid compliance. To boost your scores, verify that all student-centric learning methods and faculty publications are documented with ERP links and GeoTagged proofs.',
-            citedSections: ['SSR Summary'],
+            content: isGeneral
+              ? NAAC_CHECKLIST_FALLBACK
+              : 'Based on your report context, Criterion metrics indicate solid compliance. To boost your scores, verify that all student-centric learning methods and faculty publications are documented with ERP links and GeoTagged proofs.',
+            citedSections: isGeneral ? ['Criterion 1 to 7 SSR Preparation Guidelines'] : ['SSR Summary'],
           },
         ])
       }
     } catch {
+      const isGeneral = isGeneralGuidanceQuery(userText)
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content:
-            'Criterion metrics demonstrate positive progress. Ensure that documentary evidence such as BoS minutes, student attendance records, and appointment letters are filed in criterion-wise master folders.',
-          citedSections: ['SSR Overview'],
+          content: isGeneral
+            ? NAAC_CHECKLIST_FALLBACK
+            : 'Criterion metrics demonstrate positive progress. Ensure that documentary evidence such as BoS minutes, student attendance records, and appointment letters are filed in criterion-wise master folders.',
+          citedSections: isGeneral ? ['Criterion 1 to 7 SSR Preparation Guidelines'] : ['SSR Overview'],
         },
       ])
     } finally {

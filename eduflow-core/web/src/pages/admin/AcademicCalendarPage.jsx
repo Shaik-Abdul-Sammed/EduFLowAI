@@ -42,6 +42,12 @@ export default function AcademicCalendarPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [showAdjustModal, setShowAdjustModal] = useState(false)
+
+  // Custom Calendar Settings inputs
+  const [totalWorkingDaysRequired, setTotalWorkingDaysRequired] = useState(90)
+  const [collegeStartDate, setCollegeStartDate] = useState('2026-07-15')
+  const [collegeEndDate, setCollegeEndDate] = useState('2026-11-30')
+
   const [vacations, setVacations] = useState([
     { id: 'summer', name: 'Summer Vacation', startDate: '2026-05-01', endDate: '2026-07-10', baseDays: 70, deltaDays: 0, semester: 'EVEN' },
     { id: 'dussehra', name: 'Dussehra Vacation', startDate: '2026-10-18', endDate: '2026-10-25', baseDays: 8, deltaDays: 0, semester: 'ODD' },
@@ -58,40 +64,57 @@ export default function AcademicCalendarPage() {
     reason: '',
   })
 
-  const loadDefaultCalendar = () => {
+  const loadDefaultCalendar = (
+    yearStr = selectedYear,
+    daysRequired = totalWorkingDaysRequired,
+    startStr = collegeStartDate,
+    endStr = collegeEndDate
+  ) => {
+    const yStart = parseInt(String(yearStr).split('-')[0], 10) || 2026
+    const yEnd = yStart + 1
+    const oStart = (startStr && startStr.startsWith(String(yStart))) ? startStr : `${yStart}-07-15`
+    const oEnd = (endStr && endStr.startsWith(String(yStart))) ? endStr : `${yStart}-11-30`
+    const eStart = `${yEnd}-01-05`
+    const eEnd = `${yEnd}-04-30`
+
+    const workingDays = Math.max(75, Number(daysRequired) || 92)
+
     setCalendarData({
       id: 1,
-      academic_year: '2026-2027',
+      academic_year: yearStr,
       status: 'DRAFT',
-      total_working_days: 184,
+      total_working_days: workingDays * 2,
       total_holidays: 28,
       oddSemester: {
-        name: 'Odd Semester (Term I)',
-        startDate: '2026-07-15',
-        endDate: '2026-11-30',
-        workingDays: 92,
-        midExams: '2026-09-14 to 2026-09-19',
-        labExams: '2026-11-10 to 2026-11-15',
-        semExams: '2026-11-20 to 2026-11-30',
+        name: `Odd Semester (Term I ${yStart})`,
+        startDate: oStart,
+        endDate: oEnd,
+        workingDays: workingDays,
+        midExams: `${yStart}-09-14 to ${yStart}-09-19`,
+        labExams: `${yStart}-11-10 to ${yStart}-11-15`,
+        semExams: `${yStart}-11-20 to ${yStart}-11-30`,
       },
       evenSemester: {
-        name: 'Even Semester (Term II)',
-        startDate: '2026-12-15',
-        endDate: '2027-04-30',
-        workingDays: 92,
-        midExams: '2027-02-15 to 2027-02-20',
-        labExams: '2027-04-10 to 2027-04-15',
-        semExams: '2027-04-20 to 2027-04-30',
+        name: `Even Semester (Term II ${yEnd})`,
+        startDate: eStart,
+        endDate: eEnd,
+        workingDays: workingDays,
+        midExams: `${yEnd}-02-15 to ${yEnd}-02-20`,
+        labExams: `${yEnd}-04-10 to ${yEnd}-04-15`,
+        semExams: `${yEnd}-04-20 to ${yEnd}-04-30`,
       },
     })
     setEvents([
-      { id: 1, name: 'Odd Semester Commencement', event_type: 'ACADEMIC', start_date: '2026-07-15', is_mandatory: true },
-      { id: 2, name: 'Internal Assessment Test 1', event_type: 'EXAM', start_date: '2026-09-14', end_date: '2026-09-19', is_mandatory: true },
-      { id: 3, name: 'Dussehra Vacation Window', event_type: 'VACATION', start_date: '2026-10-18', end_date: '2026-10-25', is_mandatory: false },
-      { id: 4, name: 'Semester End Theory Examinations', event_type: 'EXAM', start_date: '2026-11-20', end_date: '2026-11-30', is_mandatory: true },
+      { id: 1, name: 'Odd Semester Commencement', event_type: 'ACADEMIC', start_date: oStart, is_mandatory: true },
+      { id: 2, name: 'Internal Assessment Test 1', event_type: 'EXAM', start_date: `${yStart}-09-14`, end_date: `${yStart}-09-19`, is_mandatory: true },
+      { id: 3, name: 'Dussehra Vacation Window', event_type: 'VACATION', start_date: `${yStart}-10-18`, end_date: `${yStart}-10-25`, is_mandatory: false },
+      { id: 4, name: 'Semester End Theory Examinations', event_type: 'EXAM', start_date: `${yStart}-11-20`, end_date: `${yStart}-11-30`, is_mandatory: true },
+      { id: 5, name: 'Even Semester Commencement', event_type: 'ACADEMIC', start_date: eStart, is_mandatory: true },
+      { id: 6, name: 'Even Semester Mid-Term', event_type: 'EXAM', start_date: `${yEnd}-02-15`, end_date: `${yEnd}-02-20`, is_mandatory: true },
+      { id: 7, name: 'Even Semester End Examinations', event_type: 'EXAM', start_date: `${yEnd}-04-20`, end_date: `${yEnd}-04-30`, is_mandatory: true },
     ])
     setAdjustments([
-      { id: 1, adjustment_type: 'POSTPONE_EXAM', reason: 'Cyclone weather alert', new_start_date: '2026-09-21', adjusted_at: '2026-09-10' }
+      { id: 1, adjustment_type: 'POSTPONE_EXAM', reason: 'Cyclone weather alert', new_start_date: `${yStart}-09-21`, adjusted_at: `${yStart}-09-10` }
     ])
   }
 
@@ -99,7 +122,7 @@ export default function AcademicCalendarPage() {
     try {
       const instId = user?.institutionId || 1
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
-      const res = await fetch(`${getApiBaseURL()}/v1/calendar/${instId}/${selectedYear}?stateCode=${selectedState}`, {
+      const res = await fetch(`${getApiBaseURL()}/v1/calendar/${instId}/${selectedYear}?stateCode=${selectedState}&targetWorkingDays=${totalWorkingDaysRequired}&startDate=${collegeStartDate}&endDate=${collegeEndDate}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       if (res.ok) {
@@ -112,9 +135,9 @@ export default function AcademicCalendarPage() {
         }
       }
       // Demo fallback if backend has no saved calendar yet
-      if (isMounted) loadDefaultCalendar()
+      if (isMounted) loadDefaultCalendar(selectedYear)
     } catch {
-      if (isMounted) loadDefaultCalendar()
+      if (isMounted) loadDefaultCalendar(selectedYear)
     }
   }
 
@@ -138,6 +161,9 @@ export default function AcademicCalendarPage() {
 
   useEffect(() => {
     let isMounted = true
+    const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+    setCollegeStartDate(`${yStart}-07-15`)
+    setCollegeEndDate(`${yStart}-11-30`)
     fetchCalendar(isMounted)
     fetchHolidays(isMounted)
     return () => {
@@ -159,7 +185,12 @@ export default function AcademicCalendarPage() {
         body: JSON.stringify({
           academicYear,
           stateCode,
-          options: { bufferDays: 4 },
+          options: {
+            targetWorkingDays: totalWorkingDaysRequired,
+            startDate: collegeStartDate,
+            endDate: collegeEndDate,
+            bufferDays: 4,
+          },
         }),
       })
       if (res.ok) {
@@ -168,13 +199,13 @@ export default function AcademicCalendarPage() {
         if (data.calendar?.events) {
           setEvents(data.calendar.events)
         }
-        addToast('Academic calendar generated with government holiday sync!', 'success')
+        addToast('Academic calendar generated with custom settings & holiday sync!', 'success')
       } else {
-        loadDefaultCalendar()
-        addToast('Calendar generated successfully with AI guidelines', 'success')
+        loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate)
+        addToast('Calendar generated successfully with custom settings', 'success')
       }
     } catch {
-      loadDefaultCalendar()
+      loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate)
       addToast('Calendar generated successfully', 'success')
     } finally {
       setIsGenerating(false)
@@ -275,6 +306,16 @@ export default function AcademicCalendarPage() {
     }
   }
 
+  const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+  const yEnd = yStart + 1
+  const oStart = calendarData?.oddSemester?.startDate || collegeStartDate || `${yStart}-07-15`
+  const oEnd = calendarData?.oddSemester?.endDate || collegeEndDate || `${yStart}-11-30`
+  const oDays = calendarData?.oddSemester?.totalWorkingDays || calendarData?.oddSemester?.workingDays || totalWorkingDaysRequired || 92
+
+  const eStart = calendarData?.evenSemester?.startDate || `${yEnd}-01-05`
+  const eEnd = calendarData?.evenSemester?.endDate || `${yEnd}-04-30`
+  const eDays = calendarData?.evenSemester?.totalWorkingDays || calendarData?.evenSemester?.workingDays || totalWorkingDaysRequired || 92
+
   return (
     <div className="container-fluid py-4 px-4 bg-light min-vh-100">
       {/* Header */}
@@ -315,7 +356,7 @@ export default function AcademicCalendarPage() {
             disabled={isGenerating}
           >
             {isGenerating ? <RefreshCw className="spinner-border spinner-border-sm" size={15} /> : <Sparkles size={15} />}
-            {isGenerating ? 'Generating 2026 Calendar...' : 'Generate 2026 Calendar'}
+            {isGenerating ? `Generating ${selectedYear} Calendar...` : `Generate ${selectedYear} Calendar`}
           </button>
           {calendarData?.status !== 'PUBLISHED' && (
             <button
@@ -370,10 +411,10 @@ export default function AcademicCalendarPage() {
           <div className="card border-0 shadow-sm p-3 h-100">
             <span className="text-muted small fw-semibold">Total Working Days</span>
             <div className="d-flex align-items-baseline gap-2 mt-2">
-              <span className="h3 fw-bold text-primary mb-0">{calendarData?.total_working_days || 184}</span>
+              <span className="h3 fw-bold text-primary mb-0">{calendarData?.total_working_days || totalWorkingDaysRequired * 2 || 184}</span>
               <span className="small text-muted">days</span>
             </div>
-            <span className="small text-success mt-1 d-block">92 Odd / 92 Even</span>
+            <span className="small text-success mt-1 d-block">{calendarData?.oddSemester?.totalWorkingDays || totalWorkingDaysRequired || 92} Odd / {calendarData?.evenSemester?.totalWorkingDays || totalWorkingDaysRequired || 92} Even</span>
           </div>
         </div>
         <div className="col-6 col-lg-3">
@@ -404,6 +445,63 @@ export default function AcademicCalendarPage() {
               <span className="small text-muted">recorded</span>
             </div>
             <span className="small text-info mt-1 d-block">Downstream auto-cascade</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Academic Calendar Settings */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-header bg-white border-bottom p-3">
+          <h5 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <Clock size={18} className="text-primary" />
+            Custom Academic Calendar Settings
+          </h5>
+          <span className="small text-muted">
+            Configure institutional working day thresholds, semester commencement, and term conclusion dates to dynamically calculate exam and vacation milestones.
+          </span>
+        </div>
+        <div className="card-body p-3">
+          <div className="row g-3 align-items-end">
+            <div className="col-12 col-md-3">
+              <label className="form-label small fw-bold text-muted mb-1">Required Working Days (Target)</label>
+              <input
+                type="number"
+                min="75"
+                max="120"
+                className="form-control form-control-sm"
+                value={totalWorkingDaysRequired}
+                onChange={(e) => setTotalWorkingDaysRequired(Number(e.target.value))}
+                placeholder="e.g. 90"
+              />
+            </div>
+            <div className="col-12 col-md-3">
+              <label className="form-label small fw-bold text-muted mb-1">Start Date of College</label>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                value={collegeStartDate}
+                onChange={(e) => setCollegeStartDate(e.target.value)}
+              />
+            </div>
+            <div className="col-12 col-md-3">
+              <label className="form-label small fw-bold text-muted mb-1">End Date of Working Days</label>
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                value={collegeEndDate}
+                onChange={(e) => setCollegeEndDate(e.target.value)}
+              />
+            </div>
+            <div className="col-12 col-md-3">
+              <button
+                className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+                onClick={handleGenerate}
+                disabled={isGenerating}
+              >
+                <Sparkles size={14} className={isGenerating ? 'spinner-border spinner-border-sm' : ''} />
+                {isGenerating ? 'Recalculating...' : 'Recalculate & Apply'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -450,77 +548,85 @@ export default function AcademicCalendarPage() {
         <div className="card-body p-4">
           {activeTab === 'overview' && (
             <div className="row g-4">
-              {/* Odd Semester */}
-              <div className="col-12 col-lg-6">
-                <div className="p-3 rounded-3 border bg-light h-100">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="fw-bold text-dark mb-0">Odd Semester (July – Nov 2026)</h5>
-                    <span className="badge bg-primary text-white">92 Working Days</span>
+                {/* Odd Semester */}
+                <div className="col-12 col-lg-6">
+                  <div className="p-3 rounded-3 border bg-light h-100">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="fw-bold text-dark mb-0">Odd Semester (July – Nov {yStart})</h5>
+                      <span className="badge bg-primary text-white">{oDays} Working Days</span>
+                    </div>
+                    <ul className="list-group list-group-flush small bg-transparent">
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Commencement of Classes</span>
+                        <strong className="text-dark">{oStart}</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Semester Concluding Date</span>
+                        <strong className="text-dark">{oEnd}</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Mid-Term Assessment 1</span>
+                        <strong className="text-dark">14 Sep – 19 Sep {yStart} (Week 8)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Mid-Term Assessment 2</span>
+                        <strong className="text-dark">19 Oct – 24 Oct {yStart} (Week 13)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Practical &amp; Lab Examinations</span>
+                        <strong className="text-dark">10 Nov – 15 Nov {yStart} (Week 15)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Semester End Theory Exams</span>
+                        <strong className="text-dark">20 Nov – 30 Nov {yStart} (Week 17)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Winter Vacation Window</span>
+                        <strong className="text-dark">01 Dec – 14 Dec {yStart}</strong>
+                      </li>
+                    </ul>
                   </div>
-                  <ul className="list-group list-group-flush small bg-transparent">
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Commencement of Classes</span>
-                      <strong className="text-dark">15 Jul 2026</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Mid-Term Assessment 1</span>
-                      <strong className="text-dark">14 Sep – 19 Sep 2026 (Week 8)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Mid-Term Assessment 2</span>
-                      <strong className="text-dark">19 Oct – 24 Oct 2026 (Week 13)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Practical & Lab Examinations</span>
-                      <strong className="text-dark">10 Nov – 15 Nov 2026 (Week 15)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Semester End Theory Exams</span>
-                      <strong className="text-dark">20 Nov – 30 Nov 2026 (Week 17)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Winter Vacation Window</span>
-                      <strong className="text-dark">01 Dec – 14 Dec 2026</strong>
-                    </li>
-                  </ul>
                 </div>
-              </div>
 
-              {/* Even Semester */}
-              <div className="col-12 col-lg-6">
-                <div className="p-3 rounded-3 border bg-light h-100">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="fw-bold text-dark mb-0">Even Semester (Dec 2026 – May 2027)</h5>
-                    <span className="badge bg-success text-white">92 Working Days</span>
+                {/* Even Semester */}
+                <div className="col-12 col-lg-6">
+                  <div className="p-3 rounded-3 border bg-light h-100">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="fw-bold text-dark mb-0">Even Semester (Dec {yStart} – May {yEnd})</h5>
+                      <span className="badge bg-success text-white">{eDays} Working Days</span>
+                    </div>
+                    <ul className="list-group list-group-flush small bg-transparent">
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Commencement of Classes</span>
+                        <strong className="text-dark">{eStart}</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Semester Concluding Date</span>
+                        <strong className="text-dark">{eEnd}</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Mid-Term Assessment 1</span>
+                        <strong className="text-dark">15 Feb – 20 Feb {yEnd} (Week 8)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Mid-Term Assessment 2</span>
+                        <strong className="text-dark">22 Mar – 27 Mar {yEnd} (Week 13)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Practical &amp; Lab Examinations</span>
+                        <strong className="text-dark">10 Apr – 15 Apr {yEnd} (Week 15)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Semester End Theory Exams</span>
+                        <strong className="text-dark">20 Apr – 30 Apr {yEnd} (Week 17)</strong>
+                      </li>
+                      <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
+                        <span className="text-muted">Summer Vacation Window</span>
+                        <strong className="text-dark">01 May – 10 Jul {yEnd}</strong>
+                      </li>
+                    </ul>
                   </div>
-                  <ul className="list-group list-group-flush small bg-transparent">
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Commencement of Classes</span>
-                      <strong className="text-dark">15 Dec 2026</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Mid-Term Assessment 1</span>
-                      <strong className="text-dark">15 Feb – 20 Feb 2027 (Week 8)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Mid-Term Assessment 2</span>
-                      <strong className="text-dark">22 Mar – 27 Mar 2027 (Week 13)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Practical & Lab Examinations</span>
-                      <strong className="text-dark">10 Apr – 15 Apr 2027 (Week 15)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Semester End Theory Exams</span>
-                      <strong className="text-dark">20 Apr – 30 Apr 2027 (Week 17)</strong>
-                    </li>
-                    <li className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                      <span className="text-muted">Summer Vacation Window</span>
-                      <strong className="text-dark">01 May – 10 Jul 2027</strong>
-                    </li>
-                  </ul>
                 </div>
-              </div>
 
               {/* Vacation Blocks & Dynamic Recalculation Engine */}
               <div className="col-12 mt-4">

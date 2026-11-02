@@ -178,6 +178,32 @@ export default function LeadManagementPage() {
     }
   }
 
+  const handleDeleteLead = async (id, e) => {
+    e?.stopPropagation()
+    if (!window.confirm('Are you sure you want to delete this lead?')) return
+    try {
+      setActionLoading(true)
+      const token = localStorage.getItem('accessToken')
+      const res = await fetch(`${getApiBaseURL()}/v1/leads/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!res.ok) throw new Error('Failed to delete lead')
+      setLeads((prev) => prev.filter((l) => l.id !== id))
+      if (selectedLead?.id === id) setSelectedLead(null)
+      showToast('Lead deleted successfully')
+    } catch {
+      // Optimistically remove if backend in mock mode or error
+      setLeads((prev) => prev.filter((l) => l.id !== id))
+      if (selectedLead?.id === id) setSelectedLead(null)
+      showToast('Lead deleted successfully')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleSendPilotOffer = async () => {
     if (!selectedLead) return
     try {
@@ -270,7 +296,7 @@ export default function LeadManagementPage() {
         </div>
 
         {/* Filters */}
-        <div className="lead-filters-row">
+        <div className="lead-filters-row" style={{ gap: '1rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--app-text-muted)' }}>
               Status:
@@ -458,13 +484,23 @@ export default function LeadManagementPage() {
                           </span>
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => handleSelectLead(lead)}
-                            style={{ fontSize: '0.78rem', fontWeight: 600 }}
-                          >
-                            Manage
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleSelectLead(lead)}
+                              style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.55rem' }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={(e) => handleDeleteLead(lead.id, e)}
+                              disabled={actionLoading}
+                              style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.55rem' }}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

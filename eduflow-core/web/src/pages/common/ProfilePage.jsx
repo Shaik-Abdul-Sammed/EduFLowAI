@@ -6,11 +6,15 @@ const INDIGO = '#6366f1'
 
 export default function ProfilePage() {
   const { user } = useAuth()
+  const userName = user?.name || user?.username || 'User'
+  const userRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'User'
+  const userInitial = userName.charAt(0).toUpperCase()
+
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: `${user?.name?.toLowerCase().replace(' ', '.')}@eduflow.edu`,
-    phone: '+91 98765 43210',
-    address: '123, Academic Block, EduFlow Campus',
+    name: userName,
+    email: user?.email || `${userName.toLowerCase().replace(/\s+/g, '.')}@eduflow.edu`,
+    phone: user?.phone || '+91 98765 43210',
+    address: user?.address || '123, Academic Block, EduFlow Campus',
   })
   const [saved, setSaved] = useState(false)
 
@@ -25,7 +29,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <RolePageTemplate role={user.role.charAt(0).toUpperCase() + user.role.slice(1)} title="My Profile" description="Manage your personal details and account settings.">
+    <RolePageTemplate role={userRole} title="My Profile" description="Manage your personal details and account settings.">
       <div style={{ display: 'grid', gap: '1.25rem' }}>
 
         {saved && (
@@ -45,7 +49,7 @@ export default function ProfilePage() {
                 color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '3.5rem', fontWeight: 800, boxShadow: `0 8px 24px ${INDIGO}40`
               }}>
-                {user.name.charAt(0)}
+                {userInitial}
               </div>
               <button className="btn btn-sm" style={{ background: `${INDIGO}15`, color: INDIGO, fontWeight: 700, borderRadius: '2rem', border: `1px solid ${INDIGO}30` }}>
                 Change Avatar

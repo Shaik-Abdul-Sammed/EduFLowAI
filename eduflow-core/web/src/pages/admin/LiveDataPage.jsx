@@ -352,7 +352,7 @@ export default function LiveDataPage() {
                 }
               ]).map((a, i) => (
                 <div key={a.id || a.title || `announcement-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
-                  <div className="fw-bold text-dark">{a.title}</div>
+                  <div className="fw-bold text-dark" style={{ marginBottom: '8px', lineHeight: '1.4' }}>{a.title}</div>
                   <div className="small text-muted">{a.description}</div>
                 </div>
               ))}
@@ -379,7 +379,7 @@ export default function LiveDataPage() {
             ]).map((c, i) => (
               <div key={c.refNo || c.title || `circular-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
                 <div className="badge bg-secondary mb-1">{c.refNo}</div>
-                <div className="fw-semibold text-dark">{c.title}</div>
+                <div className="fw-semibold text-dark" style={{ marginBottom: '8px', lineHeight: '1.4' }}>{c.title}</div>
                 <div className="small text-muted">{c.summary}</div>
               </div>
             ))}
@@ -401,7 +401,7 @@ export default function LiveDataPage() {
               { title: 'Minimum Qualifications for Appointment of Teachers', mandate: 'PhD mandatory for Associate Professor; NET/SET for Assistant Professor.' }
             ]).map((u, i) => (
               <div key={u.id || u.title || `ugc-${i}`} className="p-3 border rounded mb-2 bg-light-subtle">
-                <div className="fw-semibold text-dark">{u.title}</div>
+                <div className="fw-semibold text-dark" style={{ marginBottom: '8px', lineHeight: '1.4' }}>{u.title}</div>
                 <div className="small text-muted">{u.mandate}</div>
               </div>
             ))}
@@ -418,8 +418,8 @@ export default function LiveDataPage() {
               </div>
               <span className="badge bg-danger-subtle text-danger">{holidaysData?.state || 'Karnataka'}</span>
             </div>
-            <div className="table-responsive" style={{ maxHeight: 220, overflowY: 'auto' }}>
-              <table className="table table-sm table-hover align-middle">
+            <div className="table-responsive" style={{ maxHeight: 240, overflowY: 'auto' }}>
+              <table className="table table-sm table-hover align-middle mb-0">
                 <tbody>
                   {(holidaysData?.holidays || [
                     { name: 'Republic Day', date: '2026-01-26', type: 'National Holiday' },
@@ -428,10 +428,10 @@ export default function LiveDataPage() {
                     { name: 'Dr. B.R. Ambedkar Jayanti', date: '2026-04-14', type: 'National Observance' },
                     { name: 'Independence Day', date: '2026-08-15', type: 'National Holiday' }
                   ]).map((h, i) => (
-                    <tr key={h.name || h.date || `holiday-${i}`}>
-                      <td className="fw-semibold">{h.name}</td>
-                      <td><code>{h.date}</code></td>
-                      <td><span className="badge bg-light text-dark border">{h.type}</span></td>
+                    <tr key={h.name || h.date || `holiday-${i}`} style={{ height: '48px' }}>
+                      <td className="fw-semibold" style={{ minWidth: '170px', wordBreak: 'break-word', paddingRight: '12px' }}>{h.name}</td>
+                      <td style={{ whiteSpace: 'nowrap', paddingRight: '12px' }}><code>{h.date}</code></td>
+                      <td style={{ whiteSpace: 'nowrap' }}><span className="badge bg-light text-dark border">{h.type}</span></td>
                     </tr>
                   ))}
                 </tbody>

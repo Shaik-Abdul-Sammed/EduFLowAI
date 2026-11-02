@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+} from 'recharts'
 import { useAuth } from '../hooks/useAuth'
 import { useI18n } from '../i18n'
 import { instituteStats } from '../utils/mockData'
@@ -436,19 +446,46 @@ export default function DashboardHome({ role, routes = [] }) {
       {/* Quick Access & Widgets */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-lg-8">
-          {/* Charts/Main Data Placeholder */}
+          {/* Charts/Main Performance Chart */}
           <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '1.25rem' }}>
             <div className="card-body p-4">
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>Performance Overview</h2>
-              <div style={{ 
-                height: 240, borderRadius: '1rem', 
-                background: 'var(--surface-bg)', border: '1px dashed var(--border-color)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexDirection: 'column', color: 'var(--app-text-muted)'
-              }}>
-                <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📈</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Interactive Analytics Chart</span>
-                <span style={{ fontSize: '0.75rem' }}>(Attendance & Grades vs. Class Average)</span>
+              <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Performance Overview</h2>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--app-text-muted)' }}>
+                  Interactive Analytics Chart (Attendance &amp; Grades)
+                </span>
+              </div>
+              <div style={{ height: 240, width: '100%', minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={[
+                      { month: 'Jul', attendance: 88, grades: 82, classAvg: 78 },
+                      { month: 'Aug', attendance: 91, grades: 85, classAvg: 80 },
+                      { month: 'Sep', attendance: 86, grades: 81, classAvg: 79 },
+                      { month: 'Oct', attendance: 89, grades: 88, classAvg: 81 },
+                      { month: 'Nov', attendance: 93, grades: 89, classAvg: 83 },
+                      { month: 'Dec', attendance: 90, grades: 87, classAvg: 82 },
+                    ]}
+                    margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
+                    <XAxis dataKey="month" stroke="var(--app-text-muted, #64748b)" fontSize={12} tickLine={false} />
+                    <YAxis stroke="var(--app-text-muted, #64748b)" fontSize={12} domain={[60, 100]} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card-bg, #ffffff)',
+                        borderColor: 'var(--border-color, #e2e8f0)',
+                        borderRadius: '0.75rem',
+                        fontSize: '0.8rem',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '0.78rem', paddingTop: '6px' }} />
+                    <Line type="monotone" dataKey="attendance" name="Attendance %" stroke="#2563EB" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                    <Line type="monotone" dataKey="grades" name="Grades Score" stroke="#10B981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                    <Line type="monotone" dataKey="classAvg" name="Class Average" stroke="#F59E0B" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>

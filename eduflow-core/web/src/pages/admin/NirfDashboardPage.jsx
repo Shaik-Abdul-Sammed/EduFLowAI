@@ -239,8 +239,8 @@ export default function NirfDashboardPage() {
               2024 Framework
             </span>
           </div>
-          <h2 className="h3 fw-bold mb-1 text-dark">NIRF Ranking Analysis & Peer Benchmarking</h2>
-          <p className="text-muted small mb-0">
+          <h2 className="h3 fw-bold mb-1" style={{ color: 'var(--app-text, #0f172a)' }}>NIRF Ranking Analysis &amp; Peer Benchmarking</h2>
+          <p className="small mb-0" style={{ color: 'var(--app-text-muted, #475569)', opacity: 0.95, fontWeight: 500 }}>
             National Institutional Ranking Framework analytics, comparative benchmarking, and rank advancement roadmaps.
           </p>
         </div>

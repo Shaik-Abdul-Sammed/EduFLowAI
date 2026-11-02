@@ -32,13 +32,15 @@ export class CalendarGenerator {
     const yearStart = parseInt(String(academicYear).split('-')[0], 10) || 2026
     const holidays = await HolidayFetcher.fetchStateGovernmentHolidays(yearStart, stateCode)
 
-    // ODD Semester: July 1 to Dec 15
-    const oddStart = `${yearStart}-07-01`
-    const oddEnd = `${yearStart}-12-15`
+    // ODD Semester dates: customizable or standard
+    const oddStart = options.startDate || `${yearStart}-07-01`
+    const oddEnd = options.endDate || `${yearStart}-12-15`
 
-    // EVEN Semester: Jan 5 to May 25 of next year
-    const evenStart = `${yearStart + 1}-01-05`
-    const evenEnd = `${yearStart + 1}-05-25`
+    // EVEN Semester dates: customizable or standard
+    const evenStart = options.evenStartDate || `${yearStart + 1}-01-05`
+    const evenEnd = options.evenEndDate || `${yearStart + 1}-05-25`
+
+    const targetMinDays = Number(options.targetWorkingDays) || 90
 
     const holidayDates = new Set(holidays.map((h) => h.date))
 
@@ -97,15 +99,15 @@ export class CalendarGenerator {
         startDate: oddStart,
         endDate: oddEnd,
         totalWorkingDays: oddWorkingDays,
-        targetMinimumDays: 90,
-        compliant: oddWorkingDays >= 90,
+        targetMinimumDays: targetMinDays,
+        compliant: oddWorkingDays >= targetMinDays,
       },
       evenSemester: {
         startDate: evenStart,
         endDate: evenEnd,
         totalWorkingDays: evenWorkingDays,
-        targetMinimumDays: 90,
-        compliant: evenWorkingDays >= 90,
+        targetMinimumDays: targetMinDays,
+        compliant: evenWorkingDays >= targetMinDays,
       },
       holidaysCount: holidays.length,
       holidays,

@@ -139,6 +139,53 @@ ${reportText}
   }
 }
 
+const NAAC_DOCUMENT_CHECKLIST = `### 📋 Comprehensive NAAC SSR Documentation & Evidence Checklist
+
+To assemble a high-scoring, A++ compliant Self-Study Report (SSR) for your institution, ensure the following core documentation is uploaded and organized across all 7 criteria:
+
+#### 1. Criterion 1: Curricular Aspects
+- **Curriculum & Syllabi:** Approved Board of Studies (BoS) and Academic Council resolutions.
+- **Stakeholder Feedback:** Structured feedback collected from students, teachers, employers, and alumni with signed Action Taken Reports (ATR).
+
+#### 2. Criterion 2: Teaching-Learning & Evaluation
+- **Enrollment & Reservations:** Sanctioned student intake vs. admitted list with official government category allotment certificates.
+- **Faculty Credentials:** Full-time appointment orders, PhD/NET/SET qualification proof, and faculty-to-student ratio (1:15 or 1:20).
+- **Mentorship & Outcomes:** Mentor-mentee allocation rosters, meeting registers, and Course Outcome (CO) to Program Outcome (PO) direct/indirect attainment matrices.
+
+#### 3. Criterion 3: Research, Innovations & Extension
+- **Publications & Grants:** Seed grant sanction letters, external research funding orders, and Scopus/Web of Science publication links.
+- **Extension Activities:** GeoTagged photographs of NSS/NCC outreach programs, community adoption initiatives, and awards.
+
+#### 4. Criterion 4: Infrastructure & Learning Resources
+- **Physical & ICT Facilities:** GeoTagged photos of ICT smart classrooms, labs, seminar halls, and high-speed campus Wi-Fi infrastructure.
+- **Library System:** Integrated Library Management System (ILMS) software receipts, e-journal subscriptions (N-LIST/DELNET), and annual footfall logs.
+
+#### 5. Criterion 5: Student Support & Progression
+- **Capability Enhancement:** Career counseling, competitive examination coaching rosters, and placement offer letters.
+- **Student Welfare:** Government and institutional scholarship disbursement records, student grievance cell minutes.
+
+#### 6. Criterion 6: Governance, Leadership & Management
+- **IQAC Documentation:** IQAC committee notification, quarterly meeting minutes, and Quality Assurance initiatives.
+- **Financial Audits:** Certified audited income and expenditure balance sheets by an independent Chartered Accountant.
+
+#### 7. Criterion 7: Institutional Values & Best Practices
+- **Campus Audits:** Green Audit, Energy Audit, and Environment Compliance certificates.
+- **Institutional Distinctiveness:** Two institutional best practice case studies in the official NAAC template.
+
+💡 *Tip: Upload your department datasets or criteria drafts directly into EduFlow AI to auto-evaluate your quantitative metrics and calculate your predicted CGPA.*`
+
+function isGeneralPreparationQuestion(q = '') {
+  const lower = q.toLowerCase()
+  return (
+    /what\s+(should\s+i|to)\s+(involve|include|upload|prepare|attach)/i.test(lower) ||
+    /my\s+(clg|college)\s+report/i.test(lower) ||
+    /how\s+to\s+prepare\s+(my\s+)?(ssr|naac|report)/i.test(lower) ||
+    /what\s+(documents?|evidence|proofs?)\s+(to\s+upload|needed|required|should)/i.test(lower) ||
+    /checklist/i.test(lower) ||
+    /(what|how)\s+.*(involve|include).*report/i.test(lower)
+  )
+}
+
 /**
  * Answers questions about the NAAC report using strictly report context.
  *
@@ -151,6 +198,14 @@ export async function answerQuestion(reportText = '', question = '') {
     return {
       answer: 'Please provide a question regarding the NAAC report.',
       citedSections: [],
+    }
+  }
+
+  // If question is a general guidance or document checklist query, return helpful checklist
+  if (isGeneralPreparationQuestion(question)) {
+    return {
+      answer: NAAC_DOCUMENT_CHECKLIST,
+      citedSections: ['Criterion 1 to 7 SSR Preparation Guidelines', 'NAAC Accreditation Manual'],
     }
   }
 
@@ -186,6 +241,12 @@ Return JSON:
 
     const parsed = safeParseJson(response, null)
     if (parsed && typeof parsed.answer === 'string') {
+      if (parsed.answer.toLowerCase().includes('not present in the current report') && isGeneralPreparationQuestion(question)) {
+        return {
+          answer: NAAC_DOCUMENT_CHECKLIST,
+          citedSections: ['Criterion 1 to 7 SSR Preparation Guidelines'],
+        }
+      }
       return {
         answer: parsed.answer,
         citedSections: Array.isArray(parsed.citedSections) ? parsed.citedSections : [],
@@ -194,6 +255,12 @@ Return JSON:
 
     const cleanText = response.trim()
     if (cleanText.toLowerCase().includes('not present in the current report') || !reportText.toLowerCase().includes(question.toLowerCase().slice(0, 10))) {
+      if (isGeneralPreparationQuestion(question)) {
+        return {
+          answer: NAAC_DOCUMENT_CHECKLIST,
+          citedSections: ['Criterion 1 to 7 SSR Preparation Guidelines'],
+        }
+      }
       return {
         answer: 'This information is not present in the current report.',
         citedSections: [],
