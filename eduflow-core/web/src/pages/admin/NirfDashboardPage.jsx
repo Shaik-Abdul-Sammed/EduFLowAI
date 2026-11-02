@@ -232,15 +232,35 @@ export default function NirfDashboardPage() {
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
         <div>
           <div className="d-flex align-items-center gap-2 mb-1">
-            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-1 fs-7 fw-semibold rounded-pill">
-              <Trophy size={14} className="me-1 d-inline" /> {loading ? 'Updating NIRF Intelligence...' : 'NIRF Institutional Intelligence'}
+            <span
+              className="badge px-3 py-1 fs-7 fw-semibold rounded-pill"
+              style={{
+                backgroundColor: 'rgba(37, 99, 235, 0.25)',
+                color: '#60A5FA',
+                border: '1px solid rgba(96, 165, 250, 0.45)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              <Trophy size={14} className="d-inline" /> {loading ? 'Updating NIRF Intelligence...' : 'NIRF Institutional Intelligence'}
             </span>
-            <span className="badge bg-success bg-opacity-10 text-success px-2 py-1 fs-8 rounded-pill">
+            <span
+              className="badge px-2.5 py-1 fs-8 rounded-pill"
+              style={{
+                backgroundColor: 'rgba(16, 185, 129, 0.25)',
+                color: '#34D399',
+                border: '1px solid rgba(52, 211, 153, 0.45)',
+                fontWeight: 600,
+              }}
+            >
               2024 Framework
             </span>
           </div>
-          <h2 className="h3 fw-bold mb-1" style={{ color: 'var(--app-text, #0f172a)' }}>NIRF Ranking Analysis &amp; Peer Benchmarking</h2>
-          <p className="small mb-0" style={{ color: 'var(--app-text-muted, #475569)', opacity: 0.95, fontWeight: 500 }}>
+          <h2 className="h3 fw-bold mb-1" style={{ color: 'var(--app-text, #FFFFFF)', fontWeight: 800 }}>
+            NIRF Ranking Analysis &amp; Peer Benchmarking
+          </h2>
+          <p className="small mb-0" style={{ color: 'var(--app-text-muted, #94A3B8)', opacity: 0.95, fontWeight: 500, fontSize: '0.925rem' }}>
             National Institutional Ranking Framework analytics, comparative benchmarking, and rank advancement roadmaps.
           </p>
         </div>

@@ -42,6 +42,18 @@ Estimated hours saved: 95 hrs | Consulting cost saved: ₹2,40,000`,
 **Cycle:** 3rd Cycle Assessment | **Calculated Readiness Score:** 89.6 / 100 ✅
 
 ---
+### Table 2.1: Student Enrollment Profile (Metric 2.1.1 & 2.1.2)
+
+| Academic Year | Sanctioned Intake | Enrolled Students | SC/ST Reserved | OBC Reserved | General Category | Enrollment Ratio |
+|---|---|---|---|---|---|---|
+| **2024-2025** | 600 | 582 | 118 | 186 | 278 | 97.0% |
+| **2023-2024** | 600 | 568 | 114 | 182 | 272 | 94.7% |
+| **2022-2023** | 540 | 512 | 102 | 164 | 246 | 94.8% |
+| **2021-2022** | 540 | 498 | 99 | 160 | 239 | 92.2% |
+| **2020-2021** | 480 | 445 | 89 | 142 | 214 | 92.7% |
+| **5-Year Average** | **552** | **521** | **104.4** | **166.8** | **249.8** | **94.4%** |
+
+---
 ### Metric Compliance Breakdown
 
 1. **Metric 2.1 — Student Enrollment and Profile**
@@ -243,7 +255,7 @@ export function resolveAccreditationFallback(prompt = '', context = {}) {
   if (cTarget === '1' || cTarget === 'criterion 1' || cTarget === 'criteria 1' || combined.includes('criterion 1') || combined.includes('criteria 1') || combined.includes('curricular')) {
     return NAAC_CRITERIA_FALLBACKS.criterion1
   }
-  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('teaching')) {
+  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('teaching') || combined.includes('table 2.1') || combined.includes('table-2.1')) {
     return NAAC_CRITERIA_FALLBACKS.criterion2
   }
   if (cTarget === '4' || cTarget === 'criterion 4' || cTarget === 'criteria 4' || combined.includes('criterion 4') || combined.includes('criteria 4') || combined.includes('infrastructure')) {
@@ -430,7 +442,14 @@ export class AIService {
     if (aiProvider) {
       try {
         const promptFn = OFFICER_PROMPTS[officerType]
-        const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
+        const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS.
+
+=== VERIFIED INSTITUTIONAL DATABASE CONTEXT (JSON) ===
+Use the exact figures below to populate all quantitative Markdown tables:
+${JSON.stringify(context, null, 2)}
+
+CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
+When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.`
         const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 2000 })
         if (response && !response.includes('mock response from the fallback chain')) {
           return `${liveHeader}${response}${liveFooter}`
@@ -468,7 +487,14 @@ export class AIService {
     yield liveHeader
 
     const promptFn = OFFICER_PROMPTS[officerType]
-    const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS. Context: ${JSON.stringify(context)}`
+    const systemMessage = promptFn ? promptFn(context, prompt) : `You are the ${officerType} AI Officer for EduFlow AI OS.
+
+=== VERIFIED INSTITUTIONAL DATABASE CONTEXT (JSON) ===
+Use the exact figures below to populate all quantitative Markdown tables:
+${JSON.stringify(context, null, 2)}
+
+CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
+When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.`
 
     let streamedTokens = false
 

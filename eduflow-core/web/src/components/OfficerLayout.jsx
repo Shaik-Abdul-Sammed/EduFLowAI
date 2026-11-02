@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Send, Download, Copy, Check, Share2, Mail,
   Paperclip, X, ChevronDown, ChevronUp, Clock, FileJson,
-  Sparkles, Printer,
+  Sparkles, Printer, Eye, Edit,
 } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
@@ -41,7 +41,7 @@ import EmailReportModal from './EmailReportModal';
  *  topBarExtra:      // optional JSX rendered above input bar (e.g. criterion selector)
  *  payloadBuilder:   // optional fn(promptText, uploadedFile) => payload object
  */
-export default function OfficerLayout({ config, topBarExtra = null, payloadBuilder = null }) {
+export default function OfficerLayout({ config, topBarExtra = null, payloadBuilder = null, onInputChange = null }) {
   const {
     type, endpoint, exportEndpoint,
     icon, name, headerTitle, headerDesc,
@@ -90,6 +90,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   }, [status]);
   const [shareOpen, setShareOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
   const [shareContent, setShareContent] = useState('');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -378,7 +380,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     addToast(`File attached: ${file.name}`, 'success');
   };
 
-  // ── Share / Email helpers ──────────────────────────────────────────────────
+  // ── Share / Email / Preview helpers ──────────────────────────────────────────
   const openShare = (content) => {
     setShareContent(content || latestAssistantContent);
     setShareOpen(true);
@@ -386,6 +388,10 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const openEmail = (content) => {
     setShareContent(content || latestAssistantContent);
     setEmailOpen(true);
+  };
+  const openPreview = (content) => {
+    setPreviewContent(content || latestAssistantContent);
+    setPreviewOpen(true);
   };
 
   // ── History load ───────────────────────────────────────────────────────────
@@ -401,6 +407,10 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       <button type="button" onClick={() => handleCopy(content, `copy-${msgId}`)}
         style={{ ...btnStyle, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0' }}>
         {copied === `copy-${msgId}` ? <Check size={13} color="#10B981" /> : <Copy size={13} />} Copy
+      </button>
+      <button type="button" onClick={() => openPreview(content)}
+        style={{ ...btnStyle, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.35)', color: '#a5b4fc' }}>
+        <Eye size={13} /> Preview
       </button>
       <button type="button" onClick={() => handleDownloadPdf(content)}
         style={{ ...btnStyle, background: accentLight, border: `1px solid ${accentBorder}`, color: accentColor }}>
@@ -660,10 +670,67 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                   {msg.role === 'user' ? 'U' : icon}
                 </div>
                 <div style={{ background: msg.role === 'user' ? '#2563EB' : 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', position: 'relative' }}>
-                  {msg.role === 'assistant'
-                    ? <MarkdownRenderer content={msg.content} />
-                    : msg.content
-                  }
+                  {msg.role === 'assistant' ? (
+                    <MarkdownRenderer content={msg.content} />
+                  ) : (
+                    <div>
+                      <div>{msg.content}</div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.45rem', marginTop: '0.5rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(msg.content);
+                            addToast('Prompt copied to clipboard.', 'success');
+                          }}
+                          title="Copy prompt"
+                          aria-label="Copy prompt"
+                          style={{
+                            background: 'rgba(255,255,255,0.18)',
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            color: '#ffffff',
+                            borderRadius: '4px',
+                            padding: '3px 8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          <Copy size={12} /> Copy
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputValue(msg.content);
+                            if (typeof onInputChange === 'function') {
+                              onInputChange(msg.content);
+                            }
+                            textareaRef.current?.focus();
+                            addToast('Prompt loaded into editor.', 'info');
+                          }}
+                          title="Edit and re-run prompt"
+                          aria-label="Edit prompt"
+                          style={{
+                            background: 'rgba(255,255,255,0.18)',
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            color: '#ffffff',
+                            borderRadius: '4px',
+                            padding: '3px 8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          <Edit size={12} /> Edit
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {msg.role === 'assistant' && (
                     <ActionRow content={msg.content} msgId={i} />
                   )}
@@ -821,7 +888,12 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 ref={textareaRef}
                 value={inputValue}
                 aria-label="Officer prompt input"
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  if (typeof onInputChange === 'function') {
+                    onInputChange(e.target.value);
+                  }
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter your prompt… (Ctrl+Enter to send)"
                 style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.6rem 0', fontSize: '0.92rem', resize: 'vertical', outline: 'none', minHeight: '120px', maxHeight: '300px' }}
@@ -868,6 +940,133 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
         reportContent={shareContent}
         title={`${headerTitle} Report`}
       />
+
+      {/* ── Document Preview Modal (A4 View) ── */}
+      {previewOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Document Preview"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1100,
+            background: 'rgba(0, 0, 0, 0.78)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPreviewOpen(false);
+          }}
+        >
+          <div
+            style={{
+              background: '#0F172A',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '940px',
+              height: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.65)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.85rem 1.5rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#1E293B',
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#F8FAFC' }}>
+                  Document Preview — {headerTitle}
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94A3B8' }}>
+                  {institutionName || 'Institutional Report'} · Standard A4 Paper View
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadPdf(previewContent)}
+                  style={{
+                    background: accentColor || '#8B5CF6',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '7px',
+                    padding: '0.45rem 0.95rem',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Download size={14} /> Download PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(false)}
+                  aria-label="Close preview"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#94A3B8',
+                    borderRadius: '7px',
+                    padding: '0.45rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '2rem 1.5rem',
+                background: '#334155',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: '800px',
+                  minHeight: '1050px',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F172A',
+                  padding: '3.5rem 3rem',
+                  borderRadius: '4px',
+                  boxShadow: '0 10px 35px rgba(0, 0, 0, 0.35)',
+                  border: '1px solid #CBD5E1',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <MarkdownRenderer content={previewContent} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

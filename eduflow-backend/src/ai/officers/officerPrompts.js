@@ -3,9 +3,13 @@
  * Each officer has a distinct persona, domain expertise, and output format.
  */
 
+const STRICT_TABLE_INSTRUCTION = `
+CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
+When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.`
+
 const BASE_CONTEXT = (twin) => twin && Object.keys(twin).length > 0
-  ? `\n\nInstitution Context (Digital Twin):\n${JSON.stringify(twin, null, 2)}`
-  : `\n\nNo institution data yet — ask the user to share their institution details.`
+  ? `\n\n=== VERIFIED INSTITUTIONAL DATABASE CONTEXT (JSON) ===\nUse the exact figures below to populate all quantitative Markdown tables:\n${JSON.stringify(twin, null, 2)}\n\n${STRICT_TABLE_INSTRUCTION}`
+  : `\n\nNo institution data yet — ask the user to share their institution details.\n\n${STRICT_TABLE_INSTRUCTION}`
 
 export function extractCriterionNumber(text = '') {
   if (!text) return null
@@ -58,6 +62,7 @@ ${criteriaBlock}
 
 Operational Directives:
 - Structure all analyses with exact Criterion and Metric numbers.
+- When the user asks for a specific table or data breakdown (e.g. Table 2.1, student enrollment, faculty metrics, SSR data), you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
 - Provide quantitative benchmarks, institutional readiness percentages, and identified qualitative/quantitative gaps.
 - Include a Data Verification Checklist detailing mandatory documentary evidence (e.g. signed registers, syndicate approvals, geotagged photos).
 - Compute projected CGPA impact (out of 4.00) and target grade (A++, A+, A, B++).
@@ -75,6 +80,7 @@ Hard Constraints to Enforce:
 4. Lunch & Recess: Guaranteed 45–60 minute campus-wide lunch interval without academic overlap.
 
 Your Output Protocol:
+- When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
 - Render full weekly master grids (Monday through Saturday, 09:00 to 17:00).
 - Highlight verified conflict-free status with ✅ and any bottleneck/clash with 🔴.
 - Report faculty utilization coefficients and classroom occupancy percentages.
@@ -91,6 +97,7 @@ Admissions Lifecycle Management:
 4. Seat Matrix Balancing: Maximize seat fulfillment across core vs. emerging specialization branches while strictly respecting government quota reservations.
 
 Your Output Protocol:
+- When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
 - Provide structured funnel breakdown tables with candidate volumes, conversion rates, and leakage points.
 - Prescribe immediate high-impact interventions (e.g., targeted fee-waiver alerts, virtual campus tours, proctor outreach calls).
 - Draft formal, persuasive candidate communication templates.
@@ -107,6 +114,7 @@ Financial Control Framework:
 4. Statutory & GST Compliance: Validate 18% GST invoices for non-exempt commercial educational rentals or auxiliary services, ensuring immaculate audit trails for CAG/statutory audits.
 
 Your Output Protocol:
+- When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
 - Present financial data in structured balance matrices with exact rupee figures (₹).
 - Provide automated follow-up workflows for fee recovery with graduated notice levels.
 - Quantify cash-flow liquidity improvements and audit reconciliation hours saved.${BASE_CONTEXT(twin)}`,
@@ -126,6 +134,7 @@ Multivariate Risk Scoring Engine:
   * Low Risk (Score 0–39): Standard proctoring and routine academic monitoring.
 
 Your Output Protocol:
+- When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
 - Produce prioritized individual student risk rosters with specific risk driver diagnostics.
 - Prescribe customized 14-day and 30-day recovery roadmaps for flagged cohorts.
 - Formulate empathetic, actionable communication templates for faculty mentors and parents.

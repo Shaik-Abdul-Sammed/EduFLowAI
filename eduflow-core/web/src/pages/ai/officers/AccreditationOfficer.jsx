@@ -80,11 +80,34 @@ const OFFICER_CONFIG = {
 export default function AccreditationOfficer() {
   const [selectedCriterion, setSelectedCriterion] = useState('');
 
-  const payloadBuilder = (promptText) => ({
-    reportType: promptText,
-    action: promptText,
-    criterion: selectedCriterion,
-  });
+  const handlePromptChange = (text) => {
+    if (!text) return;
+    const match = text.match(/criterion\s*([1-7])/i) || text.match(/criteria\s*([1-7])/i);
+    if (match) {
+      const num = match[1];
+      setSelectedCriterion(`Criterion ${num}`);
+    } else if (/all\s*criteria/i.test(text) || /full\s*ssr/i.test(text)) {
+      setSelectedCriterion('All Criteria');
+    }
+  };
+
+  const payloadBuilder = (promptText) => {
+    let criterionToSend = selectedCriterion;
+    if (!criterionToSend && promptText) {
+      const match = promptText.match(/criterion\s*([1-7])/i) || promptText.match(/criteria\s*([1-7])/i);
+      if (match) {
+        criterionToSend = `Criterion ${match[1]}`;
+      } else if (/all\s*criteria/i.test(promptText) || /full\s*ssr/i.test(promptText)) {
+        criterionToSend = 'All Criteria';
+      }
+    }
+    return {
+      reportType: promptText,
+      action: promptText,
+      criterion: criterionToSend,
+      selectedCriterion: criterionToSend,
+    };
+  };
 
   const renderTopBarExtra = ({ setInputValue } = {}) => (
     <div style={{ marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -117,6 +140,7 @@ export default function AccreditationOfficer() {
       config={OFFICER_CONFIG}
       payloadBuilder={payloadBuilder}
       topBarExtra={renderTopBarExtra}
+      onInputChange={handlePromptChange}
     />
   );
 }
