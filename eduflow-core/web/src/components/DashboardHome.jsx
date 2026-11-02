@@ -88,14 +88,26 @@ export default function DashboardHome({ role, routes = [] }) {
     todayAttendancePercentage: 81.2,
   })
 
+  const chartData = [
+    { month: 'Jul', attendance: 88, grades: 82, classAvg: 78 },
+    { month: 'Aug', attendance: 91, grades: 85, classAvg: 80 },
+    { month: 'Sep', attendance: 86, grades: 81, classAvg: 79 },
+    { month: 'Oct', attendance: 89, grades: 88, classAvg: 81 },
+    { month: 'Nov', attendance: 93, grades: 89, classAvg: 83 },
+    { month: 'Dec', attendance: 90, grades: 87, classAvg: 82 },
+  ]
+
   useEffect(() => {
     let isMounted = true
+    if (!localStorage.getItem('accessToken')) return;
+
     if (role === 'admin') {
       const fetchMetrics = async () => {
         try {
           const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+          if (!token) return;
           const res = await fetch(`${getApiBaseURL()}/v1/admin/dashboard-metrics`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            headers: { Authorization: `Bearer ${token}` },
           })
           if (res.ok) {
             const data = await safeJson(res)
@@ -457,34 +469,33 @@ export default function DashboardHome({ role, routes = [] }) {
               </div>
               <div style={{ height: 240, width: '100%', minWidth: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={[
-                      { month: 'Jul', attendance: 88, grades: 82, classAvg: 78 },
-                      { month: 'Aug', attendance: 91, grades: 85, classAvg: 80 },
-                      { month: 'Sep', attendance: 86, grades: 81, classAvg: 79 },
-                      { month: 'Oct', attendance: 89, grades: 88, classAvg: 81 },
-                      { month: 'Nov', attendance: 93, grades: 89, classAvg: 83 },
-                      { month: 'Dec', attendance: 90, grades: 87, classAvg: 82 },
-                    ]}
-                    margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
-                    <XAxis dataKey="month" stroke="var(--app-text-muted, #64748b)" fontSize={12} tickLine={false} />
-                    <YAxis stroke="var(--app-text-muted, #64748b)" fontSize={12} domain={[60, 100]} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--card-bg, #ffffff)',
-                        borderColor: 'var(--border-color, #e2e8f0)',
-                        borderRadius: '0.75rem',
-                        fontSize: '0.8rem',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '0.78rem', paddingTop: '6px' }} />
-                    <Line type="monotone" dataKey="attendance" name="Attendance %" stroke="#2563EB" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                    <Line type="monotone" dataKey="grades" name="Grades Score" stroke="#10B981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                    <Line type="monotone" dataKey="classAvg" name="Class Average" stroke="#F59E0B" strokeWidth={2} strokeDasharray="4 4" dot={false} />
-                  </LineChart>
+                  {chartData && chartData.length > 0 ? (
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
+                      <XAxis dataKey="month" stroke="var(--app-text-muted, #64748b)" fontSize={12} tickLine={false} />
+                      <YAxis stroke="var(--app-text-muted, #64748b)" fontSize={12} domain={[60, 100]} tickLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--card-bg, #ffffff)',
+                          borderColor: 'var(--border-color, #e2e8f0)',
+                          borderRadius: '0.75rem',
+                          fontSize: '0.8rem',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '0.78rem', paddingTop: '6px' }} />
+                      <Line type="monotone" dataKey="attendance" name="Attendance %" stroke="#2563EB" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="grades" name="Grades Score" stroke="#10B981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="classAvg" name="Class Average" stroke="#F59E0B" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+                    </LineChart>
+                  ) : (
+                    <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--app-text-muted)' }}>
+                      Loading chart...
+                    </div>
+                  )}
                 </ResponsiveContainer>
               </div>
             </div>

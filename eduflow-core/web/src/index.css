@@ -466,17 +466,39 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .search-result-active { background: rgba(79, 70, 229, 0.1); }
 .offcanvas.show { visibility: visible; }
 
-/* ── Login Card Theme Support ── */
+/* ── Login Card Theme Support & Input Alignment ── */
 .login-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   color: var(--app-text);
+  overflow: visible !important;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 [data-theme='dark'] .login-card {
   background-color: var(--card-bg) !important;
   border-color: var(--border-color) !important;
   color: var(--app-text) !important;
+}
+
+.login-card form,
+.login-card .form-container,
+.login-card .form-group,
+.login-card .input-wrapper {
+  width: 100% !important;
+  margin-left: 0 !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+}
+
+.login-card .form-control,
+.login-card input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100% !important;
+  padding-left: 40px !important;
+  margin-left: 0 !important;
+  transform: none !important;
+  box-sizing: border-box !important;
 }
 
 /* ── Mobile Responsiveness & Touch Targets ── */

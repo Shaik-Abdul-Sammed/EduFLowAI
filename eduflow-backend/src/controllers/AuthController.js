@@ -21,12 +21,18 @@ export class AuthController {
       }
 
       // Query user by email (case-insensitive and username fallback supported)
-      let userRes = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [targetEmail])
-      if (!userRes || !userRes.rows || userRes.rows.length === 0) {
-        userRes = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [targetEmail])
-      }
-      if (!userRes || !userRes.rows || userRes.rows.length === 0) {
-        userRes = await pool.query('SELECT * FROM users WHERE username = $1 OR LOWER(username) = LOWER($1) LIMIT 1', [targetEmail])
+      let userRes
+      try {
+        userRes = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [targetEmail])
+        if (!userRes || !userRes.rows || userRes.rows.length === 0) {
+          userRes = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [targetEmail])
+        }
+        if (!userRes || !userRes.rows || userRes.rows.length === 0) {
+          userRes = await pool.query('SELECT * FROM users WHERE username = $1 OR LOWER(username) = LOWER($1) LIMIT 1', [targetEmail])
+        }
+      } catch (dbErr) {
+        console.error('Database connection error in AuthController.login:', dbErr)
+        return res.status(503).json({ error: 'Database is temporarily unavailable. Please try again.' })
       }
 
       const user = userRes?.rows?.[0]
@@ -109,6 +115,20 @@ export class AuthController {
       })
     } catch (err) {
       console.error('Login error in AuthController:', err)
+      const msg = String(err?.message || '').toLowerCase()
+      if (
+        msg.includes('database') ||
+        msg.includes('connection') ||
+        msg.includes('econnrefused') ||
+        msg.includes('timeout') ||
+        err?.code === 'ECONNREFUSED' ||
+        err?.code === 'ETIMEDOUT' ||
+        err?.code === '57P01' ||
+        err?.code === '08006' ||
+        err?.code === '08001'
+      ) {
+        return res.status(503).json({ error: 'Database is temporarily unavailable. Please try again.' })
+      }
       return res.status(500).json({ error: 'Internal server error' })
     }
   }

@@ -11,8 +11,12 @@ export default function Layout({ routes }) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Explicitly hide Sidebar and Navbar on public authentication pages
-  if (['/login', '/register-institution', '/signup'].includes(location.pathname)) {
+  // Explicitly hide Sidebar, Navbar, and Dashboard components on public authentication pages
+  if (
+    location.pathname === '/login' ||
+    location.pathname.startsWith('/login') ||
+    ['/register-institution', '/signup'].includes(location.pathname)
+  ) {
     return (
       <main style={{ minHeight: '100vh', width: '100%' }}>
         <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>

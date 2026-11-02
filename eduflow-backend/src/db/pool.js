@@ -31,7 +31,7 @@ const isProduction = String(process.env.NODE_ENV || '').trim().toLowerCase() ===
 const forcePostgres = dbMode === 'postgres' || isProduction
 
 if (forcePostgres && !databaseUrl) {
-  throw new Error('FATAL: DATABASE_URL environment variable is required when DB_MODE=postgres or NODE_ENV=production')
+  logger.error('FATAL: DATABASE_URL environment variable is required when DB_MODE=postgres or NODE_ENV=production')
 }
 
 const useMemoryOnly = (!databaseUrl || dbMode === 'memory' || isTest) && !forcePostgres
@@ -55,6 +55,12 @@ if (isRemote) {
   realPoolConfig.ssl = { rejectUnauthorized: false };
 }
 const realPool = useMemoryOnly ? null : new Pool(realPoolConfig);
+
+if (realPool) {
+  realPool.on('error', (err) => {
+    logger.error('Unexpected error on idle PostgreSQL client pool:', err)
+  })
+}
 
 function logMemoryFallbackWarningOnce() {
   if (!hasLoggedMemoryWarning) {

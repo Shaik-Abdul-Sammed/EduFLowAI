@@ -51,7 +51,8 @@ export function createAuthRouter() {
       if (result.rows.length === 0) return res.status(404).json({ error: 'No institutions found' })
       res.json({ id: result.rows[0].id, name: result.rows[0].name })
     } catch (err) {
-      res.status(500).json({ error: 'Database error' })
+      console.error('Database error in /default-institution:', err)
+      return res.status(503).json({ error: 'Database is temporarily unavailable. Please try again.' })
     }
   })
 

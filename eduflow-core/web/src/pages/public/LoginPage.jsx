@@ -244,7 +244,9 @@ export default function LoginPage() {
           border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
           borderRadius: '1.25rem',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--border-color, rgba(255, 255, 255, 0.1))',
-          padding: '2.5rem 2.25rem',
+          padding: '24px',
+          overflow: 'visible',
+          boxSizing: 'border-box',
         }}
       >
         {/* Section 1 - Brand Header */}
@@ -594,9 +596,9 @@ export default function LoginPage() {
         )}
 
         {/* Section 3 - Login Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ width: '100%', margin: 0, padding: 0 }}>
           {/* Email Address Field */}
-          <div style={{ marginBottom: '1.15rem' }}>
+          <div style={{ marginBottom: '1.15rem', width: '100%' }}>
             <label
               htmlFor="email"
               style={{
@@ -609,11 +611,12 @@ export default function LoginPage() {
             >
               Email Address
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
               <input
                 id="email"
                 name="email"
                 type="email"
+                className="form-control"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -621,7 +624,8 @@ export default function LoginPage() {
                 aria-label="Email Address"
                 style={{
                   width: '100%',
-                  padding: '0.65rem 0.85rem 0.65rem 2.5rem',
+                  padding: '0.65rem 0.85rem 0.65rem 40px',
+                  paddingLeft: '40px',
                   fontSize: '0.925rem',
                   background: 'var(--input-bg, #FFFFFF)',
                   color: 'var(--app-text, #1E293B)',
@@ -651,7 +655,7 @@ export default function LoginPage() {
           </div>
 
           {/* Password Field */}
-          <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ marginBottom: '1.25rem', width: '100%' }}>
             <label
               htmlFor="password"
               style={{
@@ -664,11 +668,12 @@ export default function LoginPage() {
             >
               Password
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
               <input
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
+                className="form-control"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -676,7 +681,8 @@ export default function LoginPage() {
                 aria-label="Password"
                 style={{
                   width: '100%',
-                  padding: '0.65rem 2.75rem 0.65rem 2.5rem',
+                  padding: '0.65rem 2.75rem 0.65rem 40px',
+                  paddingLeft: '40px',
                   fontSize: '0.925rem',
                   background: 'var(--input-bg, #FFFFFF)',
                   color: 'var(--app-text, #1E293B)',
