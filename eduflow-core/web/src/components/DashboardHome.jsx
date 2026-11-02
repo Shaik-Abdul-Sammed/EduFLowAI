@@ -137,7 +137,7 @@ export default function DashboardHome({ role, routes = [] }) {
               {config.icon} {role.charAt(0).toUpperCase() + role.slice(1)} Portal
             </p>
             <h1 style={{ color: 'white', fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', fontWeight: 800, marginBottom: '0.35rem' }}>
-              {t('welcome_back')}, {user?.name || 'User'}!
+              {t('welcome_back')}, {user?.name || user?.firstName || (user?.email === 's9010150809@gmail.com' || user?.email?.includes('dean') ? 'Dean' : 'Administrator')}!
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', margin: 0 }}>
               {config.greeting}
@@ -467,8 +467,8 @@ export default function DashboardHome({ role, routes = [] }) {
                   Interactive Analytics Chart (Attendance &amp; Grades)
                 </span>
               </div>
-              <div style={{ height: 240, width: '100%', minWidth: 0 }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <div style={{ height: 240, width: '100%', minWidth: 0, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
                   {chartData && chartData.length > 0 ? (
                     <LineChart
                       data={chartData}

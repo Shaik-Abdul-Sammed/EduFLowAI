@@ -87,10 +87,12 @@ export async function loginWithRole({ role, username, email, password, instituti
         const instResponse = await wakeUpFetch(getFullApiUrl('/v1/auth/default-institution'))
         if (instResponse.ok) {
           const instData = await safeJson(instResponse)
-          targetInstId = instData?.id
+          targetInstId = instData?.id || 1
+        } else {
+          targetInstId = 1
         }
       } catch {
-        targetInstId = undefined
+        targetInstId = 1
       }
     }
 

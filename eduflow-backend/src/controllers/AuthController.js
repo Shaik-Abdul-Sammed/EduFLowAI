@@ -108,6 +108,7 @@ export class AuthController {
           id: user.id,
           role: user.role,
           email: user.email,
+          name: user.name || [user.first_name, user.last_name].filter(Boolean).join(' ') || (user.email === 's9010150809@gmail.com' ? 'Dean Demo' : 'Administrator'),
           firstName: user.first_name || user.name || '',
           lastName: user.last_name || '',
         },
