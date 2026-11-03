@@ -110,7 +110,7 @@ export default function AccreditationOfficer() {
   };
 
   const renderTopBarExtra = ({ setInputValue } = {}) => (
-    <div style={{ marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+    <div style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
       <label htmlFor="naac-criteria-select" style={{ fontSize: '0.78rem', color: '#c4b5fd', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
         <Sparkles size={13} color="#8B5CF6" /> NAAC Criterion:
       </label>

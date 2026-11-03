@@ -4,6 +4,7 @@ import {
   ArrowLeft, Send, Download, Copy, Check, Share2, Mail,
   Paperclip, X, ChevronDown, ChevronUp, Clock, FileJson,
   Sparkles, Printer, Eye, Edit, Brain, ShieldCheck, CheckCircle, AlertTriangle,
+  PanelLeftClose, PanelLeftOpen, PanelLeft,
 } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
@@ -84,6 +85,25 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   };
 
   // ── State ──────────────────────────────────────────────────────────────────
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('officer_sidebar_open');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('officer_sidebar_open', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [copied, setCopied] = useState(null); // null | 'clipboard' | 'copy-btn'
@@ -121,6 +141,14 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const nextHeight = Math.min(Math.max(textareaRef.current.scrollHeight, 52), 160);
+      textareaRef.current.style.height = `${nextHeight}px`;
+    }
+  }, [inputValue]);
 
   const [staffPermission, setStaffPermission] = useState(null);
   const [hasCheckedPermission, setHasCheckedPermission] = useState(false);
@@ -465,16 +493,58 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0E27', color: 'white', fontFamily: '"Inter", sans-serif', display: 'flex', overflow: 'hidden' }}>
+    <div style={{ height: '100vh', maxHeight: '100vh', background: '#0A0E27', color: 'white', fontFamily: '"Inter", sans-serif', display: 'flex', overflow: 'hidden' }}>
 
       {/* ── Left panel ── */}
-      <div style={{ width: '340px', borderRight: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', flexShrink: 0 }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <Link to="/officers-dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-            <ArrowLeft size={16} /> Back to Dashboard
-          </Link>
+      <div
+        style={{
+          width: sidebarOpen ? '320px' : '0px',
+          minWidth: sidebarOpen ? '320px' : '0px',
+          maxWidth: sidebarOpen ? '320px' : '0px',
+          opacity: sidebarOpen ? 1 : 0,
+          borderRight: sidebarOpen ? '1px solid rgba(255,255,255,0.1)' : 'none',
+          background: 'rgba(255,255,255,0.02)',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          maxHeight: '100vh',
+          overflowY: sidebarOpen ? 'auto' : 'hidden',
+          overflowX: 'hidden',
+          flexShrink: 0,
+          transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+          visibility: sidebarOpen ? 'visible' : 'hidden',
+        }}
+      >
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <Link to="/officers-dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.85rem' }}>
+              <ArrowLeft size={15} /> Back to Dashboard
+            </Link>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+              data-testid="officer-sidebar-close"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '6px',
+                color: 'rgba(255,255,255,0.75)',
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              <PanelLeftClose size={15} />
+            </button>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h1 style={{ fontSize: '1.15rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.65rem', margin: 0 }}>
+            <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.65rem', margin: 0 }}>
               <span>{icon}</span> {name}
             </h1>
             <span style={{ background: accentLight, color: accentColor, padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold' }}>AI Active</span>
@@ -533,12 +603,36 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       </div>
 
       {/* ── Right panel ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', maxHeight: '100vh', minWidth: 0, overflow: 'hidden' }}>
 
         {/* Header */}
-        <div style={{ padding: '1.15rem 1.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(10,14,39,0.85)', backdropFilter: 'blur(10px)', flexShrink: 0 }}>
+        <div style={{ padding: '0.9rem 1.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(10,14,39,0.85)', backdropFilter: 'blur(10px)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+                aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+                data-testid="officer-sidebar-toggle"
+                style={{
+                  background: sidebarOpen ? 'rgba(255,255,255,0.06)' : accentLight,
+                  border: `1px solid ${sidebarOpen ? 'rgba(255,255,255,0.15)' : accentBorder}`,
+                  color: sidebarOpen ? 'rgba(255,255,255,0.85)' : accentColor,
+                  padding: '0.3rem 0.6rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {sidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}
+                <span>{sidebarOpen ? 'Hide' : 'Sidebar'}</span>
+              </button>
               <span style={{ fontSize: '1.3rem' }}>{icon}</span>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 'bold', margin: 0 }}>{headerTitle}</h2>
               {(() => {
@@ -707,7 +801,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
 
         {/* ── Conversation body ── */}
         {user?.role === 'staff' && hasCheckedPermission && !staffPermission ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
+          <div style={{ flex: '1 1 0%', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', overflowY: 'auto' }}>
             <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', marginBottom: '1rem', color: '#ef4444' }}>
               🔒
             </div>
@@ -747,17 +841,17 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             )}
           </div>
         ) : messages.length === 0 && status === 'idle' ? (
-          <div style={{ flex: 1, flexGrow: 1, minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-            <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: accentLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.25rem', marginBottom: '1.25rem', border: `1px solid ${accentBorder}`, boxShadow: `0 0 30px ${accentLight}` }}>
+          <div style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 1rem' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: accentLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.85rem', marginBottom: '0.75rem', border: `1px solid ${accentBorder}`, boxShadow: `0 0 24px ${accentLight}` }}>
               {icon}
             </div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.4rem' }}>{name} Workspace</h2>
-            <p style={{ color: 'rgba(255,255,255,0.55)', maxWidth: '440px', textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.35rem' }}>{name} Workspace</h2>
+            <p style={{ color: 'rgba(255,255,255,0.55)', maxWidth: '440px', textAlign: 'center', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
               Type a prompt or select a suggested query above to get started. Use <kbd style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '3px', padding: '1px 4px', fontSize: '0.75rem' }}>Ctrl+Enter</kbd> to send, <kbd style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '3px', padding: '1px 4px', fontSize: '0.75rem' }}>Esc</kbd> to stop streaming.
             </p>
           </div>
         ) : (
-          <div style={{ flex: 1, flexGrow: 1, minHeight: '60vh', overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
+          <div style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', padding: '1.25rem 1.75rem' }}>
             {messages.map((msg, i) => (
               <div key={msg.id || msg.timestamp || `msg-${i}`} style={{ display: 'flex', gap: '0.9rem', marginBottom: '1.4rem', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', background: msg.role === 'user' ? '#2563EB' : accentLight, border: msg.role === 'user' ? 'none' : `1px solid ${accentBorder}` }}>
@@ -915,112 +1009,127 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
         )}
 
         {/* ── Input bar ── */}
-        <div style={{ padding: '1rem 1.75rem', borderTop: '1px solid rgba(255,255,255,0.1)', background: '#0A0E27', flexShrink: 0 }}>
+        <div style={{ padding: '0.75rem 1.75rem 0.85rem 1.75rem', borderTop: '1px solid rgba(255,255,255,0.1)', background: '#0A0E27', flexShrink: 0, position: 'relative', zIndex: 10 }}>
           {/* Phase 10: file attachment preview */}
           {uploadedFile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.4rem 0.75rem', background: accentLight, border: `1px solid ${accentBorder}`, borderRadius: '8px', marginBottom: '0.6rem', fontSize: '0.82rem', color: accentColor }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.35rem 0.75rem', background: accentLight, border: `1px solid ${accentBorder}`, borderRadius: '8px', marginBottom: '0.45rem', fontSize: '0.82rem', color: accentColor }}>
               <Paperclip size={14} />
               <span style={{ flex: 1 }}>{uploadedFile.name}</span>
               <button type="button" onClick={() => setUploadedFile(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 0 }}><X size={14} /></button>
             </div>
           )}
 
-          {/* topBarExtra (e.g. criterion selector) */}
-          {typeof topBarExtra === 'function' ? topBarExtra({ setInputValue, handleSend }) : topBarExtra}
+          {/* Controls row: topBarExtra + compact Session History button */}
+          {(topBarExtra || sessionHistory.length > 0) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.45rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: topBarExtra ? '220px' : 'auto' }}>
+                {typeof topBarExtra === 'function' ? topBarExtra({ setInputValue, handleSend }) : topBarExtra}
+              </div>
 
-          {/* Collapsible Session History above the input area */}
-          <div style={{ marginBottom: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showHistory ? '0.4rem' : '0' }}>
+              {/* Session History dropdown trigger */}
               <button
                 type="button"
                 onClick={() => setShowHistory((v) => !v)}
+                title="Toggle session prompt history"
+                aria-label="Toggle session prompt history"
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
+                  background: showHistory ? accentLight : 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${showHistory ? accentBorder : 'rgba(255,255,255,0.12)'}`,
                   borderRadius: '6px',
-                  color: 'rgba(255,255,255,0.7)',
-                  padding: '0.3rem 0.65rem',
-                  fontSize: '0.75rem',
+                  color: showHistory ? accentColor : 'rgba(255,255,255,0.7)',
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.74rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
+                  flexShrink: 0,
+                  alignSelf: 'center',
                 }}
               >
-                <Clock size={13} />
-                <span>Session History ({sessionHistory.length})</span>
-                {showHistory ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                <Clock size={12} />
+                <span>History ({sessionHistory.length})</span>
+                {showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </button>
             </div>
-            {showHistory && (
-              <div
-                style={{
-                  background: 'rgba(15,23,42,0.85)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '8px',
-                  padding: '0.6rem',
-                  maxHeight: '140px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.4rem',
-                }}
-              >
-                {sessionHistory.length === 0 ? (
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>No previous prompts in this session.</span>
-                ) : (
-                  sessionHistory.map((item) => {
-                    const pText = typeof item === 'string' ? item : item.prompt || item.preview;
-                    return (
-                      <button
-                        key={item.id || pText}
-                        type="button"
-                        onClick={() => handleSelectPastPrompt(pText)}
-                        title={pText}
-                        style={{
-                          background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#e2e8f0',
-                          borderRadius: '6px',
-                          padding: '0.3rem 0.6rem',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          maxWidth: '100%',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        🕒 {item.preview || pText}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          </div>
+          )}
+
+          {/* Collapsible Session History preview list */}
+          {showHistory && (
+            <div
+              style={{
+                background: 'rgba(15,23,42,0.92)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '8px',
+                padding: '0.45rem 0.6rem',
+                maxHeight: '110px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.35rem',
+                marginBottom: '0.5rem',
+              }}
+            >
+              {sessionHistory.length === 0 ? (
+                <span style={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.4)' }}>No previous prompts in this session.</span>
+              ) : (
+                sessionHistory.map((item) => {
+                  const pText = typeof item === 'string' ? item : item.prompt || item.preview;
+                  return (
+                    <button
+                      key={item.id || pText}
+                      type="button"
+                      onClick={() => handleSelectPastPrompt(pText)}
+                      title={pText}
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: '#e2e8f0',
+                        borderRadius: '6px',
+                        padding: '0.25rem 0.5rem',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      🕒 {item.preview || pText}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          )}
 
           {user?.role === 'staff' && staffPermission?.permission_level === 'VIEW_ONLY' ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', color: '#9ca3af', fontSize: '0.82rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#9ca3af', fontSize: '0.82rem', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span>👁️ VIEW_ONLY Permission: You can view reports, but generating new prompts is disabled for your staff account.</span>
             </div>
           ) : user?.role === 'staff' && hasCheckedPermission && !staffPermission ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.8rem', background: 'rgba(239,68,68,0.1)', borderRadius: '12px', color: '#fca5a5', fontSize: '0.82rem', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem', background: 'rgba(239,68,68,0.1)', borderRadius: '10px', color: '#fca5a5', fontSize: '0.82rem', border: '1px solid rgba(239,68,68,0.2)' }}>
               <span>🔒 Officer access restricted. Please click &quot;Request Access&quot; above to request delegation from your HOD.</span>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'flex-end', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '0.4rem 0.5rem 0.4rem 0.75rem', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '0.3rem 0.45rem 0.3rem 0.65rem', gap: '0.4rem' }}>
               {/* File upload button */}
-              <button type="button" title="Attach file (PDF, Excel, CSV, TXT)" aria-label="Attach file (PDF, Excel, CSV, TXT)" onClick={() => fileInputRef.current?.click()}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.4rem', borderRadius: '6px', flexShrink: 0, alignSelf: 'flex-end' }}>
-                <Paperclip size={17} />
+              <button
+                type="button"
+                title="Attach file (PDF, Excel, CSV, TXT)"
+                aria-label="Attach file (PDF, Excel, CSV, TXT)"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.35rem', borderRadius: '6px', flexShrink: 0, alignSelf: 'flex-end' }}
+              >
+                <Paperclip size={16} />
               </button>
               <input ref={fileInputRef} type="file" aria-label="Attach file" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt" style={{ display: 'none' }} onChange={handleFileChange} />
 
               <textarea
                 ref={textareaRef}
                 value={inputValue}
+                data-testid="officer-prompt-input"
                 aria-label="Officer prompt input"
                 onChange={(e) => {
                   setInputValue(e.target.value);
@@ -1030,8 +1139,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter your prompt… (Ctrl+Enter to send)"
-                style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.6rem 0', fontSize: '0.92rem', resize: 'vertical', outline: 'none', minHeight: '100px', maxHeight: '300px' }}
-                rows={4}
+                style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.45rem 0', fontSize: '0.9rem', resize: 'none', outline: 'none', minHeight: '52px', maxHeight: '160px', overflowY: 'auto' }}
+                rows={2}
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, alignSelf: 'flex-end' }}>
                 <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)' }}>{inputValue.length}/2000</span>
@@ -1041,14 +1150,24 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                   </span>
                 )}
                 {(status === 'streaming' || status === 'connecting') && (
-                  <button type="button" onClick={stop} title="Stop streaming (Esc)" aria-label="Stop streaming"
-                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', width: '38px', height: '38px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <button
+                    type="button"
+                    onClick={stop}
+                    title="Stop streaming (Esc)"
+                    aria-label="Stop streaming"
+                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  >
                     <X size={16} />
                   </button>
                 )}
-                <button type="button" onClick={() => handleSend()} aria-label="Send prompt"
+                <button
+                  type="button"
+                  onClick={() => handleSend()}
+                  aria-label="Send prompt"
+                  data-testid="officer-send-button"
                   disabled={status === 'streaming' || status === 'connecting'}
-                  style={{ background: status === 'streaming' || status === 'connecting' ? 'rgba(255,255,255,0.08)' : accentColor, color: status === 'streaming' || status === 'connecting' ? 'rgba(255,255,255,0.3)' : 'white', border: 'none', width: '38px', height: '38px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: status === 'streaming' || status === 'connecting' ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
+                  style={{ background: status === 'streaming' || status === 'connecting' ? 'rgba(255,255,255,0.08)' : accentColor, color: status === 'streaming' || status === 'connecting' ? 'rgba(255,255,255,0.3)' : 'white', border: 'none', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: status === 'streaming' || status === 'connecting' ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+                >
                   <Send size={16} />
                 </button>
               </div>
