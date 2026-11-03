@@ -2,7 +2,11 @@
  * Data Normalizer for Verified Database Metrics.
  * Formats all numeric and statistical database values into strict, validated JSON objects
  * before injecting into LLM context prompts, ensuring zero hallucination of factual numbers.
+ *
+ * YOU ARE A DATA ANALYST. When the user asks for data (e.g., intake, enrollment, students), you MUST output a Markdown table. Do NOT output a list of compliance metrics. Do NOT hallucinate numbers. Use the exact numbers provided in the INSTITUTIONAL DATA block.
  */
+
+export const STRICT_DATA_ANALYST_INSTRUCTION = `YOU ARE A DATA ANALYST. When the user asks for data (e.g., intake, enrollment, students), you MUST output a Markdown table. Do NOT output a list of compliance metrics. Do NOT hallucinate numbers. Use the exact numbers provided in the INSTITUTIONAL DATA block.`
 
 export class DataNormalizer {
   /**
@@ -115,7 +119,9 @@ export class DataNormalizer {
    */
   static formatStrictJsonPromptBlock(categoryName, normalizedData) {
     const jsonStr = JSON.stringify(normalizedData, null, 2)
-    return `\n\n[VERIFIED DATABASE METRICS (STRICT JSON) - DO NOT HALLUCINATE OR ALTER ANY VALUES]:
+    return `\n\nYOU ARE A DATA ANALYST. When the user asks for data (e.g., intake, enrollment, students), you MUST output a Markdown table. Do NOT output a list of compliance metrics. Do NOT hallucinate numbers. Use the exact numbers provided in the INSTITUTIONAL DATA block.
+
+[VERIFIED DATABASE METRICS (STRICT JSON) - DO NOT HALLUCINATE OR ALTER ANY VALUES]:
 \`\`\`json
 {
   "${categoryName}": ${jsonStr}

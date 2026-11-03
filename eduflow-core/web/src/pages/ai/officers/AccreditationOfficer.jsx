@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Sparkles } from 'lucide-react';
 import OfficerLayout from '../../../components/OfficerLayout';
 
@@ -79,8 +79,20 @@ const OFFICER_CONFIG = {
 
 export default function AccreditationOfficer() {
   const [selectedCriterion, setSelectedCriterion] = useState('');
+  const [userInput, setUserInput] = useState('');
+
+  useEffect(() => {
+    if (!userInput) return;
+    const lower = userInput.toLowerCase();
+    if (lower.includes('2.1') || lower.includes('intake') || lower.includes('enrollment') || lower.includes('student')) {
+      setSelectedCriterion('Criterion 2');
+    } else if (lower.includes('3.3') || lower.includes('research') || lower.includes('publications')) {
+      setSelectedCriterion('Criterion 3');
+    }
+  }, [userInput]);
 
   const handlePromptChange = (text) => {
+    setUserInput(text || '');
     if (!text) return;
     const match = text.match(/criterion\s*([1-7])/i) || text.match(/criteria\s*([1-7])/i);
     if (match) {

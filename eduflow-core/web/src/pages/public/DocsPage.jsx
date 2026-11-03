@@ -224,7 +224,7 @@ npm run dev`}
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Hardware &amp; OS Requirements</h4>
         <div className="table-responsive">
-          <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+          <table className="table table-bordered small align-middle mb-4" style={{ width: '100%', minWidth: '600px', tableLayout: 'auto', color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
             <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
               <tr>
                 <th>Component</th>
@@ -372,7 +372,7 @@ npm run dev`}
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Traffic Quotas</h4>
         <p style={{ color: 'var(--app-text)' }}>To ensure high availability across campus tenants, the API enforces tiered rate limiting:</p>
         <div className="table-responsive">
-          <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+          <table className="table table-bordered small align-middle mb-4" style={{ width: '100%', minWidth: '600px', tableLayout: 'auto', color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
             <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
               <tr>
                 <th>Tier</th>
@@ -473,7 +473,7 @@ data: {"type": "done", "officerType": "accreditation", "roi": {"hoursSaved": 40,
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Error Code Matrix</h4>
         <div className="table-responsive">
-          <table className="table table-bordered small align-middle" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+          <table className="table table-bordered small align-middle" style={{ width: '100%', minWidth: '600px', tableLayout: 'auto', color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
             <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
               <tr>
                 <th>Status</th>
@@ -693,7 +693,7 @@ function verifySignature(payload, signatureHeader, secret) {
       <>
         <h4 className="fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--app-text)' }}>Cryptographic Framework</h4>
         <div className="table-responsive">
-          <table className="table table-bordered small align-middle mb-4" style={{ color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
+          <table className="table table-bordered small align-middle mb-4" style={{ width: '100%', minWidth: '600px', tableLayout: 'auto', color: 'var(--app-text)', borderColor: 'var(--border-color)' }}>
             <thead style={{ background: 'var(--surface-bg)', color: 'var(--app-text)' }}>
               <tr>
                 <th>Layer</th>
@@ -1071,7 +1071,7 @@ export default function DocsPage() {
                 minHeight: '650px',
               }}
             >
-              <div style={{ maxWidth: '800px' }}>
+              <div style={{ maxWidth: '1200px', width: '100%' }}>
                 {/* Header breadcrumb & Title */}
                 <div className="mb-4">
                   <div className="d-flex align-items-center gap-2 small mb-2" style={{ color: 'var(--app-text-muted)' }}>

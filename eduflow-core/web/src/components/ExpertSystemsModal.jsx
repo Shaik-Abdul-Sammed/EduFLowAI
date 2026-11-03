@@ -49,7 +49,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem'
+        padding: '2rem'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -58,15 +58,16 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
       <div
         style={{
           width: '100%',
-          maxWidth: '920px',
+          maxWidth: '900px',
           maxHeight: '90vh',
+          overflowY: 'auto',
           background: 'var(--app-card-bg, #111827)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '16px',
+          padding: '2rem',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          overflow: 'hidden',
           color: 'var(--app-text, #f3f4f6)'
         }}
       >
