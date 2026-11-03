@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert, CheckCircle2, Brain } from 'lucide-react';
+import { Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert, CheckCircle2, Brain, ArrowLeft } from 'lucide-react';
 import { getFullApiUrl } from '../../config/apiConfig';
 import { EXPERT_SYSTEMS, evaluateExpertSystem } from '../../services/expertSystemRules';
 
@@ -170,11 +170,40 @@ export default function OfficersDashboard() {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Cpu color="#60a5fa" size={28} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }} className="gradient-text">
-            EduFlow AI OS
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Link
+            to="/admin/dashboard"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: 'rgba(37, 99, 235, 0.2)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              color: '#93c5fd',
+              padding: '0.45rem 0.9rem',
+              borderRadius: '8px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2563EB';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(37, 99, 235, 0.2)';
+              e.currentTarget.style.color = '#93c5fd';
+            }}
+          >
+            <ArrowLeft size={16} /> ← Back to Admin Dashboard
+          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Cpu color="#60a5fa" size={28} />
+            <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }} className="gradient-text">
+              EduFlow AI OS
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

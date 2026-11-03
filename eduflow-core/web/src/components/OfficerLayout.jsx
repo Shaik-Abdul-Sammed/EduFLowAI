@@ -42,6 +42,14 @@ import EmailReportModal from './EmailReportModal';
  *  topBarExtra:      // optional JSX rendered above input bar (e.g. criterion selector)
  *  payloadBuilder:   // optional fn(promptText, uploadedFile) => payload object
  */
+const OFFICER_SUGGESTED_NEXT_PROMPTS = {
+  accreditation: ['Generate Criteria 3', 'Show DVV gaps', 'Download PDF report'],
+  'student-success': ['Show top 10 at-risk', 'Generate mentor plan', 'Compare departments'],
+  timetable: ['Check room clashes', 'Generate faculty load chart', 'Resolve lab conflicts'],
+  admissions: ['Predict branch-wise yield', 'Show conversion drop-offs', 'Generate follow-up queue'],
+  finance: ['List top 10 defaulters', 'Show 60-day fee aging', 'Reconcile bank deposits'],
+};
+
 export default function OfficerLayout({ config, topBarExtra = null, payloadBuilder = null, onInputChange = null }) {
   const {
     type, endpoint, exportEndpoint,
@@ -56,10 +64,24 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     institutionName = 'Sri Siddhartha Institute of Technology',
   } = config;
 
+  const officerSuggestions = config?.suggestedNextPrompts || OFFICER_SUGGESTED_NEXT_PROMPTS[type] || [
+    'Explain key metrics',
+    'Generate detailed breakdown table',
+    'Download PDF report',
+  ];
+
   // ── Context & Custom Hooks (moved to top to prevent TDZ ReferenceError) ───
   const { addToast } = useToast();
   const { user } = useAuth();
   const { tokens, status, error, start, stop } = useStreamingOfficer();
+
+  const handleSuggestedNextPrompt = (promptText) => {
+    setInputValue(promptText);
+    if (typeof onInputChange === 'function') {
+      onInputChange(promptText);
+    }
+    handleSend(promptText);
+  };
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [messages, setMessages] = useState([]);
@@ -725,7 +747,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             )}
           </div>
         ) : messages.length === 0 && status === 'idle' ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div style={{ flex: 1, flexGrow: 1, minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
             <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: accentLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.25rem', marginBottom: '1.25rem', border: `1px solid ${accentBorder}`, boxShadow: `0 0 30px ${accentLight}` }}>
               {icon}
             </div>
@@ -735,7 +757,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             </p>
           </div>
         ) : (
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
+          <div style={{ flex: 1, flexGrow: 1, minHeight: '60vh', overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
             {messages.map((msg, i) => (
               <div key={msg.id || msg.timestamp || `msg-${i}`} style={{ display: 'flex', gap: '0.9rem', marginBottom: '1.4rem', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', background: msg.role === 'user' ? '#2563EB' : accentLight, border: msg.role === 'user' ? 'none' : `1px solid ${accentBorder}` }}>
@@ -804,7 +826,47 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                     </div>
                   )}
                   {msg.role === 'assistant' && (
-                    <ActionRow content={msg.content} msgId={i} />
+                    <>
+                      <ActionRow content={msg.content} msgId={i} />
+                      {i === messages.length - 1 && (status === 'done' || status === 'idle') && (
+                        <div style={{ marginTop: '0.85rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                          <div style={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
+                            <Sparkles size={13} color={accentColor} /> Suggested Next Prompts:
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {officerSuggestions.slice(0, 3).map((promptSuggestion, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSuggestedNextPrompt(promptSuggestion)}
+                                style={{
+                                  background: accentLight,
+                                  border: `1px solid ${accentBorder}`,
+                                  color: '#ffffff',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  transition: 'all 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = accentColor;
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = accentLight;
+                                }}
+                              >
+                                <span>✨</span> {promptSuggestion}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -968,7 +1030,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter your prompt… (Ctrl+Enter to send)"
-                style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.6rem 0', fontSize: '0.92rem', resize: 'vertical', outline: 'none', minHeight: '120px', maxHeight: '300px' }}
+                style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', padding: '0.6rem 0', fontSize: '0.92rem', resize: 'vertical', outline: 'none', minHeight: '100px', maxHeight: '300px' }}
                 rows={4}
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, alignSelf: 'flex-end' }}>

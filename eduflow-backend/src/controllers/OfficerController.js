@@ -218,13 +218,14 @@ export class OfficerController {
       )
 
       const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
-      let rawPrompt = `${contextBlock}\nGenerate ${reportType}`
+      let rawPrompt = `Generate ${reportType}`
       if (criterion && !rawPrompt.toLowerCase().includes(String(criterion).toLowerCase())) {
         rawPrompt = `${rawPrompt}\nSpecific NAAC Criterion Target: ${criterion}`
       }
       const promptWithData = await enrichPromptWithDatabaseData(rawPrompt, req.user.institutionId)
+      const finalPrompt = `${contextBlock}\n\n${promptWithData}`
 
-      const reply = await AIService.processPrompt('accreditation', promptWithData, { userRole: req.user.role, criterion })
+      const reply = await AIService.processPrompt('accreditation', finalPrompt, { userRole: req.user.role, criterion })
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'ACCREDITATION_REPORT_GENERATED', req.ip, req.get('user-agent'), { reportType })
 
       res.json({
@@ -255,8 +256,9 @@ export class OfficerController {
         roi.moneySaved
       )
 
+      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
       const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('student-success', enriched)
+      const reply = await AIService.processPrompt('student-success', `${contextBlock}\n\n${enriched}`)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'RISK_PREDICTION_RUN', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -281,8 +283,9 @@ export class OfficerController {
         roi.moneySaved
       )
 
+      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
       const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('timetable', enriched)
+      const reply = await AIService.processPrompt('timetable', `${contextBlock}\n\n${enriched}`)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'TIMETABLE_GENERATED', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -307,8 +310,9 @@ export class OfficerController {
         roi.moneySaved
       )
 
+      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
       const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('admissions', enriched)
+      const reply = await AIService.processPrompt('admissions', `${contextBlock}\n\n${enriched}`)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'ADMISSION_YIELD_PREDICTED', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -333,8 +337,9 @@ export class OfficerController {
         roi.moneySaved
       )
 
+      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
       const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('finance', enriched)
+      const reply = await AIService.processPrompt('finance', `${contextBlock}\n\n${enriched}`)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'FINANCE_RECONCILED', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -461,7 +466,14 @@ export class OfficerController {
         ...extraContext,
       }
 
-      let enrichedPrompt = await enrichPromptWithDatabaseData(prompt, req.user?.institutionId || 1)
+      const instDataBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
+      let cleanPrompt = prompt
+      if (cleanPrompt.includes('INSTITUTIONAL DATA\n==================')) {
+        cleanPrompt = cleanPrompt.replace(/INSTITUTIONAL DATA\s*==================[\s\S]*?Use this data to generate the report\.\s*/, '').trim()
+      }
+
+      let enrichedPrompt = await enrichPromptWithDatabaseData(cleanPrompt, req.user?.institutionId || 1)
+      enrichedPrompt = `${instDataBlock}\n\n${enrichedPrompt}`
 
       // Phase 1: Advanced RAG vector search with cosine similarity and re-ranking
       try {

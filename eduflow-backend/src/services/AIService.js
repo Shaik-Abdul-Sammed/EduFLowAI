@@ -449,7 +449,10 @@ Use the exact figures below to populate all quantitative Markdown tables:
 ${JSON.stringify(context, null, 2)}
 
 CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
-When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.`
+When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
+Always output data in Markdown tables. Never output raw comma-separated text.
+CRITICAL INSTRUCTION: You are a data analyst. You must output the actual data provided in the context. Do NOT output generic regulatory frameworks (like AICTE rules or UGC guidelines) unless explicitly asked. If the user asks for a list of students, output their actual names and roll numbers. If the user asks for a timetable, output the actual Markdown table with classes and rooms.
+If the user asks for a chart or graph, output a JSON block formatted for Recharts (e.g., \`\`\`json { "type": "bar", "data": [...] } \`\`\`).`
         const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 2000 })
         if (response && !response.includes('mock response from the fallback chain')) {
           return `${liveHeader}${response}${liveFooter}`
@@ -494,7 +497,10 @@ Use the exact figures below to populate all quantitative Markdown tables:
 ${JSON.stringify(context, null, 2)}
 
 CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
-When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.`
+When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
+Always output data in Markdown tables. Never output raw comma-separated text.
+CRITICAL INSTRUCTION: You are a data analyst. You must output the actual data provided in the context. Do NOT output generic regulatory frameworks (like AICTE rules or UGC guidelines) unless explicitly asked. If the user asks for a list of students, output their actual names and roll numbers. If the user asks for a timetable, output the actual Markdown table with classes and rooms.
+If the user asks for a chart or graph, output a JSON block formatted for Recharts (e.g., \`\`\`json { "type": "bar", "data": [...] } \`\`\`).`
 
     let streamedTokens = false
 

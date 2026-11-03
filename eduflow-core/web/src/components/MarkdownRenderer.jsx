@@ -1,10 +1,57 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 function cleanProps(props) {
   const copy = { ...props };
   delete copy.node;
   return copy;
+}
+
+function renderRechartsBlock(jsonStr) {
+  try {
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+      const keys = Object.keys(parsed.data[0]);
+      if (keys.length === 0) return null;
+      const xKey = keys[0];
+      const yKey = keys[1] || keys[0];
+
+      if (parsed.type === 'bar') {
+        return (
+          <div style={{ width: '100%', minWidth: '280px', height: 260, margin: '1rem 0', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 260 }}>
+              <BarChart data={parsed.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <XAxis dataKey={xKey} stroke="#94a3b8" fontSize={12} />
+                <YAxis stroke="#94a3b8" fontSize={12} />
+                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }} />
+                <Bar dataKey={yKey} fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        );
+      }
+      if (parsed.type === 'line') {
+        return (
+          <div style={{ width: '100%', minWidth: '280px', height: 260, margin: '1rem 0', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 400, height: 260 }}>
+              <LineChart data={parsed.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <XAxis dataKey={xKey} stroke="#94a3b8" fontSize={12} />
+                <YAxis stroke="#94a3b8" fontSize={12} />
+                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '6px', color: '#fff', fontSize: '12px' }} />
+                <Line type="monotone" dataKey={yKey} stroke="#3b82f6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        );
+      }
+    }
+  } catch {
+    // not recharts JSON
+  }
+  return null;
 }
 
 /**
@@ -116,7 +163,7 @@ export default function MarkdownRenderer({ content, className = '' }) {
             />
           ),
           code: (props) => {
-            const { inline, ...rest } = cleanProps(props);
+            const { inline, children, className: codeClass, ...rest } = cleanProps(props);
             if (inline) {
               return (
                 <code
@@ -128,9 +175,20 @@ export default function MarkdownRenderer({ content, className = '' }) {
                     fontSize: '0.88em',
                   }}
                   {...rest}
-                />
+                >
+                  {children}
+                </code>
               );
             }
+
+            if (typeof children === 'string' || (Array.isArray(children) && typeof children[0] === 'string')) {
+              const rawStr = (typeof children === 'string' ? children : children.join('')).trim();
+              if (rawStr.startsWith('{') && rawStr.endsWith('}') && (rawStr.includes('"type"') || rawStr.includes("'type'")) && rawStr.includes('"data"')) {
+                const chartElement = renderRechartsBlock(rawStr);
+                if (chartElement) return chartElement;
+              }
+            }
+
             return (
               <pre
                 style={{
@@ -143,13 +201,16 @@ export default function MarkdownRenderer({ content, className = '' }) {
                 }}
               >
                 <code
+                  className={codeClass}
                   style={{
                     fontFamily: 'monospace',
                     fontSize: '0.88rem',
                     color: '#e2e8f0',
                   }}
                   {...rest}
-                />
+                >
+                  {children}
+                </code>
               </pre>
             );
           },
