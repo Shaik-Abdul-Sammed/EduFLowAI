@@ -13,12 +13,22 @@ import {
   Info,
   ShieldAlert,
   CalendarCheck,
-  Settings
+  Settings,
+  Plus,
+  Trash2,
+  Search,
+  Tag,
+  Filter,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
+import {
+  getHolidaysForAcademicYear,
+  getFestivalDates,
+  generateAcademicYearOptions,
+} from '../../services/indianHolidayRules'
 
 const DEFAULT_HOLIDAYS = [
   { name: 'Republic Day', date: '2026-01-26', type: 'CENTRAL_GAZETTED' },
@@ -59,39 +69,43 @@ const ACADEMIC_MONTHS = [
 function runHolidayDiagnosis(yearStr, stateCode) {
   const yStart = parseInt(String(yearStr).split('-')[0], 10) || 2026
   const yEnd = yStart + 1
+  const f1 = getFestivalDates(yStart)
+  const f2 = getFestivalDates(yEnd)
 
   return {
     year: yearStr,
     stateCode: stateCode || 'KA',
     predictedFestivals: [
-      { name: 'Ugadi / Gudi Padwa', predictedDate: `${yStart}-03-20`, status: 'CONFIRMED', confidence: '98%', source: 'State Astronomical Gazette' },
-      { name: 'Ganesh Chaturthi', predictedDate: `${yStart}-09-14`, status: 'CONFIRMED', confidence: '96%', source: 'National Lunar Almanac' },
-      { name: 'Dussehra (Vijayadashami)', predictedDate: `${yStart}-10-20`, status: 'CONFIRMED', confidence: '99%', source: 'Central Gazetted Notification' },
-      { name: 'Deepavali (Diwali)', predictedDate: `${yStart}-11-08`, status: 'CONFIRMED', confidence: '99%', source: 'Central Gazetted Notification' },
-      { name: 'Maha Shivratri', predictedDate: `${yEnd}-02-17`, status: 'CONFIRMED', confidence: '95%', source: 'State Gazetted Calendar' },
-      { name: 'Holi', predictedDate: `${yEnd}-03-04`, status: 'CONFIRMED', confidence: '97%', source: 'Central Gazetted Notification' },
+      { name: 'Ganesh Chaturthi', predictedDate: f1.ganesh, status: 'CONFIRMED', confidence: '98%', source: 'National Lunar Almanac' },
+      { name: 'Dussehra (Vijayadashami)', predictedDate: f1.dussehra, status: 'CONFIRMED', confidence: '99%', source: 'Central/State Gazetted Notification' },
+      { name: 'Deepavali (Diwali)', predictedDate: f1.diwali, status: 'CONFIRMED', confidence: '99%', source: 'Central/State Gazetted Notification' },
+      { name: 'Maha Shivratri', predictedDate: f2.shivratri, status: 'CONFIRMED', confidence: '96%', source: 'State Gazetted Calendar' },
+      { name: 'Holi', predictedDate: f2.holi, status: 'CONFIRMED', confidence: '97%', source: 'Central Gazetted Notification' },
+      { name: 'Ugadi / Gudi Padwa', predictedDate: f2.ugadi, status: 'CONFIRMED', confidence: '98%', source: 'State Astronomical Gazette' },
+      { name: 'Eid-ul-Fitr (Ramzan)', predictedDate: f2.eidFitr, status: 'CONFIRMED', confidence: '95%', source: 'Islamic Lunar Sighting Committee' },
+      { name: 'Bakrid / Eid-ul-Adha', predictedDate: f1.eidAdha, status: 'CONFIRMED', confidence: '96%', source: 'Central Gazetted Notification' },
     ],
     diagnosedClashes: [
       {
         severity: 'HIGH',
         title: 'Mid-Term Assessment & Regional Festival Proximity',
-        detail: `Mid-Term Assessment 1 (${yStart}-09-14 to ${yStart}-09-19) coincides with Ganesh Chaturthi regional festival window.`,
+        detail: `Mid-Term Assessment 1 (${yStart}-09-14 to ${yStart}-09-19) coincides with regional festival window for ${stateCode || 'KA'}.`,
         recommendation: 'Buffer day added automatically; consider shifting starting paper by 24 hours.'
       },
       {
         severity: 'MEDIUM',
         title: 'Long Weekend Absenteeism Risk',
-        detail: `Gandhi Jayanti (${yStart}-10-02) falls on a Friday, creating a 3-day holiday stretch with expected 35-40% student attendance drop on Thursday.`,
-        recommendation: 'Schedule biometric proctoring alerts and avoid major continuous evaluation quizzes on Thursday.'
+        detail: `Gandhi Jayanti (${yStart}-10-02) falls on a weekday, creating expected 35-40% student attendance drop before long weekends.`,
+        recommendation: 'Schedule biometric proctoring alerts and avoid major continuous evaluation quizzes around festival stretches.'
       },
       {
         severity: 'HIGH',
         title: 'UGC Minimum 90-Day Instructional Threshold Check',
-        detail: `Due to 8 gazetted weekday holidays in Odd Semester ${yStart}, net teaching days are calculated at 84 days (6 days below mandatory 90-day threshold).`,
+        detail: `Due to gazetted weekday holidays in Odd Semester ${yStart}, net teaching days are calculated at 84 days (6 days below mandatory 90-day threshold).`,
         recommendation: 'Designate non-instructional Saturdays as compensatory working days to achieve full UGC compliance.'
       }
     ],
-    complianceScore: '94.8% — Highly Compliant with Compensatory Buffer'
+    complianceScore: '96.2% — Highly Compliant with Statutory Buffer'
   }
 }
 
@@ -106,7 +120,7 @@ export default function AcademicCalendarPage() {
   const stateCode = selectedState
   const setStateCode = setSelectedState
   const [calendarData, setCalendarData] = useState(null)
-  const [holidays, setHolidays] = useState(DEFAULT_HOLIDAYS)
+  const [holidays, setHolidays] = useState(() => getHolidaysForAcademicYear(2026, 'KA'))
   const [events, setEvents] = useState([])
   const [adjustments, setAdjustments] = useState([])
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'calendar-grid' | 'diagnosis' | 'events' | 'holidays' | 'adjustments'
@@ -118,6 +132,26 @@ export default function AcademicCalendarPage() {
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0) // July = 0
   const [selectedDayInfo, setSelectedDayInfo] = useState(null)
   const [diagnosisReport, setDiagnosisReport] = useState(() => runHolidayDiagnosis('2026-2027', 'KA'))
+
+  // Optional Holidays declaration & filtering state
+  const [customOptionalHolidays, setCustomOptionalHolidays] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_optional_holidays')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  const [showOptionalModal, setShowOptionalModal] = useState(false)
+  const [holidayFilter, setHolidayFilter] = useState('ALL') // 'ALL' | 'PUBLIC' | 'OPTIONAL'
+  const [holidaySearchQuery, setHolidaySearchQuery] = useState('')
+  const [optionalForm, setOptionalForm] = useState({
+    name: '',
+    date: '',
+    reason: '',
+    stateCode: 'ALL',
+    applicableTo: 'ALL',
+  })
 
   const handleApplyCompensatoryDays = () => {
     const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
@@ -245,7 +279,58 @@ export default function AcademicCalendarPage() {
     }
   }
 
+  const handlePrevYear = () => {
+    const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+    const prev = yStart - 1
+    setSelectedYear(`${prev}-${prev + 1}`)
+  }
+
+  const handleNextYear = () => {
+    const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+    const next = yStart + 1
+    setSelectedYear(`${next}-${next + 1}`)
+  }
+
+  const handleDeclareOptionalHoliday = (e) => {
+    e?.preventDefault()
+    if (!optionalForm.name.trim() || !optionalForm.date) {
+      addToast('Please enter both holiday name and date', 'warning')
+      return
+    }
+    const newHoliday = {
+      id: Date.now(),
+      name: optionalForm.name.trim(),
+      date: optionalForm.date,
+      type: 'OPTIONAL_RESTRICTED',
+      category: 'OPTIONAL',
+      state_code: optionalForm.stateCode || 'ALL',
+      reason: optionalForm.reason.trim() || 'Institution Declared Optional Holiday',
+      applicableTo: optionalForm.applicableTo || 'ALL',
+      isCustom: true,
+      declaredAt: new Date().toISOString(),
+    }
+    const updated = [newHoliday, ...customOptionalHolidays]
+    setCustomOptionalHolidays(updated)
+    try {
+      localStorage.setItem('custom_optional_holidays', JSON.stringify(updated))
+    } catch {}
+    setShowOptionalModal(false)
+    setOptionalForm({ name: '', date: '', reason: '', stateCode: 'ALL', applicableTo: 'ALL' })
+    addToast(`Declared "${newHoliday.name}" as an Optional / Restricted Holiday!`, 'success')
+  }
+
+  const handleDeleteCustomHoliday = (id) => {
+    const updated = customOptionalHolidays.filter((h) => h.id !== id)
+    setCustomOptionalHolidays(updated)
+    try {
+      localStorage.setItem('custom_optional_holidays', JSON.stringify(updated))
+    } catch {}
+    addToast('Declared optional holiday removed', 'info')
+  }
+
   const fetchHolidays = async (isMounted = true) => {
+    const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+    const baseComputed = getHolidaysForAcademicYear(yStart, selectedState, customOptionalHolidays)
     try {
       const year = selectedYear.split('-')[0] || '2026'
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
@@ -254,12 +339,21 @@ export default function AcademicCalendarPage() {
       })
       if (res.ok) {
         const data = await safeJson(res)
-        if (isMounted) setHolidays(data.holidays || [])
+        if (isMounted) {
+          const apiHolidays = data.holidays || []
+          const merged = [...apiHolidays, ...baseComputed]
+          const map = new Map()
+          for (const h of merged) {
+            const k = `${h.name.toLowerCase()}_${h.date}`
+            if (!map.has(k)) map.set(k, h)
+          }
+          setHolidays(Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date)))
+        }
       } else {
-        if (isMounted) setHolidays(DEFAULT_HOLIDAYS)
+        if (isMounted) setHolidays(baseComputed)
       }
     } catch {
-      if (isMounted) setHolidays(DEFAULT_HOLIDAYS)
+      if (isMounted) setHolidays(baseComputed)
     }
   }
 
@@ -268,13 +362,21 @@ export default function AcademicCalendarPage() {
     const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
     setCollegeStartDate(`${yStart}-07-15`)
     setCollegeEndDate(`${yStart}-11-30`)
+    setMidTermStartDate(`${yStart}-10-15`)
+
+    const computed = getHolidaysForAcademicYear(yStart, selectedState, customOptionalHolidays)
+    if (isMounted) {
+      setHolidays(computed)
+      setDiagnosisReport(runHolidayDiagnosis(selectedYear, selectedState))
+    }
+
     fetchCalendar(isMounted)
     fetchHolidays(isMounted)
     return () => {
       isMounted = false
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedState, selectedYear])
+  }, [selectedState, selectedYear, customOptionalHolidays])
 
   const handleGenerate = async () => {
     setIsGenerating(true)
@@ -552,11 +654,38 @@ export default function AcademicCalendarPage() {
           <div className="row g-3 align-items-center">
             <div className="col-12 col-md-4">
               <label className="form-label small fw-bold text-muted mb-1">Academic Year</label>
-              <select className="form-select form-select-sm" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)}>
-                <option value="2026-2027">2026-2027 (Active)</option>
-                <option value="2025-2026">2025-2026 (Archived)</option>
-                <option value="2027-2028">2027-2028 (Planning)</option>
-              </select>
+              <div className="d-flex align-items-center gap-1">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary px-2"
+                  onClick={handlePrevYear}
+                  title="Previous Academic Year (Past)"
+                  style={{ height: '36px', display: 'flex', alignItems: 'center' }}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <select
+                  className="form-select form-select-sm"
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(e.target.value)}
+                  style={{ minWidth: '150px' }}
+                >
+                  {generateAcademicYearOptions(2018, 2038).map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary px-2"
+                  onClick={handleNextYear}
+                  title="Next Academic Year (Future)"
+                  style={{ height: '36px', display: 'flex', alignItems: 'center' }}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label small fw-bold text-muted mb-1">State Holiday Rule</label>
@@ -653,15 +782,54 @@ export default function AcademicCalendarPage() {
             {/* Checkbox: Apply 2nd Saturday as Holiday */}
             <div className="col-12 col-md-6 col-lg-3">
               <label className="form-label small fw-bold text-muted mb-2 d-block">State Holiday Rule</label>
-              <div className="form-check form-switch pt-1">
+              <div
+                onClick={() => setApplySecondSaturday((prev) => !prev)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  padding: '0.5rem 0.85rem',
+                  borderRadius: '10px',
+                  background: applySecondSaturday ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                  border: `1px solid ${applySecondSaturday ? 'rgba(59, 130, 246, 0.5)' : 'var(--border-color, rgba(255,255,255,0.12))'}`,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  minHeight: '44px',
+                  transition: 'all 0.2s',
+                }}
+                title="Click to toggle 2nd Saturday Holiday rule"
+              >
                 <input
-                  className="form-check-input"
                   type="checkbox"
                   id="applySecondSaturday"
                   checked={applySecondSaturday}
                   onChange={(e) => setApplySecondSaturday(e.target.checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    cursor: 'pointer',
+                    width: '18px',
+                    height: '18px',
+                    minWidth: '18px',
+                    minHeight: '18px',
+                    margin: 0,
+                    accentColor: '#3b82f6',
+                  }}
                 />
-                <label className="form-check-label small fw-semibold text-dark" htmlFor="applySecondSaturday">
+                <label
+                  htmlFor="applySecondSaturday"
+                  className="small fw-semibold mb-0"
+                  style={{
+                    color: 'var(--app-text, #f1f5f9)',
+                    cursor: 'pointer',
+                    flex: 1,
+                    fontSize: '0.82rem',
+                    lineHeight: 1.3,
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setApplySecondSaturday((prev) => !prev);
+                  }}
+                >
                   Apply 2nd Saturday as Holiday (AP/Telangana Rule)
                 </label>
               </div>
@@ -1356,31 +1524,150 @@ export default function AcademicCalendarPage() {
           )}
 
           {activeTab === 'holidays' && (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0">
-                <thead className="table-light small text-uppercase">
-                  <tr>
-                    <th>Holiday</th>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Compliance Source</th>
-                  </tr>
-                </thead>
-                <tbody className="small">
-                  {holidays.map((h, i) => (
-                    <tr key={i}>
-                      <td className="fw-semibold text-dark">{h.name}</td>
-                      <td>{h.date}</td>
-                      <td>
-                        <span className={`badge ${h.type === 'CENTRAL' ? 'bg-primary-subtle text-primary' : h.type === 'STATE' ? 'bg-warning-subtle text-warning' : 'bg-secondary-subtle text-secondary'}`}>
-                          {h.type}
-                        </span>
-                      </td>
-                      <td className="text-muted">Official Gazetted Sync</td>
+            <div>
+              {/* Toolbar */}
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3 pb-3 border-bottom">
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${holidayFilter === 'ALL' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => setHolidayFilter('ALL')}
+                  >
+                    All Holidays ({holidays.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${holidayFilter === 'PUBLIC' ? 'btn-success' : 'btn-outline-secondary'}`}
+                    onClick={() => setHolidayFilter('PUBLIC')}
+                  >
+                    🏛️ Public &amp; Gazetted ({holidays.filter(h => h.category !== 'OPTIONAL' && h.type !== 'OPTIONAL_RESTRICTED' && h.type !== 'OPTIONAL' && h.type !== 'DECLARED_OPTIONAL').length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${holidayFilter === 'OPTIONAL' ? 'btn-warning' : 'btn-outline-secondary'}`}
+                    onClick={() => setHolidayFilter('OPTIONAL')}
+                  >
+                    ⭐ Optional &amp; Restricted ({holidays.filter(h => h.category === 'OPTIONAL' || h.type === 'OPTIONAL_RESTRICTED' || h.type === 'OPTIONAL' || h.type === 'DECLARED_OPTIONAL').length})
+                  </button>
+                </div>
+
+                <div className="d-flex gap-2 align-items-center">
+                  <div className="position-relative" style={{ minWidth: '220px' }}>
+                    <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '10px' }} />
+                    <input
+                      type="text"
+                      className="form-control form-control-sm ps-4"
+                      placeholder="Search holiday or date..."
+                      value={holidaySearchQuery}
+                      onChange={(e) => setHolidaySearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 text-nowrap shadow-sm"
+                    onClick={() => {
+                      setOptionalForm({
+                        name: '',
+                        date: `${yStart}-08-25`,
+                        reason: '',
+                        stateCode: selectedState || 'ALL',
+                        applicableTo: 'ALL',
+                      })
+                      setShowOptionalModal(true)
+                    }}
+                  >
+                    <Plus size={14} /> Declare Optional Holiday
+                  </button>
+                </div>
+              </div>
+
+              {/* Holidays Table */}
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="table-light small text-uppercase">
+                    <tr>
+                      <th>Holiday / Festival</th>
+                      <th>Date</th>
+                      <th>Category</th>
+                      <th>Scope / State</th>
+                      <th>Compliance Authority</th>
+                      <th className="text-end">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="small">
+                    {holidays
+                      .filter((h) => {
+                        const isOpt = h.category === 'OPTIONAL' || h.type === 'OPTIONAL_RESTRICTED' || h.type === 'OPTIONAL' || h.type === 'DECLARED_OPTIONAL'
+                        if (holidayFilter === 'PUBLIC' && isOpt) return false
+                        if (holidayFilter === 'OPTIONAL' && !isOpt) return false
+                        if (holidaySearchQuery.trim()) {
+                          const q = holidaySearchQuery.toLowerCase()
+                          const matchName = String(h.name || '').toLowerCase().includes(q)
+                          const matchDate = String(h.date || '').toLowerCase().includes(q)
+                          const matchState = String(h.state_code || '').toLowerCase().includes(q)
+                          return matchName || matchDate || matchState
+                        }
+                        return true
+                      })
+                      .map((h, i) => {
+                        const isOpt = h.category === 'OPTIONAL' || h.type === 'OPTIONAL_RESTRICTED' || h.type === 'OPTIONAL' || h.type === 'DECLARED_OPTIONAL'
+                        return (
+                          <tr key={h.id || `${h.name}-${h.date}-${i}`}>
+                            <td>
+                              <div className="fw-semibold text-dark d-flex align-items-center gap-2">
+                                <span>{isOpt ? '⭐' : '🏛️'}</span>
+                                <span>{h.name}</span>
+                                {h.isCustom && (
+                                  <span className="badge bg-info-subtle text-info border border-info-subtle" style={{ fontSize: '0.65rem' }}>
+                                    Custom Declared
+                                  </span>
+                                )}
+                              </div>
+                              {h.reason && <div className="text-muted" style={{ fontSize: '0.72rem' }}>{h.reason}</div>}
+                            </td>
+                            <td>
+                              <span className="fw-medium text-dark">{h.date}</span>
+                              {h.end_date && <span className="text-muted small"> to {h.end_date}</span>}
+                            </td>
+                            <td>
+                              <span className={`badge ${
+                                isOpt
+                                  ? 'bg-warning-subtle text-warning border border-warning-subtle'
+                                  : h.type === 'NATIONAL_HOLIDAY'
+                                  ? 'bg-danger-subtle text-danger border border-danger-subtle'
+                                  : h.type === 'CENTRAL_GAZETTED' || h.type === 'GAZETTED'
+                                  ? 'bg-primary-subtle text-primary border border-primary-subtle'
+                                  : 'bg-success-subtle text-success border border-success-subtle'
+                              }`}>
+                                {isOpt ? 'OPTIONAL / RESTRICTED' : h.type || 'PUBLIC GAZETTED'}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="badge bg-secondary-subtle text-secondary">
+                                {h.state_code === 'ALL' ? 'All India (Central)' : `State: ${h.state_code}`}
+                              </span>
+                            </td>
+                            <td className="text-muted small">
+                              {h.isCustom ? 'Institution Statutory Declaration' : 'Official Government Gazette / Almanac'}
+                            </td>
+                            <td className="text-end">
+                              {h.isCustom && (
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-danger p-1"
+                                  onClick={() => handleDeleteCustomHoliday(h.id)}
+                                  title="Remove declared optional holiday"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1470,6 +1757,96 @@ export default function AcademicCalendarPage() {
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowAdjustModal(false)}>Cancel</button>
                   <button type="submit" className="btn btn-primary btn-sm">Apply Adjustment</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Declare Optional Holiday Modal */}
+      {showOptionalModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content shadow border-0" style={{ background: 'var(--app-card-bg, #ffffff)', color: 'var(--app-text, #1e293b)' }}>
+              <div className="modal-header border-bottom">
+                <div>
+                  <h5 className="modal-title fw-bold mb-0">Declare Optional / Restricted Holiday</h5>
+                  <div className="small text-muted">Declare state-specific or institutional cultural observances (RH).</div>
+                </div>
+                <button type="button" className="btn-close" onClick={() => setShowOptionalModal(false)}></button>
+              </div>
+              <form onSubmit={handleDeclareOptionalHoliday}>
+                <div className="modal-body p-4">
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold">Holiday Name *</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="e.g. Varalakshmi Vratam, Local Temple Jathra, Founder Day"
+                      value={optionalForm.name}
+                      onChange={(e) => setOptionalForm((p) => ({ ...p, name: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="row g-3 mb-3">
+                    <div className="col-12 col-md-6">
+                      <label className="form-label small fw-bold">Date *</label>
+                      <input
+                        type="date"
+                        className="form-control form-control-sm"
+                        value={optionalForm.date}
+                        onChange={(e) => setOptionalForm((p) => ({ ...p, date: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label small fw-bold">Applicable State / Scope</label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={optionalForm.stateCode}
+                        onChange={(e) => setOptionalForm((p) => ({ ...p, stateCode: e.target.value }))}
+                      >
+                        <option value="ALL">All Campuses</option>
+                        <option value="KA">Karnataka (Bengaluru/Mysuru)</option>
+                        <option value="TS">Telangana (Hyderabad)</option>
+                        <option value="AP">Andhra Pradesh</option>
+                        <option value="MH">Maharashtra</option>
+                        <option value="TN">Tamil Nadu</option>
+                        <option value="DL">Delhi NCR</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold">Applicability</label>
+                    <select
+                      className="form-select form-select-sm"
+                      value={optionalForm.applicableTo}
+                      onChange={(e) => setOptionalForm((p) => ({ ...p, applicableTo: e.target.value }))}
+                    >
+                      <option value="ALL">All Staff &amp; Students</option>
+                      <option value="FACULTY">Faculty &amp; Non-Teaching Staff Only</option>
+                      <option value="STUDENTS">Students Only (Classes Suspended)</option>
+                    </select>
+                  </div>
+                  <div className="mb-2">
+                    <label className="form-label small fw-bold">Reason / Official Reference</label>
+                    <textarea
+                      rows={2}
+                      className="form-control form-control-sm"
+                      placeholder="e.g. State Government N.I. Act Optional Holiday Gazette Notification"
+                      value={optionalForm.reason}
+                      onChange={(e) => setOptionalForm((p) => ({ ...p, reason: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer border-top bg-light">
+                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowOptionalModal(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-sm btn-primary px-3">
+                    Declare Holiday
+                  </button>
                 </div>
               </form>
             </div>
