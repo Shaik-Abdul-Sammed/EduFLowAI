@@ -58,7 +58,7 @@ function renderRechartsBlock(jsonStr) {
  * Reusable Markdown renderer supporting GitHub-flavored Markdown
  * with full table rendering, bold text styling, code blocks, and dark theme support.
  */
-export default function MarkdownRenderer({ content, className = '' }) {
+export default function MarkdownRenderer({ content, className = '', onImageClick = null }) {
   if (!content) return null;
 
   return (
@@ -66,6 +66,33 @@ export default function MarkdownRenderer({ content, className = '' }) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          img: (props) => {
+            const { src, alt, ...rest } = cleanProps(props);
+            return (
+              <span style={{ display: 'inline-block', margin: '0.75rem 0', position: 'relative' }}>
+                <img
+                  src={src}
+                  alt={alt || 'Picture or Document Preview'}
+                  style={{
+                    maxWidth: '100%',
+                    height: 'auto',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    cursor: 'zoom-in',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+                    transition: 'transform 0.2s',
+                  }}
+                  onClick={() => {
+                    if (typeof onImageClick === 'function') {
+                      onImageClick({ url: src, name: alt || 'Picture Preview' });
+                    }
+                  }}
+                  title="Click to preview pic in full screen"
+                  {...rest}
+                />
+              </span>
+            );
+          },
           h1: (props) => (
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '1.25rem', marginBottom: '0.75rem', color: 'inherit' }} {...cleanProps(props)} />
           ),

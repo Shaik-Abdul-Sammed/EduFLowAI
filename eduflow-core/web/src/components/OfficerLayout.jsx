@@ -4,7 +4,8 @@ import {
   ArrowLeft, Send, Download, Copy, Check, Share2, Mail,
   Paperclip, X, ChevronDown, ChevronUp, Clock, FileJson,
   Sparkles, Printer, Eye, Edit, Brain, ShieldCheck, CheckCircle, AlertTriangle,
-  PanelLeftClose, PanelLeftOpen, PanelLeft,
+  PanelLeftClose, PanelLeftOpen, PanelLeft, Image as ImageIcon, ZoomIn, ZoomOut,
+  RotateCw, Table as TableIcon, Code, FileText, Trash2,
 } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
@@ -104,10 +105,55 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     });
   };
 
+  // ── Temporary Chat State ───────────────────────────────────────────────────
+  const [isTemporaryChat, setIsTemporaryChat] = useState(() => {
+    try {
+      return sessionStorage.getItem(`officer_temp_chat_${type || 'default'}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleTemporaryChat = () => {
+    setIsTemporaryChat((prev) => {
+      const next = !prev;
+      try {
+        sessionStorage.setItem(`officer_temp_chat_${type || 'default'}`, String(next));
+      } catch {}
+      if (next) {
+        addToast('⚡ Temporary Chat activated. Messages will not be saved to history.', 'info');
+      } else {
+        addToast('Temporary Chat disabled. Normal history tracking resumed.', 'info');
+      }
+      return next;
+    });
+  };
+
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [copied, setCopied] = useState(null); // null | 'clipboard' | 'copy-btn'
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null);
+  const [previewPicModal, setPreviewPicModal] = useState(null); // { url, name, size }
+  const [picZoom, setPicZoom] = useState(1);
+  const [picRotation, setPicRotation] = useState(0);
+
+  useEffect(() => {
+    if (uploadedFile && uploadedFile.type && uploadedFile.type.startsWith('image/')) {
+      const url = URL.createObjectURL(uploadedFile);
+      setFilePreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setFilePreviewUrl(null);
+    }
+  }, [uploadedFile]);
+
+  const handlePicPreview = (picData) => {
+    setPicZoom(1);
+    setPicRotation(0);
+    setPreviewPicModal(picData);
+  };
+
   const [showWhyThis, setShowWhyThis] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [sessionHistory, setSessionHistory] = useState(() => {
@@ -135,6 +181,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const [emailOpen, setEmailOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [docZoom, setDocZoom] = useState(1);
+  const [previewTab, setPreviewTab] = useState('a4'); // 'a4' | 'table' | 'raw'
   const [shareContent, setShareContent] = useState('');
   const [expertSystemOpen, setExpertSystemOpen] = useState(false);
   const expertDomain = evaluateExpertSystem(type);
@@ -223,14 +271,16 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
           const last = prev[prev.length - 1];
           if (last && last.role === 'assistant' && last.content === tokens) return prev;
           const newMsg = { role: 'assistant', content: tokens, timestamp: Date.now() };
-          // Save to session history
-          setSessionHistory((h) => [{ id: Date.now(), preview: tokens.slice(0, 60) + '...', content: tokens, timestamp: new Date().toLocaleTimeString() }, ...h.slice(0, 19)]);
+          // Save to session history (only if NOT in temporary chat mode)
+          if (!isTemporaryChat) {
+            setSessionHistory((h) => [{ id: Date.now(), preview: tokens.slice(0, 60) + '...', content: tokens, timestamp: new Date().toLocaleTimeString() }, ...h.slice(0, 19)]);
+          }
           return [...prev, newMsg];
         });
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [status, tokens]);
+  }, [status, tokens, isTemporaryChat]);
 
   // ── Send ───────────────────────────────────────────────────────────────────
   const handleSend = (text) => {
@@ -255,23 +305,25 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     setInputValue('');
     setUploadedFile(null);
 
-    // Save prompt to session history & localStorage
-    setSessionHistory((prev) => {
-      const existing = prev.filter((item) => (typeof item === 'string' ? item : item.prompt) !== promptText);
-      const newEntry = {
-        id: Date.now(),
-        prompt: promptText,
-        preview: promptText.length > 60 ? promptText.slice(0, 60) + '…' : promptText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      const updated = [newEntry, ...existing].slice(0, 15);
-      try {
-        localStorage.setItem(`officer_history_${type || 'default'}`, JSON.stringify(updated));
-      } catch {
-        // ignore storage errors
-      }
-      return updated;
-    });
+    // Save prompt to session history & localStorage (only if NOT in temporary chat mode)
+    if (!isTemporaryChat) {
+      setSessionHistory((prev) => {
+        const existing = prev.filter((item) => (typeof item === 'string' ? item : item.prompt) !== promptText);
+        const newEntry = {
+          id: Date.now(),
+          prompt: promptText,
+          preview: promptText.length > 60 ? promptText.slice(0, 60) + '…' : promptText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        const updated = [newEntry, ...existing].slice(0, 15);
+        try {
+          localStorage.setItem(`officer_history_${type || 'default'}`, JSON.stringify(updated));
+        } catch {
+          // ignore storage errors
+        }
+        return updated;
+      });
+    }
 
     const fullEndpoint = `${getApiBaseURL()}${endpoint}`;
     const payload = payloadBuilder
@@ -423,10 +475,10 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const allowed = ['.pdf', '.xlsx', '.xls', '.csv', '.docx', '.txt'];
+    const allowed = ['.pdf', '.xlsx', '.xls', '.csv', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.webp', '.svg'];
     const ext = '.' + file.name.split('.').pop().toLowerCase();
     if (!allowed.includes(ext)) {
-      addToast('Unsupported file type. Please upload PDF, Excel, CSV, DOCX, or TXT.', 'warning');
+      addToast('Unsupported file type. Please upload PDF, Excel, CSV, DOCX, TXT, or Image (PNG/JPG/WEBP).', 'warning');
       return;
     }
     setUploadedFile(file);
@@ -442,9 +494,47 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     setShareContent(content || latestAssistantContent);
     setEmailOpen(true);
   };
-  const openPreview = (content) => {
-    setPreviewContent(content || latestAssistantContent);
+  const openPreview = (content, defaultTab = 'a4') => {
+    setPreviewContent(content || latestAssistantContent || '');
+    setPreviewTab(defaultTab);
+    setDocZoom(1);
     setPreviewOpen(true);
+  };
+
+  // ── Markdown Table Extractor ───────────────────────────────────────────────
+  const extractTablesFromMarkdown = (md) => {
+    if (!md) return [];
+    const lines = md.split('\n');
+    const tables = [];
+    let currentTable = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('|') && line.endsWith('|')) {
+        const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+        const isSeparator = cells.every((c) => /^:?-+:?$/.test(c));
+        if (isSeparator) {
+          if (currentTable) {
+            currentTable.separatorFound = true;
+          }
+        } else if (!currentTable) {
+          currentTable = { headers: cells, rows: [], separatorFound: false };
+        } else if (!currentTable.separatorFound) {
+          currentTable.headers = cells;
+        } else {
+          currentTable.rows.push(cells);
+        }
+      } else {
+        if (currentTable && currentTable.rows.length > 0) {
+          tables.push(currentTable);
+        }
+        currentTable = null;
+      }
+    }
+    if (currentTable && currentTable.rows.length > 0) {
+      tables.push(currentTable);
+    }
+    return tables;
   };
 
   // ── History load ───────────────────────────────────────────────────────────
@@ -461,21 +551,25 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
         style={{ ...btnStyle, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0' }}>
         {copied === `copy-${msgId}` ? <Check size={13} color="#10B981" /> : <Copy size={13} />} Copy
       </button>
-      <button type="button" onClick={() => openPreview(content)}
-        style={{ ...btnStyle, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.35)', color: '#a5b4fc' }}>
-        <Eye size={13} /> Preview
+      <button type="button" onClick={() => openPreview(content, 'a4')}
+        title="Preview document formatted as A4, data tables, or JSON before downloading"
+        style={{ ...btnStyle, background: 'rgba(99,102,241,0.18)', border: '1px solid rgba(99,102,241,0.38)', color: '#a5b4fc' }}>
+        <Eye size={13} /> Preview & Download
       </button>
       <button type="button" onClick={() => handleDownloadPdf(content)}
+        title="Download PDF report"
         style={{ ...btnStyle, background: accentLight, border: `1px solid ${accentBorder}`, color: accentColor }}>
         <Download size={13} /> PDF
       </button>
       <button type="button" onClick={() => handleDownloadCsv(content)}
+        title="Download CSV spreadsheet"
         style={{ ...btnStyle, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#6ee7b7' }}>
-        <FileJson size={13} /> CSV
+        <TableIcon size={13} /> CSV
       </button>
       <button type="button" onClick={() => handleDownloadJson(content)}
+        title="Download JSON structure"
         style={{ ...btnStyle, background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}>
-        <FileJson size={13} /> JSON
+        <Code size={13} /> JSON
       </button>
       <button type="button" onClick={() => openShare(content)}
         style={{ ...btnStyle, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa' }}>
@@ -584,6 +678,11 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Clock size={14} /> Session History ({sessionHistory.length})</span>
               {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
+            {isTemporaryChat && (
+              <div style={{ marginTop: '0.45rem', padding: '0.45rem 0.65rem', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', fontSize: '0.72rem', color: '#fbbf24' }}>
+                ⚡ Temp Chat ON: History disabled
+              </div>
+            )}
             {showHistory && (
               <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
                 {sessionHistory.length === 0
@@ -687,6 +786,31 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             </div>
             {/* Top-right actions */}
             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              {/* Temporary Chat Toggle */}
+              <button
+                type="button"
+                onClick={toggleTemporaryChat}
+                title={isTemporaryChat ? 'Temporary Chat is ON (Incognito). Prompts and responses will not be saved.' : 'Switch to Temporary Chat (Incognito mode without history)'}
+                aria-label="Toggle temporary chat"
+                data-testid="officer-temp-chat-toggle"
+                style={{
+                  background: isTemporaryChat ? 'rgba(245, 158, 11, 0.22)' : 'rgba(255, 255, 255, 0.06)',
+                  border: `1px solid ${isTemporaryChat ? '#f59e0b' : 'rgba(255, 255, 255, 0.15)'}`,
+                  color: isTemporaryChat ? '#fbbf24' : 'rgba(255, 255, 255, 0.8)',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <Clock size={13} color={isTemporaryChat ? '#f59e0b' : 'currentColor'} />
+                <span>{isTemporaryChat ? '⚡ Temp Chat ON' : 'Temp Chat'}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setExpertSystemOpen((v) => !v)}
@@ -710,6 +834,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               </button>
               {latestAssistantContent && (
                 <>
+                  <button type="button" onClick={() => openPreview(latestAssistantContent)} title="Preview report document" aria-label="Preview report document" style={iconBtnStyle}><Eye size={15} /></button>
                   <button type="button" onClick={() => openShare()} title="Share report" aria-label="Share report" style={iconBtnStyle}><Share2 size={15} /></button>
                   <button type="button" onClick={() => openEmail()} title="Email report" aria-label="Email report" style={iconBtnStyle}><Mail size={15} /></button>
                   <button type="button" onClick={handlePrint} title="Print report" aria-label="Print report" style={iconBtnStyle}><Printer size={15} /></button>
@@ -846,12 +971,61 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               {icon}
             </div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.35rem' }}>{name} Workspace</h2>
+            {isTemporaryChat && (
+              <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.35)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.74rem', marginBottom: '0.65rem' }}>
+                ⚡ Temporary Chat Active (Incognito)
+              </span>
+            )}
             <p style={{ color: 'rgba(255,255,255,0.55)', maxWidth: '440px', textAlign: 'center', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
               Type a prompt or select a suggested query above to get started. Use <kbd style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '3px', padding: '1px 4px', fontSize: '0.75rem' }}>Ctrl+Enter</kbd> to send, <kbd style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '3px', padding: '1px 4px', fontSize: '0.75rem' }}>Esc</kbd> to stop streaming.
             </p>
           </div>
         ) : (
           <div style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', padding: '1.25rem 1.75rem' }}>
+            {isTemporaryChat && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.55rem 1rem',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  borderRadius: '8px',
+                  marginBottom: '1rem',
+                  color: '#fbbf24',
+                  fontSize: '0.8rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1rem' }}>⚡</span>
+                  <span><strong>Temporary Chat Active:</strong> Messages and reports in this session are not saved to your history.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([]);
+                    addToast('Temporary chat cleared.', 'info');
+                  }}
+                  title="Clear temporary messages"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    color: '#fef3c7',
+                    borderRadius: '6px',
+                    padding: '0.2rem 0.6rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <Trash2 size={12} /> Clear Chat
+                </button>
+              </div>
+            )}
             {messages.map((msg, i) => (
               <div key={msg.id || msg.timestamp || `msg-${i}`} style={{ display: 'flex', gap: '0.9rem', marginBottom: '1.4rem', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', background: msg.role === 'user' ? '#2563EB' : accentLight, border: msg.role === 'user' ? 'none' : `1px solid ${accentBorder}` }}>
@@ -859,7 +1033,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 </div>
                 <div style={{ background: msg.role === 'user' ? '#2563EB' : 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', position: 'relative' }}>
                   {msg.role === 'assistant' ? (
-                    <MarkdownRenderer content={msg.content} />
+                    <MarkdownRenderer content={msg.content} onImageClick={handlePicPreview} />
                   ) : (
                     <div>
                       <div>{msg.content}</div>
@@ -973,7 +1147,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                   {icon}
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', border: `1px solid ${accentBorder}`, lineHeight: '1.6' }}>
-                  <MarkdownRenderer content={tokens || ''} />
+                  <MarkdownRenderer content={tokens || ''} onImageClick={handlePicPreview} />
                   <span style={{ display: 'inline-block', width: '7px', height: '14px', background: accentColor, marginLeft: '3px', verticalAlign: 'text-bottom', animation: 'obs-blink 1s infinite' }} />
                 </div>
               </div>
@@ -1010,12 +1184,71 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
 
         {/* ── Input bar ── */}
         <div style={{ padding: '0.75rem 1.75rem 0.85rem 1.75rem', borderTop: '1px solid rgba(255,255,255,0.1)', background: '#0A0E27', flexShrink: 0, position: 'relative', zIndex: 10 }}>
-          {/* Phase 10: file attachment preview */}
+          {/* File attachment preview */}
           {uploadedFile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.35rem 0.75rem', background: accentLight, border: `1px solid ${accentBorder}`, borderRadius: '8px', marginBottom: '0.45rem', fontSize: '0.82rem', color: accentColor }}>
-              <Paperclip size={14} />
-              <span style={{ flex: 1 }}>{uploadedFile.name}</span>
-              <button type="button" onClick={() => setUploadedFile(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 0 }}><X size={14} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.75rem', background: 'rgba(255,255,255,0.06)', border: `1px solid ${accentBorder}`, borderRadius: '8px', marginBottom: '0.45rem', fontSize: '0.82rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflow: 'hidden' }}>
+                {filePreviewUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => handlePicPreview({ url: filePreviewUrl, name: uploadedFile.name, size: `${(uploadedFile.size / 1024).toFixed(1)} KB` })}
+                    title="Click to preview pic in full screen"
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <img
+                      src={filePreviewUrl}
+                      alt="Attachment Thumbnail"
+                      style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.2)' }}
+                    />
+                  </button>
+                ) : (
+                  <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: accentLight, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accentColor, flexShrink: 0 }}>
+                    <FileText size={16} />
+                  </div>
+                )}
+                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {uploadedFile.name}
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem' }}>
+                    {(uploadedFile.size / 1024).toFixed(1)} KB · {uploadedFile.type || 'Document'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                {filePreviewUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => handlePicPreview({ url: filePreviewUrl, name: uploadedFile.name, size: `${(uploadedFile.size / 1024).toFixed(1)} KB` })}
+                    style={{ background: accentLight, border: `1px solid ${accentBorder}`, color: accentColor, borderRadius: '4px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                  >
+                    <Eye size={12} /> Preview Pic
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const reader = new FileReader();
+                      reader.onload = (re) => {
+                        openPreview(re.target.result);
+                      };
+                      reader.readAsText(uploadedFile);
+                    }}
+                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0', borderRadius: '4px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                  >
+                    <Eye size={12} /> Preview Doc
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setUploadedFile(null)}
+                  title="Remove file"
+                  aria-label="Remove attachment"
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1124,7 +1357,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               >
                 <Paperclip size={16} />
               </button>
-              <input ref={fileInputRef} type="file" aria-label="Attach file" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt" style={{ display: 'none' }} onChange={handleFileChange} />
+              <input ref={fileInputRef} type="file" aria-label="Attach file" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt,.png,.jpg,.jpeg,.webp,.svg,image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 
               <textarea
                 ref={textareaRef}
@@ -1194,7 +1427,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
         title={`${headerTitle} Report`}
       />
 
-      {/* ── Document Preview Modal (A4 View) ── */}
+      {/* ── Document Preview Modal (A4, Tables Grid, & JSON View) ── */}
       {previewOpen && (
         <div
           role="dialog"
@@ -1204,12 +1437,12 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
             position: 'fixed',
             inset: 0,
             zIndex: 1100,
-            background: 'rgba(0, 0, 0, 0.78)',
-            backdropFilter: 'blur(5px)',
+            background: 'rgba(0, 0, 0, 0.82)',
+            backdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1.25rem',
+            padding: '1rem',
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setPreviewOpen(false);
@@ -1221,11 +1454,11 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '12px',
               width: '100%',
-              maxWidth: '940px',
+              maxWidth: '980px',
               height: '92vh',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.65)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)',
               overflow: 'hidden',
             }}
           >
@@ -1235,20 +1468,85 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0.85rem 1.5rem',
+                padding: '0.75rem 1.25rem',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 background: '#1E293B',
+                flexWrap: 'wrap',
+                gap: '0.6rem',
               }}
             >
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#F8FAFC' }}>
                   Document Preview — {headerTitle}
                 </h3>
-                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#94A3B8' }}>
-                  {institutionName || 'Institutional Report'} · Standard A4 Paper View
+                <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: '#94A3B8' }}>
+                  {institutionName || 'Institutional Report'} · {previewContent.length} chars · {previewContent.split(/\s+/).filter(Boolean).length} words
                 </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+
+              {/* View Tabs */}
+              <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.75)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <button
+                  type="button"
+                  onClick={() => setPreviewTab('a4')}
+                  style={{
+                    background: previewTab === 'a4' ? accentColor : 'transparent',
+                    color: previewTab === 'a4' ? '#fff' : '#94a3b8',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <FileText size={13} /> A4 Document
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewTab('table')}
+                  style={{
+                    background: previewTab === 'table' ? accentColor : 'transparent',
+                    color: previewTab === 'table' ? '#fff' : '#94a3b8',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <TableIcon size={13} /> Tables Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewTab('raw')}
+                  style={{
+                    background: previewTab === 'raw' ? accentColor : 'transparent',
+                    color: previewTab === 'raw' ? '#fff' : '#94a3b8',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Code size={13} /> JSON / Raw
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <button
                   type="button"
                   onClick={() => handleDownloadPdf(previewContent)}
@@ -1256,17 +1554,74 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                     background: accentColor || '#8B5CF6',
                     color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '7px',
-                    padding: '0.45rem 0.95rem',
-                    fontSize: '0.82rem',
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.75rem',
+                    fontSize: '0.78rem',
                     fontWeight: 600,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
+                    gap: '0.35rem',
                     cursor: 'pointer',
                   }}
                 >
-                  <Download size={14} /> Download PDF
+                  <Download size={13} /> PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadCsv(previewContent)}
+                  style={{
+                    background: 'rgba(16,185,129,0.18)',
+                    border: '1px solid rgba(16,185,129,0.4)',
+                    color: '#6ee7b7',
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.75rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <TableIcon size={13} /> CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownloadJson(previewContent)}
+                  style={{
+                    background: 'rgba(251,191,36,0.15)',
+                    border: '1px solid rgba(251,191,36,0.35)',
+                    color: '#fbbf24',
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.75rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Code size={13} /> JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#e2e8f0',
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.65rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Printer size={13} /> Print
                 </button>
                 <button
                   type="button"
@@ -1276,8 +1631,8 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                     background: 'rgba(255, 255, 255, 0.08)',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
                     color: '#94A3B8',
-                    borderRadius: '7px',
-                    padding: '0.45rem',
+                    borderRadius: '6px',
+                    padding: '0.4rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1289,33 +1644,297 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               </div>
             </div>
 
+            {/* Sub-toolbar for zoom controls in A4 view */}
+            {previewTab === 'a4' && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0.35rem', background: '#0F172A', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <button type="button" onClick={() => setDocZoom((z) => Math.max(z - 0.15, 0.6))} style={zoomBtnStyle}>
+                  <ZoomOut size={13} />
+                </button>
+                <span style={{ fontSize: '0.75rem', color: '#94A3B8', minWidth: '40px', textAlign: 'center' }}>{Math.round(docZoom * 100)}%</span>
+                <button type="button" onClick={() => setDocZoom((z) => Math.min(z + 0.15, 1.6))} style={zoomBtnStyle}>
+                  <ZoomIn size={13} />
+                </button>
+                <button type="button" onClick={() => setDocZoom(1)} style={zoomBtnStyle}>100%</button>
+              </div>
+            )}
+
             {/* Body */}
             <div
               style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: '2rem 1.5rem',
-                background: '#334155',
+                padding: previewTab === 'a4' ? '2rem 1.5rem' : '1.5rem',
+                background: previewTab === 'a4' ? '#334155' : '#0B1120',
                 display: 'flex',
                 justifyContent: 'center',
               }}
             >
-              <div
-                style={{
-                  width: '100%',
-                  maxWidth: '800px',
-                  minHeight: '1050px',
-                  backgroundColor: '#FFFFFF',
-                  color: '#0F172A',
-                  padding: '3.5rem 3rem',
-                  borderRadius: '4px',
-                  boxShadow: '0 10px 35px rgba(0, 0, 0, 0.35)',
-                  border: '1px solid #CBD5E1',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <MarkdownRenderer content={previewContent} />
+              {previewTab === 'a4' && (
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '820px',
+                    minHeight: '1050px',
+                    backgroundColor: '#FFFFFF',
+                    color: '#0F172A',
+                    padding: '3rem 2.75rem',
+                    borderRadius: '4px',
+                    boxShadow: '0 10px 35px rgba(0, 0, 0, 0.45)',
+                    border: '1px solid #CBD5E1',
+                    boxSizing: 'border-box',
+                    transform: `scale(${docZoom})`,
+                    transformOrigin: 'top center',
+                    transition: 'transform 0.15s ease',
+                  }}
+                >
+                  {/* Institutional Header Banner */}
+                  <div style={{ borderBottom: '2px solid #0F172A', paddingBottom: '1rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                        {institutionName}
+                      </h2>
+                      <p style={{ margin: '3px 0 0', fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>
+                        Autonomous AI Officer Evaluation · {headerTitle}
+                      </p>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748B' }}>
+                        Document Reference: EDF-{type.toUpperCase()}-{Date.now().toString().slice(-6)} · Statutory Benchmark Met
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ display: 'inline-block', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 700, color: '#0F172A' }}>
+                        OFFICIAL COPY
+                      </span>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '4px' }}>
+                        {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <MarkdownRenderer content={previewContent} onImageClick={handlePicPreview} />
+
+                  {/* Institutional Footer */}
+                  <div style={{ marginTop: '3rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#94A3B8' }}>
+                    <span>EduFlow AI Governance Framework · Confidential & Statutory</span>
+                    <span>Page 1 of 1</span>
+                  </div>
+                </div>
+              )}
+
+              {previewTab === 'table' && (
+                <div style={{ width: '100%', maxWidth: '920px' }}>
+                  {(() => {
+                    const extracted = extractTablesFromMarkdown(previewContent);
+                    if (extracted.length === 0) {
+                      return (
+                        <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+                          <TableIcon size={36} color="#64748b" style={{ marginBottom: '1rem' }} />
+                          <h4>No Markdown Tables Detected</h4>
+                          <p style={{ fontSize: '0.85rem' }}>This document response is primarily textual narrative. You can view the full formatted document in the A4 tab.</p>
+                        </div>
+                      );
+                    }
+                    return extracted.map((tbl, tIdx) => (
+                      <div key={tIdx} style={{ marginBottom: '2rem', background: '#1E293B', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                        <div style={{ padding: '0.75rem 1rem', background: '#334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ fontSize: '0.85rem', color: '#f8fafc' }}>Table {tIdx + 1} ({tbl.rows.length} rows)</strong>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const headerRow = tbl.headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(',');
+                              const bodyRows = tbl.rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(','));
+                              const csvContent = [headerRow, ...bodyRows].join('\n');
+                              const blob = new Blob([csvContent], { type: 'text/csv' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `table-${tIdx + 1}-${Date.now()}.csv`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                              addToast(`Table ${tIdx + 1} exported to CSV.`, 'success');
+                            }}
+                            style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.3rem 0.6rem', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+                          >
+                            <Download size={12} /> Export Table CSV
+                          </button>
+                        </div>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', color: '#e2e8f0' }}>
+                            <thead>
+                              <tr style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                                <th style={{ padding: '8px 12px', textAlign: 'center', color: '#94a3b8', width: '40px' }}>#</th>
+                                {tbl.headers.map((h, hIdx) => (
+                                  <th key={hIdx} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, borderRight: '1px solid rgba(255,255,255,0.06)' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {tbl.rows.map((row, rIdx) => (
+                                <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                  <td style={{ padding: '8px 12px', textAlign: 'center', color: '#64748b', fontSize: '0.75rem' }}>{rIdx + 1}</td>
+                                  {row.map((cell, cIdx) => (
+                                    <td key={cIdx} style={{ padding: '8px 12px', borderRight: '1px solid rgba(255,255,255,0.04)' }}>{cell}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
+
+              {previewTab === 'raw' && (
+                <div style={{ width: '100%', maxWidth: '920px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(previewContent);
+                        addToast('Raw content copied to clipboard.', 'success');
+                      }}
+                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '4px', padding: '0.3rem 0.65rem', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Copy size={13} /> Copy Content
+                    </button>
+                  </div>
+                  <pre
+                    style={{
+                      background: '#020617',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      padding: '1.25rem',
+                      color: '#e2e8f0',
+                      fontSize: '0.82rem',
+                      lineHeight: '1.6',
+                      overflowX: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {previewContent}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Picture / Image Preview Lightbox Modal ── */}
+      {previewPicModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Picture Preview"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1200,
+            background: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.25rem',
+          }}
+          onClick={() => setPreviewPicModal(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#0F172A',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '12px',
+              maxWidth: '92vw',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Lightbox Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', background: '#1E293B', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                <ImageIcon size={18} color="#8B5CF6" />
+                <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {previewPicModal.name || 'Picture Preview'}
+                </span>
+                {previewPicModal.size && (
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>({previewPicModal.size})</span>
+                )}
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                <a
+                  href={previewPicModal.url}
+                  download={previewPicModal.name || 'picture-download.png'}
+                  style={{
+                    background: '#8B5CF6',
+                    color: '#fff',
+                    borderRadius: '6px',
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <Download size={13} /> Download Pic
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewPicModal(null)}
+                  aria-label="Close picture preview"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#94a3b8',
+                    borderRadius: '6px',
+                    padding: '0.35rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lightbox Image View */}
+            <div style={{ flex: 1, overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: '#020617' }}>
+              <img
+                src={previewPicModal.url}
+                alt={previewPicModal.name || 'Preview'}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '68vh',
+                  objectFit: 'contain',
+                  borderRadius: '6px',
+                  transform: `scale(${picZoom}) rotate(${picRotation}deg)`,
+                  transition: 'transform 0.2s ease',
+                }}
+              />
+            </div>
+
+            {/* Zoom / Rotate controls */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem', padding: '0.5rem', background: '#1E293B', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <button type="button" onClick={() => setPicZoom((z) => Math.max(z - 0.25, 0.5))} style={zoomBtnStyle}>
+                <ZoomOut size={13} /> Zoom Out
+              </button>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', minWidth: '40px', textAlign: 'center' }}>{Math.round(picZoom * 100)}%</span>
+              <button type="button" onClick={() => setPicZoom((z) => Math.min(z + 0.25, 3))} style={zoomBtnStyle}>
+                <ZoomIn size={13} /> Zoom In
+              </button>
+              <button type="button" onClick={() => setPicRotation((r) => (r + 90) % 360)} style={zoomBtnStyle}>
+                <RotateCw size={13} /> Rotate
+              </button>
+              <button type="button" onClick={() => { setPicZoom(1); setPicRotation(0); }} style={zoomBtnStyle}>Reset</button>
             </div>
           </div>
         </div>
@@ -1323,6 +1942,20 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     </div>
   );
 }
+
+// ── Shared inline button styles ──────────────────────────────────────────────
+const zoomBtnStyle = {
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  color: '#e2e8f0',
+  borderRadius: '4px',
+  padding: '0.25rem 0.55rem',
+  fontSize: '0.72rem',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '3px',
+};
 
 // ── Shared inline button styles ──────────────────────────────────────────────
 const btnStyle = {
