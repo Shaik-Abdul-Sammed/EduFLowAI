@@ -3,6 +3,7 @@ import assert from 'node:assert'
 import { AdvancedRagService } from '../../src/services/ai/AdvancedRagService.js'
 import { IntentClassifier } from '../../src/services/ai/IntentClassifier.js'
 import { DataNormalizer } from '../../src/services/ai/DataNormalizer.js'
+import { MockProvider } from '../../src/ai/providers/providerFactory.js'
 
 describe('Phase 1: Deep AI Algorithms & Data Handling', () => {
   describe('Advanced RAG & Vector Cosine Similarity', () => {
@@ -77,6 +78,25 @@ describe('Phase 1: Deep AI Algorithms & Data Handling', () => {
       const result = IntentClassifier.classify('Generate a report on teaching and non-teaching staff for HR review')
       assert.strictEqual(result.intent, 'GENERAL_REPORT_GENERATION')
       assert(result.confidence >= 0.90)
+    })
+
+    test('classifies demographic and raw numbers query to DATA_ANALYSIS', () => {
+      const result = IntentClassifier.classify('There are 500 students, 250 male, 200 female, SC category')
+      assert.strictEqual(result.intent, 'DATA_ANALYSIS')
+      assert(result.confidence >= 0.90)
+    })
+    test('MockProvider echoes user input and calculates percentages for raw student data in fallback mode', async () => {
+      const mock = new MockProvider()
+      const userPrompt = 'There are 500 students, 250 male, 200 female, SC category'
+      const response = await mock.chat([{ role: 'user', content: userPrompt }])
+
+      assert(response.includes('I am currently running in offline fallback mode'))
+      assert(response.includes('Here is an analysis of the data you provided'))
+      assert(response.includes(userPrompt))
+      assert(response.includes('50.0%'))
+      assert(response.includes('40.0%'))
+      assert(response.includes('SC Category') || response.includes('SC'))
+      assert(!response.includes('# NAAC Criterion 2: Teaching-Learning'))
     })
   })
 

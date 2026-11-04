@@ -470,25 +470,30 @@ export class OfficerController {
         ...extraContext,
       }
 
-      const instDataBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
       let cleanPrompt = prompt
       if (cleanPrompt.includes('INSTITUTIONAL DATA\n==================')) {
         cleanPrompt = cleanPrompt.replace(/INSTITUTIONAL DATA\s*==================[\s\S]*?Use this data to generate the report\.\s*/, '').trim()
       }
 
-      let enrichedPrompt = await enrichPromptWithDatabaseData(cleanPrompt, req.user?.institutionId || 1)
-      enrichedPrompt = `${instDataBlock}\n\n${enrichedPrompt}`
+      let enrichedPrompt
+      if (intentInfo.intent === 'DATA_ANALYSIS') {
+        enrichedPrompt = cleanPrompt
+      } else {
+        const instDataBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
+        enrichedPrompt = await enrichPromptWithDatabaseData(cleanPrompt, req.user?.institutionId || 1)
+        enrichedPrompt = `${instDataBlock}\n\n${enrichedPrompt}`
 
-      // Phase 1: Advanced RAG vector search with cosine similarity and re-ranking
-      try {
-        const ragChunks = await AdvancedRagService.searchKnowledgeBase(prompt, req.user?.institutionId || 1, { topK: 3 })
-        if (Array.isArray(ragChunks) && ragChunks.length > 0) {
-          const ragBlock = '\n\n[RELEVANT RETRIEVED KNOWLEDGE BASE CONTEXT (RERANKED)]:\n' +
-            ragChunks.map((c, i) => `[Source ${i + 1} - ${c.sourceName || 'Institutional Knowledge'} (Re-Rank Score: ${c.reRankScore})]:\n${c.text}`).join('\n\n')
-          enrichedPrompt += ragBlock
+        // Phase 1: Advanced RAG vector search with cosine similarity and re-ranking
+        try {
+          const ragChunks = await AdvancedRagService.searchKnowledgeBase(prompt, req.user?.institutionId || 1, { topK: 3 })
+          if (Array.isArray(ragChunks) && ragChunks.length > 0) {
+            const ragBlock = '\n\n[RELEVANT RETRIEVED KNOWLEDGE BASE CONTEXT (RERANKED)]:\n' +
+              ragChunks.map((c, i) => `[Source ${i + 1} - ${c.sourceName || 'Institutional Knowledge'} (Re-Rank Score: ${c.reRankScore})]:\n${c.text}`).join('\n\n')
+            enrichedPrompt += ragBlock
+          }
+        } catch (ragErr) {
+          logger.warn(`Advanced RAG search skipped: ${ragErr.message}`)
         }
-      } catch (ragErr) {
-        logger.warn(`Advanced RAG search skipped: ${ragErr.message}`)
       }
 
       for await (const token of AIService.streamPrompt(officerType, enrichedPrompt, context)) {

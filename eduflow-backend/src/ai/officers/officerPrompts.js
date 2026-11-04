@@ -51,8 +51,9 @@ const NAAC_CRITERIA_MAP = {
 export const OFFICER_PROMPTS = {
   accreditation: (twin, userPrompt = '') => {
     const isGeneralStaffOrHr = /\b(non-teaching|staff|hr|admin\s+staff|human\s+resources|employee)\b/i.test(userPrompt)
+    const contextCriterion = extractCriterionNumber(typeof twin === 'string' ? twin : twin?.criterion || twin?.selectedCriterion || twin?.criterionNumber || '')
     const hasExplicitCriterionMention = Boolean(
-      extractCriterionNumber(userPrompt) || /table\s*2\.1/i.test(userPrompt) || /criterion\s*\d/i.test(userPrompt)
+      extractCriterionNumber(userPrompt) || /table\s*2\.1/i.test(userPrompt) || /criterion\s*\d/i.test(userPrompt) || contextCriterion
     )
 
     const isAllCriteria = /all\s*criteria/i.test(userPrompt) 
@@ -60,14 +61,14 @@ export const OFFICER_PROMPTS = {
       || (/all\s*criteria/i.test(typeof twin === 'string' ? twin : twin?.criterion || '') && !isGeneralStaffOrHr)
 
     const cNum = isAllCriteria || isGeneralStaffOrHr ? null : (
-      extractCriterionNumber(userPrompt)
-      || (hasExplicitCriterionMention ? extractCriterionNumber(typeof twin === 'string' ? twin : twin?.criterion || twin?.selectedCriterion || twin?.criterionNumber || '') : null)
+      extractCriterionNumber(userPrompt) || contextCriterion
     )
 
     const criteriaBlock = cNum && NAAC_CRITERIA_MAP[cNum]
-      ? `The NAAC RAF Criterion ${cNum} Framework Reference:
+      ? `The NAAC RAF Criterion ${cNum} Framework Reference (STRICTLY for Criterion ${cNum}):
 ${NAAC_CRITERIA_MAP[cNum]}`
-      : `The NAAC RAF Full SSR Assessment (All Criteria):
+      : (hasExplicitCriterionMention || isAllCriteria
+        ? `The NAAC RAF Full SSR Assessment (All Criteria):
 1. ${NAAC_CRITERIA_MAP[1]}
 2. ${NAAC_CRITERIA_MAP[2]}
 3. ${NAAC_CRITERIA_MAP[3]}
@@ -75,21 +76,13 @@ ${NAAC_CRITERIA_MAP[cNum]}`
 5. ${NAAC_CRITERIA_MAP[5]}
 6. ${NAAC_CRITERIA_MAP[6]}
 7. ${NAAC_CRITERIA_MAP[7]}`
+        : '')
 
-    return `${INJECT_INSTITUTIONAL_DATA_HEADER(twin)}You are an expert AI Assistant and Senior Institutional Accreditation & HR Analytics Officer for EduFlow AI OS.
+    return `You are an expert Accreditation Data Analyst. You must answer the user's prompt directly.
+If the user provides raw data (e.g., 'There are 500 students, 250 male, 200 female'), you must analyze THAT specific data. Calculate the percentages (50% male, 40% female) and provide insights on the SC category.
+Do NOT output generic 'NAAC Criterion 2' tables unless the user explicitly asks for 'Criterion 2'. Be conversational, helpful, and precise like ChatGPT.
 
-CRITICAL RULE:
-You are an expert AI Assistant. You must answer the user's prompt EXACTLY as they asked. If the user asks for a report on 'teaching and non-teaching staff', you must generate a dedicated HR/Staff report detailing the counts, roles, and ratios. Do NOT force the response into a NAAC Criterion 2 table unless the user specifically mentions 'Criterion 2' or 'Table 2.1'.
-
-${criteriaBlock}
-
-Operational Directives:
-- You are an expert AI Assistant. You must answer the user's prompt EXACTLY as they asked. If the user asks for a report on 'teaching and non-teaching staff', you must generate a dedicated HR/Staff report detailing the counts, roles, and ratios. Do NOT force the response into a NAAC Criterion 2 table unless the user specifically mentions 'Criterion 2' or 'Table 2.1'.
-- If the user explicitly asks for NAAC/NBA compliance or a specific Criterion, structure the analysis with exact Criterion and Metric numbers. Otherwise, directly answer the user's inquiry (e.g. HR staff report, student distribution, institutional overview) with dedicated data tables.
-- When the user asks for a specific table or data breakdown (e.g. Table 2.1, student enrollment, faculty metrics, staff breakdown), you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
-- Provide quantitative benchmarks, institutional readiness percentages, and identified qualitative/quantitative gaps when accreditation SSR is requested.
-- Include a Data Verification Checklist detailing mandatory documentary evidence when generating formal compliance reports.
-- Tone: Formal, rigorous, objective, and auditor-grade.${BASE_CONTEXT(twin)}`
+${criteriaBlock ? `${criteriaBlock}\n\n` : ''}${INJECT_INSTITUTIONAL_DATA_HEADER(twin)}${BASE_CONTEXT(twin)}`
   },
 
   timetable: (twin) => `${INJECT_INSTITUTIONAL_DATA_HEADER(twin)}You are the Lead Operations Research and Academic Scheduling Optimization Specialist for EduFlow AI OS.

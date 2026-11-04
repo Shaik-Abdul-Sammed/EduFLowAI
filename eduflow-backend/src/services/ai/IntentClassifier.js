@@ -39,11 +39,23 @@ export class IntentClassifier {
     let confidence = 0.85
     let matchedPattern = 'default general fallback'
 
+    const hasDataAnalysisKeywords = /\b(male|female|category|categories|sc|st|obc|raw\s+data|data\s+analysis)\b/i.test(lower)
+    const hasRawNumbersInput = /\b(there\s+are|we\s+have|given|cohort\s+of)\b/i.test(lower) && /\d+/.test(lower)
+    const isDataAnalysis = hasDataAnalysisKeywords || hasRawNumbersInput || (/\d+/.test(lower) && /\b(male|female|boys?|girls?|demographics?|percentage)\b/i.test(lower))
+
+    const isDataQuery = dataQueryPatterns.some(p => p.test(lower))
     const isGeneralStaffQuery = /\b(non-teaching|staff|hr|admin\s+staff)\b/i.test(lower)
     const isReport = reportPatterns.some(p => p.test(lower))
-    const isDataQuery = dataQueryPatterns.some(p => p.test(lower))
 
-    if (isGeneralStaffQuery) {
+    if (isDataAnalysis) {
+      intent = 'DATA_ANALYSIS'
+      confidence = 0.98
+      matchedPattern = 'data analysis pattern matched'
+    } else if (isDataQuery) {
+      intent = 'DATA_QUERY'
+      confidence = 0.92
+      matchedPattern = 'database query pattern matched'
+    } else if (isGeneralStaffQuery) {
       intent = 'GENERAL_REPORT_GENERATION'
       confidence = 0.96
       matchedPattern = 'general HR/staff report pattern matched'

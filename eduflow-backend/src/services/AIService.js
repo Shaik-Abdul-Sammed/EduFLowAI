@@ -1,5 +1,6 @@
-import { createAIProvider } from '../ai/providers/providerFactory.js'
+import { createAIProvider, MockProvider } from '../ai/providers/providerFactory.js'
 import { OFFICER_PROMPTS } from '../ai/officers/officerPrompts.js'
+import { IntentClassifier } from './ai/IntentClassifier.js'
 import { logger } from '../utils/logger.js'
 
 let aiProvider = null
@@ -249,13 +250,19 @@ export function resolveAccreditationFallback(prompt = '', context = {}) {
   const pTarget = String(prompt || '').toLowerCase()
   const combined = `${pTarget} ${cTarget}`
 
+  const isGeneralStaff = /\b(non-teaching|staff|hr|admin\s+staff)\b/i.test(combined)
+  if (isGeneralStaff && !combined.includes('criterion 2') && !combined.includes('table 2.1')) {
+    const mock = new MockProvider()
+    return mock.generateRealisticResponse([{ role: 'user', content: prompt }])
+  }
+
   if (cTarget === 'all' || cTarget === 'all criteria' || combined.includes('all criteria') || combined.includes('full ssr') || combined.includes('criteria 1 to 7') || combined.includes('criterion 1 to 7')) {
     return NAAC_CRITERIA_FALLBACKS.allCriteria
   }
   if (cTarget === '1' || cTarget === 'criterion 1' || cTarget === 'criteria 1' || combined.includes('criterion 1') || combined.includes('criteria 1') || combined.includes('curricular')) {
     return NAAC_CRITERIA_FALLBACKS.criterion1
   }
-  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('teaching') || combined.includes('table 2.1') || combined.includes('table-2.1')) {
+  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || (!isGeneralStaff && combined.includes('teaching')) || combined.includes('table 2.1') || combined.includes('table-2.1')) {
     return NAAC_CRITERIA_FALLBACKS.criterion2
   }
   if (cTarget === '4' || cTarget === 'criterion 4' || cTarget === 'criteria 4' || combined.includes('criterion 4') || combined.includes('criteria 4') || combined.includes('infrastructure')) {
@@ -273,7 +280,9 @@ export function resolveAccreditationFallback(prompt = '', context = {}) {
   if (cTarget === '3' || cTarget === 'criterion 3' || cTarget === 'criteria 3' || combined.includes('criterion 3') || combined.includes('criteria 3') || combined.includes('research')) {
     return NAAC_CRITERIA_FALLBACKS.criterion3
   }
-  return NAAC_CRITERIA_FALLBACKS.criterion3
+  
+  const mock = new MockProvider()
+  return mock.generateRealisticResponse([{ role: 'user', content: prompt }])
 }
 
 const OFFICER_FALLBACK_TEXTS = {
@@ -439,6 +448,9 @@ export class AIService {
     const liveHeader = await this.getLiveOfficerHeader(officerType)
     const liveFooter = this.getLiveOfficerFooter(officerType)
 
+    const intent = context?.intent || IntentClassifier.classify(prompt, { officerType, ...context }).intent
+    const isDataAnalysis = intent === 'DATA_ANALYSIS'
+
     if (aiProvider) {
       try {
         const promptFn = OFFICER_PROMPTS[officerType]
@@ -464,7 +476,10 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
 
     // Return rich fallback response with live context prepended and appended
     let fallbackText = `[AI Fallback] Processed prompt: "${prompt}" successfully.`
-    if (officerType === 'accreditation') {
+    if (isDataAnalysis) {
+      const mock = new MockProvider()
+      fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }])
+    } else if (officerType === 'accreditation') {
       fallbackText = resolveAccreditationFallback(prompt, context)
     } else if (OFFICER_FALLBACK_TEXTS[officerType]) {
       fallbackText = OFFICER_FALLBACK_TEXTS[officerType]
@@ -504,6 +519,9 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
 
     let streamedTokens = false
 
+    const intent = context?.intent || IntentClassifier.classify(prompt, { officerType, ...context }).intent
+    const isDataAnalysis = intent === 'DATA_ANALYSIS'
+
     if (aiProvider) {
       try {
         let firstChunk = true
@@ -530,9 +548,15 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
 
     // If provider failed or didn't yield real content, stream rich realistic demo template
     if (!streamedTokens) {
-      const fallbackText = officerType === 'accreditation'
-        ? resolveAccreditationFallback(prompt, context)
-        : (OFFICER_FALLBACK_TEXTS[officerType] || `[${officerType} AI Officer]: Analysis completed for "${prompt}". All constraints satisfied.`)
+      let fallbackText
+      if (isDataAnalysis) {
+        const mock = new MockProvider()
+        fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
+      } else if (officerType === 'accreditation') {
+        fallbackText = resolveAccreditationFallback(prompt, context)
+      } else {
+        fallbackText = (OFFICER_FALLBACK_TEXTS[officerType] || `[${officerType} AI Officer]: Analysis completed for "${prompt}". All constraints satisfied.`)
+      }
       yield* simulateTokenStream(fallbackText, 12)
     }
 
