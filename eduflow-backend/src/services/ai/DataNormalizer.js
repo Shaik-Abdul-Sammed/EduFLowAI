@@ -16,14 +16,31 @@ export class DataNormalizer {
    * @returns {object} Strict normalized metrics object
    */
   static normalizeAcademicMetrics(raw = {}) {
+    const totalFaculty = Number(raw.totalFaculty ?? raw.faculty_count ?? 85)
+    const nonTeachingStaff = Number(raw.nonTeachingStaff ?? raw.non_teaching_count ?? 45)
+    const totalStudents = Number(raw.totalStudents ?? raw.student_count ?? 1250)
+    const totalStaff = totalFaculty + nonTeachingStaff
+
     return {
-      total_students: Number(raw.totalStudents ?? raw.student_count ?? 1250),
-      total_faculty: Number(raw.totalFaculty ?? raw.faculty_count ?? 85),
+      institutional_data: {
+        teachingStaffCount: totalFaculty,
+        nonTeachingStaffCount: nonTeachingStaff,
+        totalStaff: totalStaff,
+        students: totalStudents,
+      },
+      teachingStaffCount: totalFaculty,
+      nonTeachingStaffCount: nonTeachingStaff,
+      totalStaff: totalStaff,
+      students: totalStudents,
+      total_students: totalStudents,
+      total_faculty: totalFaculty,
+      non_teaching_staff: nonTeachingStaff,
+      total_staff: totalStaff,
       phd_faculty_count: Number(raw.phdFaculty ?? raw.phd_count ?? 40),
-      phd_faculty_percentage: Number((Number(raw.phdRatio ?? (40 / 85 * 100))).toFixed(1)),
+      phd_faculty_percentage: Number((Number(raw.phdRatio ?? (40 / totalFaculty * 100))).toFixed(1)),
       average_cgpa: Number((Number(raw.averageCgpa ?? raw.avg_cgpa ?? 7.8)).toFixed(2)),
       average_attendance_percentage: Number((Number(raw.averageAttendance ?? raw.avg_attendance ?? 82.0)).toFixed(1)),
-      student_faculty_ratio: Number((Number(raw.sfr ?? (1250 / 85))).toFixed(1)),
+      student_faculty_ratio: Number((Number(raw.sfr ?? (totalStudents / totalFaculty))).toFixed(1)),
       placement_percentage: Number((Number(raw.placementPercentage ?? 62.0)).toFixed(1)),
       median_package_lpa: Number((Number(raw.medianPackageLpa ?? 5.5)).toFixed(2)),
       total_research_publications: Number(raw.totalResearch ?? 450),

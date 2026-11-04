@@ -588,6 +588,22 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
 
   return (
     <div style={{ height: '100vh', maxHeight: '100vh', background: '#0A0E27', color: 'white', fontFamily: '"Inter", sans-serif', display: 'flex', overflow: 'hidden' }}>
+      <style>{`
+        .markdown-content table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1rem 0;
+        }
+        .markdown-content div:has(> table),
+        .markdown-table-wrapper {
+          overflow-x: auto !important;
+          max-width: 100%;
+          -webkit-overflow-scrolling: touch;
+        }
+        .officer-chat-bubble table {
+          min-width: 480px;
+        }
+      `}</style>
 
       {/* ── Left panel ── */}
       <div
@@ -1031,7 +1047,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', background: msg.role === 'user' ? '#2563EB' : accentLight, border: msg.role === 'user' ? 'none' : `1px solid ${accentBorder}` }}>
                   {msg.role === 'user' ? 'U' : icon}
                 </div>
-                <div style={{ background: msg.role === 'user' ? '#2563EB' : 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', position: 'relative' }}>
+                <div className="officer-chat-bubble" style={{ background: msg.role === 'user' ? '#2563EB' : 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', minWidth: 0, overflowX: 'auto', border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)', lineHeight: '1.6', position: 'relative' }}>
                   {msg.role === 'assistant' ? (
                     <MarkdownRenderer content={msg.content} onImageClick={handlePicPreview} />
                   ) : (
@@ -1146,7 +1162,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                 <div style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', background: accentLight, border: `1px solid ${accentBorder}` }}>
                   {icon}
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', border: `1px solid ${accentBorder}`, lineHeight: '1.6' }}>
+                <div className="officer-chat-bubble" style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem 1.15rem', borderRadius: '12px', maxWidth: '82%', minWidth: 0, overflowX: 'auto', border: `1px solid ${accentBorder}`, lineHeight: '1.6' }}>
                   <MarkdownRenderer content={tokens || ''} onImageClick={handlePicPreview} />
                   <span style={{ display: 'inline-block', width: '7px', height: '14px', background: accentColor, marginLeft: '3px', verticalAlign: 'text-bottom', animation: 'obs-blink 1s infinite' }} />
                 </div>

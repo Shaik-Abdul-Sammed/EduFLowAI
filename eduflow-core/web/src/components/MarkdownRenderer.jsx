@@ -124,10 +124,11 @@ export default function MarkdownRenderer({ content, className = '', onImageClick
             <li style={{ marginBottom: '0.35rem' }} {...cleanProps(props)} />
           ),
           table: (props) => (
-            <div style={{ overflowX: 'auto', margin: '1rem 0' }}>
+            <div className="markdown-table-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', margin: '1rem 0', width: '100%', maxWidth: '100%' }}>
               <table
                 style={{
                   width: '100%',
+                  minWidth: '450px',
                   borderCollapse: 'collapse',
                   border: '1px solid var(--border-color, rgba(148, 163, 184, 0.25))',
                   borderRadius: '6px',

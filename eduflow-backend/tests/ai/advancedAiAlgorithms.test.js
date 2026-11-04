@@ -72,6 +72,12 @@ describe('Phase 1: Deep AI Algorithms & Data Handling', () => {
       assert.strictEqual(result.intent, 'GENERAL_QUESTION')
       assert(result.confidence >= 0.85)
     })
+
+    test('classifies staff and non-teaching queries to GENERAL_REPORT_GENERATION', () => {
+      const result = IntentClassifier.classify('Generate a report on teaching and non-teaching staff for HR review')
+      assert.strictEqual(result.intent, 'GENERAL_REPORT_GENERATION')
+      assert(result.confidence >= 0.90)
+    })
   })
 
   describe('Data Normalization & Hallucination Prevention', () => {
@@ -90,6 +96,10 @@ describe('Phase 1: Deep AI Algorithms & Data Handling', () => {
       assert.strictEqual(normalized.average_cgpa, 7.82)
       assert.strictEqual(normalized.average_attendance_percentage, 82.1)
       assert.strictEqual(normalized.student_faculty_ratio, 14.7)
+      assert.strictEqual(normalized.institutional_data.teachingStaffCount, 85)
+      assert.strictEqual(normalized.institutional_data.nonTeachingStaffCount, 45)
+      assert.strictEqual(normalized.institutional_data.totalStaff, 130)
+      assert.strictEqual(normalized.institutional_data.students, 1250)
 
       const block = DataNormalizer.formatStrictJsonPromptBlock('test_metrics', normalized)
       assert(block.includes('"total_students": 1250'))

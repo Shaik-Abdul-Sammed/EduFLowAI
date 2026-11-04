@@ -150,7 +150,9 @@ export async function buildInstitutionalDataContext(institutionId = 1) {
 ==================
 Institution: Sri Sudha Institute of Technology
 Total Students: ${stats.totalStudents || 1250}
-Total Faculty: ${stats.totalFaculty || 85}
+Total Faculty (Teaching Staff): ${stats.totalFaculty || 85}
+Non-Teaching Staff: 45
+Total Staff: ${Number(stats.totalFaculty || 85) + 45}
 PhD Faculty: ${stats.phdFaculty || 40} (${Math.round(stats.phdRatio || 47)} percent)
 Average CGPA: ${stats.averageCgpa || 7.8}
 Average Attendance: ${Math.round(stats.averageAttendance || 82)} percent
@@ -176,7 +178,9 @@ Use this data to generate the report.
 ==================
 Institution: Sri Sudha Institute of Technology
 Total Students: 1250
-Total Faculty: 85
+Total Faculty (Teaching Staff): 85
+Non-Teaching Staff: 45
+Total Staff: 130
 PhD Faculty: 40 (47 percent)
 Average CGPA: 7.8
 Average Attendance: 82 percent

@@ -39,10 +39,15 @@ export class IntentClassifier {
     let confidence = 0.85
     let matchedPattern = 'default general fallback'
 
+    const isGeneralStaffQuery = /\b(non-teaching|staff|hr|admin\s+staff)\b/i.test(lower)
     const isReport = reportPatterns.some(p => p.test(lower))
     const isDataQuery = dataQueryPatterns.some(p => p.test(lower))
 
-    if (isReport && !lower.startsWith('what is') && !lower.startsWith('explain')) {
+    if (isGeneralStaffQuery) {
+      intent = 'GENERAL_REPORT_GENERATION'
+      confidence = 0.96
+      matchedPattern = 'general HR/staff report pattern matched'
+    } else if (isReport && !lower.startsWith('what is') && !lower.startsWith('explain')) {
       intent = 'REPORT_GENERATION'
       confidence = 0.95
       matchedPattern = 'report generation pattern matched'
