@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FileText, Sparkles } from 'lucide-react';
 import OfficerLayout from '../../../components/OfficerLayout';
 
@@ -78,16 +79,34 @@ const OFFICER_CONFIG = {
 };
 
 export default function AccreditationOfficer() {
+  const location = useLocation();
   const [selectedCriterion, setSelectedCriterion] = useState('');
   const [userInput, setUserInput] = useState('');
 
   useEffect(() => {
+    const passedCriterion = location?.state?.criterion || new URLSearchParams(location?.search).get('criterion');
+    if (passedCriterion) {
+      setSelectedCriterion(passedCriterion);
+    }
+  }, [location]);
+
+  useEffect(() => {
     if (!userInput) return;
     const lower = userInput.toLowerCase();
-    if (lower.includes('2.1') || lower.includes('intake') || lower.includes('enrollment') || lower.includes('student')) {
+    if (lower.includes('1.1') || lower.includes('1.2') || lower.includes('curriculum') || lower.includes('syllabus') || lower.includes('enrichment') || lower.includes('academic flexibility')) {
+      setSelectedCriterion('Criterion 1');
+    } else if (lower.includes('2.1') || lower.includes('2.2') || lower.includes('intake') || lower.includes('enrollment') || lower.includes('student') || lower.includes('sfr') || lower.includes('faculty ratio') || lower.includes('teaching')) {
       setSelectedCriterion('Criterion 2');
-    } else if (lower.includes('3.3') || lower.includes('research') || lower.includes('publications')) {
+    } else if (lower.includes('3.1') || lower.includes('3.2') || lower.includes('3.3') || lower.includes('research') || lower.includes('publications') || lower.includes('patent') || lower.includes('scopus') || lower.includes('consultancy')) {
       setSelectedCriterion('Criterion 3');
+    } else if (lower.includes('4.1') || lower.includes('4.2') || lower.includes('infrastructure') || lower.includes('library') || lower.includes('physical facilities') || lower.includes('classroom')) {
+      setSelectedCriterion('Criterion 4');
+    } else if (lower.includes('5.1') || lower.includes('5.2') || lower.includes('scholarship') || lower.includes('placement') || lower.includes('progression') || lower.includes('student support') || lower.includes('alumni')) {
+      setSelectedCriterion('Criterion 5');
+    } else if (lower.includes('6.1') || lower.includes('6.2') || lower.includes('governance') || lower.includes('iqac') || lower.includes('leadership') || lower.includes('financial management') || lower.includes('empowerment')) {
+      setSelectedCriterion('Criterion 6');
+    } else if (lower.includes('7.1') || lower.includes('7.2') || lower.includes('best practices') || lower.includes('distinctiveness') || lower.includes('institutional values') || lower.includes('green campus') || lower.includes('solar')) {
+      setSelectedCriterion('Criterion 7');
     }
   }, [userInput]);
 

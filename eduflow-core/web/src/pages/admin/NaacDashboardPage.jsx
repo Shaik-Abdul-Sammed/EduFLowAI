@@ -16,7 +16,8 @@ import {
   XCircle,
   BarChart3,
   FileSpreadsheet,
-  Share2
+  Share2,
+  Sparkles
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -625,6 +626,37 @@ export default function NaacDashboardPage() {
                       </div>
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => navigate('/officer/accreditation', { state: { criterion: `Criterion ${c.criterion}` } })}
+                    style={{
+                      marginTop: '0.85rem',
+                      width: '100%',
+                      padding: '0.45rem 0.75rem',
+                      background: 'rgba(139, 92, 246, 0.15)',
+                      border: '1px solid rgba(139, 92, 246, 0.35)',
+                      borderRadius: '8px',
+                      color: '#c4b5fd',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)';
+                    }}
+                  >
+                    <Sparkles size={13} color="#8B5CF6" />
+                    <span>⚡ AI Audit Criterion {c.criterion}</span>
+                  </button>
                 </div>
               </div>
             );
@@ -864,7 +896,7 @@ export default function NaacDashboardPage() {
           <button
             type="button"
             data-testid="generate-full-ssr-button"
-            onClick={() => navigate('/officer/accreditation')}
+            onClick={() => navigate('/officer/accreditation', { state: { criterion: 'All Criteria' } })}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -887,7 +919,7 @@ export default function NaacDashboardPage() {
           <button
             type="button"
             data-testid="generate-single-criterion-button"
-            onClick={() => navigate('/officer/accreditation')}
+            onClick={() => navigate('/officer/accreditation', { state: { criterion: 'Criterion 1' } })}
             style={{
               display: 'flex',
               alignItems: 'center',

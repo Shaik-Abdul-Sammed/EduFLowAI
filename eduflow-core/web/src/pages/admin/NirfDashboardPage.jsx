@@ -29,6 +29,9 @@ export default function NirfDashboardPage() {
 
   // Benchmarking state
   const [peersList, setPeersList] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedState, setSelectedState] = useState('ALL')
+  const [evaluationYear, setEvaluationYear] = useState('2026-2027')
 
   // Parameter explorer state
   const [expandedParam, setExpandedParam] = useState('RP')
@@ -254,7 +257,7 @@ export default function NirfDashboardPage() {
                 fontWeight: 600,
               }}
             >
-              {new Date().getFullYear()} Framework
+              {evaluationYear} Framework
             </span>
           </div>
           <h2 className="h3 fw-bold mb-1" style={{ color: '#ffffff', fontWeight: 800, opacity: 1 }}>
@@ -265,10 +268,23 @@ export default function NirfDashboardPage() {
           </p>
         </div>
 
-        <div className="d-flex align-items-center gap-2 mt-3 mt-md-0">
+        <div className="d-flex align-items-center gap-2 mt-3 mt-md-0 flex-wrap">
+          <select
+            className="form-select form-select-sm shadow-sm"
+            style={{ width: '170px', fontWeight: 600 }}
+            value={evaluationYear}
+            onChange={(e) => setEvaluationYear(e.target.value)}
+            title="Select NIRF Framework Assessment Year"
+          >
+            <option value="2026-2027">2026-2027 (Active)</option>
+            <option value="2025-2026">2025-2026 (Audited)</option>
+            <option value="2024-2025">2024-2025 (Historical)</option>
+            <option value="2027-2028">2027-2028 (Projected)</option>
+          </select>
+
           <select 
             className="form-select form-select-sm shadow-sm"
-            style={{ width: '160px', fontWeight: 600 }}
+            style={{ width: '150px', fontWeight: 600 }}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -437,14 +453,54 @@ export default function NirfDashboardPage() {
 
       {/* SECTION 3: Peer Benchmarking */}
       <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <Users size={18} className="text-info" />
-            Top-Ranked Peer Institutions Benchmarking
-          </h5>
-          <span className="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1 rounded-pill small">
-            National Comparison Cohort
-          </span>
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <Users size={18} className="text-info" />
+              Top-Ranked Peer Institutions Benchmarking
+            </h5>
+            <span className="small text-muted">
+              Filter by State, Regional Cohort, or Search by Institution Name
+            </span>
+          </div>
+
+          <div className="d-flex align-items-center gap-2 flex-wrap">
+            <input
+              type="text"
+              className="form-control form-control-sm"
+              placeholder="Search peer (e.g. VIT, NIT, BITS)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '220px' }}
+            />
+            <select
+              className="form-select form-select-sm"
+              style={{ width: '170px' }}
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+            >
+              <option value="ALL">All States (India)</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Delhi">Delhi NCR</option>
+              <option value="South">All South Zone</option>
+            </select>
+            {(searchQuery || selectedState !== 'ALL') && (
+              <button
+                type="button"
+                className="btn btn-sm btn-link text-decoration-none text-muted p-0"
+                onClick={() => {
+                  setSearchQuery('')
+                  setSelectedState('ALL')
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="table-responsive">
@@ -480,27 +536,55 @@ export default function NirfDashboardPage() {
                 <td><strong className="text-primary">{scoreData.totalScore}</strong></td>
               </tr>
 
-              {peersList.slice(0, 10).map((p) => {
-                const r = p.nirf_rank || p.nirfRank
-                const isAhead = r < scoreData.predictedRank
-                return (
-                  <tr key={p.id || r}>
-                    <td>
-                      <span className={`badge ${isAhead ? 'bg-secondary' : 'bg-light text-dark'} rounded-pill px-2`}>
-                        #{r}
-                      </span>
-                    </td>
-                    <td className="small text-dark fw-medium">{p.name}</td>
-                    <td><span className="badge bg-light text-dark border small">{p.institution_type || p.institutionType}</span></td>
-                    <td className="small text-muted">{p.location_state || p.locationState}</td>
-                    <td><span className="badge bg-success bg-opacity-75">{p.naac_grade || p.naacGrade}</span></td>
-                    <td className="small text-muted">{p.tlr_score || p.tlrScore}</td>
-                    <td className="small text-muted">{p.rp_score || p.rpScore}</td>
-                    <td className="small text-muted">{p.go_score || p.goScore}</td>
-                    <td><span className="fw-semibold text-dark">{p.total_score || p.totalScore}</span></td>
-                  </tr>
-                )
-              })}
+              {(() => {
+                const filtered = peersList.filter((p) => {
+                  const q = searchQuery.toLowerCase().trim()
+                  const matchesSearch = !q ||
+                    (p.name && p.name.toLowerCase().includes(q)) ||
+                    (p.institution_type && p.institution_type.toLowerCase().includes(q)) ||
+                    (p.institutionType && p.institutionType.toLowerCase().includes(q)) ||
+                    (p.location_state && p.location_state.toLowerCase().includes(q)) ||
+                    (p.locationState && p.locationState.toLowerCase().includes(q))
+                  const st = (p.location_state || p.locationState || '').toLowerCase()
+                  const matchesState = selectedState === 'ALL' ||
+                    st === selectedState.toLowerCase() ||
+                    (selectedState === 'South' && ['andhra pradesh', 'telangana', 'karnataka', 'tamil nadu', 'kerala'].includes(st)) ||
+                    (selectedState === 'Delhi' && st.includes('delhi'))
+                  return matchesSearch && matchesState
+                })
+
+                if (filtered.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan="9" className="text-center text-muted py-4 small">
+                        No peer institutions found matching "{searchQuery}" in state "{selectedState}".
+                      </td>
+                    </tr>
+                  )
+                }
+
+                return filtered.slice(0, 10).map((p) => {
+                  const r = p.nirf_rank || p.nirfRank
+                  const isAhead = r < scoreData.predictedRank
+                  return (
+                    <tr key={p.id || r}>
+                      <td>
+                        <span className={`badge ${isAhead ? 'bg-secondary' : 'bg-light text-dark'} rounded-pill px-2`}>
+                          #{r}
+                        </span>
+                      </td>
+                      <td className="small text-dark fw-medium">{p.name}</td>
+                      <td><span className="badge bg-light text-dark border small">{p.institution_type || p.institutionType}</span></td>
+                      <td className="small text-muted">{p.location_state || p.locationState}</td>
+                      <td><span className="badge bg-success bg-opacity-75">{p.naac_grade || p.naacGrade}</span></td>
+                      <td className="small text-muted">{p.tlr_score || p.tlrScore}</td>
+                      <td className="small text-muted">{p.rp_score || p.rpScore}</td>
+                      <td className="small text-muted">{p.go_score || p.goScore}</td>
+                      <td><span className="fw-semibold text-dark">{p.total_score || p.totalScore}</span></td>
+                    </tr>
+                  )
+                })
+              })()}
             </tbody>
           </table>
         </div>

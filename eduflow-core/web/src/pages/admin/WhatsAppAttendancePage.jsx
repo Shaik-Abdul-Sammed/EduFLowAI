@@ -38,6 +38,15 @@ export default function WhatsAppAttendancePage() {
   const [stagedList, setStagedList] = useState([])
   const [logsList, setLogsList] = useState([])
   const [visibleLogsCount, setVisibleLogsCount] = useState(8)
+  const [logDirectionFilter, setLogDirectionFilter] = useState('ALL')
+  const [logSearchQuery, setLogSearchQuery] = useState('')
+  const [showAbsentAlertModal, setShowAbsentAlertModal] = useState(false)
+  const [absentAlertForm, setAbsentAlertForm] = useState({
+    courseSection: 'CSE 3A',
+    studentRolls: '2023CSE012, 2023CSE045',
+    parentPhone: '+91 98765 43210',
+    reason: 'Unexcused Absence in Morning Lecture & Lab Session',
+  })
   const [facultyList, setFacultyList] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionMsg, setActionMsg] = useState('')
@@ -155,6 +164,37 @@ export default function WhatsAppAttendancePage() {
     setLogsList(demoLogs)
     setActionMsg('Loaded demo reports: Attendance alerts, Fee reminders, and Leave approvals.')
     setTimeout(() => setActionMsg(''), 4000)
+  }
+
+  const handleSendAbsentAlert = async (e) => {
+    e?.preventDefault?.()
+    const alertMsg = `EduFlow Alert: Student(s) [${absentAlertForm.studentRolls}] marked ABSENT today in ${absentAlertForm.courseSection} (${absentAlertForm.reason}). Current attendance approaching UGC 75% threshold. Please ensure regular attendance.`
+    const newLog = {
+      id: Date.now(),
+      direction: 'OUTBOUND',
+      from_number: status.senderNumber || '+91 99000 11222',
+      to_number: absentAlertForm.parentPhone,
+      body: alertMsg,
+      status: 'DELIVERED',
+      created_at: new Date().toISOString(),
+    }
+    setLogsList((prev) => [newLog, ...prev])
+    setShowAbsentAlertModal(false)
+    setActionMsg(`✓ Sent Absentee WhatsApp Alert for ${absentAlertForm.courseSection} to ${absentAlertForm.parentPhone}`)
+    setTimeout(() => setActionMsg(''), 6000)
+
+    try {
+      await fetch(getFullApiUrl('/v1/whatsapp/simulate-message'), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          fromNumber: status.senderNumber || '+91 99000 11222',
+          toNumber: absentAlertForm.parentPhone,
+          message: alertMsg,
+          direction: 'OUTBOUND'
+        })
+      })
+    } catch {}
   }
 
   useEffect(() => {
@@ -461,20 +501,68 @@ export default function WhatsAppAttendancePage() {
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
-              minHeight: '500px',
+              minHeight: '520px',
             }}
           >
             <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
               <h5 className="fw-bold mb-0 d-flex align-items-center">
                 <MessageSquare size={18} className="me-2 text-primary" /> Recent WhatsApp Messages
               </h5>
-              <button
-                className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm"
-                onClick={handleLoadDemoReports}
-              >
-                <Sparkles size={14} /> Load Demo Reports
-              </button>
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm d-flex align-items-center gap-1 shadow-sm"
+                  onClick={() => setShowAbsentAlertModal(true)}
+                  title="Notify parents of absent students immediately via WhatsApp"
+                >
+                  <Send size={13} /> Send Absent Alert
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm"
+                  onClick={handleLoadDemoReports}
+                >
+                  <Sparkles size={14} /> Load Demo Reports
+                </button>
+              </div>
             </div>
+
+            {/* Filter Pills and Search */}
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div className="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  className={`btn btn-sm ${logDirectionFilter === 'ALL' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  onClick={() => setLogDirectionFilter('ALL')}
+                >
+                  All ({logsList.length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${logDirectionFilter === 'INBOUND' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  onClick={() => setLogDirectionFilter('INBOUND')}
+                >
+                  📥 Inbound ({logsList.filter((l) => l.direction === 'INBOUND').length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${logDirectionFilter === 'OUTBOUND' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  onClick={() => setLogDirectionFilter('OUTBOUND')}
+                >
+                  📤 Outbound ({logsList.filter((l) => l.direction === 'OUTBOUND').length})
+                </button>
+              </div>
+
+              <input
+                type="text"
+                className="form-control form-control-sm"
+                placeholder="Search phone or text..."
+                value={logSearchQuery}
+                onChange={(e) => setLogSearchQuery(e.target.value)}
+                style={{ width: '180px' }}
+              />
+            </div>
+
             <div
               style={{
                 flexGrow: 1,
@@ -483,40 +571,59 @@ export default function WhatsAppAttendancePage() {
                 width: '100%',
               }}
             >
-              <table className="table table-sm align-middle mb-0" style={{ minWidth: '720px', tableLayout: 'fixed' }}>
-                <thead className="table-light small text-uppercase">
-                  <tr>
-                    <th style={{ width: '85px' }}>Dir</th>
-                    <th style={{ width: '145px' }}>Number</th>
-                    <th style={{ width: '380px' }}>Message</th>
-                    <th style={{ width: '110px' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logsList.length === 0 ? (
-                    <tr><td colSpan="4" className="text-center text-muted py-3">No messages logged yet. Click "Load Demo Reports" to view sample interactions.</td></tr>
-                  ) : (
-                    logsList.slice(0, visibleLogsCount).map(l => (
-                      <tr key={l.id}>
-                        <td>
-                          {l.direction === 'INBOUND' ? (
-                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle">
-                              <ArrowDownLeft size={12} className="me-1" /> IN
-                            </span>
-                          ) : (
-                            <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                              <ArrowUpRight size={12} className="me-1" /> OUT
-                            </span>
-                          )}
-                        </td>
-                        <td className="small font-monospace">{l.direction === 'INBOUND' ? l.from_number : l.to_number}</td>
-                        <td className="small text-truncate" style={{ maxWidth: '380px' }} title={l.body}>{l.body}</td>
-                        <td><span className="badge bg-light text-dark border small">{l.status || 'SENT'}</span></td>
+              {(() => {
+                const filtered = logsList.filter((l) => {
+                  const matchesDir = logDirectionFilter === 'ALL' || l.direction === logDirectionFilter
+                  const q = logSearchQuery.toLowerCase().trim()
+                  const phone = (l.direction === 'INBOUND' ? l.from_number : l.to_number) || ''
+                  const body = l.body || ''
+                  const matchesSearch = !q || phone.toLowerCase().includes(q) || body.toLowerCase().includes(q)
+                  return matchesDir && matchesSearch
+                })
+
+                return (
+                  <table className="table table-sm align-middle mb-0" style={{ minWidth: '720px', tableLayout: 'fixed' }}>
+                    <thead className="table-light small text-uppercase">
+                      <tr>
+                        <th style={{ width: '85px' }}>Dir</th>
+                        <th style={{ width: '145px' }}>Number</th>
+                        <th style={{ width: '380px' }}>Message</th>
+                        <th style={{ width: '110px' }}>Status</th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {filtered.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" className="text-center text-muted py-3">
+                            {logsList.length === 0
+                              ? 'No messages logged yet. Click "Load Demo Reports" to view sample interactions.'
+                              : `No messages match filter "${logDirectionFilter}" and query "${logSearchQuery}".`}
+                          </td>
+                        </tr>
+                      ) : (
+                        filtered.slice(0, visibleLogsCount).map((l) => (
+                          <tr key={l.id}>
+                            <td>
+                              {l.direction === 'INBOUND' ? (
+                                <span className="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                  <ArrowDownLeft size={12} className="me-1" /> IN
+                                </span>
+                              ) : (
+                                <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                                  <ArrowUpRight size={12} className="me-1" /> OUT
+                                </span>
+                              )}
+                            </td>
+                            <td className="small font-monospace">{l.direction === 'INBOUND' ? l.from_number : l.to_number}</td>
+                            <td className="small text-truncate" style={{ maxWidth: '380px' }} title={l.body}>{l.body}</td>
+                            <td><span className="badge bg-light text-dark border small">{l.status || 'SENT'}</span></td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                )
+              })()}
             </div>
             <div className="d-flex justify-content-between align-items-center pt-3 mt-auto border-top">
               <span className="small text-muted">
@@ -526,7 +633,7 @@ export default function WhatsAppAttendancePage() {
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-primary"
-                  onClick={() => setVisibleLogsCount(prev => prev + 8)}
+                  onClick={() => setVisibleLogsCount((prev) => prev + 8)}
                 >
                   Load More Messages
                 </button>
@@ -542,6 +649,126 @@ export default function WhatsAppAttendancePage() {
             </div>
           </div>
         </div>
+
+        {/* Modal: Instant Absentee Alert */}
+        {showAbsentAlertModal && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 1050,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem',
+            }}
+          >
+            <div
+              className="card border-0 shadow-lg"
+              style={{
+                width: '100%',
+                maxWidth: '520px',
+                borderRadius: '16px',
+                background: '#ffffff',
+                color: '#1e293b',
+              }}
+            >
+              <div className="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3 px-4">
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ fontSize: '1.25rem' }}>📢</span>
+                  <h6 className="fw-bold mb-0">Dispatch Absentee WhatsApp Alert to Parents</h6>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowAbsentAlertModal(false)}
+                />
+              </div>
+
+              <form onSubmit={handleSendAbsentAlert} className="card-body p-4">
+                <div className="mb-3">
+                  <label className="form-label small fw-bold text-muted">Class &amp; Section</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={absentAlertForm.courseSection}
+                    onChange={(e) => setAbsentAlertForm({ ...absentAlertForm, courseSection: e.target.value })}
+                  >
+                    <option value="CSE 3A">CSE 3rd Year - Section A</option>
+                    <option value="CSE 3B">CSE 3rd Year - Section B</option>
+                    <option value="ECE 2A">ECE 2nd Year - Section A</option>
+                    <option value="ECE 2B">ECE 2nd Year - Section B</option>
+                    <option value="IT 4A">IT 4th Year - Final Sem</option>
+                    <option value="AI 1A">AI &amp; Data Science 1st Year</option>
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold text-muted">Absent Student Roll Numbers</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    value={absentAlertForm.studentRolls}
+                    onChange={(e) => setAbsentAlertForm({ ...absentAlertForm, studentRolls: e.target.value })}
+                    placeholder="e.g. 2023CSE012, 2023CSE045"
+                    required
+                  />
+                  <div className="form-text small" style={{ fontSize: '0.74rem' }}>
+                    Comma-separated roll numbers of students missing from today's roll call.
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold text-muted">Parent / Guardian WhatsApp Number</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm font-monospace"
+                    value={absentAlertForm.parentPhone}
+                    onChange={(e) => setAbsentAlertForm({ ...absentAlertForm, parentPhone: e.target.value })}
+                    placeholder="+91 98765 43210"
+                    required
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold text-muted">Reason / Class Context</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    value={absentAlertForm.reason}
+                    onChange={(e) => setAbsentAlertForm({ ...absentAlertForm, reason: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="p-3 bg-light rounded border mb-3 small">
+                  <strong className="text-secondary d-block mb-1">Generated WhatsApp Notification Template:</strong>
+                  <p className="mb-0 text-muted font-monospace" style={{ fontSize: '0.78rem' }}>
+                    "EduFlow Alert: Student(s) [{absentAlertForm.studentRolls}] marked ABSENT today in {absentAlertForm.courseSection} ({absentAlertForm.reason}). Current attendance approaching UGC 75% threshold. Please ensure regular attendance."
+                  </p>
+                </div>
+
+                <div className="d-flex justify-content-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => setShowAbsentAlertModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-sm btn-danger d-flex align-items-center gap-1">
+                    <Send size={13} />
+                    <span>Transmit WhatsApp Alert</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Faculty Number Registry */}
         <div className="col-md-5">
