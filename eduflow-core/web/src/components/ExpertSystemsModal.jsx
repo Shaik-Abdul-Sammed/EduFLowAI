@@ -49,7 +49,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem'
+        padding: '1.5rem'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -58,13 +58,12 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
       <div
         style={{
           width: '100%',
-          maxWidth: '900px',
+          maxWidth: '920px',
           maxHeight: '90vh',
-          overflowY: 'auto',
           background: 'var(--app-card-bg, #111827)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '16px',
-          padding: '2rem',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
@@ -79,7 +78,8 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(255, 255, 255, 0.03)'
+            background: 'rgba(255, 255, 255, 0.03)',
+            flexShrink: 0
           }}
         >
           <div className="d-flex align-items-center gap-2">
@@ -91,7 +91,8 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
                 background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0
               }}
             >
               <Brain size={20} color="#fff" />
@@ -110,7 +111,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
             className="btn btn-sm btn-outline-secondary"
             onClick={onClose}
             aria-label="Close"
-            style={{ borderRadius: '50%', width: 32, height: 32, padding: 0 }}
+            style={{ borderRadius: '50%', width: 32, height: 32, padding: 0, flexShrink: 0 }}
           >
             <X size={16} />
           </button>
@@ -122,8 +123,11 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
             display: 'flex',
             overflowX: 'auto',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(0, 0, 0, 0.2)',
-            padding: '0.5rem 1.25rem 0'
+            background: 'rgba(0, 0, 0, 0.25)',
+            padding: '0.6rem 1.25rem 0',
+            flexShrink: 0,
+            gap: '0.35rem',
+            scrollbarWidth: 'thin'
           }}
         >
           {evaluatedSystems.map((sys) => {
@@ -134,19 +138,21 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
                 type="button"
                 onClick={() => setActiveTab(sys.key)}
                 style={{
-                  background: isActive ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                  background: isActive ? 'rgba(59, 130, 246, 0.18)' : 'transparent',
                   border: 'none',
-                  borderBottom: isActive ? '2px solid #3B82F6' : '2px solid transparent',
-                  color: isActive ? '#60A5FA' : 'rgba(255,255,255,0.7)',
-                  padding: '0.65rem 1rem',
-                  fontSize: '0.85rem',
-                  fontWeight: isActive ? 600 : 400,
+                  borderBottom: isActive ? '3px solid #3B82F6' : '3px solid transparent',
+                  color: isActive ? '#93C5FD' : 'rgba(255,255,255,0.7)',
+                  padding: '0.65rem 1.1rem',
+                  fontSize: '0.86rem',
+                  fontWeight: isActive ? 600 : 500,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  gap: '0.55rem',
                   whiteSpace: 'nowrap',
-                  borderRadius: '6px 6px 0 0'
+                  borderRadius: '8px 8px 0 0',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {SYSTEM_ICONS[sys.key]}
@@ -155,7 +161,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
                   className={`badge ${
                     sys.overallStatus === 'OPTIMAL' ? 'bg-success' : 'bg-warning text-dark'
                   }`}
-                  style={{ fontSize: '0.65rem' }}
+                  style={{ fontSize: '0.68rem', padding: '0.2rem 0.45rem' }}
                 >
                   {sys.summaryScore}
                 </span>
@@ -165,7 +171,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
         </div>
 
         {/* Tab Content Body */}
-        <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(85vh - 145px)', padding: '1.25rem 1.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '1.25rem 1.5rem' }}>
           {/* Framework Banner */}
           <div
             className="p-3 rounded mb-4"
@@ -261,7 +267,8 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(255, 255, 255, 0.02)'
+            background: 'rgba(255, 255, 255, 0.02)',
+            flexShrink: 0
           }}
         >
           <div className="small text-muted">
