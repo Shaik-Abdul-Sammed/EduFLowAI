@@ -1,5 +1,5 @@
 import { useState, Suspense, lazy } from 'react'
-import { BrowserRouter, Link, Navigate, Route, Routes, NavLink } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Route, Routes, NavLink, useLocation } from 'react-router-dom'
 import { I18nProvider } from './i18n'
 import DashboardHome from './components/DashboardHome'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -60,6 +60,8 @@ const TimetableOfficer = lazy(() => import('./pages/ai/officers/TimetableOfficer
 const AdmissionOfficer = lazy(() => import('./pages/ai/officers/AdmissionOfficer'))
 const FinanceOfficer = lazy(() => import('./pages/ai/officers/FinanceOfficer'))
 const DomainInsightPage = lazy(() => import('./pages/admin/insights/DomainInsightPage'))
+const InvoiceGeneratorPage = lazy(() => import('./pages/admin/InvoiceGeneratorPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'))
 
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -235,6 +237,20 @@ function NotFoundPage() {
   )
 }
 
+function RolePathRedirect({ role }) {
+  const location = useLocation()
+  let target = location.pathname.replace(new RegExp(`^\\/${role}(\\/dashboard)?`), `/${role}-dashboard`)
+  if (!target || target === `/${role}-dashboard/` || target === `/${role}-dashboard`) {
+    target = `/${role}-dashboard`
+  }
+  return <Navigate to={`${target}${location.search}${location.hash}`} replace />
+}
+
+function DirectPathRedirect({ to }) {
+  const location = useLocation()
+  return <Navigate to={`${to}${location.search}${location.hash}`} replace />
+}
+
 function App() {
   const groupedRoutes = generatedRoutes.reduce((acc, route) => {
     if (!acc[route.role]) {
@@ -332,6 +348,7 @@ function App() {
             <Route path="/welcome" element={<EntryPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/register-institution" element={<InstitutionRegister />} />
             <Route path="/signup" element={<InstitutionRegister />} />
             <Route path="/for-colleges" element={<LeadIntakePage />} />
@@ -451,11 +468,37 @@ function App() {
           <Route path="/finance-dashboard" element={<FinanceDashboardPage />} />
           <Route path="/finance-dashboard/fee-reminders" element={<FeeReminderPage />} />
           <Route path="/finance-dashboard/upi-collection" element={<UPICollectionPage />} />
+          <Route path="/finance-dashboard/invoices" element={<InvoiceGeneratorPage />} />
         </Route>
 
           <Route path="/visitor-dashboard" element={<VisitorDashboard />} />
 
         <Route path="/directory" element={isDemoMode ? <Navigate to="/admin-dashboard" replace /> : <HomeDirectory />} />
+
+        {/* Global Role Path Aliases & Auto-Redirection */}
+        <Route path="/admin" element={<DirectPathRedirect to="/admin-dashboard" />} />
+        <Route path="/admin/dashboard" element={<DirectPathRedirect to="/admin-dashboard" />} />
+        <Route path="/admin/audit-logs" element={<DirectPathRedirect to="/admin-dashboard/audit-logs" />} />
+        <Route path="/audit-logs" element={<DirectPathRedirect to="/admin-dashboard/audit-logs" />} />
+        <Route path="/admin/*" element={<RolePathRedirect role="admin" />} />
+
+        <Route path="/faculty" element={<DirectPathRedirect to="/faculty-dashboard" />} />
+        <Route path="/faculty/*" element={<RolePathRedirect role="faculty" />} />
+
+        <Route path="/student" element={<DirectPathRedirect to="/student-dashboard" />} />
+        <Route path="/student/*" element={<RolePathRedirect role="student" />} />
+
+        <Route path="/hod" element={<DirectPathRedirect to="/hod-dashboard" />} />
+        <Route path="/hod/*" element={<RolePathRedirect role="hod" />} />
+
+        <Route path="/staff" element={<DirectPathRedirect to="/staff-dashboard" />} />
+        <Route path="/staff/*" element={<RolePathRedirect role="staff" />} />
+
+        <Route path="/finance" element={<DirectPathRedirect to="/finance-dashboard" />} />
+        <Route path="/finance/*" element={<RolePathRedirect role="finance" />} />
+
+        <Route path="/officers" element={<DirectPathRedirect to="/officers-dashboard" />} />
+        <Route path="/officer" element={<DirectPathRedirect to="/officers-dashboard" />} />
 
         {generatedRoutes.map((route) => {
           const isAllowedInDemo = [

@@ -172,7 +172,7 @@ export default function OfficersDashboard() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link
-            to="/admin/dashboard"
+            to="/admin-dashboard"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -420,7 +420,7 @@ export default function OfficersDashboard() {
                   }} onMouseOver={e => e.target.style.background = '#1d4ed8'} onMouseOut={e => e.target.style.background = '#2563EB'}>
                     Open
                   </Link>
-                  <Link to="/admin/audit-logs?category=Officers" style={{
+                  <Link to="/admin-dashboard/audit-logs?category=Officers" style={{
                     flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white',
                     textAlign: 'center', padding: '0.625rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500,
                     cursor: 'pointer', transition: 'background 0.2s', textDecoration: 'none'

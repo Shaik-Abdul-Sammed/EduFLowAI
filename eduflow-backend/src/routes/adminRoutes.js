@@ -188,8 +188,12 @@ export function createAdminRouter() {
         const cat = req.query.category
         if (cat === 'Security') {
           query += ` AND a.action LIKE 'AUTH_%'`
-        } else if (cat === 'System' || cat === 'Officers') {
+        } else if (cat === 'Officers') {
           query += ` AND a.action LIKE 'OFFICER_%'`
+        } else if (cat === 'Academics') {
+          query += ` AND (a.action LIKE 'ACAD_%' OR a.action LIKE 'ATTEND_%' OR a.action LIKE 'TIMETABLE_%')`
+        } else if (cat === 'System') {
+          query += ` AND a.action NOT LIKE 'AUTH_%' AND a.action NOT LIKE 'OFFICER_%'`
         }
       }
 
@@ -201,10 +205,11 @@ export function createAdminRouter() {
       const logs = result.rows.map(row => {
         let category = 'System'
         if (row.action.startsWith('AUTH_')) category = 'Security'
-        if (row.action.startsWith('OFFICER_')) category = 'Officers'
+        else if (row.action.startsWith('OFFICER_')) category = 'Officers'
+        else if (row.action.startsWith('ACAD_') || row.action.startsWith('ATTEND_') || row.action.startsWith('TIMETABLE_')) category = 'Academics'
 
         let status = 'success'
-        if (row.action === 'AUTH_LOGIN_FAILED') status = 'failed'
+        if (row.action === 'AUTH_LOGIN_FAILED' || row.action.endsWith('_FAILED') || row.action.endsWith('_ERROR')) status = 'failed'
 
         return {
           id: row.id,
