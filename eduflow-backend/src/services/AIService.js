@@ -262,7 +262,7 @@ export function resolveAccreditationFallback(prompt = '', context = {}) {
   if (cTarget === '1' || cTarget === 'criterion 1' || cTarget === 'criteria 1' || combined.includes('criterion 1') || combined.includes('criteria 1') || combined.includes('curricular')) {
     return NAAC_CRITERIA_FALLBACKS.criterion1
   }
-  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || (!isGeneralStaff && combined.includes('teaching')) || combined.includes('table 2.1') || combined.includes('table-2.1')) {
+  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('table 2.1') || combined.includes('table-2.1')) {
     return NAAC_CRITERIA_FALLBACKS.criterion2
   }
   if (cTarget === '4' || cTarget === 'criterion 4' || cTarget === 'criteria 4' || combined.includes('criterion 4') || combined.includes('criteria 4') || combined.includes('infrastructure')) {
@@ -476,9 +476,9 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
 
     // Return rich fallback response with live context prepended and appended
     let fallbackText = `[AI Fallback] Processed prompt: "${prompt}" successfully.`
-    if (isDataAnalysis) {
+    if (isDataAnalysis && (officerType === 'accreditation' || officerType === 'general')) {
       const mock = new MockProvider()
-      fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }])
+      fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
     } else if (officerType === 'accreditation') {
       fallbackText = resolveAccreditationFallback(prompt, context)
     } else if (OFFICER_FALLBACK_TEXTS[officerType]) {
@@ -549,7 +549,7 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
     // If provider failed or didn't yield real content, stream rich realistic demo template
     if (!streamedTokens) {
       let fallbackText
-      if (isDataAnalysis) {
+      if (isDataAnalysis && (officerType === 'accreditation' || officerType === 'general')) {
         const mock = new MockProvider()
         fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
       } else if (officerType === 'accreditation') {

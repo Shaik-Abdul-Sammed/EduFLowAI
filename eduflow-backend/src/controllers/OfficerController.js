@@ -125,6 +125,29 @@ Top Defaulters (>60 days):
   return enriched
 }
 
+export function shouldInjectDatabaseContext(promptText = '') {
+  const lower = String(promptText || '').toLowerCase()
+
+  // If the user provides their own raw numbers or data in the prompt, do NOT inject the database context
+  const hasUserRawData = /\b(there\s+are|we\s+have|given|cohort\s+of|breakdown)\b/i.test(lower)
+    || /\b(male|female|boys?|girls?|demographics?)\b/i.test(lower)
+    || (/\d+/.test(lower) && /\b(students?|faculty|staff|admissions?|candidates?|intake)\b/i.test(lower))
+    || /\b(raw\s+data|data\s+analysis)\b/i.test(lower)
+
+  if (hasUserRawData) {
+    return false
+  }
+
+  // Only inject the INSTITUTIONAL DATA block if the user's prompt explicitly asks for database data
+  const explicitlyAsksDatabase = /\b(our\s+students|our\s+database|current\s+numbers|institutional\s+data|institution\s+database|from\s+database|in\s+our\s+database|system\s+data|our\s+records)\b/i.test(lower)
+    || /\b(database\s+data|database\s+records|our\s+numbers|our\s+faculty|our\s+staff)\b/i.test(lower)
+    || /\b(official\s+intake|sanctioned\s+intake)\b/i.test(lower)
+    || /\b(ssr\s+report|generate\s+ssr|full\s+ssr|all\s+criteria)\b/i.test(lower)
+    || /criterion\s*[1-7]/i.test(lower)
+
+  return explicitlyAsksDatabase
+}
+
 export async function buildInstitutionalDataContext(institutionId = 1) {
   try {
     const stats = await DemoDataRepository.getStats();
@@ -221,13 +244,16 @@ export class OfficerController {
         roi.moneySaved
       )
 
-      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
       let rawPrompt = `Generate ${reportType}`
       if (criterion && !rawPrompt.toLowerCase().includes(String(criterion).toLowerCase())) {
         rawPrompt = `${rawPrompt}\nSpecific NAAC Criterion Target: ${criterion}`
       }
-      const promptWithData = await enrichPromptWithDatabaseData(rawPrompt, req.user.institutionId)
-      const finalPrompt = `${contextBlock}\n\n${promptWithData}`
+      let finalPrompt = rawPrompt
+      if (shouldInjectDatabaseContext(rawPrompt)) {
+        const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
+        const promptWithData = await enrichPromptWithDatabaseData(rawPrompt, req.user.institutionId)
+        finalPrompt = `${contextBlock}\n\n${promptWithData}`
+      }
 
       const reply = await AIService.processPrompt('accreditation', finalPrompt, { userRole: req.user.role, criterion })
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'ACCREDITATION_REPORT_GENERATED', req.ip, req.get('user-agent'), { reportType })
@@ -476,9 +502,7 @@ export class OfficerController {
       }
 
       let enrichedPrompt
-      if (intentInfo.intent === 'DATA_ANALYSIS') {
-        enrichedPrompt = cleanPrompt
-      } else {
+      if (shouldInjectDatabaseContext(cleanPrompt)) {
         const instDataBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
         enrichedPrompt = await enrichPromptWithDatabaseData(cleanPrompt, req.user?.institutionId || 1)
         enrichedPrompt = `${instDataBlock}\n\n${enrichedPrompt}`
@@ -494,6 +518,8 @@ export class OfficerController {
         } catch (ragErr) {
           logger.warn(`Advanced RAG search skipped: ${ragErr.message}`)
         }
+      } else {
+        enrichedPrompt = cleanPrompt
       }
 
       for await (const token of AIService.streamPrompt(officerType, enrichedPrompt, context)) {
@@ -543,8 +569,11 @@ export class OfficerController {
   static async streamAccreditation(req, res) {
     const rawPrompt = req.body?.reportType || req.body?.action || req.body?.prompt || 'Generate NAAC Criteria 3 SSR Analysis for SSIT'
     const criterion = req.body?.criterion || req.body?.criterionNumber || req.body?.selectedCriterion
-    const contextBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
-    let prompt = `${contextBlock}\n${rawPrompt}`
+    let prompt = rawPrompt
+    if (shouldInjectDatabaseContext(rawPrompt)) {
+      const contextBlock = await buildInstitutionalDataContext(req.user?.institutionId || 1)
+      prompt = `${contextBlock}\n${rawPrompt}`
+    }
     if (criterion && !prompt.toLowerCase().includes(String(criterion).toLowerCase())) {
       prompt = `${prompt}\nSpecific NAAC Criterion Target: ${criterion}`
     }

@@ -85,18 +85,17 @@ describe('Phase 1: Deep AI Algorithms & Data Handling', () => {
       assert.strictEqual(result.intent, 'DATA_ANALYSIS')
       assert(result.confidence >= 0.90)
     })
-    test('MockProvider echoes user input and calculates percentages for raw student data in fallback mode', async () => {
+    test('MockProvider calculates percentages for raw student data in fallback mode', async () => {
       const mock = new MockProvider()
-      const userPrompt = 'There are 500 students, 250 male, 200 female, SC category'
+      const userPrompt = '500 students, 250 male, 200 female'
       const response = await mock.chat([{ role: 'user', content: userPrompt }])
 
-      assert(response.includes('I am currently running in offline fallback mode'))
-      assert(response.includes('Here is an analysis of the data you provided'))
-      assert(response.includes(userPrompt))
-      assert(response.includes('50.0%'))
-      assert(response.includes('40.0%'))
-      assert(response.includes('SC Category') || response.includes('SC'))
+      assert(response.includes('Here is the analysis of your data: 50% male, 40% female.'))
+      assert(response.includes('50 students') && response.includes('unspecified'))
       assert(!response.includes('# NAAC Criterion 2: Teaching-Learning'))
+
+      const uncalculable = await mock.chat([{ role: 'user', content: 'Random uncalculable prompt' }])
+      assert(uncalculable.includes('I am currently in offline mode, but I received your data: Random uncalculable prompt.'))
     })
   })
 

@@ -28,45 +28,35 @@ export class MockProvider extends BaseProvider {
     }
     const cleanLower = cleanPrompt.toLowerCase()
 
-    // 0. Raw Data / Demographic Analysis intent handling
-    const hasDataKeywords = /\b(male|female|category|categories|sc|st|obc|demographics?)\b/i.test(cleanLower)
-    const hasNumbers = /\d+/.test(cleanLower)
-    const isDataAnalysis = hasDataKeywords || (hasNumbers && (/\b(students?|faculty|staff|boys?|girls?|enrolled|count|intake|percentage)\b/i.test(cleanLower) || cleanLower.includes('data')))
+    // 0. Dynamic calculation based on user's text (Phase 3)
+    const maleMatch = cleanPrompt.match(/(\d+)\s*(?:male|boys?)/i)
+    const femaleMatch = cleanPrompt.match(/(\d+)\s*(?:female|girls?)/i)
+    const isExplicitCriterion2 = cleanLower.includes('criterion 2') || cleanLower.includes('table 2.1') || cleanLower.includes('table-2.1')
 
-    if (isDataAnalysis && !/\bcriterion\s*[1-7]\b/i.test(cleanLower) && !/\btable\s*2\.1\b/i.test(cleanLower)) {
+    if (maleMatch && femaleMatch && !isExplicitCriterion2) {
       const numbers = (cleanPrompt.match(/\d+(?:,\d+)*(?:\.\d+)?/g) || []).map(n => parseFloat(n.replace(/,/g, '')))
-      const totalMatch = cleanPrompt.match(/(\d+)\s*students/i)
-      const maleMatch = cleanPrompt.match(/(\d+)\s*male/i)
-      const femaleMatch = cleanPrompt.match(/(\d+)\s*female/i)
-      
-      let total = totalMatch ? parseFloat(totalMatch[1]) : (numbers.length > 0 ? numbers[0] : 500)
-      let male = maleMatch ? parseFloat(maleMatch[1]) : (numbers.length > 1 ? numbers[1] : 250)
-      let female = femaleMatch ? parseFloat(femaleMatch[1]) : (numbers.length > 2 ? numbers[2] : 200)
+      const totalMatch = cleanPrompt.match(/(\d+)\s*students?/i) || cleanPrompt.match(/total\s*(?:of\s*)?(\d+)/i)
 
-      if (total < male + female && numbers.length > 0) {
-        total = Math.max(...numbers)
+      let total = totalMatch ? parseFloat(totalMatch[1]) : (numbers.length > 0 ? numbers[0] : null)
+      let male = parseFloat(maleMatch[1])
+      let female = parseFloat(femaleMatch[1])
+
+      if (total && male !== null && female !== null) {
+        if (total < male + female && numbers.length > 0) {
+          total = Math.max(...numbers)
+        }
+        const malePct = Math.round((male / total) * 100)
+        const femalePct = Math.round((female / total) * 100)
+        const remainingCount = total - (male + female)
+        const remainingPct = Math.max(0, 100 - malePct - femalePct)
+
+        let remainingSuffix = ''
+        if (remainingCount > 0) {
+          remainingSuffix = ` The remaining ${remainingPct}% (${remainingCount} students) are unspecified.`
+        }
+
+        return `Here is the analysis of your data: ${malePct}% male, ${femalePct}% female.${remainingSuffix}`
       }
-
-      const malePct = total > 0 ? ((male / total) * 100).toFixed(1) : '50.0'
-      const femalePct = total > 0 ? ((female / total) * 100).toFixed(1) : '40.0'
-      const otherCount = total >= (male + female) ? total - (male + female) : Math.max(0, Math.round(total * 0.1))
-      const otherPct = total > 0 ? ((otherCount / total) * 100).toFixed(1) : '10.0'
-
-      return `I am currently running in offline fallback mode. Here is an analysis of the data you provided: ${cleanPrompt}. Since the AI provider is offline, I cannot perform deep reasoning, but I have logged your request: '${cleanPrompt}'.
-
-### Direct Data Analysis & Demographic Breakdown
-
-| Demographic Category | Headcount | Percentage | Institutional & Regulatory Insights |
-|---|---|---|---|
-| **Male Students** | ${male} | ${malePct}% | Represents ${malePct}% of the active cohort. |
-| **Female Students** | ${female} | ${femalePct}% | Represents ${femalePct}% of the cohort, demonstrating positive diversity ratio. |
-| **Reserved / SC Category** | ${otherCount} | ${otherPct}% | Key demographic cohort eligible for statutory reservation, scholarships, and fee waivers. |
-| **Total Cohort Analyzed** | ${total} | 100.0% | Calculated strictly from your supplied input data. |
-
-### Key Analytical Insights:
-1. **Gender Ratio & Distribution:** The cohort reflects ${malePct}% male and ${femalePct}% female students, aligning with institutional diversity metrics.
-2. **Category-Specific Analysis (SC Category):** The SC category representation (${otherPct}%) qualifies for designated tuition reimbursement, equity initiatives, and faculty mentor mapping.
-3. **Conversational Direct Response:** Analyzed strictly according to your provided input ('${cleanPrompt}'). No generic NAAC Criterion templates applied.`
     }
 
     // 0b. General HR / Staff Report handling
@@ -510,7 +500,7 @@ Estimated total hours saved: 725 hrs | Total consulting savings: ₹18,20,000`
       const critMatch = userLower.match(/criteri(?:on|a)\s*(\d)/i)
         || combined.match(/specific naac criterion target:\s*criterion\s*(\d)/i)
         || combined.match(/strictly for criterion\s*(\d)/i)
-        || combined.match(/criterion\s*(\d)/i)
+        || combined.match(/(?:target\s*)?criterion\s*(\d)\s*assessment/i)
       const cNum = critMatch ? critMatch[1] : null
 
       if (cNum === '1' || (cNum === null && (userLower.includes('curricular') || userLower.includes('curriculum')))) {
@@ -708,12 +698,7 @@ Estimated hours saved: 120 hrs | Consulting cost saved: ₹3,00,000`
 Estimated hours saved: 120 hrs | Consulting cost saved: ₹3,00,000`
     }
 
-    return `I am currently running in offline fallback mode. Here is an analysis of the data you provided: ${cleanPrompt}. Since the AI provider is offline, I cannot perform deep reasoning, but I have logged your request: '${cleanPrompt}'.
-
-### Summary of Logged Request:
-- **Recorded User Prompt:** "${cleanPrompt}"
-- **Status:** Logged into audit records.
-- **Direct Processing:** Request captured without forcing into predefined templates.`
+    return `I am currently in offline mode, but I received your data: ${cleanPrompt}.`
   }
 
   async chat(messages, systemPrompt) {

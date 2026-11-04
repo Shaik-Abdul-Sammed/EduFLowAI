@@ -50,39 +50,26 @@ const NAAC_CRITERIA_MAP = {
 
 export const OFFICER_PROMPTS = {
   accreditation: (twin, userPrompt = '') => {
-    const isGeneralStaffOrHr = /\b(non-teaching|staff|hr|admin\s+staff|human\s+resources|employee)\b/i.test(userPrompt)
-    const contextCriterion = extractCriterionNumber(typeof twin === 'string' ? twin : twin?.criterion || twin?.selectedCriterion || twin?.criterionNumber || '')
-    const hasExplicitCriterionMention = Boolean(
-      extractCriterionNumber(userPrompt) || /table\s*2\.1/i.test(userPrompt) || /criterion\s*\d/i.test(userPrompt) || contextCriterion
-    )
+    const isCriterion2 = /criterion\s*2/i.test(userPrompt) || /table\s*2\.1/i.test(userPrompt)
+    const contextCrit = extractCriterionNumber(typeof twin === 'string' ? twin : twin?.criterion || twin?.selectedCriterion || twin?.criterionNumber || '')
+    const basePrompt = `You are a helpful, highly intelligent AI Data Analyst, similar to ChatGPT. Your job is to answer the user's specific prompt directly and accurately.
 
-    const isAllCriteria = /all\s*criteria/i.test(userPrompt) 
-      || /full\s*ssr/i.test(userPrompt)
-      || (/all\s*criteria/i.test(typeof twin === 'string' ? twin : twin?.criterion || '') && !isGeneralStaffOrHr)
+If the user provides raw numbers or data, analyze THAT data. Calculate percentages, identify trends, and provide insights.
 
-    const cNum = isAllCriteria || isGeneralStaffOrHr ? null : (
-      extractCriterionNumber(userPrompt) || contextCriterion
-    )
+Do NOT output generic NAAC Criterion templates or compliance tables unless the user specifically asks for 'Criterion 2' or 'Table 2.1'.
 
-    const criteriaBlock = cNum && NAAC_CRITERIA_MAP[cNum]
-      ? `The NAAC RAF Criterion ${cNum} Framework Reference (STRICTLY for Criterion ${cNum}):
-${NAAC_CRITERIA_MAP[cNum]}`
-      : (hasExplicitCriterionMention || isAllCriteria
-        ? `The NAAC RAF Full SSR Assessment (All Criteria):
-1. ${NAAC_CRITERIA_MAP[1]}
-2. ${NAAC_CRITERIA_MAP[2]}
-3. ${NAAC_CRITERIA_MAP[3]}
-4. ${NAAC_CRITERIA_MAP[4]}
-5. ${NAAC_CRITERIA_MAP[5]}
-6. ${NAAC_CRITERIA_MAP[6]}
-7. ${NAAC_CRITERIA_MAP[7]}`
-        : '')
+Be conversational, clear, and mathematical.`
 
-    return `You are an expert Accreditation Data Analyst. You must answer the user's prompt directly.
-If the user provides raw data (e.g., 'There are 500 students, 250 male, 200 female'), you must analyze THAT specific data. Calculate the percentages (50% male, 40% female) and provide insights on the SC category.
-Do NOT output generic 'NAAC Criterion 2' tables unless the user explicitly asks for 'Criterion 2'. Be conversational, helpful, and precise like ChatGPT.
-
-${criteriaBlock ? `${criteriaBlock}\n\n` : ''}${INJECT_INSTITUTIONAL_DATA_HEADER(twin)}${BASE_CONTEXT(twin)}`
+    if (isCriterion2) {
+      return `${basePrompt}\n\nSTRICTLY for Criterion 2.`
+    }
+    if (contextCrit) {
+      return `${basePrompt}\n\nCriterion ${contextCrit} assessment.`
+    }
+    if (/all\s*criteria/i.test(typeof twin === 'string' ? twin : twin?.criterion || '')) {
+      return `${basePrompt}\n\nAll Criteria Full SSR assessment.`
+    }
+    return basePrompt
   },
 
   timetable: (twin) => `${INJECT_INSTITUTIONAL_DATA_HEADER(twin)}You are the Lead Operations Research and Academic Scheduling Optimization Specialist for EduFlow AI OS.
