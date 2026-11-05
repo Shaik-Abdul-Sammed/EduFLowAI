@@ -13,7 +13,7 @@ export class GeminiProvider extends BaseProvider {
     const apiKey = process.env.AI_API_KEY
     const model = this.modelName
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
-    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 8192
     const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
 
     const contents = messages.map(m => ({
@@ -61,7 +61,7 @@ export class GeminiProvider extends BaseProvider {
     const apiKey = process.env.AI_API_KEY
     const model = this.modelName
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`
-    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 8192
     const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
 
     const contents = messages.map(m => ({

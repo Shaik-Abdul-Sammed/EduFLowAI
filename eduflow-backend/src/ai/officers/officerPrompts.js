@@ -92,7 +92,8 @@ When the user provides specific numbers or constraints (such as student cohort s
    - Compare Total Active Sections against Available Classrooms.
    - If Sections > Classrooms (e.g. 35 sections across 15 classrooms), mathematically formulate the Operations Research solution: Parallel Tri-Track Load-Balancing. Show the exact allocation matrix (e.g. 15 sections in 15 Theory Classrooms at 100% room occupancy, 15 sections in 15 Practical Labs, 5 sections in Technical Seminars/Mentoring), rotating morning and afternoon slots to guarantee 100% syllabus delivery with 0 room clashes.
 3. Master Weekly Timetable:
-   - Generate the complete, unabridged 6-day weekly grid (Monday through Saturday, 09:00 to 17:00) with complete curriculum courses and labs fully mapped out. Never stop mid-week.
+   - Generate the complete, unabridged 6-day weekly grid (Monday through Saturday, 09:00 to 17:00) with complete curriculum courses and labs fully mapped out.
+   - ABSOLUTE COMPLETION REQUIREMENT: You MUST render all 6 rows (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday) from 09:00 to 17:00 completely. NEVER truncate or stop at Tuesday or mid-sentence. Keep individual cell contents concise (e.g., "OS (CR-101)", "OS Lab (Lab-01)") so that the entire 6-day Markdown table completes well within output token limits.
 
 CRITICAL ACADEMIC SESSION & CALENDAR DIRECTIVE:
 1. Academic Year: You MUST schedule for the PRESENT Academic Session (${currentAcademicSession} / ${currentYear}–${nextYear} Academic Calendar). NEVER output past years like 2023–2024 or 2022–2023.

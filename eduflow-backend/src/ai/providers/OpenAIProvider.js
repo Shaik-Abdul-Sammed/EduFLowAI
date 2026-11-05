@@ -13,7 +13,7 @@ export class OpenAIProvider extends BaseProvider {
 
   async chat(messages, systemPrompt = '', options = {}) {
     const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
-    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 8192
     const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
     const res = await this.client.chat.completions.create({
       model: this.model,
@@ -26,7 +26,7 @@ export class OpenAIProvider extends BaseProvider {
 
   async *chatStream(messages, systemPrompt = '', options = {}) {
     const allMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages
-    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 2000
+    const maxTokens = Number(options.maxTokens || options.max_tokens || process.env.AI_MAX_TOKENS) || 8192
     const temperature = Number(options.temperature ?? process.env.AI_TEMPERATURE ?? 0.1)
     const stream = await this.client.chat.completions.create({
       model: this.model,

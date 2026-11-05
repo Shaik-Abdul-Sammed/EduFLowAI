@@ -389,13 +389,19 @@ Estimated hours saved: 0.5 hrs | Administrative cost saved: ₹150`,
 Estimated hours saved: 4 hrs | Reconciled revenue saved: ₹3,200`
 }
 
-async function* simulateTokenStream(text, delayMs = (process.env.NODE_ENV === 'test' ? 1 : 8)) {
-  const chunks = text.split(/(\s+)/)
-  for (const chunk of chunks) {
-    if (chunk) {
-      yield chunk
-      await new Promise((resolve) => setTimeout(resolve, delayMs))
+async function* simulateTokenStream(text, delayMs = (process.env.NODE_ENV === 'test' ? 1 : 2)) {
+  const words = text.split(/(\s+)/);
+  let buffer = '';
+  for (const w of words) {
+    buffer += w;
+    if (buffer.length >= 25 || w.includes('\n')) {
+      yield buffer;
+      buffer = '';
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
+  }
+  if (buffer) {
+    yield buffer;
   }
 }
 
@@ -466,7 +472,7 @@ When the user asks for a specific table or data breakdown, you MUST generate a c
 Always output data in Markdown tables. Never output raw comma-separated text.
 CRITICAL INSTRUCTION: You are a data analyst. You must output the actual data provided in the context. Do NOT output generic regulatory frameworks (like AICTE rules or UGC guidelines) unless explicitly asked. If the user asks for a list of students, output their actual names and roll numbers. If the user asks for a timetable, output the actual Markdown table with classes and rooms.
 If the user asks for a chart or graph, output a JSON block formatted for Recharts (e.g., \`\`\`json { "type": "bar", "data": [...] } \`\`\`).`
-        const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 4000 })
+        const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 8192 })
         if (response && !response.includes('mock response from the fallback chain')) {
           return `${liveHeader}${response}${liveFooter}`
         }
@@ -529,7 +535,7 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
         let firstChunk = true
         let isMock = false
 
-        for await (const chunk of aiProvider.chatStream([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 4000 })) {
+        for await (const chunk of aiProvider.chatStream([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 8192 })) {
           if (firstChunk && chunk.includes('mock response from the fallback chain')) {
             isMock = true
             break

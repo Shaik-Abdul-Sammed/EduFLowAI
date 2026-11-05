@@ -1139,14 +1139,20 @@ Estimated hours saved: 120 hrs | Consulting cost saved: ₹3,00,000`
   }
 
   async *chatStream(messages, systemPrompt) {
-    const text = this.generateRealisticResponse(messages, systemPrompt)
-    const tokens = text.split(/(\s+)/)
-    const delay = process.env.NODE_ENV === 'test' ? 1 : 50
-    for (const tok of tokens) {
-      if (tok) {
-        yield tok
-        await new Promise((resolve) => setTimeout(resolve, delay))
+    const text = this.generateRealisticResponse(messages, systemPrompt);
+    const words = text.split(/(\s+)/);
+    const delay = process.env.NODE_ENV === 'test' ? 1 : 2;
+    let buffer = '';
+    for (const w of words) {
+      buffer += w;
+      if (buffer.length >= 30 || w.includes('\n')) {
+        yield buffer;
+        buffer = '';
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
+    }
+    if (buffer) {
+      yield buffer;
     }
   }
 
