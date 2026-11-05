@@ -1,3 +1,22 @@
+export function sanitizeLatexMath(text) {
+  if (!text || typeof text !== "string") return text;
+  return text
+    .replace(/\s*\(\$C_{\\text\{theory\}}\$\)/g, "")
+    .replace(/\s*\(\$S_d\$\)/g, "")
+    .replace(/\s*\(\$D\$\)/g, "")
+    .replace(/\(\$S_{\\text\{total\}}\s*=\s*D\s*\\times\s*S_d\$\)/g, "(Total Sections = Departments × Sections per Dept)")
+    .replace(/\$C_{\\text\{theory\}}\$/g, "Available Classrooms")
+    .replace(/\$S_{\\text\{total\}}\$/g, "Total Sections")
+    .replace(/\$S_d\$/g, "Sections per Dept")
+    .replace(/\$D\$/g, "Departments")
+    .replace(/\\approx/g, "≈")
+    .replace(/\\times/g, "×")
+    .replace(/\\le/g, "≤")
+    .replace(/\\ge/g, "≥")
+    .replace(/\\text\{([^}]+)\}/g, "$1")
+    .replace(/\$([^$\n]+)\$/g, "$1");
+}
+
 import { GeminiProvider } from './GeminiProvider.js'
 import { OpenAIProvider } from './OpenAIProvider.js'
 import { ClaudeProvider } from './ClaudeProvider.js'
@@ -356,9 +375,11 @@ export class MockProvider extends BaseProvider {
     const mentionsStudents = /\b(students?|strength|enrollment|headcount)\b/i.test(cleanPrompt);
     const mentionsTimetable = /\b(timetable|schedule|time\s*table|class\s*schedule)\b/i.test(cleanLower);
     const mentionsReport = /\b(report|analysis|analyze|generate|create|make)\b/i.test(cleanLower);
+    const hasTimetableConstraints = /\b(\d+)\s*(?:students?|strength|enrollment|headcount|classrooms?|lecture\s*halls?|rooms?|sections?|departments?)\b/i.test(cleanPrompt) || /\b([2-9]\d{1,}|1\d{2,})\b/.test(cleanPrompt);
+    const isDepartmentOrWorkload = /\b(cse|ece|me|civil|department|workload|balanc|room|clash|conflict|faculty)\b/i.test(cleanLower);
     const hasNumbers = /\d+/.test(cleanPrompt);
 
-    if (mentionsTimetable && !hasNumbers && !cleanLower.includes('b.tech') && !cleanLower.includes('inter') && !cleanLower.includes('btech')) {
+    if (mentionsTimetable && !hasTimetableConstraints && !isDepartmentOrWorkload && !cleanLower.includes('our') && !cleanLower.includes('database') && !cleanLower.includes('default') && !cleanLower.includes('sample') && !cleanLower.includes('inter 1') && !cleanLower.includes('inter 2') && !cleanLower.includes('b.tech 1') && !cleanLower.includes('b.tech 2') && !cleanLower.includes('b.tech 4')) {
       return '📋 **More Information Needed to Generate Your Timetable**\n\n' +
         'To create a fully accurate, conflict-free, and AICTE-compliant timetable, I need the following details:\n\n' +
         '| # | Information Required | Example |\n' +
@@ -753,15 +774,27 @@ Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
 
         if (isBTech3rdYear) {
           const strengthMatch = cleanPrompt.match(/([0-9,]+)\s*(?:students?|strength|enrollment|headcount)/i);
-          const strength = strengthMatch ? parseInt(strengthMatch[1].replace(/,/g, ""), 10) : 1100;
-
           const roomsMatch = cleanPrompt.match(/(\d+)\s*(?:classrooms?|lecture\s*halls?|rooms?)/i);
-          const classrooms = roomsMatch ? parseInt(roomsMatch[1], 10) : 15;
-
           const deptsMatch = cleanPrompt.match(/(\d+)\s*departments?/i);
-          const depts = deptsMatch ? parseInt(deptsMatch[1], 10) : 7;
-
           const sectionsPerDeptMatch = cleanPrompt.match(/(\d+)\s*sections?(?:\s*(?:in|per|each)\s*(?:each|the)?\s*department)?/i);
+
+          if (!strengthMatch && !roomsMatch && !cleanLower.includes('our') && !cleanLower.includes('database') && !cleanLower.includes('default') && !cleanLower.includes('sample')) {
+            return '📋 **More Information Needed to Generate Your B.Tech 3rd Year Timetable**\n\n' +
+              'To generate a mathematically verified, conflict-free, and AICTE-compliant timetable for **B.Tech 3rd Year (Semester V)** based on the active curriculum and present academic calendar (2026–2027), please specify your institution\'s structural parameters:\n\n' +
+              '| # | Required Parameter | Example Value |\n' +
+              '| :--- | :--- | :--- |\n' +
+              '| 1 | **Total Student Strength** | 1,100 students (or your enrolled count) |\n' +
+              '| 2 | **Available Classrooms** | 15 lecture halls (or your room count) |\n' +
+              '| 3 | **Departments & Sections** | 7 departments, 5 sections each |\n' +
+              '| 4 | **Academic Session** | 2026–2027 (Active Academic Calendar) |\n\n' +
+              '**Example prompt to try:**\n' +
+              '> *"Generate timetable for B.Tech 3rd year with 1100 students, 15 classrooms, 7 departments, 5 sections each, for present academic calendar 2026-2027."*\n\n' +
+              '*(Reply with your student count and available rooms to compute your institutional capacity allocation and conflict-free master timetable instantly!)*';
+          }
+
+          const strength = strengthMatch ? parseInt(strengthMatch[1].replace(/,/g, ""), 10) : 1100;
+          const classrooms = roomsMatch ? parseInt(roomsMatch[1], 10) : 15;
+          const depts = deptsMatch ? parseInt(deptsMatch[1], 10) : 7;
           const sectionsPerDept = sectionsPerDeptMatch ? parseInt(sectionsPerDeptMatch[1], 10) : 5;
 
           const totalSections = depts * sectionsPerDept;
@@ -1135,11 +1168,11 @@ Estimated hours saved: 120 hrs | Consulting cost saved: ₹3,00,000`
   }
 
   async chat(messages, systemPrompt) {
-    return this.generateRealisticResponse(messages, systemPrompt)
+    return sanitizeLatexMath(this.generateRealisticResponse(messages, systemPrompt))
   }
 
   async *chatStream(messages, systemPrompt) {
-    const text = this.generateRealisticResponse(messages, systemPrompt);
+    const text = sanitizeLatexMath(this.generateRealisticResponse(messages, systemPrompt));
     const words = text.split(/(\s+)/);
     const delay = process.env.NODE_ENV === 'test' ? 1 : 2;
     let buffer = '';

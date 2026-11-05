@@ -1,4 +1,4 @@
-import { createAIProvider, MockProvider } from '../ai/providers/providerFactory.js'
+import { createAIProvider, MockProvider, sanitizeLatexMath } from '../ai/providers/providerFactory.js'
 import { OFFICER_PROMPTS } from '../ai/officers/officerPrompts.js'
 import { IntentClassifier } from './ai/IntentClassifier.js'
 import { logger } from '../utils/logger.js'
@@ -474,7 +474,7 @@ CRITICAL INSTRUCTION: You are a data analyst. You must output the actual data pr
 If the user asks for a chart or graph, output a JSON block formatted for Recharts (e.g., \`\`\`json { "type": "bar", "data": [...] } \`\`\`).`
         const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 8192 })
         if (response && !response.includes('mock response from the fallback chain')) {
-          return `${liveHeader}${response}${liveFooter}`
+          return sanitizeLatexMath(`${liveHeader}${response}${liveFooter}`)
         }
       } catch (err) {
         logger.warn(`AI Provider Error for ${officerType}, routing seamlessly to realistic fallback:`, err.message)
@@ -493,7 +493,7 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
       fallbackText = OFFICER_FALLBACK_TEXTS[officerType]
     }
 
-    return `${liveHeader}${fallbackText}${liveFooter}`
+    return sanitizeLatexMath(`${liveHeader}${fallbackText}${liveFooter}`)
   }
 
   /**
