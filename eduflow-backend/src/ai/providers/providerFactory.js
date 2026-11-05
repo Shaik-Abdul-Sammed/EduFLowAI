@@ -32,23 +32,85 @@ export class MockProvider extends BaseProvider {
     // FEATURE 1: MISSPELLING / AUTOCORRECTION
     // =========================================================
     const SPELL_MAP = {
-      'timetabel': 'timetable', 'timetabl': 'timetable', 'timetble': 'timetable',
-      'addmission': 'admission', 'admision': 'admission', 'admisison': 'admission',
-      'studant': 'student', 'studnet': 'student', 'stident': 'student',
-      'facutly': 'faculty', 'faculity': 'faculty', 'facculty': 'faculty',
-      'accrediation': 'accreditation', 'acreditation': 'accreditation', 'accreditaion': 'accreditation',
-      'nacc': 'naac',
-      'finanace': 'finance', 'finace': 'finance', 'finanec': 'finance',
-      'calender': 'calendar', 'calander': 'calendar',
-      'sceduling': 'scheduling', 'schedulling': 'scheduling',
-      'crietria': 'criteria', 'critiera': 'criteria',
-      'semster': 'semester', 'semiester': 'semester',
-      'percantage': 'percentage', 'percetage': 'percentage',
-      'attandance': 'attendance', 'attendence': 'attendance', 'attandence': 'attendance',
-      'btech': 'b.tech', 'deparment': 'department', 'deprtament': 'department',
-      'wekly': 'weekly', 'weakly': 'weekly',
-      'reccomend': 'recommend', 'recommed': 'recommend',
-      'calcluation': 'calculation', 'calcualtion': 'calculation',
+      // --- Timetable & Scheduling ---
+      'timetabel': 'timetable', 'timetabl': 'timetable', 'timetble': 'timetable', 'time-table': 'timetable', 'timtable': 'timetable', 'titmetable': 'timetable',
+      'sceduling': 'scheduling', 'schedulling': 'scheduling', 'schedulin': 'scheduling', 'shedule': 'schedule', 'schedue': 'schedule', 'schedul': 'schedule',
+      'calender': 'calendar', 'calander': 'calendar', 'calendr': 'calendar', 'calandar': 'calendar',
+      'clashs': 'clashes', 'clashe': 'clashes', 'confict': 'conflict', 'conflicts': 'conflict', 'conflcit': 'conflict',
+      'clasroom': 'classroom', 'classrom': 'classroom', 'classrrom': 'classroom', 'clasrooms': 'classrooms', 'classroms': 'classrooms',
+      'laboratry': 'laboratory', 'laboratery': 'laboratory', 'labrotary': 'laboratory', 'laboratary': 'laboratory', 'labortary': 'laboratory',
+      'wekly': 'weekly', 'weakly': 'weekly', 'weekley': 'weekly',
+      'worklaod': 'workload', 'worklod': 'workload', 'worload': 'workload',
+
+      // --- Academic & Structure ---
+      'semster': 'semester', 'semiester': 'semester', 'semister': 'semester', 'semestr': 'semester', 'semesters': 'semester',
+      'curiculum': 'curriculum', 'curriculm': 'curriculum', 'currculum': 'curriculum', 'cirriculum': 'curriculum', 'curriculam': 'curriculum',
+      'sylabuss': 'syllabus', 'sylabus': 'syllabus', 'syllubus': 'syllabus', 'syllabuss': 'syllabus',
+      'deparment': 'department', 'deprtament': 'department', 'deptartmant': 'department', 'depatment': 'department', 'departmnt': 'department',
+      'instituion': 'institution', 'instutition': 'institution', 'instituition': 'institution', 'insitution': 'institution', 'instiute': 'institute',
+      'unversity': 'university', 'univeristy': 'university', 'univarsity': 'university',
+      'collge': 'college', 'colleg': 'college', 'clg': 'college',
+      'academc': 'academic', 'acadmic': 'academic', 'acedemic': 'academic', 'acadamic': 'academic',
+      'btech': 'b.tech', 'mtech': 'm.tech', 'bpharma': 'b.pharm', 'mpharma': 'm.pharm',
+      'intermidiate': 'intermediate', 'intermdiate': 'intermediate', 'intrmediate': 'intermediate',
+
+      // --- People: Students, Faculty & Staff ---
+      'studant': 'student', 'studnet': 'student', 'stident': 'student', 'studetn': 'student', 'studens': 'students', 'studants': 'students',
+      'facutly': 'faculty', 'faculity': 'faculty', 'facculty': 'faculty', 'faclty': 'faculty', 'faculities': 'faculties',
+      'profesor': 'professor', 'proffesor': 'professor', 'professr': 'professor', 'professer': 'professor',
+      'lectur': 'lecture', 'lectuer': 'lecture', 'lecturer': 'lecturer', 'lecturor': 'lecturer',
+      'teching': 'teaching', 'teachng': 'teaching', 'nonteaching': 'non-teaching', 'non-teching': 'non-teaching',
+      'princpal': 'principal', 'princiapl': 'principal', 'principel': 'principal',
+
+      // --- Admissions & Enrollment ---
+      'addmission': 'admission', 'admision': 'admission', 'admisison': 'admission', 'admissin': 'admission', 'admisssion': 'admission',
+      'aplication': 'application', 'appliation': 'application', 'applicaton': 'application', 'applicaiton': 'application',
+      'aply': 'apply', 'aplied': 'applied', 'applicnt': 'applicant', 'applcant': 'applicant', 'applicats': 'applicants',
+      'counceling': 'counselling', 'counseling': 'counselling', 'councling': 'counselling', 'counsellin': 'counselling',
+      'elgibility': 'eligibility', 'eligiblity': 'eligibility', 'elegibility': 'eligibility', 'eligable': 'eligible',
+      'allotment': 'allotment', 'allotmnt': 'allotment', 'alotment': 'allotment',
+      'enrolment': 'enrollment', 'enrollmnt': 'enrollment', 'enrol': 'enroll',
+
+      // --- Accreditation & Compliance (NAAC, NBA, NIRF, AICTE) ---
+      'accrediation': 'accreditation', 'acreditation': 'accreditation', 'accreditaion': 'accreditation', 'acreditaton': 'accreditation',
+      'nacc': 'naac', 'naack': 'naac',
+      'crietria': 'criteria', 'critiera': 'criteria', 'criterias': 'criteria', 'critera': 'criteria', 'critertion': 'criterion', 'criterian': 'criterion',
+      'complaince': 'compliance', 'complience': 'compliance', 'complianc': 'compliance', 'complient': 'compliant',
+      'assessmnt': 'assessment', 'assesment': 'assessment', 'assement': 'assessment',
+      'regulatery': 'regulatory', 'regulatry': 'regulatory', 'regualtory': 'regulatory',
+      'certifcate': 'certificate', 'certifacation': 'certification', 'certeficate': 'certificate',
+
+      // --- Finance, Fees & Accounts ---
+      'finanace': 'finance', 'finace': 'finance', 'finanec': 'finance', 'finacial': 'financial', 'financail': 'financial',
+      'feee': 'fee', 'feees': 'fees', 'fe': 'fee',
+      'reconcil': 'reconcile', 'reconsile': 'reconcile', 'reconcilation': 'reconciliation', 'reconsilation': 'reconciliation',
+      'defulter': 'defaulter', 'defaluter': 'defaulter', 'defaulters': 'defaulter', 'defalut': 'default',
+      'scholorship': 'scholarship', 'scholaship': 'scholarship', 'scholarshipp': 'scholarship',
+      'transcation': 'transaction', 'transacation': 'transaction', 'transation': 'transaction', 'trasaction': 'transaction',
+      'challan': 'challan', 'chalan': 'challan', 'challaan': 'challan',
+      'invoce': 'invoice', 'invoise': 'invoice', 'invioce': 'invoice',
+      'concession': 'concession', 'concesion': 'concession',
+
+      // --- Student Success, Attendance & Risk ---
+      'attandance': 'attendance', 'attendence': 'attendance', 'attandence': 'attendance', 'attandanc': 'attendance', 'attendace': 'attendance',
+      'absentee': 'absentee', 'absente': 'absentee', 'absentees': 'absentee',
+      'drop-out': 'dropout', 'dropouts': 'dropout', 'dropuot': 'dropout',
+      'intervenion': 'intervention', 'intervetion': 'intervention', 'intervantion': 'intervention',
+      'remediaton': 'remediation', 'remedation': 'remediation', 'remedial': 'remedial',
+      'baclog': 'backlog', 'backlogs': 'backlogs', 'baklog': 'backlog',
+      'performence': 'performance', 'preformance': 'performance', 'perforamnce': 'performance',
+      'counselor': 'counselor', 'councellor': 'counselor', 'menter': 'mentor', 'mentorshp': 'mentorship',
+
+      // --- Data, Mathematics, Analytics & General ---
+      'percantage': 'percentage', 'percetage': 'percentage', 'percenatge': 'percentage', 'percentge': 'percentage', 'prcentage': 'percentage',
+      'calcluation': 'calculation', 'calcualtion': 'calculation', 'calculaton': 'calculation', 'calulation': 'calculation', 'claculation': 'calculation',
+      'stastistics': 'statistics', 'statitics': 'statistics', 'statistcs': 'statistics', 'statisics': 'statistics',
+      'analysiss': 'analysis', 'analaysis': 'analysis', 'analisis': 'analysis', 'anylisis': 'analysis', 'analyis': 'analysis',
+      'reccomend': 'recommend', 'recommed': 'recommend', 'recomend': 'recommend', 'reccommend': 'recommend',
+      'genarate': 'generate', 'genrate': 'generate', 'generat': 'generate',
+      'infromation': 'information', 'infomation': 'information', 'informtion': 'information',
+      'documnts': 'documents', 'documnt': 'document', 'documet': 'document', 'documnet': 'document',
+      'exmination': 'examination', 'exminations': 'examinations', 'exm': 'exam', 'exms': 'exams'
     };
 
     const spellWords = cleanLower.split(/\b/);
