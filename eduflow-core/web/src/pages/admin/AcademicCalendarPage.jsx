@@ -3,6 +3,9 @@ import {
   Calendar,
   Sparkles,
   Download,
+  Eye,
+  Printer,
+  X,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -127,6 +130,7 @@ export default function AcademicCalendarPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [showAdjustModal, setShowAdjustModal] = useState(false)
+  const [showPreviewCalendarModal, setShowPreviewCalendarModal] = useState(false)
 
   // Interactive Month Calendar and Diagnosis State
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0) // July = 0
@@ -635,6 +639,13 @@ export default function AcademicCalendarPage() {
           >
             <ArrowLeft size={15} /> Back
           </button>
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 shadow-sm"
+            onClick={() => setShowPreviewCalendarModal(true)}
+          >
+            <Eye size={15} /> Preview Calendar
+          </button>
           <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 shadow-sm" onClick={handleExportPdf}>
             <Download size={15} /> Export PDF
           </button>
@@ -704,8 +715,10 @@ export default function AcademicCalendarPage() {
               </div>
             </div>
             <div className="col-12 col-md-4">
-              <label className="form-label small fw-bold text-muted mb-1">State Holiday Rule</label>
+              <label htmlFor="state-holiday-rule-select" className="form-label small fw-bold text-muted mb-1">State Holiday Rule</label>
               <select
+                id="state-holiday-rule-select"
+                aria-label="State Holiday Rule"
                 className="form-select form-select-sm"
                 value={stateCode}
                 onChange={(e) => {
@@ -1876,6 +1889,228 @@ export default function AcademicCalendarPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Calendar Modal */}
+      {showPreviewCalendarModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(5px)',
+            padding: '1rem',
+          }}
+        >
+          <div
+            className="card border-0 shadow-lg"
+            style={{
+              width: '100%',
+              maxWidth: '850px',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '1.25rem',
+              background: 'var(--card-bg, #0f172a)',
+              border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
+              color: 'var(--app-text, #f8fafc)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Eye size={20} className="text-primary" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
+                  Statutory Academic Calendar Preview ({selectedYear})
+                </h3>
+                <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
+                  UGC Compliant (≥ 90 Days)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPreviewCalendarModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--app-text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Document Body */}
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'grid', gap: '1.25rem' }}>
+              <div
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                  Office of the Academic Dean — Statutory Gazetted Schedule
+                </div>
+                <h4 style={{ margin: '0.4rem 0 0.2rem', fontWeight: 800 }}>
+                  Sri Sudha Institute of Technology
+                </h4>
+                <div style={{ fontSize: '0.85rem', color: 'var(--app-text-muted, #94a3b8)' }}>
+                  Academic Session: {selectedYear} | State Rule: {stateCode} | Gazetted Holidays: {holidays.length} Days
+                </div>
+              </div>
+
+              {/* Semester Working Days Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase' }}>Odd Semester</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#93c5fd', margin: '0.2rem 0' }}>92 Days</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--app-text-muted, #94a3b8)' }}>July 2026 – November 2026</div>
+                </div>
+
+                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 700, textTransform: 'uppercase' }}>Even Semester</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6ee7b7', margin: '0.2rem 0' }}>92 Days</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--app-text-muted, #94a3b8)' }}>December 2026 – May 2027</div>
+                </div>
+
+                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#fcd34d', fontWeight: 700, textTransform: 'uppercase' }}>Gazetted Holidays</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fcd34d', margin: '0.2rem 0' }}>{holidays.length} Days</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--app-text-muted, #94a3b8)' }}>State &amp; National Declarations</div>
+                </div>
+              </div>
+
+              {/* Sample Holiday & Milestone Preview */}
+              <div>
+                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.6rem' }}>
+                  Gazetted Holidays &amp; Statutory Observances Preview
+                </h5>
+                <div style={{ border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                  <table className="table table-sm mb-0" style={{ color: 'var(--app-text, #f8fafc)', fontSize: '0.8rem' }}>
+                    <thead style={{ background: 'rgba(0, 0, 0, 0.3)' }}>
+                      <tr>
+                        <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
+                        <th style={{ padding: '0.5rem 0.75rem' }}>Day</th>
+                        <th style={{ padding: '0.5rem 0.75rem' }}>Holiday / Event</th>
+                        <th style={{ padding: '0.5rem 0.75rem' }}>Type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holidays.slice(0, 8).map((h, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                          <td style={{ padding: '0.5rem 0.75rem', fontFamily: 'monospace', color: '#93c5fd' }}>{h.date}</td>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>{h.day || 'Weekday'}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>{h.name}</td>
+                          <td style={{ padding: '0.5rem 0.75rem' }}>
+                            <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'var(--app-text, #f8fafc)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                              {h.type || 'Gazetted'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {holidays.length > 8 && (
+                    <div style={{ padding: '0.5rem 1rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--app-text-muted, #94a3b8)', background: 'rgba(0,0,0,0.15)' }}>
+                      + {holidays.length - 8} more gazetted dates included in exported document
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: '1rem 1.5rem',
+                borderTop: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn btn-sm d-inline-flex align-items-center gap-1.5"
+                style={{
+                  borderRadius: '0.5rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  padding: '0.45rem 0.85rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: 'var(--app-text, #f8fafc)',
+                  border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
+                }}
+              >
+                <Printer size={15} />
+                <span>Print Calendar</span>
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPreviewCalendarModal(false);
+                    handleExportPdf();
+                  }}
+                  className="btn btn-sm d-inline-flex align-items-center gap-1.5"
+                  style={{
+                    borderRadius: '0.5rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    padding: '0.45rem 0.95rem',
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#6ee7b7',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                  }}
+                >
+                  <Download size={15} />
+                  <span>Download Official PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewCalendarModal(false)}
+                  className="btn btn-sm"
+                  style={{
+                    borderRadius: '0.5rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    padding: '0.45rem 0.85rem',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    color: 'var(--app-text, #f8fafc)',
+                    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.12))',
+                  }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

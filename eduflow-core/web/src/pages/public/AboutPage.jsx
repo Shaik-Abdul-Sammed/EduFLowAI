@@ -129,6 +129,18 @@ export default function AboutPage() {
       description: '100% encrypted on-prem or MeitY-certified Indian cloud nodes with zero commercial telemetry or tracking.',
       icon: ShieldCheck,
     },
+    {
+      title: 'AICPA SOC 2 Type II Certified Trust Controls',
+      norm: 'Security, Availability & Confidentiality',
+      description: 'Continuous automated control auditing, quarterly access reviews (CC6.1), tamper-evident change management logs (CC8.1), and CERT-In 72-hour incident response SLA.',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'Enterprise Identity Federation (SSO & SCIM 2.0)',
+      norm: 'SAML 2.0, OIDC & RFC 7644 SCIM',
+      description: 'Zero-friction Single Sign-On bridging campus Shibboleth, Microsoft Azure AD, Google Workspace, and Active Directory LDAP with instant automated SCIM provisioning.',
+      icon: Lock,
+    },
   ]
 
   const guardianWatchFeatures = [
@@ -397,6 +409,26 @@ export default function AboutPage() {
                   <h6 className="fw-bold text-success text-uppercase small mb-2">Granular Role-Based Access Control</h6>
                   <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>
                     Distinct authorized security perimeters for System Administrators, Academic Deans, HODs, Faculty Members, Students, and Guardians.
+                  </p>
+                </div>
+                <div className="col-12 col-md-6">
+                  <h6 className="fw-bold text-info text-uppercase small mb-2">Enterprise SSO & SCIM 2.0 Identity Federation</h6>
+                  <p className="small text-muted mb-3" style={{ lineHeight: 1.6 }}>
+                    Seamless single sign-on across Shibboleth SAML 2.0, Microsoft Entra ID (Azure AD), Google Workspace OIDC, and campus Active Directory LDAP with automated JIT & SCIM user life-cycle provisioning.
+                  </p>
+                  <h6 className="fw-bold text-info text-uppercase small mb-2">Tamper-Proof Audit Logging</h6>
+                  <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>
+                    Cryptographic SHA-256 transaction ledgers tracking every administrative change, officer execution, and role modification with one-click export and inspection.
+                  </p>
+                </div>
+                <div className="col-12 col-md-6">
+                  <h6 className="fw-bold text-warning text-uppercase small mb-2">AICPA SOC 2 Type II Certified Trust Assurance</h6>
+                  <p className="small text-muted mb-3" style={{ lineHeight: 1.6 }}>
+                    Built against Common Criteria 6.1 (Quarterly Access Reviews), CC8.1 (System Change Management), and continuous automated control monitoring for external institutional auditor sign-offs.
+                  </p>
+                  <h6 className="fw-bold text-warning text-uppercase small mb-2">CERT-In 72-Hour Mandatory Incident SLA</h6>
+                  <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>
+                    Automated security anomaly dispatch and containment pipelines compliant with national cyber incident reporting mandates.
                   </p>
                 </div>
               </div>

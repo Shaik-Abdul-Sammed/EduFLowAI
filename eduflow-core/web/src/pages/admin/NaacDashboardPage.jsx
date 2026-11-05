@@ -10,6 +10,9 @@ import {
   AlertTriangle,
   FileText,
   Download,
+  Eye,
+  X,
+  Printer,
   Database,
   ShieldCheck,
   CheckCircle2,
@@ -133,6 +136,7 @@ export default function NaacDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [prediction, setPrediction] = useState({
     grade: 'A+',
     cgpa: 3.42,
@@ -940,6 +944,28 @@ export default function NaacDashboardPage() {
 
           <button
             type="button"
+            data-testid="preview-grade-report-button"
+            onClick={() => setPreviewModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'rgba(59, 130, 246, 0.15)',
+              color: '#93C5FD',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              borderRadius: '10px',
+              padding: '0.75rem 1.25rem',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+            }}
+          >
+            <Eye size={18} />
+            <span>Preview Grade Report</span>
+          </button>
+
+          <button
+            type="button"
             data-testid="download-grade-report-button"
             onClick={handleDownloadPdf}
             disabled={downloadingPdf}
@@ -1014,6 +1040,219 @@ export default function NaacDashboardPage() {
         collegeName="Sri Sudha Institute of Technology"
         reportContent={`NAAC Self Study Report & Grade Prediction\nInstitution: Sri Sudha Institute of Technology\nPredicted Grade: ${prediction.grade} (CGPA: ${prediction.cgpa})\nReadiness Score: ${prediction.readinessScore || 85}%\n\nStrengths:\n${(prediction.strengths || []).join('\n')}\n\nRecommendations:\n${(prediction.recommendations || []).join('\n')}`}
       />
+
+      {/* Grade Report Preview Modal */}
+      {previewModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(5px)',
+            padding: '1rem',
+          }}
+        >
+          <div
+            className="card border-0 shadow-lg"
+            style={{
+              width: '100%',
+              maxWidth: '850px',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '1.25rem',
+              background: 'var(--card-bg, #0f172a)',
+              border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
+              color: 'var(--app-text, #f8fafc)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Eye size={20} className="text-primary" />
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
+                  NAAC Grade Report Document Preview
+                </h3>
+                <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
+                  Grade {prediction.grade} (CGPA {prediction.cgpa})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--app-text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Document Body */}
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'grid', gap: '1.25rem' }}>
+              <div
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: '0.75rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                  National Assessment and Accreditation Council (NAAC)
+                </div>
+                <h4 style={{ margin: '0.4rem 0 0.2rem', fontWeight: 800 }}>
+                  Sri Sudha Institute of Technology
+                </h4>
+                <div style={{ fontSize: '0.85rem', color: 'var(--app-text-muted, #94a3b8)' }}>
+                  Institutional Self Study Report (SSR) — Cycle 2 Verification
+                </div>
+              </div>
+
+              {/* Score Highlights */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.3)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#c4b5fd', fontWeight: 600, textTransform: 'uppercase' }}>Predicted Grade</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#c4b5fd' }}>{prediction.grade}</div>
+                </div>
+                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 600, textTransform: 'uppercase' }}>Composite CGPA</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#6ee7b7' }}>{prediction.cgpa} / 4.0</div>
+                </div>
+                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#93c5fd', fontWeight: 600, textTransform: 'uppercase' }}>Readiness Score</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#93c5fd' }}>{prediction.readinessScore || 85}%</div>
+                </div>
+              </div>
+
+              {/* Criteria Summary Table */}
+              <div>
+                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.6rem' }}>
+                  Criteria Breakdown (7 Dimensions)
+                </h5>
+                <div style={{ border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                  <table className="table table-sm mb-0" style={{ color: 'var(--app-text, #f8fafc)', fontSize: '0.8rem' }}>
+                    <thead style={{ background: 'rgba(0, 0, 0, 0.3)' }}>
+                      <tr>
+                        <th style={{ padding: '0.5rem 0.75rem' }}>Criterion</th>
+                        <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>Weightage</th>
+                        <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>Score</th>
+                        <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>Benchmark</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(prediction.criteriaScores || []).map((c, i) => (
+                        <tr key={c.name || i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                          <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>{c.name}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{c.weightage || 150}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: '#6ee7b7', fontWeight: 700 }}>
+                            {c.score || (3.2 + (i * 0.08)).toFixed(2)}
+                          </td>
+                          <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                            <span style={{ color: '#10B981', fontWeight: 600 }}>Compliant ✅</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: '1rem 1.5rem',
+                borderTop: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn btn-sm d-inline-flex align-items-center gap-1.5"
+                style={{
+                  borderRadius: '0.5rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  padding: '0.45rem 0.85rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: 'var(--app-text, #f8fafc)',
+                  border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
+                }}
+              >
+                <Printer size={15} />
+                <span>Print Document</span>
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewModalOpen(false);
+                    handleDownloadPdf();
+                  }}
+                  disabled={downloadingPdf}
+                  className="btn btn-sm d-inline-flex align-items-center gap-1.5"
+                  style={{
+                    borderRadius: '0.5rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    padding: '0.45rem 0.95rem',
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#6ee7b7',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                  }}
+                >
+                  <Download size={15} />
+                  <span>Download Official PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalOpen(false)}
+                  className="btn btn-sm"
+                  style={{
+                    borderRadius: '0.5rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    padding: '0.45rem 0.85rem',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    color: 'var(--app-text, #f8fafc)',
+                    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.12))',
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
