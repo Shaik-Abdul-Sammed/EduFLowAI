@@ -225,28 +225,41 @@ export default function NotificationCenter() {
 
       {open && (
         <div
+          className="eduflow-notification-menu"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 10px)',
+            top: 'calc(100% + 12px)',
             right: 0,
             width: '380px',
             maxWidth: 'calc(100vw - 24px)',
             zIndex: 1250,
             borderRadius: '1rem',
             background: isDark ? '#0f172a' : '#ffffff',
-            border: isDark ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid #e2e8f0',
+            border: isDark ? '1px solid rgba(148, 163, 184, 0.25)' : '1px solid #e2e8f0',
             boxShadow: isDark
-              ? '0 20px 45px -8px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08)'
-              : '0 20px 45px -8px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              ? '0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12)'
+              : '0 20px 45px -8px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08)',
             overflow: 'hidden',
           }}
         >
+          <style>{`
+            @media (max-width: 576px) {
+              .eduflow-notification-menu {
+                position: fixed !important;
+                top: 70px !important;
+                left: 12px !important;
+                right: 12px !important;
+                width: auto !important;
+                max-width: none !important;
+              }
+            }
+          `}</style>
           {/* Header */}
           <div
             style={{
               padding: '0.9rem 1.15rem',
-              background: isDark ? 'rgba(15, 23, 42, 0.98)' : 'rgba(248, 250, 252, 0.98)',
-              borderBottom: isDark ? '1px solid rgba(148, 163, 184, 0.15)' : '1px solid #f1f5f9',
+              background: isDark ? '#0f172a' : '#f8fafc',
+              borderBottom: isDark ? '1px solid rgba(148, 163, 184, 0.18)' : '1px solid #f1f5f9',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -457,8 +470,8 @@ export default function NotificationCenter() {
 
                     <p
                       style={{
-                        fontSize: '0.8rem',
-                        color: isDark ? '#cbd5e1' : '#475569',
+                        fontSize: '0.82rem',
+                        color: isDark ? '#e2e8f0' : '#334155',
                         margin: '0 0 0.45rem 0',
                         lineHeight: 1.45,
                         paddingLeft: isUnread ? '0.7rem' : '0',
@@ -474,7 +487,7 @@ export default function NotificationCenter() {
                           alignItems: 'center',
                           gap: '0.3rem',
                           fontSize: '0.74rem',
-                          color: isDark ? '#38bdf8' : '#2563EB',
+                          color: isDark ? '#60a5fa' : '#2563EB',
                           fontWeight: 600,
                           paddingLeft: isUnread ? '0.7rem' : '0',
                         }}

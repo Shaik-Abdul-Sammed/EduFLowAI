@@ -910,7 +910,7 @@ export default function DocsPage() {
       <header
         className="border-bottom sticky-top shadow-sm px-4 py-3"
         style={{
-          zIndex: 1020,
+          zIndex: 100,
           background: 'var(--card-bg, #0c121e)',
           borderColor: 'var(--border-color, rgba(255,255,255,0.1))',
           color: 'var(--app-text, #f8fafc)',
