@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 import {
@@ -16,7 +16,9 @@ import {
   X,
   Sparkles,
   Eye,
-  EyeOff
+  EyeOff,
+  Smartphone,
+  CheckCheck
 } from 'lucide-react'
 
 export default function WhatsAppAttendancePage() {
@@ -30,9 +32,46 @@ export default function WhatsAppAttendancePage() {
 
   // Simulator state
   const [simPhone, setSimPhone] = useState('+919876543210')
-  const [simMessage, setSimMessage] = useState('CSE 3A present 45 absent 5')
+  const [simMessage, setSimMessage] = useState('CSE 3A present 48 absent 2')
   const [simulating, setSimulating] = useState(false)
   const [simResult, setSimResult] = useState(null)
+
+  // Interactive Live WhatsApp Chat Preview (matching Figure 9 from Whitepaper)
+  const [chatHistory, setChatHistory] = useState([
+    {
+      id: 'msg-1',
+      sender: 'faculty',
+      text: 'CSE 3A present 48 absent 2',
+      time: '09:04 AM',
+      status: 'read'
+    },
+    {
+      id: 'msg-2',
+      sender: 'bot',
+      text: '📋 Attendance Record Staged:\n• Class: CSE 3rd Year (Section A)\n• Enrolled: 50 | Present: 48 | Absent: 2\n• Flagged Absentees: CS-015, CS-042\n• Time: 09:05 AM (Slot 1)\nReply "YES" to confirm and post to ERP.',
+      time: '09:04 AM'
+    },
+    {
+      id: 'msg-3',
+      sender: 'faculty',
+      text: 'YES',
+      time: '09:05 AM',
+      status: 'read'
+    },
+    {
+      id: 'msg-4',
+      sender: 'bot',
+      text: '✅ Attendance Confirmed & Synced!\n• Transaction ID: `ATT-2026-0941`\n• 48 Student Ledgers Marked Present\n• Automated SMS alerts queued to guardians\n• Synced to Biometric Attendance Cloud',
+      time: '09:05 AM'
+    }
+  ])
+  const chatScrollRef = useRef(null)
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [chatHistory])
 
   // Staged queue & Logs & Faculty
   const [stagedList, setStagedList] = useState([])
@@ -206,12 +245,23 @@ export default function WhatsAppAttendancePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleSimulate = async (e) => {
-    e.preventDefault()
-    if (!simMessage) return
+  const handleSimulate = async (e, customMsg = null) => {
+    if (e && e.preventDefault) e.preventDefault()
+    const msgToSend = (customMsg !== null && customMsg !== undefined) ? customMsg : simMessage
+    if (!msgToSend || !msgToSend.trim()) return
     setSimulating(true)
     setSimResult(null)
     setActionMsg('')
+
+    const sentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    const userMsgObj = {
+      id: `msg-${Date.now()}`,
+      sender: 'faculty',
+      text: msgToSend,
+      time: sentTime,
+      status: 'read'
+    }
+    setChatHistory(prev => [...prev, userMsgObj])
 
     try {
       const res = await fetch(getFullApiUrl('/v1/whatsapp/simulate-message'), {
@@ -219,12 +269,23 @@ export default function WhatsAppAttendancePage() {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           from: simPhone,
-          body: simMessage
+          body: msgToSend
         })
       })
       const data = await safeJson(res)
       setSimResult(data)
       setSimMessage('')
+
+      if (data && data.reply) {
+        const botMsgObj = {
+          id: `msg-${Date.now() + 1}`,
+          sender: 'bot',
+          text: data.reply,
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }
+        setChatHistory(prev => [...prev, botMsgObj])
+      }
+
       await Promise.all([fetchStaged(), fetchLogs()])
     } catch (err) {
       setSimResult({ error: err.message })
@@ -264,7 +325,7 @@ export default function WhatsAppAttendancePage() {
   }
 
   return (
-    <div className="container py-4" style={{ maxWidth: '1100px' }}>
+    <div className="container py-4" style={{ maxWidth: '1280px' }}>
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -307,11 +368,57 @@ export default function WhatsAppAttendancePage() {
         </div>
       )}
 
-      {/* Row 1: Connection Status & Simulator */}
+      {/* Enterprise Highlights Banner (from Institutional Whitepaper Fig 9) */}
+      <div className="card shadow-sm border-0 p-3 mb-4" style={{ background: '#0b132b', borderLeft: '4px solid #25d366', borderRadius: '12px' }}>
+        <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+          <h6 className="fw-bold mb-0 text-white d-flex align-items-center">
+            <ShieldCheck size={18} className="me-2 text-success" />
+            Zero-Hardware Attendance Ingestion Highlights
+          </h6>
+          <span className="badge" style={{ backgroundColor: '#25d366', color: '#0b132b', fontWeight: 700 }}>
+            FIGURE 9 ARCHITECTURE
+          </span>
+        </div>
+        <div className="row g-2 text-white small">
+          <div className="col-md-4 col-sm-6">
+            <div className="p-2 rounded" style={{ background: '#1c2541', border: '1px solid #334155' }}>
+              <strong style={{ color: '#38bdf8' }}>• Zero App Installation</strong>
+              <div className="text-light" style={{ fontSize: '0.78rem' }}>Everyday WhatsApp. Zero biometric queue delays or extra downloads.</div>
+            </div>
+          </div>
+          <div className="col-md-4 col-sm-6">
+            <div className="p-2 rounded" style={{ background: '#1c2541', border: '1px solid #334155' }}>
+              <strong style={{ color: '#38bdf8' }}>• Multi-Pattern NLP</strong>
+              <div className="text-light" style={{ fontSize: '0.78rem' }}>Parses counts, ratios (23/30), or &apos;today 48&apos; into ERP ledgers.</div>
+            </div>
+          </div>
+          <div className="col-md-4 col-sm-6">
+            <div className="p-2 rounded" style={{ background: '#1c2541', border: '1px solid #334155' }}>
+              <strong style={{ color: '#38bdf8' }}>• Dual-Factor Staging</strong>
+              <div className="text-light" style={{ fontSize: '0.78rem' }}>2-step prompt validation before committing records to official database.</div>
+            </div>
+          </div>
+          <div className="col-md-6 col-sm-6">
+            <div className="p-2 rounded" style={{ background: '#1c2541', border: '1px solid #334155' }}>
+              <strong style={{ color: '#34d399' }}>• Real-Time Guardian Alerts</strong>
+              <div className="text-light" style={{ fontSize: '0.78rem' }}>Absentees automatically trigger parental WhatsApp notifications within 3 mins.</div>
+            </div>
+          </div>
+          <div className="col-md-6 col-sm-12">
+            <div className="p-2 rounded" style={{ background: '#1c2541', border: '1px solid #334155' }}>
+              <strong style={{ color: '#34d399' }}>• Audit-Proof Cryptographic Trail</strong>
+              <div className="text-light" style={{ fontSize: '0.78rem' }}>Messages and transaction IDs (ATT-2026-0941) synced to cloud logs for NAAC/UGC.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 1: Connection Status, Simulator & Interactive Phone Preview */}
       <div className="row g-4 mb-4">
-        {/* Connection Status Card */}
-        <div className="col-md-5">
-          <div className="card shadow-sm border-0 h-100 p-4">
+        {/* Left Column: Connection Status & Simulator Form */}
+        <div className="col-lg-6">
+          {/* Connection Status Card */}
+          <div className="card shadow-sm border-0 mb-4 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h5 className="fw-bold mb-0">Gateway Status</h5>
               <span className={`badge ${status.configured ? 'bg-success' : 'bg-secondary'}`}>
@@ -335,11 +442,9 @@ export default function WhatsAppAttendancePage() {
               Automated 2-step verification: Faculty sends message &rarr; Bot stages attendance and asks for confirmation &rarr; Faculty replies YES to commit.
             </div>
           </div>
-        </div>
 
-        {/* Message Simulator */}
-        <div className="col-md-7">
-          <div className="card shadow-sm border-0 h-100 p-4">
+          {/* Message Simulator Form Card */}
+          <div className="card shadow-sm border-0 p-4">
             <h5 className="fw-bold mb-2 d-flex align-items-center">
               <Send size={18} className="me-2 text-primary" /> Test Message Simulator
             </h5>
@@ -365,11 +470,14 @@ export default function WhatsAppAttendancePage() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Type attendance command (e.g. 'CSE 3A present 45 absent 5' or 'YES')..."
+                  placeholder="Type attendance command (e.g. 'CSE 3A present 48 absent 2' or 'YES')..."
                   value={simMessage}
                   onChange={(e) => setSimMessage(e.target.value)}
                 />
-                <div className="d-flex gap-1 mt-1 flex-wrap">
+                <div className="d-flex gap-1 mt-2 flex-wrap">
+                  <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-muted" onClick={() => setSimMessage('CSE 3A present 48 absent 2')}>
+                    Format 1 (48p 2a - Fig 9)
+                  </button>
                   <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-muted" onClick={() => setSimMessage('CSE 3A present 45 absent 5')}>
                     Format 1 (45p 5a)
                   </button>
@@ -379,8 +487,11 @@ export default function WhatsAppAttendancePage() {
                   <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-muted" onClick={() => setSimMessage('attendance CSE-3A today 48 present')}>
                     Format 3 (today 48)
                   </button>
-                  <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-muted" onClick={() => setSimMessage('YES')}>
+                  <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-success fw-bold" onClick={() => setSimMessage('YES')}>
                     Confirm (YES)
+                  </button>
+                  <button type="button" className="btn btn-sm btn-light border py-0 px-2 small text-danger" onClick={() => setSimMessage('NO')}>
+                    Cancel (NO)
                   </button>
                 </div>
               </div>
@@ -394,7 +505,7 @@ export default function WhatsAppAttendancePage() {
               <div className="mt-3 p-3 bg-light rounded border">
                 <h6 className="fw-semibold small mb-1 text-success">Simulator Response:</h6>
                 {simResult.reply && (
-                  <div className="p-2 bg-white rounded border mb-2 small font-monospace">
+                  <div className="p-2 bg-white rounded border mb-2 small font-monospace" style={{ whiteSpace: 'pre-wrap' }}>
                     {simResult.reply}
                   </div>
                 )}
@@ -405,6 +516,188 @@ export default function WhatsAppAttendancePage() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Right Column: Live Interactive WhatsApp Mobile Device Preview (matching Figure 9) */}
+        <div className="col-lg-6">
+          <div className="card shadow-sm border-0 p-3 h-100" style={{ background: '#0b132b', borderRadius: '16px' }}>
+            <div className="d-flex justify-content-between align-items-center mb-2 px-1 text-white">
+              <span className="small fw-bold d-flex align-items-center gap-1 text-light">
+                <Smartphone size={16} className="text-success" /> Live Interactive WhatsApp View (Figure 9)
+              </span>
+              <span className="badge" style={{ backgroundColor: '#25d366', color: '#111b21', fontSize: '0.72rem', fontWeight: 700 }}>
+                ONLINE &bull; E2E ENCRYPTED
+              </span>
+            </div>
+
+            <div
+              style={{
+                borderRadius: '20px',
+                background: '#111b21',
+                border: '2px solid #25d366',
+                overflow: 'hidden',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '560px'
+              }}
+            >
+              {/* WhatsApp App Bar */}
+              <div
+                style={{
+                  background: '#202c33',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  borderBottom: '1px solid #2a3942'
+                }}
+              >
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: '#25d366',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: '13px'
+                  }}
+                >
+                  EF
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: '#e9edef', fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2 }}>
+                    EduFlow AI Attendance Bot
+                  </div>
+                  <div style={{ color: '#8696a0', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    Official Verified Institutional Gateway <span style={{ color: '#25d366' }}>✅</span>
+                  </div>
+                </div>
+                <span className="badge bg-dark text-success border border-success-subtle font-monospace" style={{ fontSize: '0.68rem' }}>
+                  +91 99000 11222
+                </span>
+              </div>
+
+              {/* Chat Message Scroll */}
+              <div
+                ref={chatScrollRef}
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  backgroundImage: 'radial-gradient(#1f2c34 1px, transparent 1px)',
+                  backgroundSize: '16px 16px'
+                }}
+              >
+                {chatHistory.map((msg) => {
+                  const isFaculty = msg.sender === 'faculty'
+                  return (
+                    <div
+                      key={msg.id}
+                      style={{
+                        alignSelf: isFaculty ? 'flex-end' : 'flex-start',
+                        maxWidth: '85%',
+                        backgroundColor: isFaculty ? '#005c4b' : '#202c33',
+                        color: '#e9edef',
+                        borderRadius: '8px',
+                        borderTopRightRadius: isFaculty ? '2px' : '8px',
+                        borderTopLeftRadius: isFaculty ? '8px' : '2px',
+                        padding: '8px 12px',
+                        fontSize: '0.79rem',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                      }}
+                    >
+                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{msg.text}</div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          alignItems: 'center',
+                          gap: '3px',
+                          marginTop: '4px',
+                          fontSize: '0.66rem',
+                          color: '#8696a0'
+                        }}
+                      >
+                        <span>{msg.time}</span>
+                        {isFaculty && <CheckCheck size={12} color="#53bdeb" />}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Chat Quick Response Action Bar */}
+              <div
+                style={{
+                  background: '#202c33',
+                  padding: '8px 12px',
+                  borderTop: '1px solid #2a3942',
+                  display: 'flex',
+                  gap: '6px',
+                  alignItems: 'center'
+                }}
+              >
+                <div className="d-flex gap-1 overflow-auto me-1" style={{ maxWidth: '170px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-success py-0 px-2"
+                    style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                    onClick={(e) => handleSimulate(e, 'YES')}
+                    disabled={simulating}
+                  >
+                    YES
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-danger py-0 px-2"
+                    style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+                    onClick={(e) => handleSimulate(e, 'NO')}
+                    disabled={simulating}
+                  >
+                    NO
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  style={{
+                    background: '#2a3942',
+                    border: 'none',
+                    color: '#e9edef',
+                    fontSize: '0.78rem',
+                    borderRadius: '16px'
+                  }}
+                  placeholder="Type message..."
+                  value={simMessage}
+                  onChange={(e) => setSimMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSimulate(e)
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  style={{ backgroundColor: '#25d366', color: '#111b21', borderRadius: '50%', width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  disabled={simulating || !simMessage.trim()}
+                  onClick={(e) => handleSimulate(e)}
+                  title="Send via bot"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
