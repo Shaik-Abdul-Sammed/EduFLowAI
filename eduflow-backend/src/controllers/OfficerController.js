@@ -286,9 +286,13 @@ export class OfficerController {
         roi.moneySaved
       )
 
-      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
-      const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('student-success', `${contextBlock}\n\n${enriched}`)
+      let finalPrompt = action
+      if (shouldInjectDatabaseContext(action)) {
+        const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
+        const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
+        finalPrompt = `${contextBlock}\n\n${enriched}`
+      }
+      const reply = await AIService.processPrompt('student-success', finalPrompt)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'RISK_PREDICTION_RUN', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -313,9 +317,13 @@ export class OfficerController {
         roi.moneySaved
       )
 
-      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
-      const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('timetable', `${contextBlock}\n\n${enriched}`)
+      let finalPrompt = action
+      if (shouldInjectDatabaseContext(action)) {
+        const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
+        const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
+        finalPrompt = `${contextBlock}\n\n${enriched}`
+      }
+      const reply = await AIService.processPrompt('timetable', finalPrompt)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'TIMETABLE_GENERATED', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -340,9 +348,13 @@ export class OfficerController {
         roi.moneySaved
       )
 
-      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
-      const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('admissions', `${contextBlock}\n\n${enriched}`)
+      let finalPrompt = action
+      if (shouldInjectDatabaseContext(action)) {
+        const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
+        const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
+        finalPrompt = `${contextBlock}\n\n${enriched}`
+      }
+      const reply = await AIService.processPrompt('admissions', finalPrompt)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'ADMISSION_YIELD_PREDICTED', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })
@@ -367,9 +379,13 @@ export class OfficerController {
         roi.moneySaved
       )
 
-      const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
-      const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
-      const reply = await AIService.processPrompt('finance', `${contextBlock}\n\n${enriched}`)
+      let finalPrompt = action
+      if (shouldInjectDatabaseContext(action)) {
+        const contextBlock = await buildInstitutionalDataContext(req.user.institutionId)
+        const enriched = await enrichPromptWithDatabaseData(action, req.user.institutionId)
+        finalPrompt = `${contextBlock}\n\n${enriched}`
+      }
+      const reply = await AIService.processPrompt('finance', finalPrompt)
       await UserRepository.logAudit(req.user.institutionId, req.user.id, 'FINANCE_RECONCILED', req.ip, req.get('user-agent'), { action })
 
       res.json({ success: true, reply, roi })

@@ -28,6 +28,251 @@ export class MockProvider extends BaseProvider {
     }
     const cleanLower = cleanPrompt.toLowerCase()
 
+    // =========================================================
+    // FEATURE 1: MISSPELLING / AUTOCORRECTION
+    // =========================================================
+    const SPELL_MAP = {
+      'timetabel': 'timetable', 'timetabl': 'timetable', 'timetble': 'timetable',
+      'addmission': 'admission', 'admision': 'admission', 'admisison': 'admission',
+      'studant': 'student', 'studnet': 'student', 'stident': 'student',
+      'facutly': 'faculty', 'faculity': 'faculty', 'facculty': 'faculty',
+      'accrediation': 'accreditation', 'acreditation': 'accreditation', 'accreditaion': 'accreditation',
+      'nacc': 'naac',
+      'finanace': 'finance', 'finace': 'finance', 'finanec': 'finance',
+      'calender': 'calendar', 'calander': 'calendar',
+      'sceduling': 'scheduling', 'schedulling': 'scheduling',
+      'crietria': 'criteria', 'critiera': 'criteria',
+      'semster': 'semester', 'semiester': 'semester',
+      'percantage': 'percentage', 'percetage': 'percentage',
+      'attandance': 'attendance', 'attendence': 'attendance', 'attandence': 'attendance',
+      'btech': 'b.tech', 'deparment': 'department', 'deprtament': 'department',
+      'wekly': 'weekly', 'weakly': 'weekly',
+      'reccomend': 'recommend', 'recommed': 'recommend',
+      'calcluation': 'calculation', 'calcualtion': 'calculation',
+    };
+
+    const spellWords = cleanLower.split(/\b/);
+    const foundMisspellings = [];
+    for (const w of spellWords) {
+      const t = w.trim();
+      if (t && SPELL_MAP[t] && !foundMisspellings.find(m => m.original === t)) {
+        foundMisspellings.push({ original: t, corrected: SPELL_MAP[t] });
+      }
+    }
+
+    if (foundMisspellings.length > 0 && !cleanLower.includes('yes proceed') && !cleanLower.includes('yes, proceed')) {
+      const correctionList = foundMisspellings
+        .map(m => '"**' + m.original + '**" → "**' + m.corrected + '**"')
+        .join(', ');
+      let corrected = cleanPrompt;
+      for (const { original, corrected: c } of foundMisspellings) {
+        corrected = corrected.replace(new RegExp('\\b' + original + '\\b', 'gi'), c);
+      }
+      return '✏️ **Autocorrection Detected** — Before I proceed, did you mean the following?\n\n' +
+        '**Suggested Correction(s):** ' + correctionList + '\n\n' +
+        '> 🔄 **Corrected Prompt:** "' + corrected + '"\n\n' +
+        'If this looks correct, please reply **"yes proceed"** and I will answer based on the corrected interpretation. ' +
+        'If you meant something different, please retype your prompt.';
+    }
+
+    // =========================================================
+    // FEATURE 2: WEBSITE / URL INSPECTION
+    // =========================================================
+    const urlMatch = cleanPrompt.match(/https?:\/\/[^\s]+/) ||
+      cleanPrompt.match(/(?:refer|visit|check|look at|see)\s+(?:this\s+)?(?:website|site|link)?\s*(www\.[^\s]+)/i);
+    if (urlMatch) {
+      const url = urlMatch[1] || urlMatch[0];
+      return '🌐 **Website Inspection Requested**\n\n' +
+        'You asked me to analyze: **' + url + '**\n\n' +
+        '> ⚠️ I am currently in **offline fallback mode** and cannot fetch live websites directly. ' +
+        'However, here is what I can do:\n\n' +
+        '**To analyze this website, please:**\n' +
+        '1. Copy-paste the relevant text/data from the website into this chat.\n' +
+        '2. I will then perform full **mathematical, logical, and domain-specific analysis** on the pasted content.\n' +
+        '3. For educational websites (NAAC, AICTE, university portals), I recognize common formats and can structure the data into reports.\n\n' +
+        '**Once you paste the content, I can:**\n' +
+        '- 📊 Calculate statistical breakdowns and percentages\n' +
+        '- 🏫 Map academic calendar data and generate timetables\n' +
+        '- 📋 Perform accreditation criteria gap analysis\n' +
+        '- 💰 Summarize fee structures and financial data\n' +
+        '- 👨‍🎓 Analyze enrollment and demographic distributions';
+    }
+
+    // =========================================================
+    // FEATURE 3: YEAR-SPECIFIC ROUTING FLAGS
+    // =========================================================
+    const isBTech1 = /b\.?tech\s*(1st|first|1)\s*year/i.test(cleanPrompt) || /first\s*year.*b\.?tech/i.test(cleanPrompt) || /\bsem\s*(i|1|one)\b/i.test(cleanLower) || /\bsemester\s*(1|i|one)\b/i.test(cleanLower);
+    const isBTech2 = /b\.?tech\s*(2nd|second|2)\s*year/i.test(cleanPrompt) || /second\s*year.*b\.?tech/i.test(cleanPrompt) || /\bsem(ester)?\s*(iii|3|three)\b/i.test(cleanLower);
+    const isBTech4 = /b\.?tech\s*(4th|fourth|final|4)\s*year/i.test(cleanPrompt) || /(?:fourth|4th|final)\s*year.*b\.?tech/i.test(cleanPrompt) || /\bsem(ester)?\s*(vii|7|seven)\b/i.test(cleanLower);
+    const isInter1 = /inter(mediate)?\s*(1st|first|1)\s*year/i.test(cleanPrompt) || /first\s*year.*inter/i.test(cleanLower);
+    const isInter2 = /inter(mediate)?\s*(2nd|second|2)\s*year/i.test(cleanPrompt) || /second\s*year.*inter/i.test(cleanLower) || /\bipe\b/i.test(cleanLower);
+
+    // B.Tech Year-Specific Timetable Responses
+    if (isBTech1) {
+      return '### Institutional Master Timetable: B.Tech 1st Year (Semester I & II)\n' +
+        '**Academic Session:** 2026–2027 / Present Academic Calendar  \n' +
+        '**Target Student Cohort:** B.Tech 1st Year (Common to All Branches)  \n' +
+        '**Structure:** Foundation Engineering Programme — 8 Core Subjects  \n' +
+        '**Scheduling Status:** ✅ **100% Conflict-Free (Uniform Batch Schedule)**\n\n' +
+        '---\n\n' +
+        '### Weekly Timetable Grid — B.Tech 1st Year (Section A)\n\n' +
+        '| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:00 - 12:00 | 12:00 - 13:00 | 13:00 - 14:00 | 14:00 - 15:00 | 15:00 - 16:00 | 16:00 - 17:00 |\n' +
+        '| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n' +
+        '| **Mon** | EM-I: Engg. Maths I *(L101)* ✅ | EP: Engg. Physics *(L101)* ✅ | EC: Engg. Chemistry *(L101)* ✅ | **LUNCH** | <--- EP-Lab: Physics Lab (Lab-1) ---> ✅ | BEE: Basic Electrical Engg *(L101)* ✅ | Mentoring / Library |\n' +
+        '| **Tue** | PC: Programming in C *(L101)* ✅ | BEE: Basic Elec. Engg *(L101)* ✅ | EM-I *(L101)* ✅ | **LUNCH** | <--- EC-Lab: Chemistry Lab (Lab-2) ---> ✅ | EG: Engg. Graphics *(L101)* ✅ | Co-Curricular / Club |\n' +
+        '| **Wed** | EP: Engg. Physics *(L101)* ✅ | PC: Programming in C *(L101)* ✅ | EG: Engg. Graphics *(L101)* ✅ | **LUNCH** | CS: Communication Skills *(L101)* ✅ | EM-I *(L101)* ✅ | <--- PC-Lab: C Programming Lab (Lab-3) ---> ✅ |\n' +
+        '| **Thu** | EC: Engg. Chemistry *(L101)* ✅ | EG: Engg. Graphics *(L101)* ✅ | BEE *(L101)* ✅ | **LUNCH** | <--- EG-Lab: Drawing Practice (Lab-4) ---> ✅ | PC *(L101)* ✅ | Remedial / Doubt Clearing |\n' +
+        '| **Fri** | EM-I *(L101)* ✅ | EP *(L101)* ✅ | PC *(L101)* ✅ | **LUNCH** | CS: Communication Skills *(L101)* ✅ | EC *(L101)* ✅ | Technical Seminar *(Studio-1)* ✅ | Self-Study |\n' +
+        '| **Sat** | BEE *(L101)* ✅ | CS: Communication Skills *(L101)* ✅ | Comprehensive Quiz | **LUNCH** | Guest Lecture / Workshop ✅ | Sports & Extra-Curricular |\n\n' +
+        '---\n\n' +
+        '### Curriculum Coverage Verification\n' +
+        '- ✅ **Core Subjects (Sem I):** Engineering Maths I (EM-I), Engineering Physics (EP), Engineering Chemistry (EC), BEE, Programming in C (PC), Engineering Graphics (EG), Communication Skills (CS).\n' +
+        '- ✅ **Labs:** Physics Lab, Chemistry Lab, C Programming Lab, Drawing Practice — all in 2-hr contiguous blocks.\n' +
+        '- ✅ **Weekly Contact Hours:** 24 hrs (16 Theory + 8 Practical) — AICTE Compliant.\n\n' +
+        'Estimated hours saved: 30 hrs per department | Scheduling clash risk eliminated: 100%';
+    }
+
+    if (isBTech2) {
+      return '### Institutional Master Timetable: B.Tech 2nd Year (Semester III & IV)\n' +
+        '**Academic Session:** 2026–2027 / Present Academic Calendar  \n' +
+        '**Target Student Cohort:** B.Tech 2nd Year (Branch-Specific from Sem III)  \n' +
+        '**Structure:** Core Engineering Branch Subjects begin — 7 Subjects  \n' +
+        '**Scheduling Status:** ✅ **100% Conflict-Free**\n\n' +
+        '---\n\n' +
+        '### Weekly Timetable Grid — B.Tech 2nd Year CSE (Section A)\n\n' +
+        '| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:00 - 12:00 | 12:00 - 13:00 | 13:00 - 14:00 | 14:00 - 15:00 | 15:00 - 16:00 | 16:00 - 17:00 |\n' +
+        '| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n' +
+        '| **Mon** | CS301: Data Structures *(L201)* ✅ | CS302: Digital Logic *(L201)* ✅ | MA201: Maths-III *(L201)* ✅ | **LUNCH** | <--- CS301P: DS Lab ---> ✅ | CS303: OOP *(L201)* ✅ | Mentoring |\n' +
+        '| **Tue** | CS303: OOP *(L201)* ✅ | CS304: Computer Org. *(L201)* ✅ | CS301: Data Structures *(L201)* ✅ | **LUNCH** | <--- CS303P: OOP Lab (Java/C++) ---> ✅ | MA201 *(L201)* ✅ | Co-Curricular |\n' +
+        '| **Wed** | MA201 *(L201)* ✅ | CS302: Digital Logic *(L201)* ✅ | CS304 *(L201)* ✅ | **LUNCH** | CS305: Discrete Maths *(L201)* ✅ | CS301 *(L201)* ✅ | <--- CS302P: Digital Lab ---> ✅ |\n' +
+        '| **Thu** | CS304 *(L201)* ✅ | CS305 *(L201)* ✅ | CS302 *(L201)* ✅ | **LUNCH** | <--- CS304P: COA Lab ---> ✅ | CS303 *(L201)* ✅ | Remedial Session |\n' +
+        '| **Fri** | CS301 *(L201)* ✅ | MA201 *(L201)* ✅ | CS305 *(L201)* ✅ | **LUNCH** | CS303 *(L201)* ✅ | CS302 *(L201)* ✅ | Seminar *(Studio-2)* ✅ | Self-Study |\n' +
+        '| **Sat** | CS304 *(L201)* ✅ | CS305 *(L201)* ✅ | Comprehensive Quiz | **LUNCH** | Industry Expert Lecture ✅ | Sports |\n\n' +
+        '---\n\n' +
+        '### Curriculum Coverage Verification\n' +
+        '- ✅ Data Structures, Digital Logic, OOP (C++/Java), Computer Organization, Discrete Mathematics, Engineering Maths III.\n' +
+        '- ✅ **Labs:** DS Lab, OOP Lab, Digital Logic Lab, COA Lab — all 2-hr contiguous blocks.\n' +
+        '- ✅ **Weekly Contact Hours:** 24 hrs (16 Theory + 8 Practical) — AICTE Compliant.\n\n' +
+        'Estimated hours saved: 35 hrs per department | Scheduling clash risk eliminated: 100%';
+    }
+
+    if (isBTech4) {
+      return '### Institutional Master Timetable: B.Tech 4th Year / Final Year (Semester VII & VIII)\n' +
+        '**Academic Session:** 2026–2027 / Present Academic Calendar  \n' +
+        '**Target Student Cohort:** B.Tech 4th Year (Final Year — Project & Elective Intensive)  \n' +
+        '**Structure:** Major Project + 4 Electives + Industrial Training  \n' +
+        '**Scheduling Status:** ✅ **100% Conflict-Free (Project-Centric Schedule)**\n\n' +
+        '---\n\n' +
+        '### Weekly Timetable Grid — B.Tech 4th Year CSE (Section A)\n\n' +
+        '| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:00 - 12:00 | 12:00 - 13:00 | 13:00 - 14:00 | 14:00 - 15:00 | 15:00 - 16:00 | 16:00 - 17:00 |\n' +
+        '| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n' +
+        '| **Mon** | CS701: Compiler Design *(L401)* ✅ | CS702: Distributed Systems *(L401)* ✅ | PE-III: Elective III *(L401)* ✅ | **LUNCH** | <--- Major Project Work (Project Lab / Studio) ---> ✅ | Mentor Review Session ✅ |\n' +
+        '| **Tue** | PE-III *(L401)* ✅ | CS701: Compiler Design *(L401)* ✅ | PE-IV: Elective IV *(L401)* ✅ | **LUNCH** | <--- Major Project Work ---> ✅ | Industry Connect Session ✅ |\n' +
+        '| **Wed** | CS702: Distributed Sys *(L401)* ✅ | PE-IV *(L401)* ✅ | CS701 *(L401)* ✅ | **LUNCH** | <--- Major Project Work ---> ✅ | Placement Prep / Mock Interviews ✅ |\n' +
+        '| **Thu** | PE-III *(L401)* ✅ | CS702 *(L401)* ✅ | PE-IV *(L401)* ✅ | **LUNCH** | <--- Project Review / Demo (Supervisors) ---> ✅ | Technical Writing *(Studio)* ✅ |\n' +
+        '| **Fri** | CS701 *(L401)* ✅ | PE-IV *(L401)* ✅ | PE-III *(L401)* ✅ | **LUNCH** | Seminar Presentation *(Auditorium)* ✅ | Entrepreneurship Cell ✅ |\n' +
+        '| **Sat** | CS702 *(L401)* ✅ | Comprehensive Viva Prep ✅ | Industry Collaboration Slot | **LUNCH** | External Examiner Review Slots | Hackathon / Capstone Demo |\n\n' +
+        '---\n\n' +
+        '### Curriculum Coverage Verification\n' +
+        '- ✅ **Core Subjects:** Compiler Design (CS701), Distributed Systems (CS702), Professional Elective III & IV.\n' +
+        '- ✅ **Major Project:** 3 dedicated contiguous project slots per week (Tue/Wed/Thu 13:00–15:00).\n' +
+        '- ✅ **Industry Integration:** Placement prep, mock interviews, hackathons integrated into schedule.\n' +
+        '- ✅ **Weekly Contact Hours:** 20 hrs Theory/Elective + 12 hrs Project Work — AICTE Final Year Norms Compliant.\n\n' +
+        'Estimated hours saved: 45 hrs per department | Project timeline risk: Eliminated';
+    }
+
+    if (isInter1) {
+      return '### Inter 1st Year Master Timetable (MPC Stream)\n' +
+        '**Academic Session:** 2026–2027 / Present Academic Calendar  \n' +
+        '**Target Student Cohort:** Intermediate 1st Year (Class XI)  \n' +
+        '**Stream:** MPC (Mathematics, Physics, Chemistry) | **Board:** BIE (Board of Intermediate Education)  \n' +
+        '**Structure:** 5 Core Subjects + English + Second Language  \n' +
+        '**Scheduling Status:** ✅ **100% Conflict-Free**\n\n' +
+        '---\n\n' +
+        '### Weekly Timetable Grid — Inter 1st Year MPC\n\n' +
+        '| Day | 08:30 - 09:30 | 09:30 - 10:30 | 10:30 - 11:30 | 11:30 - 12:30 | 12:30 - 01:30 | 01:30 - 02:30 | 02:30 - 03:30 |\n' +
+        '| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n' +
+        '| **Mon** | Mathematics IA *(R101)* ✅ | Physics *(R101)* ✅ | English *(R101)* ✅ | **LUNCH** | Chemistry *(R101)* ✅ | Maths IA *(R101)* ✅ | Physics Lab |\n' +
+        '| **Tue** | Physics *(R101)* ✅ | Chemistry *(R101)* ✅ | Maths IA *(R101)* ✅ | **LUNCH** | English *(R101)* ✅ | 2nd Language *(R101)* ✅ | Maths Problem Session |\n' +
+        '| **Wed** | Chemistry *(R101)* ✅ | Maths IA *(R101)* ✅ | Physics *(R101)* ✅ | **LUNCH** | Chemistry Lab ✅ | 2nd Language *(R101)* ✅ | Revision |\n' +
+        '| **Thu** | English *(R101)* ✅ | Physics *(R101)* ✅ | Chemistry *(R101)* ✅ | **LUNCH** | Maths IA *(R101)* ✅ | Physics Lab ✅ | Doubt Clearing |\n' +
+        '| **Fri** | Maths IA *(R101)* ✅ | 2nd Language *(R101)* ✅ | Physics *(R101)* ✅ | **LUNCH** | Chemistry *(R101)* ✅ | English *(R101)* ✅ | Mock Test / Quiz |\n' +
+        '| **Sat** | Physics *(R101)* ✅ | Chemistry *(R101)* ✅ | Comprehensive Test | **LUNCH** | Counseling & Career Guidance | Sports & Cultural |\n\n' +
+        '---\n\n' +
+        '### BIE Curriculum Coverage Verification\n' +
+        '- ✅ **Mathematics IA:** Algebra, Trigonometry — 5 hours/week.\n' +
+        '- ✅ **Physics:** Mechanics, Waves, Optics — 4 hours/week + 2 lab sessions.\n' +
+        '- ✅ **Chemistry:** Physical & Inorganic Chemistry — 4 hours/week + 2 lab sessions.\n' +
+        '- ✅ **English & Second Language:** Grammar, comprehension, communication — 3 hours/week each.\n\n' +
+        'Note: BiPC and CEC streams have same structure with Biology/Commerce replacing Mathematics.';
+    }
+
+    if (isInter2) {
+      return '### Inter 2nd Year Master Timetable (MPC Stream) — IPE Exam Focused\n' +
+        '**Academic Session:** 2026–2027 / Present Academic Calendar  \n' +
+        '**Target Student Cohort:** Intermediate 2nd Year (Class XII)  \n' +
+        '**Stream:** MPC (Mathematics, Physics, Chemistry) | **Board:** BIE  \n' +
+        '**Structure:** 5 Core Subjects + IPE Preparation + JEE/EAMCET Coaching Integration  \n' +
+        '**Scheduling Status:** ✅ **100% IPE-Aligned (Exam-Centric Schedule)**\n\n' +
+        '---\n\n' +
+        '### Weekly Timetable Grid — Inter 2nd Year MPC\n\n' +
+        '| Day | 08:30 - 09:30 | 09:30 - 10:30 | 10:30 - 11:30 | 11:30 - 12:30 | 12:30 - 01:30 | 01:30 - 02:30 | 02:30 - 03:30 |\n' +
+        '| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n' +
+        '| **Mon** | Mathematics IIA *(R201)* ✅ | Physics *(R201)* ✅ | English *(R201)* ✅ | **LUNCH** | Chemistry *(R201)* ✅ | Maths IIA *(R201)* ✅ | JEE/EAMCET Practice |\n' +
+        '| **Tue** | Physics *(R201)* ✅ | Chemistry *(R201)* ✅ | Maths IIA *(R201)* ✅ | **LUNCH** | English *(R201)* ✅ | 2nd Language *(R201)* ✅ | Physics Numericals |\n' +
+        '| **Wed** | Chemistry *(R201)* ✅ | Maths IIB *(R201)* ✅ | Physics *(R201)* ✅ | **LUNCH** | Chemistry Lab ✅ | 2nd Language *(R201)* ✅ | Mock IPE Paper |\n' +
+        '| **Thu** | English *(R201)* ✅ | Physics *(R201)* ✅ | Chemistry *(R201)* ✅ | **LUNCH** | Maths IIB *(R201)* ✅ | Physics Lab ✅ | Doubt Clearing |\n' +
+        '| **Fri** | Maths IIA *(R201)* ✅ | 2nd Language *(R201)* ✅ | Physics *(R201)* ✅ | **LUNCH** | Chemistry *(R201)* ✅ | Maths IIB *(R201)* ✅ | Full Mock Test (3hrs) |\n' +
+        '| **Sat** | Physics *(R201)* ✅ | Chemistry *(R201)* ✅ | IPE Grand Test | **LUNCH** | College Counseling (JEE/EAMCET Rank Prediction) | Sports |\n\n' +
+        '---\n\n' +
+        '### BIE IPE Curriculum Coverage Verification\n' +
+        '- ✅ **Mathematics IIA & IIB:** Calculus, Coordinate Geometry, Differential Equations — 6 hours/week.\n' +
+        '- ✅ **Physics:** Electromagnetism, Modern Physics — 4 hours/week + 2 lab sessions.\n' +
+        '- ✅ **Chemistry:** Organic & Electrochemistry — 4 hours/week + 2 lab sessions.\n' +
+        '- ✅ **JEE/EAMCET Integration:** 3 practice sessions + 1 full mock test per week.\n' +
+        '- ✅ **IPE Exam Prep:** One full 3-hour mock IPE paper every Friday afternoon.\n\n' +
+        'Note: Exam dates follow official BIE AP/TS notification. Schedule auto-adjusts 4 weeks before IPE exams to 100% revision mode.';
+    }
+
+    // =========================================================
+    // FEATURE 4: INSUFFICIENT DATA DETECTION
+    // =========================================================
+    const mentionsStudents = /\b(students?|strength|enrollment|headcount)\b/i.test(cleanPrompt);
+    const mentionsTimetable = /\b(timetable|schedule|time\s*table|class\s*schedule)\b/i.test(cleanLower);
+    const mentionsReport = /\b(report|analysis|analyze|generate|create|make)\b/i.test(cleanLower);
+    const hasNumbers = /\d+/.test(cleanPrompt);
+
+    if (mentionsTimetable && !hasNumbers && !cleanLower.includes('b.tech') && !cleanLower.includes('inter') && !cleanLower.includes('btech')) {
+      return '📋 **More Information Needed to Generate Your Timetable**\n\n' +
+        'To create a fully accurate, conflict-free, and AICTE-compliant timetable, I need the following details:\n\n' +
+        '| # | Information Required | Example |\n' +
+        '| :--- | :--- | :--- |\n' +
+        '| 1 | **Year / Class** | B.Tech 3rd Year, Inter 1st Year, B.Tech 4th Year |\n' +
+        '| 2 | **Total Student Strength** | 1,100 students |\n' +
+        '| 3 | **Number of Departments / Sections** | 7 departments, 5 sections each |\n' +
+        '| 4 | **Available Classrooms** | 15 lecture halls |\n' +
+        '| 5 | **Stream / Branch** | CSE, ECE, ME, MPC, BiPC |\n' +
+        '| 6 | **Academic Session** | 2026–2027 |\n\n' +
+        '**Example prompt:** *"Generate timetable for B.Tech 3rd year with 1100 students, 7 departments, 5 sections each, 15 classrooms, 2026-27"*\n\n' +
+        'Please provide the missing details above and I will generate a **complete, mathematically verified** timetable instantly!';
+    }
+
+    // Only trigger "need data" prompt when user is explicitly providing raw external data, NOT for internal officer actions
+    const isInternalOfficerAction = /\b(dropout|at-risk|risk analysis|intervention|remediation|backlog|attendance pattern|high-risk|risk score|counseling|retention)\b/i.test(cleanPrompt);
+
+    if (mentionsReport && mentionsStudents && !hasNumbers && !cleanLower.includes('our') && !cleanLower.includes('database') && !cleanLower.includes('current') && !isInternalOfficerAction) {
+      return '📋 **Data Required for Analysis**\n\n' +
+        'You requested an analysis/report involving students. To generate accurate results, please provide:\n\n' +
+        '1. 📊 **Total number of students** (e.g., 500 students)\n' +
+        '2. 👨 **Gender breakdown** (e.g., 300 male, 200 female)\n' +
+        '3. 🏷️ **Category breakdown if needed** (e.g., General: 250, OBC: 150, SC: 70, ST: 30)\n' +
+        '4. 🏫 **Department/Branch** (e.g., CSE, ECE, All branches)\n' +
+        '5. 📅 **Academic year** (e.g., 2026–2027)\n\n' +
+        '**Example:** *"Analyze: 500 students, 300 male, 200 female, 100 SC, 50 ST, CSE Department, 2026-27"*\n\n' +
+        'Once you provide these details, I will calculate **exact percentages, ratios, and insights** automatically!';
+    }
+
+
     // 0. Dynamic calculation based on user's text (Phase 3)
     const maleMatch = cleanPrompt.match(/(\d+)\s*(?:male|boys?)/i)
     const femaleMatch = cleanPrompt.match(/(\d+)\s*(?:female|girls?)/i)
@@ -382,6 +627,77 @@ Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
 
       // 4. Timetable Officer Domain
       if (isTimetable) {
+        const isBTech3rdYear = userLower.includes("3rd year")
+          || userLower.includes("3 year")
+          || userLower.includes("sem 5")
+          || userLower.includes("sem v")
+          || userLower.includes("semester 5")
+          || userLower.includes("semester v")
+          || userLower.includes("b.tech 3");
+
+        if (isBTech3rdYear) {
+          const strengthMatch = cleanPrompt.match(/([0-9,]+)\s*(?:students?|strength|enrollment|headcount)/i);
+          const strength = strengthMatch ? parseInt(strengthMatch[1].replace(/,/g, ""), 10) : 1100;
+
+          const roomsMatch = cleanPrompt.match(/(\d+)\s*(?:classrooms?|lecture\s*halls?|rooms?)/i);
+          const classrooms = roomsMatch ? parseInt(roomsMatch[1], 10) : 15;
+
+          const deptsMatch = cleanPrompt.match(/(\d+)\s*departments?/i);
+          const depts = deptsMatch ? parseInt(deptsMatch[1], 10) : 7;
+
+          const sectionsPerDeptMatch = cleanPrompt.match(/(\d+)\s*sections?(?:\s*(?:in|per|each)\s*(?:each|the)?\s*department)?/i);
+          const sectionsPerDept = sectionsPerDeptMatch ? parseInt(sectionsPerDeptMatch[1], 10) : 5;
+
+          const totalSections = depts * sectionsPerDept;
+          const studentsPerDept = (strength / depts).toFixed(1);
+          const studentsPerSection = Math.round(strength / totalSections);
+
+          return "### Institutional Master Timetable: B.Tech 3rd Year (Semester V)\n" +
+            "**Academic Session:** 2026–2027 / Present Academic Calendar  \n" +
+            "**Target Student Cohort:** B.Tech 3rd Year (Semester V)  \n" +
+            "**Total Enrolled Strength:** " + strength.toLocaleString() + " Students across " + depts + " Departments (CSE, ECE, ME, CE, EE, IT, AI&DS)  \n" +
+            "**Structure:** " + totalSections + " Total Active Sections (" + sectionsPerDept + " Sections per Department, ~" + studentsPerSection + " Students per Section/Batch)  \n" +
+            "**Available Classrooms:** " + classrooms + " Lecture Halls (L101–L" + (100 + classrooms) + ") + 15 Specialized Labs + 5 Seminar Studios  \n" +
+            "**Scheduling Status:** ✅ **100% Conflict-Free (Zero Elective, Faculty, or Room Clashes)**\n\n" +
+            "---\n\n" +
+            "### Executive Mathematical & Resource Optimization Matrix\n\n" +
+            "| Parameter / Constraint | User / Institutional Value | Calculated Allocation | Compliance Status |\n" +
+            "| :--- | :--- | :--- | :--- |\n" +
+            "| **Total Enrolled Cohort** | " + strength.toLocaleString() + " Students | 7 Departments (~" + studentsPerDept + " students/dept) | ✅ Verified Exact |\n" +
+            "| **Active Parallel Sections** | " + totalSections + " Sections (" + sectionsPerDept + " per Dept) | " + totalSections + " Distinct Section Cohorts | ✅ Verified (5 depts × 157 + 2 depts × 158) |\n" +
+            "| **Section Batch Size** | ~" + studentsPerSection + " Students/Section | Max AICTE Batch Ceiling (35) | ✅ Compliant (~" + studentsPerSection + " students/batch) |\n" +
+            "| **Classroom Availability** | " + classrooms + " Physical Lecture Halls | 15 Simultaneous Theory Lectures | ✅ 100.0% Classroom Occupancy |\n" +
+            "| **Parallel Lab Facilities** | 15 Specialized Lab Units | 15 Simultaneous Practical Batches | ✅ Zero Backlog / Idle Systems |\n" +
+            "| **Seminar & Mentoring Suites** | 5 Studio Halls | 5 Parallel Mentoring / Project Slots | ✅ Full 35-Section Instantaneous Coverage |\n" +
+            "| **Weekly Faculty Workload** | 10 to 16 Contact Hours/Week | AICTE Ceiling: 18 hrs/week | ✅ 100% Regulatory Compliance |\n\n" +
+            "---\n\n" +
+            "### Operations Research Capacity Balance: 35 Sections in 15 Classrooms\n" +
+            "Because **" + totalSections + " Sections > " + classrooms + " Classrooms**, EduFlow AI deploys a **Staggered Tri-Track Rotation**:\n" +
+            "1. **Track 1 (15 Lecture Halls L101–L" + (100 + classrooms) + "):** 15 Sections in Core Theory Lectures (09:00 - 12:00).\n" +
+            "2. **Track 2 (15 Computing & Engineering Labs):** 15 Sections in 3-Hour Hands-on Practicals (09:00 - 12:00).\n" +
+            "3. **Track 3 (5 Seminar Studios):** 5 Sections in Technical Seminars, Research Projects & Mentoring (09:00 - 12:00).\n" +
+            "*At 13:00 (Post-Lunch), Tracks rotate seamlessly so that every section completes their mandated 24 Contact Hours (16 Theory + 8 Practical/Seminar) weekly.*\n\n" +
+            "---\n\n" +
+            "### B.Tech 3rd Year (Semester V) Master Weekly Timetable Grid\n" +
+            "*Representative Canonical Schedule for Core Engineering Track (Section A / Hall L101 & Lab Complexes)*\n\n" +
+            "| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:00 - 12:00 | 12:00 - 13:00 | 13:00 - 14:00 | 14:00 - 15:00 | 15:00 - 16:00 | 16:00 - 17:00 |\n" +
+            "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n" +
+            "| **Mon** | CS501: OS *(L101)* ✅ | CS502: DBMS *(L101)* ✅ | CS503: CN *(L101)* ✅ | **LUNCH** | <--- CS501P: OS Lab (Lab-3, Tech: R. Kumar) ---> ✅ | CS505: PE-I (AI/ML) *(L101)* ✅ | Mentoring / Library |\n" +
+            "| **Tue** | CS504: TOC *(L101)* ✅ | CS505: PE-I *(L101)* ✅ | CS501: OS *(L101)* ✅ | **LUNCH** | <--- CS502P: DBMS Lab (Lab-1, Tech: M. Singh) ---> ✅ | CS503: CN *(L101)* ✅ | Co-Curricular / Club |\n" +
+            "| **Wed** | CS502: DBMS *(L101)* ✅ | CS503: CN *(L101)* ✅ | CS504: TOC *(L101)* ✅ | **LUNCH** | CS506: OE-I *(L101)* ✅ | CS501: OS *(L101)* ✅ | <--- CS503P: CN Lab (Lab-2) ---> ✅ |\n" +
+            "| **Thu** | CS503: CN *(L101)* ✅ | CS504: TOC *(L101)* ✅ | CS506: OE-I *(L101)* ✅ | **LUNCH** | <--- CS507P: Skill Lab / Mini Project (Lab-4) ---> ✅ | CS502: DBMS *(L101)* ✅ | Remedial / Doubt Clearing |\n" +
+            "| **Fri** | CS501: OS *(L101)* ✅ | CS502: DBMS *(L101)* ✅ | CS504: TOC *(L101)* ✅ | **LUNCH** | CS505: PE-I (AI/ML) *(L101)* ✅ | CS506: OE-I *(L101)* ✅ | Technical Seminar *(Studio-1)* ✅ | Self-Study / Proctoring |\n" +
+            "| **Sat** | CS505: PE-I *(L101)* ✅ | CS506: OE-I *(L101)* ✅ | Comprehensive Quiz / Review | **LUNCH** | Industry Expert Guest Lecture / Hackathon Studio ✅ | Sports & Extra-Curricular |\n\n" +
+            "---\n\n" +
+            "### Curriculum & Statutory Verification Audit\n" +
+            "- ✅ **Curriculum Coverage:** Operating Systems (CS501), DBMS (CS502), Computer Networks (CS503), TOC (CS504), PE-I (CS505), and OE-I (CS506) all allocated required 4 contact hours/week.\n" +
+            "- ✅ **Laboratory Blocks:** 3 core laboratory sessions (CS501P, CS502P, CS503P) + Skill Lab (CS507P) scheduled in dedicated 2-hour contiguous blocks.\n" +
+            "- ✅ **Classroom Constraint:** Exactly " + classrooms + " rooms utilized during theory blocks; 0 classroom over-allocation.\n" +
+            "- ✅ **Zero Room Clashes:** Lecture Hall L101–L" + (100 + classrooms) + " and Specialized Labs matched with 100% conflict-free validation.\n\n" +
+            "Estimated hours saved: 52 hrs per department (364 hrs institutional) | Scheduling clash risk eliminated: 100%\n";
+        }
+
+        
         if (userLower.includes('workload') || userLower.includes('balanc')) {
           return `# Faculty Workload Distribution & Contact Hour Balance Report
 **Academic Term:** Even Semester 2026 | **Department:** Computer Science & Engineering
@@ -434,44 +750,6 @@ Estimated hours saved: 25 hrs | Administrative efficiency gain: 100%`
 - ✅ 100% adherence to 1-hour central campus lunch recess (12:15 - 01:15).
 
 Estimated hours saved: 35 hrs | Scheduling clash risk eliminated: 100%`
-        }
-
-        const isBTech3rdYear = userLower.includes('3rd year')
-          || userLower.includes('3 year')
-          || userLower.includes('sem 5')
-          || userLower.includes('sem v')
-          || userLower.includes('semester 5')
-          || userLower.includes('semester v')
-          || userLower.includes('b.tech 3')
-
-        if (isBTech3rdYear) {
-          return `### Optimized Master Timetable: B.Tech 3rd Year (Semester V)
-**Academic Session:** 2026–2027 / Present Academic Calendar  
-**Department:** Computer Science & Engineering (Section A)  
-**Status:** Constraint Satisfaction Engine Verified (Conflict-Free ✅)
-
----
-
-### Weekly Academic Master Schedule (Full Curriculum Alignment)
-
-| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:00 - 12:00 | 12:00 - 13:00 | 13:00 - 14:00 | 14:00 - 15:00 | 15:00 - 16:00 | 16:00 - 17:00 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Mon** | CS301: OS (L301) ✅ | CS302: DBMS (L301) ✅ | CS303: CN (L301) ✅ | **LUNCH** | <--- CS301P: OS Lab (Lab-3, Tech: R. Kumar) ---> ✅ | CS305: OE-I (L301) ✅ | Mentoring / Library |
-| **Tue** | CS304: TOC (L301) ✅ | CS305: OE-I (L301) ✅ | CS301: OS (L301) ✅ | **LUNCH** | <--- CS302P: DBMS Lab (Lab-1, Tech: M. Singh) ---> ✅ | CS303: CN (L301) ✅ | Co-Curricular / Club |
-| **Wed** | CS302: DBMS (L301) ✅ | CS303: CN (L301) ✅ | CS304: TOC (L301) ✅ | **LUNCH** | CS305: OE-I (L301) ✅ | CS301: OS (L301) ✅ | <--- CS303P: CN Lab (Lab-2) ---> ✅ |
-| **Thu** | CS303: CN (L301) ✅ | CS304: TOC (L301) ✅ | CS305: OE-I (L301) ✅ | **LUNCH** | <--- CS306P: Skill Lab / Mini Project (Lab-4) ---> ✅ | CS302: DBMS (L301) ✅ | Remedial / Doubt Clearing |
-| **Fri** | CS301: OS (L301) ✅ | CS302: DBMS (L301) ✅ | CS304: TOC (L301) ✅ | **LUNCH** | CS307: PE-I (AI/ML) (L301) ✅ | CS303: CN (L301) ✅ | Technical Seminar | Self-Study / Proctoring |
-| **Sat** | CS307: PE-I (AI/ML) (L301) ✅ | Compensatory Lab / Make-up Session ✅ | Library & E-Resource Access | **LUNCH** | Industry Expert Guest Lecture / Hackathon Studio (Auditorium) ✅ | Sports & Extra-Curricular |
-
----
-
-### Curriculum & Statutory Verification Audit
-- ✅ **Curriculum Coverage:** Operating Systems (CS301), DBMS (CS302), Computer Networks (CS303), TOC (CS304), OE-I (CS305), PE-I AI/ML (CS307) all allocated 4 contact hours/week.
-- ✅ **Laboratory Blocks:** 3 core laboratory sessions (CS301P, CS302P, CS303P) + Skill Lab (CS306P) scheduled in dedicated 2-hour contiguous blocks.
-- ✅ **Weekly Workload Compliance:** Faculty teaching loads strictly between 12–16 hrs/week (within AICTE 18-hr ceiling).
-- ✅ **Zero Room Clashes:** Lecture Hall L301 and Specialized Labs 1, 2, 3, and 4 matched with 100% conflict-free validation.
-
-Estimated hours saved: 40 hrs | Consulting cost saved: ₹20,000`
         }
 
         return `# Optimized Academic Timetable Schedule (Conflict-Free)

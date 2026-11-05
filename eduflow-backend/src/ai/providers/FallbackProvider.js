@@ -54,7 +54,7 @@ export class FallbackProvider extends BaseProvider {
   }
 
   async *chatStream(messages, systemPrompt) {
-    const delay = process.env.NODE_ENV === 'test' ? 1 : 50
+    const delay = process.env.NODE_ENV === 'test' ? 1 : 8
 
     for (const provider of this.providers) {
       try {

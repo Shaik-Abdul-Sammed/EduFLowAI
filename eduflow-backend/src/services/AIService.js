@@ -389,7 +389,7 @@ Estimated hours saved: 0.5 hrs | Administrative cost saved: ₹150`,
 Estimated hours saved: 4 hrs | Reconciled revenue saved: ₹3,200`
 }
 
-async function* simulateTokenStream(text, delayMs = (process.env.NODE_ENV === 'test' ? 1 : 50)) {
+async function* simulateTokenStream(text, delayMs = (process.env.NODE_ENV === 'test' ? 1 : 8)) {
   const chunks = text.split(/(\s+)/)
   for (const chunk of chunks) {
     if (chunk) {
@@ -477,9 +477,10 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
 
     // Return rich fallback response with live context prepended and appended
     let fallbackText = `[AI Fallback] Processed prompt: "${prompt}" successfully.`
-    if (isDataAnalysis && (officerType === 'accreditation' || officerType === 'general')) {
-      const mock = new MockProvider()
-      fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
+    const mock = new MockProvider()
+    const mockResponse = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
+    if (mockResponse && !mockResponse.includes('mock response from the fallback chain')) {
+      fallbackText = mockResponse
     } else if (officerType === 'accreditation') {
       fallbackText = resolveAccreditationFallback(prompt, context)
     } else if (OFFICER_FALLBACK_TEXTS[officerType]) {
@@ -550,15 +551,16 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
     // If provider failed or didn't yield real content, stream rich realistic demo template
     if (!streamedTokens) {
       let fallbackText
-      if (isDataAnalysis && (officerType === 'accreditation' || officerType === 'general')) {
-        const mock = new MockProvider()
-        fallbackText = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
+      const mock = new MockProvider()
+      const mockResponse = mock.generateRealisticResponse([{ role: 'user', content: prompt }], systemMessage)
+      if (mockResponse && !mockResponse.includes('mock response from the fallback chain')) {
+        fallbackText = mockResponse
       } else if (officerType === 'accreditation') {
         fallbackText = resolveAccreditationFallback(prompt, context)
       } else {
         fallbackText = (OFFICER_FALLBACK_TEXTS[officerType] || `[${officerType} AI Officer]: Analysis completed for "${prompt}". All constraints satisfied.`)
       }
-      yield* simulateTokenStream(fallbackText, 12)
+      yield* simulateTokenStream(fallbackText, 8)
     }
 
     // Yield verified live source citations at completion of stream
