@@ -76,26 +76,80 @@ export class MockProvider extends BaseProvider {
     }
 
     // =========================================================
-    // FEATURE 2: WEBSITE / URL INSPECTION
+    // FEATURE 2: WEBSITE / URL / WEB PLATFORM INSPECTION
+    // Supports: full URLs, domains, and colloquial portal names (e.g. sih2k26, nptel, swayam)
+    // Active across ALL AI Officers
     // =========================================================
-    const urlMatch = cleanPrompt.match(/https?:\/\/[^\s]+/) ||
-      cleanPrompt.match(/(?:refer|visit|check|look at|see)\s+(?:this\s+)?(?:website|site|link)?\s*(www\.[^\s]+)/i);
-    if (urlMatch) {
-      const url = urlMatch[1] || urlMatch[0];
-      return '🌐 **Website Inspection Requested**\n\n' +
-        'You asked me to analyze: **' + url + '**\n\n' +
-        '> ⚠️ I am currently in **offline fallback mode** and cannot fetch live websites directly. ' +
-        'However, here is what I can do:\n\n' +
-        '**To analyze this website, please:**\n' +
-        '1. Copy-paste the relevant text/data from the website into this chat.\n' +
-        '2. I will then perform full **mathematical, logical, and domain-specific analysis** on the pasted content.\n' +
-        '3. For educational websites (NAAC, AICTE, university portals), I recognize common formats and can structure the data into reports.\n\n' +
-        '**Once you paste the content, I can:**\n' +
-        '- 📊 Calculate statistical breakdowns and percentages\n' +
-        '- 🏫 Map academic calendar data and generate timetables\n' +
-        '- 📋 Perform accreditation criteria gap analysis\n' +
-        '- 💰 Summarize fee structures and financial data\n' +
-        '- 👨‍🎓 Analyze enrollment and demographic distributions';
+    let inspectedTarget = null;
+
+    // 1. Explicit http/https URL
+    const fullUrlMatch = cleanPrompt.match(/https?:\/\/[^\s]+/i);
+    if (fullUrlMatch) {
+      inspectedTarget = fullUrlMatch[0];
+    }
+
+    // 2. Domain patterns (e.g. sih.gov.in, aicte-india.org, onlinesbi.sbi, nirfindia.org)
+    if (!inspectedTarget) {
+      const domainMatch = cleanPrompt.match(/\b([a-zA-Z0-9][a-zA-Z0-9\-]*\.(?:gov\.in|ac\.in|nic\.in|edu\.in|res\.in|org|gov|edu|in|com|net|io|ai|co|sbi)(?:\/[^\s]*)?)\b/i);
+      if (domainMatch) {
+        inspectedTarget = domainMatch[1];
+      }
+    }
+
+    // 3. WWW prefix (e.g. www.aicte-india.org)
+    if (!inspectedTarget) {
+      const wwwMatch = cleanPrompt.match(/\b(www\.[a-zA-Z0-9\-]+(?:\.[a-zA-Z]{2,})+[^\s]*)/i);
+      if (wwwMatch) {
+        inspectedTarget = wwwMatch[1];
+      }
+    }
+
+    // 4. Colloquial web names & hackathons (e.g. sih2k26, sih 2026, smart india hackathon, swayam, nptel, naac portal)
+    if (!inspectedTarget) {
+      const NAMED_PLATFORMS = [
+        { pattern: /\b(sih\s*2k\d{2}|sih\s*\d{4}|smart\s*india\s*hackathon(?:\s*\d{4})?)\b/i, label: 'Smart India Hackathon (SIH 2026 — sih.gov.in)' },
+        { pattern: /\b(sih2k\d{2})\b/i, label: 'Smart India Hackathon (sih.gov.in)' },
+        { pattern: /\b(swayam(?:\s*portal)?)\b/i, label: 'SWAYAM MHRD / NPTEL Portal (swayam.gov.in)' },
+        { pattern: /\b(nptel(?:\s*portal)?)\b/i, label: 'NPTEL IIT Portal (nptel.ac.in)' },
+        { pattern: /\b(aicte(?:\s*portal|\s*website)?)\b/i, label: 'AICTE Official Portal (aicte-india.org)' },
+        { pattern: /\b(ugc(?:\s*portal|\s*website)?)\b/i, label: 'UGC Official Portal (ugc.ac.in)' },
+        { pattern: /\b(naac(?:\s*portal|\s*website)?)\b/i, label: 'NAAC Official Portal (naac.gov.in)' },
+        { pattern: /\b(nirf(?:\s*portal|\s*website)?)\b/i, label: 'NIRF Ranking Portal (nirfindia.org)' },
+        { pattern: /\b(digilocker(?:\s*nad|\s*portal)?)\b/i, label: 'DigiLocker NAD Portal (digilocker.gov.in)' },
+        { pattern: /\b(unstop|codechef|hackerearth|leetcode|hackerrank|kaggle|github)\b/i, label: 'Technical Platform' },
+      ];
+
+      for (const item of NAMED_PLATFORMS) {
+        const m = cleanPrompt.match(item.pattern);
+        if (m) {
+          inspectedTarget = item.label === 'Technical Platform' ? (m[0] + ' platform') : item.label;
+          break;
+        }
+      }
+    }
+
+    // 5. "refer <name> website/portal" pattern
+    if (!inspectedTarget) {
+      const referNamedSite = cleanPrompt.match(/(?:refer|visit|check|look at|see|inspect|open|explore)\s+(?:to\s+)?(?:the\s+)?(?:this\s+)?([a-zA-Z0-9_\-\.]+)\s*(?:website|site|portal|webpage|page|web)/i);
+      if (referNamedSite && !['this', 'the', 'a', 'our', 'an'].includes(referNamedSite[1].toLowerCase())) {
+        inspectedTarget = referNamedSite[1] + ' portal/website';
+      }
+    }
+
+    if (inspectedTarget) {
+      return '🌐 **Web & Portal Inspection Requested**\n\n' +
+        'Target Identified: **' + inspectedTarget + '**\n\n' +
+        '> ⚠️ I am currently in **offline fallback mode** and cannot fetch live external websites directly. ' +
+        'However, I am fully equipped to analyze your data once provided!\n\n' +
+        '**How to inspect this resource with EduFlow AI:**\n' +
+        '1. Copy and paste the key text, rules, problem statement, or table from **' + inspectedTarget + '** into this chat.\n' +
+        '2. For **Smart India Hackathon (SIH 2026)** or competitive portals: Paste the problem statement ID, domain (Hardware/Software), or team composition, and I will perform feasibility scoring, timetable alignment, and mentor mapping.\n' +
+        '3. For regulatory sites (AICTE / UGC / NAAC / NIRF): Paste the criteria or intake notification, and I will structure it into conflict-free timetables or grade gap matrices.\n\n' +
+        '**Once you paste the data, I will perform:**\n' +
+        '- 🧮 Mathematical & logical calculations (percentages, ratios, workload hours)\n' +
+        '- 📅 Timetable & lab slot allocations with 0 clashes\n' +
+        '- 📋 Compliance checks and criteria gap scoring\n' +
+        '- 💡 Practical action plans tailored to your department and student year';
     }
 
     // =========================================================
