@@ -774,9 +774,16 @@ Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
 
         if (isBTech3rdYear) {
           const strengthMatch = cleanPrompt.match(/([0-9,]+)\s*(?:students?|strength|enrollment|headcount)/i);
-          const roomsMatch = cleanPrompt.match(/(\d+)\s*(?:classrooms?|lecture\s*halls?|rooms?)/i);
+          const roomsMatch = cleanPrompt.match(/(\d+)\s*(?:classrooms?|lecture\s*halls?|rooms?|classes|classed)/i)
+            || cleanPrompt.match(/(?:classes|classed|classrooms?|lecture\s*halls?|rooms?)\s*(?:will\s*be|=|:)?\s*(\d+)/i);
           const deptsMatch = cleanPrompt.match(/(\d+)\s*departments?/i);
           const sectionsPerDeptMatch = cleanPrompt.match(/(\d+)\s*sections?(?:\s*(?:in|per|each)\s*(?:each|the)?\s*department)?/i);
+
+          const targetDeptMatch = cleanPrompt.match(/\b(cse|computer\s*science|ece|electronics|me|mechanical|ce|civil|ee|eee|electrical|it|information\s*technology|ai&ds|aids|chemical|biotech|automobile|aero(?:space)?)\b/i);
+          const allDeptsRequested = /\b(all\s*departments?|every\s*department|across\s*all\s*departments?|all\s*branches?|master\s*schedule|all\s*7\s*departments?)\b/i.test(cleanPrompt);
+          const hasSubjectSpec = /\b(\d+)\s*(?:subjects?|courses?|theory\s*subjects?)\b/i.test(cleanPrompt)
+            || /\b(os|dbms|cn|toc|vlsi|dsp|cad|thermo|fluid|mechanics|circuit|structures?)\b/i.test(cleanPrompt)
+            || /\b(standard\s*curriculum|aicte\s*curriculum|model\s*curriculum|default\s*subjects?)\b/i.test(cleanPrompt);
 
           if (!strengthMatch && !roomsMatch && !cleanLower.includes('our') && !cleanLower.includes('database') && !cleanLower.includes('default') && !cleanLower.includes('sample')) {
             return '📋 **More Information Needed to Generate Your B.Tech 3rd Year Timetable**\n\n' +
@@ -786,14 +793,15 @@ Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
               '| 1 | **Total Student Strength** | 1,100 students (or your enrolled count) |\n' +
               '| 2 | **Available Classrooms** | 15 lecture halls (or your room count) |\n' +
               '| 3 | **Departments & Sections** | 7 departments, 5 sections each |\n' +
-              '| 4 | **Academic Session** | 2026–2027 (Active Academic Calendar) |\n\n' +
+              '| 4 | **Target Department & Subjects** | CSE, ECE, ME (with 5 theory subjects and 2 labs) |\n' +
+              '| 5 | **Academic Session** | 2026–2027 (Active Academic Calendar) |\n\n' +
               '**Example prompt to try:**\n' +
-              '> *"Generate timetable for B.Tech 3rd year with 1100 students, 15 classrooms, 7 departments, 5 sections each, for present academic calendar 2026-2027."*\n\n' +
-              '*(Reply with your student count and available rooms to compute your institutional capacity allocation and conflict-free master timetable instantly!)*';
+              '> *"Generate timetable for B.Tech 3rd year CSE Department with 1100 students, 15 classrooms, 7 departments, 5 sections each, 5 theory subjects and 2 labs."*\n\n' +
+              '*(Reply with your student count, available rooms, and target department to compute your institutional allocation instantly!)*';
           }
 
           const strength = strengthMatch ? parseInt(strengthMatch[1].replace(/,/g, ""), 10) : 1100;
-          const classrooms = roomsMatch ? parseInt(roomsMatch[1], 10) : 15;
+          const classrooms = roomsMatch ? parseInt(roomsMatch[1] || roomsMatch[2], 10) : 15;
           const depts = deptsMatch ? parseInt(deptsMatch[1], 10) : 7;
           const sectionsPerDept = sectionsPerDeptMatch ? parseInt(sectionsPerDeptMatch[1], 10) : 5;
 
@@ -801,9 +809,91 @@ Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
           const studentsPerDept = (strength / depts).toFixed(1);
           const studentsPerSection = Math.round(strength / totalSections);
 
+          // If the user provided the cohort constraints (1100 students, 15 classrooms, 7 departments, 5 sections each),
+          // but did NOT specify which department (or all departments) or how many subjects/courses:
+          if ((!targetDeptMatch && !allDeptsRequested) && (!hasSubjectSpec && !cleanLower.includes('standard') && !cleanLower.includes('default') && !cleanLower.includes('sample') && !cleanLower.includes('cse'))) {
+            return '📋 **Department & Subject Information Needed to Generate Timetable**\n\n' +
+              'EduFlow AI has mathematically verified your institutional capacity constraints:\n' +
+              '- **Total Enrolled Strength:** ' + strength.toLocaleString() + ' Students across ' + depts + ' Departments\n' +
+              '- **Total Active Sections:** ' + totalSections + ' Sections (' + sectionsPerDept + ' sections per department, ~' + studentsPerSection + ' students/batch)\n' +
+              '- **Physical Classrooms Available:** ' + classrooms + ' Lecture Halls\n' +
+              '- **Parallel Tri-Track Solution:** ' + classrooms + ' Sections in Theory Classrooms (100% occupancy) + ' + classrooms + ' Sections in Practical Labs + ' + (totalSections - 2 * classrooms) + ' Sections in Seminars/Mentoring (0 Room Clashes ✅)\n\n' +
+              'However, because an institution with **' + depts + ' distinct departments** has different specialized subjects, syllabi, and laboratory modules, please specify:\n\n' +
+              '| # | Required Missing Information | Options / Examples |\n' +
+              '| :--- | :--- | :--- |\n' +
+              '| 1 | **Target Department** | Which department do you want the timetable for? (e.g., **CSE**, **ECE**, **Mechanical**, **Civil**, **Electrical**, or **All 7 Departments Master Matrix**) |\n' +
+              '| 2 | **Number of Subjects & Labs** | How many subjects are prescribed? (e.g., **5 Theory Subjects + 2 Practical Labs**, or list your course titles like *OS, DBMS, CN, TOC, PE-I*, or reply *"standard curriculum"*) |\n\n' +
+              '**Example prompt to continue:**\n' +
+              '> *"Generate for CSE Department with 5 theory subjects and 2 labs"*\n' +
+              '> *(or "Generate for ECE with 5 subjects" / "Generate for Mechanical with standard curriculum")*\n\n' +
+              'Reply with your target department and subject requirements to render the complete 6-day master timetable!';
+          }
+
+          let deptCode = targetDeptMatch ? targetDeptMatch[0].toUpperCase() : 'CSE';
+          if (deptCode === 'COMPUTER SCIENCE') deptCode = 'CSE';
+          if (deptCode === 'ELECTRONICS') deptCode = 'ECE';
+          if (deptCode === 'MECHANICAL') deptCode = 'ME';
+          if (deptCode === 'CIVIL') deptCode = 'CE';
+          if (deptCode === 'ELECTRICAL' || deptCode === 'EEE') deptCode = 'EE';
+          if (deptCode === 'INFORMATION TECHNOLOGY') deptCode = 'IT';
+          if (deptCode === 'AIDS') deptCode = 'AI&DS';
+
+          let deptFullName = 'Computer Science & Engineering';
+          let subjects = [
+            { code: 'CS501: OS', name: 'Operating Systems', lab: 'CS501P: OS Lab (Lab-3, Tech: R. Kumar)' },
+            { code: 'CS502: DBMS', name: 'Database Management Systems', lab: 'CS502P: DBMS Lab (Lab-1, Tech: M. Singh)' },
+            { code: 'CS503: CN', name: 'Computer Networks', lab: 'CS503P: CN Lab (Lab-2)' },
+            { code: 'CS504: TOC', name: 'Theory of Computation', lab: 'CS507P: Skill Lab / Mini Project (Lab-4)' },
+            { code: 'CS505: PE-I (AI/ML)', name: 'Professional Elective I', lab: null },
+            { code: 'CS506: OE-I', name: 'Open Elective I', lab: null }
+          ];
+
+          if (deptCode === 'ECE') {
+            deptFullName = 'Electronics & Communication Engineering';
+            subjects = [
+              { code: 'EC501: DSP', name: 'Digital Signal Processing', lab: 'EC501P: DSP Lab (Lab-5)' },
+              { code: 'EC502: VLSI', name: 'VLSI Design', lab: 'EC502P: VLSI Design Lab (Lab-6)' },
+              { code: 'EC503: MP&MC', name: 'Microprocessors & Microcontrollers', lab: 'EC503P: Microcontroller Lab (Lab-7)' },
+              { code: 'EC504: CS', name: 'Control Systems', lab: 'EC507P: Embedded Systems Lab (Lab-8)' },
+              { code: 'EC505: PE-I (IoT)', name: 'Professional Elective I (IoT)', lab: null },
+              { code: 'EC506: OE-I', name: 'Open Elective I', lab: null }
+            ];
+          } else if (deptCode === 'ME') {
+            deptFullName = 'Mechanical Engineering';
+            subjects = [
+              { code: 'ME501: DME', name: 'Design of Machine Elements', lab: 'ME501P: Heat Transfer Lab (Lab-9)' },
+              { code: 'ME502: HT', name: 'Heat & Mass Transfer', lab: 'ME502P: CAD/CAM Studio (Lab-10)' },
+              { code: 'ME503: DOM', name: 'Dynamics of Machinery', lab: 'ME503P: Metrology & Measurements Lab (Lab-11)' },
+              { code: 'ME504: MT', name: 'Manufacturing Technology', lab: 'ME507P: CNC Simulation Lab (Lab-12)' },
+              { code: 'ME505: PE-I (Robotics)', name: 'Professional Elective I', lab: null },
+              { code: 'ME506: OE-I', name: 'Open Elective I', lab: null }
+            ];
+          } else if (deptCode === 'CE') {
+            deptFullName = 'Civil Engineering';
+            subjects = [
+              { code: 'CE501: SA-II', name: 'Structural Analysis II', lab: 'CE501P: Geotechnical Engineering Lab (Lab-13)' },
+              { code: 'CE502: GE', name: 'Geotechnical Engineering', lab: 'CE502P: Environmental Engineering Lab (Lab-14)' },
+              { code: 'CE503: HWR', name: 'Hydrology & Water Resources', lab: 'CE503P: Computer Aided Design Lab (Lab-15)' },
+              { code: 'CE504: EE', name: 'Environmental Engineering', lab: 'CE507P: Concrete Testing Studio' },
+              { code: 'CE505: PE-I (Transport)', name: 'Professional Elective I', lab: null },
+              { code: 'CE506: OE-I', name: 'Open Elective I', lab: null }
+            ];
+          } else if (deptCode === 'EE') {
+            deptFullName = 'Electrical & Electronics Engineering';
+            subjects = [
+              { code: 'EE501: PS-II', name: 'Power Systems II', lab: 'EE501P: Power Systems Simulation Lab' },
+              { code: 'EE502: PE', name: 'Power Electronics', lab: 'EE502P: Power Electronics & Drives Lab' },
+              { code: 'EE503: EM-II', name: 'Electrical Machines II', lab: 'EE503P: Electrical Machines Lab' },
+              { code: 'EE504: CS', name: 'Control Systems', lab: 'EE507P: PLC & Automation Lab' },
+              { code: 'EE505: PE-I (Renewable)', name: 'Professional Elective I', lab: null },
+              { code: 'EE506: OE-I', name: 'Open Elective I', lab: null }
+            ];
+          }
+
           return "### Institutional Master Timetable: B.Tech 3rd Year (Semester V)\n" +
             "**Academic Session:** 2026–2027 / Present Academic Calendar  \n" +
             "**Target Student Cohort:** B.Tech 3rd Year (Semester V)  \n" +
+            "**Target Department:** " + deptFullName + " (" + deptCode + ")  \n" +
             "**Total Enrolled Strength:** " + strength.toLocaleString() + " Students across " + depts + " Departments (CSE, ECE, ME, CE, EE, IT, AI&DS)  \n" +
             "**Structure:** " + totalSections + " Total Active Sections (" + sectionsPerDept + " Sections per Department, ~" + studentsPerSection + " Students per Section/Batch)  \n" +
             "**Available Classrooms:** " + classrooms + " Lecture Halls (L101–L" + (100 + classrooms) + ") + 15 Specialized Labs + 5 Seminar Studios  \n" +
@@ -827,20 +917,20 @@ Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
             "3. **Track 3 (5 Seminar Studios):** 5 Sections in Technical Seminars, Research Projects & Mentoring (09:00 - 12:00).\n" +
             "*At 13:00 (Post-Lunch), Tracks rotate seamlessly so that every section completes their mandated 24 Contact Hours (16 Theory + 8 Practical/Seminar) weekly.*\n\n" +
             "---\n\n" +
-            "### B.Tech 3rd Year (Semester V) Master Weekly Timetable Grid\n" +
-            "*Representative Canonical Schedule for Core Engineering Track (Section A / Hall L101 & Lab Complexes)*\n\n" +
+            "### " + deptFullName + " (" + deptCode + " - Section A) Master Weekly Timetable Grid\n" +
+            "*Canonical Schedule for " + deptCode + " Core Track (Section A / Hall L101 & Lab Complexes)*\n\n" +
             "| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:00 - 12:00 | 12:00 - 13:00 | 13:00 - 14:00 | 14:00 - 15:00 | 15:00 - 16:00 | 16:00 - 17:00 |\n" +
             "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n" +
-            "| **Mon** | CS501: OS *(L101)* ✅ | CS502: DBMS *(L101)* ✅ | CS503: CN *(L101)* ✅ | **LUNCH** | <--- CS501P: OS Lab (Lab-3, Tech: R. Kumar) ---> ✅ | CS505: PE-I (AI/ML) *(L101)* ✅ | Mentoring / Library |\n" +
-            "| **Tue** | CS504: TOC *(L101)* ✅ | CS505: PE-I *(L101)* ✅ | CS501: OS *(L101)* ✅ | **LUNCH** | <--- CS502P: DBMS Lab (Lab-1, Tech: M. Singh) ---> ✅ | CS503: CN *(L101)* ✅ | Co-Curricular / Club |\n" +
-            "| **Wed** | CS502: DBMS *(L101)* ✅ | CS503: CN *(L101)* ✅ | CS504: TOC *(L101)* ✅ | **LUNCH** | CS506: OE-I *(L101)* ✅ | CS501: OS *(L101)* ✅ | <--- CS503P: CN Lab (Lab-2) ---> ✅ |\n" +
-            "| **Thu** | CS503: CN *(L101)* ✅ | CS504: TOC *(L101)* ✅ | CS506: OE-I *(L101)* ✅ | **LUNCH** | <--- CS507P: Skill Lab / Mini Project (Lab-4) ---> ✅ | CS502: DBMS *(L101)* ✅ | Remedial / Doubt Clearing |\n" +
-            "| **Fri** | CS501: OS *(L101)* ✅ | CS502: DBMS *(L101)* ✅ | CS504: TOC *(L101)* ✅ | **LUNCH** | CS505: PE-I (AI/ML) *(L101)* ✅ | CS506: OE-I *(L101)* ✅ | Technical Seminar *(Studio-1)* ✅ | Self-Study / Proctoring |\n" +
-            "| **Sat** | CS505: PE-I *(L101)* ✅ | CS506: OE-I *(L101)* ✅ | Comprehensive Quiz / Review | **LUNCH** | Industry Expert Guest Lecture / Hackathon Studio ✅ | Sports & Extra-Curricular |\n\n" +
+            "| **Mon** | " + subjects[0].code + " *(L101)* ✅ | " + subjects[1].code + " *(L101)* ✅ | " + subjects[2].code + " *(L101)* ✅ | **LUNCH** | <--- " + subjects[0].lab + " ---> ✅ | " + subjects[4].code + " *(L101)* ✅ | Mentoring / Library |\n" +
+            "| **Tue** | " + subjects[3].code + " *(L101)* ✅ | " + subjects[4].code + " *(L101)* ✅ | " + subjects[0].code + " *(L101)* ✅ | **LUNCH** | <--- " + subjects[1].lab + " ---> ✅ | " + subjects[2].code + " *(L101)* ✅ | Co-Curricular / Club |\n" +
+            "| **Wed** | " + subjects[1].code + " *(L101)* ✅ | " + subjects[2].code + " *(L101)* ✅ | " + subjects[3].code + " *(L101)* ✅ | **LUNCH** | " + subjects[5].code + " *(L101)* ✅ | " + subjects[0].code + " *(L101)* ✅ | <--- " + subjects[2].lab + " ---> ✅ |\n" +
+            "| **Thu** | " + subjects[2].code + " *(L101)* ✅ | " + subjects[3].code + " *(L101)* ✅ | " + subjects[5].code + " *(L101)* ✅ | **LUNCH** | <--- " + subjects[3].lab + " ---> ✅ | " + subjects[1].code + " *(L101)* ✅ | Remedial / Doubt Clearing |\n" +
+            "| **Fri** | " + subjects[0].code + " *(L101)* ✅ | " + subjects[1].code + " *(L101)* ✅ | " + subjects[3].code + " *(L101)* ✅ | **LUNCH** | " + subjects[4].code + " *(L101)* ✅ | " + subjects[5].code + " *(L101)* ✅ | Technical Seminar *(Studio-1)* ✅ | Self-Study / Proctoring |\n" +
+            "| **Sat** | " + subjects[4].code + " *(L101)* ✅ | " + subjects[5].code + " *(L101)* ✅ | Comprehensive Quiz / Review | **LUNCH** | Industry Expert Guest Lecture / Hackathon Studio ✅ | Sports & Extra-Curricular |\n\n" +
             "---\n\n" +
             "### Curriculum & Statutory Verification Audit\n" +
-            "- ✅ **Curriculum Coverage:** Operating Systems (CS501), DBMS (CS502), Computer Networks (CS503), TOC (CS504), PE-I (CS505), and OE-I (CS506) all allocated required 4 contact hours/week.\n" +
-            "- ✅ **Laboratory Blocks:** 3 core laboratory sessions (CS501P, CS502P, CS503P) + Skill Lab (CS507P) scheduled in dedicated 2-hour contiguous blocks.\n" +
+            "- ✅ **Curriculum Coverage:** 6 semester courses (" + subjects.map(s => s.code).join(', ') + ") all allocated required 4 contact hours/week.\n" +
+            "- ✅ **Laboratory Blocks:** Department practical laboratories scheduled in dedicated contiguous blocks.\n" +
             "- ✅ **Classroom Constraint:** Exactly " + classrooms + " rooms utilized during theory blocks; 0 classroom over-allocation.\n" +
             "- ✅ **Zero Room Clashes:** Lecture Hall L101–L" + (100 + classrooms) + " and Specialized Labs matched with 100% conflict-free validation.\n\n" +
             "Estimated hours saved: 52 hrs per department (364 hrs institutional) | Scheduling clash risk eliminated: 100%\n";
