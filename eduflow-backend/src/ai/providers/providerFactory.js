@@ -103,7 +103,7 @@ export class MockProvider extends BaseProvider {
       'finanace': 'finance', 'finace': 'finance', 'finanec': 'finance', 'finacial': 'financial', 'financail': 'financial',
       'feee': 'fee', 'feees': 'fees', 'fe': 'fee',
       'reconcil': 'reconcile', 'reconsile': 'reconcile', 'reconcilation': 'reconciliation', 'reconsilation': 'reconciliation',
-      'defulter': 'defaulter', 'defaluter': 'defaulter', 'defaulters': 'defaulter', 'defalut': 'default',
+      'defulter': 'defaulter', 'defaluter': 'defaulter', 'defalut': 'default',
       'scholorship': 'scholarship', 'scholaship': 'scholarship', 'scholarshipp': 'scholarship',
       'transcation': 'transaction', 'transacation': 'transaction', 'transation': 'transaction', 'trasaction': 'transaction',
       'challan': 'challan', 'chalan': 'challan', 'challaan': 'challan',
@@ -116,7 +116,7 @@ export class MockProvider extends BaseProvider {
       'drop-out': 'dropout', 'dropouts': 'dropout', 'dropuot': 'dropout',
       'intervenion': 'intervention', 'intervetion': 'intervention', 'intervantion': 'intervention',
       'remediaton': 'remediation', 'remedation': 'remediation', 'remedial': 'remedial',
-      'baclog': 'backlog', 'backlogs': 'backlogs', 'baklog': 'backlog',
+      'baclog': 'backlog', 'baklog': 'backlog',
       'performence': 'performance', 'preformance': 'performance', 'perforamnce': 'performance',
       'counselor': 'counselor', 'councellor': 'counselor', 'menter': 'mentor', 'mentorshp': 'mentorship',
 
@@ -495,10 +495,13 @@ All intake figures conform to official Council approvals and institutional recor
       const isAdmissions = isAdmissionsPersona || (!isFinancePersona && !isStudentSuccessPersona && !isTimetablePersona && (
         userLower.includes('admission')
         || userLower.includes('applicant')
+        || userLower.includes('application')
         || userLower.includes('funnel')
         || userLower.includes('yield')
         || userLower.includes('lead scoring')
         || userLower.includes('enrollment')
+        || userLower.includes('seat matrix')
+        || userLower.includes('counselling')
       ))
 
       const isFinance = isFinancePersona || (!isAdmissionsPersona && !isStudentSuccessPersona && !isTimetablePersona && (
@@ -522,6 +525,9 @@ All intake figures conform to official Council approvals and institutional recor
         || userLower.includes('attendance warning')
         || userLower.includes('backlog correlation')
         || (userLower.includes('student') && userLower.includes('risk'))
+        || (userLower.includes('student') && userLower.includes('attendance'))
+        || (userLower.includes('student') && userLower.includes('backlog'))
+        || userLower.includes('intervention plan')
       ))
 
       const isTimetable = isTimetablePersona || (!isAdmissionsPersona && !isFinancePersona && !isStudentSuccessPersona && (
@@ -537,6 +543,99 @@ All intake figures conform to official Council approvals and institutional recor
 
       // 1. Admissions Officer Domain
       if (isAdmissions) {
+        // ── Dynamic Missing-Data Diagnostic ──────────────────────────────────
+        const appsMatch = cleanPrompt.match(/(\d[\d,]*)\s*(?:applications?|applicants?|leads?|candidates?)/i)
+        const seatsMatch = cleanPrompt.match(/(\d[\d,]*)\s*(?:seats?|intake|sanctioned)/i)
+        const targetBranchMatch = cleanPrompt.match(/\b(cse|ece|me|mech|civil|eee|it|mba|mca|pharmacy|diploma|b\.?tech|b\.?e)\b/i)
+        const roundsMatch = cleanPrompt.match(/\b(round\s*[12]|round\s*one|round\s*two|mop[\s-]?up|spot\s*round|lateral\s*entry)\b/i)
+
+        const hasAdmissionsNumbers = appsMatch || seatsMatch
+        const hasBranchOrRound = targetBranchMatch || roundsMatch
+
+        // Numbers provided but branch/round omitted → diagnostic halt
+        if (hasAdmissionsNumbers && !hasBranchOrRound) {
+          const apps  = appsMatch  ? parseInt(appsMatch[1].replace(/,/g,''))  : 450
+          const seats = seatsMatch ? parseInt(seatsMatch[1].replace(/,/g,'')) : 480
+          const selectivity     = (apps / seats * 100).toFixed(1)
+          const verifiedCount   = Math.round(apps * 0.844)
+          const projectedYield  = Math.round(seats * 0.915)
+          const fulfillmentPct  = (projectedYield / seats * 100).toFixed(1)
+          return `# Admissions Funnel Diagnostic — Partial Data Received
+**Academic Cycle:** 2026–2027 | **Data Status:** ⚠️ Incomplete — Branch & Round not specified
+
+---
+### Computed Admissions Arithmetic (from your inputs)
+
+| Parameter | Computed Value |
+|---|---|
+| **Total Applications Received** | ${apps.toLocaleString()} |
+| **Sanctioned Seat Intake** | ${seats.toLocaleString()} |
+| **Selectivity Ratio (Apps per Seat)** | ${selectivity}% |
+| **Verification Velocity (Automated)** | 84.4% → ${verifiedCount.toLocaleString()} candidates cleared |
+| **Projected Yield (91.5% fulfillment)** | ${projectedYield.toLocaleString()} confirmed seats (${fulfillmentPct}% intake fulfilment) |
+
+---
+### DIAGNOSTIC PAUSE — 3 Clarifications Needed
+
+**Question 1 — Target Academic Program & Branch:**
+(e.g., B.Tech CSE, B.Tech ECE, B.Tech Mechanical, B.Tech Civil, MBA, MCA, Diploma, Pharmacy, or All Branches Master Matrix)
+
+**Question 2 — Counseling Round Phase:**
+(Round 1 — General Merit, Round 2 — Waitlist Reallocation, Mop-Up / Spot Round, or Lateral Entry Round)
+
+**Question 3 — Quota Reservation Focus:**
+(State CET General Merit, JEE National Rank, Management/NRI Quota, SC/ST/OBC/EWS Category, or All Categories combined)
+
+Estimated hours saved after full data: 18 hrs | Projected yield gain post-analysis: +6.5%`
+        }
+
+        // Branch/round specified → targeted funnel breakdown
+        if (hasBranchOrRound) {
+          const branchRaw = targetBranchMatch ? targetBranchMatch[1].toUpperCase() : 'B.Tech'
+          const roundRaw  = roundsMatch ? roundsMatch[0].replace(/\s+/g,' ').trim() : 'Round 1'
+          const apps      = appsMatch  ? parseInt(appsMatch[1].replace(/,/g,''))  : 450
+          const seats     = seatsMatch ? parseInt(seatsMatch[1].replace(/,/g,'')) : 120
+          const verified     = Math.round(apps  * 0.844)
+          const allotted     = Math.round(seats * 0.96)
+          const feeDeposited = Math.round(allotted * 0.91)
+          const waitlist     = apps - verified
+          const yieldPct     = (feeDeposited / seats * 100).toFixed(1)
+          return `# ${branchRaw} Admissions Funnel — ${roundRaw} Breakdown
+**Academic Cycle:** 2026–2027 | **Program:** ${branchRaw} | **Round:** ${roundRaw}
+**Funnel Engine:** EduFlow Predictive Yield Model v2.1
+
+---
+### Admissions Funnel Pipeline
+
+| Stage | Volume | Conversion Rate | Status |
+|---|---|---|---|
+| **Applications Submitted** | ${apps.toLocaleString()} | 100% (Baseline) | ✅ Captured |
+| **Document Verification Cleared** | ${verified.toLocaleString()} | ${(verified/apps*100).toFixed(1)}% | ✅ Automated |
+| **Seats Allotted (${branchRaw})** | ${allotted} / ${seats} | ${(allotted/seats*100).toFixed(1)}% | ✅ Filled |
+| **Fee Deposited & Confirmed** | ${feeDeposited} | ${yieldPct}% yield | ✅ Confirmed |
+| **Waitlist / Carry-Forward** | ${waitlist.toLocaleString()} | — | ⏳ Next Round Queue |
+
+---
+### Quota & Category Seat Allocation Matrix
+
+| Category | Reserved Seats | Filled | Unfilled |
+|---|---|---|---|
+| **General Merit (Open)** | ${Math.round(seats*0.50)} | ${Math.round(seats*0.49)} | ${Math.round(seats*0.01)} |
+| **OBC (27%)** | ${Math.round(seats*0.27)} | ${Math.round(seats*0.26)} | ${Math.round(seats*0.01)} |
+| **SC (15%)** | ${Math.round(seats*0.15)} | ${Math.round(seats*0.14)} | ${Math.round(seats*0.01)} |
+| **ST (7.5%)** | ${Math.round(seats*0.075)} | ${Math.round(seats*0.07)} | 0 |
+| **EWS (10%)** | ${Math.round(seats*0.10)} | ${Math.round(seats*0.09)} | ${Math.round(seats*0.01)} |
+
+---
+### Automated Outreach Actions
+1. ${feeDeposited} personalized seat confirmation letters dispatched via email & WhatsApp.
+2. ${waitlist} waitlist candidates queued for next round automated notification.
+3. Merit scholarship eligibility auto-screened for top ${Math.round(verified*0.15)} verified applicants.
+
+Estimated hours saved: 18 hrs | Projected yield gain: +6.5%`
+        }
+
+        // Keyword-specific static responses ────────────────────────────────────
         if (userLower.includes('lead') || userLower.includes('priorit')) {
           return `# Admissions Lead Scoring & Prioritization Matrix
 **Academic Cycle:** 2026-2027 Academic Year | **Scoring Engine:** AI Predictive Lead Scorer v2.1
@@ -604,24 +703,127 @@ Estimated hours saved: 12 hrs | Conversion acceleration: +14%`
    - 120 personalized acceptance letters dispatched via automated email.
    - 45 high-intent scholarship candidates scheduled for Virtual Open Day.
 
-Estimated hours saved: 0.5 hrs | Administrative cost saved: ₹150`
+Estimated hours saved: 0.5 hrs | Administrative cost saved: Rs. 150`
       }
 
       // 2. Finance Officer Domain
       if (isFinance) {
+        // ── Dynamic Missing-Data Diagnostic ──────────────────────────────────
+        const expectedMatch = cleanPrompt.match(/(?:expected|billed|total\s*fees?|billing)\s*(?:of|:)?\s*(?:rs\.?|inr|rupees?)?\s*([\d,]+(?:\.\d+)?)\s*(?:lakhs?|lacs?|l)?/i)
+        const collectedMatch = cleanPrompt.match(/(?:collected|received|reconciled)\s*(?:rs\.?|inr|rupees?)?\s*([\d,]+(?:\.\d+)?)\s*(?:lakhs?|lacs?|l)?/i)
+        const arrearsMatch2 = cleanPrompt.match(/(?:arrears?|outstanding|overdue|pending)\s*(?:rs\.?|inr|rupees?)?\s*([\d,]+(?:\.\d+)?)\s*(?:lakhs?|lacs?|l)?/i)
+        const defaultersCountMatch = cleanPrompt.match(/(\d+)\s*(?:defaulters?|overdue\s*accounts?|students?\s*pending)/i)
+        const feeCategoryMatch = cleanPrompt.match(/\b(tuition|hostel|mess|transport|exam(?:ination)?|lab(?:oratory)?|library|caution\s*deposit)\b/i)
+        const agingPeriodMatch = cleanPrompt.match(/\b(31[\s-]?60|61[\s-]?90|over\s*90|>\s*90|60\+|90\+|critical\s*arrears?)\b/i)
+
+        const hasFinanceNumbers  = expectedMatch || collectedMatch || arrearsMatch2 || defaultersCountMatch
+        const hasFinanceContext  = feeCategoryMatch || agingPeriodMatch
+
+        const fmtRs = (n) => 'Rs. ' + Math.round(n).toLocaleString('en-IN')
+
+        if (hasFinanceNumbers && !hasFinanceContext) {
+          const isLakhs = (m) => m && /lakhs?|lacs?|\bl\b/i.test(m[0])
+          const toLong  = (raw, isL) => isL ? raw * 100000 : (raw < 10000 ? raw * 100000 : raw)
+          const eRaw    = expectedMatch  ? parseFloat(expectedMatch[1].replace(/,/g,''))  : 48
+          const cRaw    = collectedMatch ? parseFloat(collectedMatch[1].replace(/,/g,'')) : null
+          const expected  = toLong(eRaw, isLakhs(expectedMatch))
+          const collected = cRaw !== null ? toLong(cRaw, isLakhs(collectedMatch)) : expected * 0.885
+          const arrear    = expected - collected
+          const realPct   = (collected / expected * 100).toFixed(2)
+          const defCount  = defaultersCountMatch ? parseInt(defaultersCountMatch[1]) : Math.round(arrear / 15000)
+          const avgBal    = defCount > 0 ? Math.round(arrear / defCount) : 0
+          return `# Finance Ledger Diagnostic — Partial Data Received
+**Assessment Period:** 2026–2027 Academic Year | **Data Status:** ⚠️ Incomplete — Fee Category & Aging Period not specified
+
+---
+### Computed Financial Arithmetic (from your inputs)
+
+| Ledger Parameter | Computed Value |
+|---|---|
+| **Total Expected Billing** | ${fmtRs(expected)} |
+| **Reconciled Collections** | ${fmtRs(collected)} |
+| **Realization Rate** | ${realPct}% |
+| **Outstanding Arrears** | ${fmtRs(arrear)} |
+| **Estimated Defaulter Accounts** | ${defCount} student accounts |
+| **Average Outstanding per Defaulter** | ${fmtRs(avgBal)} |
+
+---
+### DIAGNOSTIC PAUSE — 3 Clarifications Needed
+
+**Question 1 — Target Fee Category:**
+(Tuition Fee, Hostel & Mess Fee, Transport Fee, Examination Fee, Laboratory Fee, Library Caution Deposit, or All Heads combined)
+
+**Question 2 — Aging Period Priority:**
+(1–30 days grace, 31–60 days formal notice, 61–90 days administrative hold, >90 days critical/legal notice)
+
+**Question 3 — Payment Channel under Audit:**
+(Online Gateway — Razorpay/Paytm/UPI, Bank Challan/NEFT/RTGS, Scholarship/Government Reimbursement, or All Channels)
+
+Estimated hours saved after full analysis: 8 hrs | Projected cash-flow recovery: ${fmtRs(arrear * 0.72)}`
+        }
+
+        // Fee category or aging period is specified → full reconciliation matrix
+        if (hasFinanceContext) {
+          const feeCategory = feeCategoryMatch ? feeCategoryMatch[1] : 'Tuition'
+          const agingLabel  = agingPeriodMatch  ? agingPeriodMatch[0].trim() : '31-60 Days'
+          const catCap = feeCategory.charAt(0).toUpperCase() + feeCategory.slice(1)
+          return `# ${catCap} Fee Reconciliation & ${agingLabel} Aging Report
+**Category:** ${catCap} Fee | **Aging Focus:** ${agingLabel} | **Engine:** EduFlow Finance Audit v3.1
+
+---
+### Financial Reconciliation Matrix
+
+| Metric | Value | Status |
+|---|---|---|
+| **Total Expected ${catCap} Billing** | Rs. 48,00,000 | Baseline |
+| **Reconciled Collections** | Rs. 42,50,000 | ✅ 88.5% realized |
+| **Outstanding Arrears** | Rs. 5,35,000 | ⚠️ 11.5% pending |
+| **Flagged Unmatched Transactions** | 3 entries (Rs. 38,500 total) | ❌ Under audit |
+
+---
+### Defaulter Aging Matrix
+
+| Aging Bucket | Accounts | Total Outstanding | Action Status |
+|---|---|---|---|
+| **1 - 30 Days (Grace Period)** | 32 students | Rs. 2,10,000 | SMS sent |
+| **31 - 60 Days (Formal Notice)** | 18 students | Rs. 1,45,000 | Email dispatched |
+| **> 60 Days (Critical Arrears)** | 14 students | Rs. 1,80,000 | HOD alert + parent call |
+
+---
+### Top Critical Defaulters (> 60 Days — ${catCap} Head)
+
+| Student | Roll No | Days Overdue | Amount | Recovery Action |
+|---|---|---|---|---|
+| Rajesh V. | CS-015 | 85 days | Rs. 25,000 | WhatsApp payment link sent |
+| Priya M. | EC-034 | 78 days | Rs. 20,000 | Installment plan agreed |
+| Suresh K. | ME-011 | 72 days | Rs. 20,000 | Scholarship adjustment pending |
+| Deepa N. | CS-092 | 70 days | Rs. 18,000 | Reminder notice acknowledged |
+| Vikram S. | EE-043 | 68 days | Rs. 15,000 | Guardian SMS dispatched |
+
+---
+### Automated Recovery Workflow
+- ✅ Tier 1 (1–30 days): WhatsApp + SMS reminders with UPI payment links.
+- ✅ Tier 2 (31–60 days): Formal email notice + proctor counseling appointment.
+- ✅ Tier 3 (>60 days): HOD escalation memo + parent guardian phone call queue.
+- ⏳ Legal Notice Template: Prepared for 3 accounts exceeding 90 days (pending Principal approval).
+
+Estimated hours saved: 8 hrs | Projected cash-flow recovery: Rs. 1,29,600`
+        }
+
+        // Keyword-specific static responses ────────────────────────────────────
         if (userLower.includes('unmatched') || userLower.includes('discrepan') || userLower.includes('gateway')) {
           return `# Unmatched Payment Discrepancy & Banking Audit
 **Period:** March 1 - March 20, 2026 | **Gateways:** Razorpay, HDFC Bank Portal, SBI Escrow
-**Reconciliation Status:** 3 Discrepancies Flagged (Totaling ₹38,500) ❌
+**Reconciliation Status:** 3 Discrepancies Flagged (Totaling Rs. 38,500) ❌
 
 ---
 ### Discrepancy Audit Log
 
 | Trans ID / UTR | Amount | Payment Mode | Identified Failure Driver | Resolution Action |
 |---|---|---|---|---|
-| \`UPI/608291039412\` | ₹15,000 | Razorpay UPI | Student Roll No omitted in UPI transaction remarks | Auto-matched to CS-042 via registered phone |
-| \`NEFT/AXIS8492019\` | ₹18,500 | Bank Challan | Partial semester tuition installment with fee discrepancy | Reconciled against Term-2 invoice split |
-| \`UPI/608299401294\` | ₹5,000 | PhonePe Gateway | Admission registration fee pending ERP ledger webhook sync | Forced webhook retry & updated ERP ledger |
+| \`UPI/608291039412\` | Rs. 15,000 | Razorpay UPI | Student Roll No omitted in UPI transaction remarks | Auto-matched to CS-042 via registered phone |
+| \`NEFT/AXIS8492019\` | Rs. 18,500 | Bank Challan | Partial semester tuition installment with fee discrepancy | Reconciled against Term-2 invoice split |
+| \`UPI/608299401294\` | Rs. 5,000 | PhonePe Gateway | Admission registration fee pending ERP ledger webhook sync | Forced webhook retry & updated ERP ledger |
 
 ---
 ### Automated Safeguards & Next Steps
@@ -634,24 +836,24 @@ Estimated hours saved: 6 hrs | Discrepancy resolution rate: 100%`
 
         if (userLower.includes('defaulter') || userLower.includes('arrear') || userLower.includes('reminder') || userLower.includes('over 60 days')) {
           return `# Fee Defaulter Aging Analysis & Automated Recovery Queue
-**Period:** March 2026 Assessment | **Total Overdue Arrears:** ₹1,80,000 across 14 Student Accounts
+**Period:** March 2026 Assessment | **Total Overdue Arrears:** Rs. 1,80,000 across 14 Student Accounts
 **Automated Action:** Multi-Tier Payment Reminders Dispatched
 
 ---
 ### Aging Breakdown Matrix
 
-- **1 - 30 Days Arrears:** ₹2,10,000 (32 student ledger accounts) — Friendly reminder SMS sent.
-- **31 - 60 Days Arrears:** ₹1,45,000 (18 student ledger accounts) — Formal email notice dispatched.
-- **>60 Days Critical Arrears:** ₹1,80,000 (14 student ledger accounts) — Parent call & HOD alert queued.
+- **1 - 30 Days Arrears:** Rs. 2,10,000 (32 student ledger accounts) — Friendly reminder SMS sent.
+- **31 - 60 Days Arrears:** Rs. 1,45,000 (18 student ledger accounts) — Formal email notice dispatched.
+- **>60 Days Critical Arrears:** Rs. 1,80,000 (14 student ledger accounts) — Parent call & HOD alert queued.
 
 ### Critical Defaulter Roster (>60 Days)
-1. **Rajesh V. (CS-015)** — ₹25,000 overdue (85 days) | Status: WhatsApp payment link sent.
-2. **Priya M. (EC-034)** — ₹20,000 overdue (78 days) | Status: Installment plan opted.
-3. **Suresh K. (ME-011)** — ₹20,000 overdue (72 days) | Status: Scholarship adjustment pending.
-4. **Deepa N. (CS-092)** — ₹18,000 overdue (70 days) | Status: Reminder notice acknowledged.
-5. **Vikram S. (EE-043)** — ₹15,000 overdue (68 days) | Status: SMS dispatched to guardian.
+1. **Rajesh V. (CS-015)** — Rs. 25,000 overdue (85 days) | Status: WhatsApp payment link sent.
+2. **Priya M. (EC-034)** — Rs. 20,000 overdue (78 days) | Status: Installment plan opted.
+3. **Suresh K. (ME-011)** — Rs. 20,000 overdue (72 days) | Status: Scholarship adjustment pending.
+4. **Deepa N. (CS-092)** — Rs. 18,000 overdue (70 days) | Status: Reminder notice acknowledged.
+5. **Vikram S. (EE-043)** — Rs. 15,000 overdue (68 days) | Status: SMS dispatched to guardian.
 
-Estimated hours saved: 8 hrs | Recovered cash flow: ₹1,20,000 projected`
+Estimated hours saved: 8 hrs | Recovered cash flow: Rs. 1,20,000 projected`
         }
 
         return `# Real-Time Fee Reconciliation & Bank Statement Audit
@@ -660,27 +862,122 @@ Estimated hours saved: 8 hrs | Recovered cash flow: ₹1,20,000 projected`
 
 ---
 ### Financial Reconciliation Summary
-- **Total Expected Fees (Term 2):** ₹48,00,000
-- **Total Reconciled Collections:** ₹42,50,000 (88.5% Complete) ✅
-- **Outstanding Arrears (Defaulters):** ₹1,80,000 (Across 14 student accounts) ⚠️
-- **Flagged Unmatched Transactions:** 3 UPI Transactions (Total: ₹38,500) ❌
+- **Total Expected Fees (Term 2):** Rs. 48,00,000
+- **Total Reconciled Collections:** Rs. 42,50,000 (88.5% Complete) ✅
+- **Outstanding Arrears (Defaulters):** Rs. 1,80,000 (Across 14 student accounts) ⚠️
+- **Flagged Unmatched Transactions:** 3 UPI Transactions (Total: Rs. 38,500) ❌
 
 ---
 ### Unmatched Transaction Audit
-1. \`UPI/608291039412/15000\` — ₹15,000 | Reference missing student Roll No.
-2. \`NEFT/AXIS8492019/18500\` — ₹18,500 | Partial semester payment, unmatched invoice.
-3. \`UPI/608299401294/5000\`  — ₹5,000  | Admission registration fee, pending ERP sync.
+1. \`UPI/608291039412/15000\` — Rs. 15,000 | Reference missing student Roll No.
+2. \`NEFT/AXIS8492019/18500\` — Rs. 18,500 | Partial semester payment, unmatched invoice.
+3. \`UPI/608299401294/5000\`  — Rs. 5,000  | Admission registration fee, pending ERP sync.
 
 ---
 ### Automated Actions Taken
 - ✅ Verified 342 fee receipts generated and synced to student accounts.
 - ✅ Automated SMS reminders queued for 14 fee defaulter accounts with payment links.
 
-Estimated hours saved: 4 hrs | Reconciled revenue saved: ₹3,200`
+Estimated hours saved: 4 hrs | Reconciled revenue saved: Rs. 3,200`
       }
 
       // 3. Student Success Officer Domain
       if (isStudentSuccess) {
+        // ── Dynamic Missing-Data Diagnostic ──────────────────────────────────
+        const studentsCountMatch = cleanPrompt.match(/(\d[\d,]*)\s*students?/i)
+        const attCutoffMatch2 = cleanPrompt.match(/(?:attendance|att\.?)\s*(?:below|<|cut[\s-]?off|threshold)?\s*(\d{2})%?/i)
+        const backlogsMatch2 = cleanPrompt.match(/(\d+)\s*(?:active\s*)?backlogs?/i)
+        const targetDeptMatch2 = cleanPrompt.match(/\b(cse|ece|me|mech|civil|eee|it|chem|biotech|pharmacy|mba|mca)\b/i)
+        const semMatch2 = cleanPrompt.match(/(?:sem(?:ester)?|year)\s*([1-8]|one|two|three|four|five|six|seven|eight)/i)
+
+        const hasStudentNumbers = studentsCountMatch || attCutoffMatch2 || backlogsMatch2
+        const hasStudentContext = targetDeptMatch2 || semMatch2
+
+        if (hasStudentNumbers && !hasStudentContext) {
+          const totalStudents = studentsCountMatch ? parseInt(studentsCountMatch[1].replace(/,/g,'')) : 1250
+          const attCutoff = attCutoffMatch2 ? parseInt(attCutoffMatch2[1]) : 75
+          const backlogs  = backlogsMatch2  ? parseInt(backlogsMatch2[1])  : 2
+          const atRiskCount  = Math.round(totalStudents * 0.18)
+          const highRisk     = Math.round(atRiskCount * 0.55)
+          const modRisk      = atRiskCount - highRisk
+          const roi = atRiskCount * 85000
+          return `# Student Success Diagnostic — Partial Data Received
+**Cohort Scope:** ${totalStudents.toLocaleString()} Students | **Data Status:** ⚠️ Incomplete — Department & Semester not specified
+
+---
+### Computed Risk Arithmetic (from your inputs)
+
+| Statistical Parameter | Computed Value |
+|---|---|
+| **Total Scanned Cohort** | ${totalStudents.toLocaleString()} students |
+| **At-Risk Threshold** | Attendance < ${attCutoff}% OR ${backlogs}+ active backlogs |
+| **Statistical At-Risk Volume** | ~${atRiskCount} students (~18% of cohort) |
+| **High Risk (Score 70–100)** | ~${highRisk} students — Mandatory HOD & parent intervention |
+| **Moderate Risk (Score 40–69)** | ~${modRisk} students — Peer mentor & remedial coaching |
+| **Tuition Preservation ROI** | Rs. ${roi.toLocaleString()} (at Rs. 85,000/student retained) |
+
+---
+### DIAGNOSTIC PAUSE — 3 Clarifications Needed
+
+**Question 1 — Target Department & Semester:**
+(e.g., CSE Semester 4, ECE Semester 6, ME Semester 2, Civil Semester 5, or All Departments combined)
+
+**Question 2 — Risk Evaluation Benchmark:**
+(Biometric Attendance < ${attCutoff}%, Active Backlogs >= ${backlogs}, IA score drop > 20%, or Composite multi-factor score)
+
+**Question 3 — Intervention Roadmap Level:**
+(Tier 1: Automated SMS & peer mentor alerts, Tier 2: Faculty proctor remedial classes, Tier 3: HOD escalation & parent conferences)
+
+Estimated hours saved after full data: 14 hrs | Projected retention value: Rs. ${roi.toLocaleString()}`
+        }
+
+        // Department/semester specified → targeted at-risk roster
+        if (hasStudentContext) {
+          const dept2    = targetDeptMatch2 ? targetDeptMatch2[1].toUpperCase() : 'CSE'
+          const semRaw   = semMatch2 ? semMatch2[1] : '4'
+          const semLabel = semRaw.match(/\d/) ? `Semester ${semRaw}` : `Semester ${['one','two','three','four','five','six','seven','eight'].indexOf(semRaw.toLowerCase())+1}`
+          const totals   = studentsCountMatch ? parseInt(studentsCountMatch[1].replace(/,/g,'')) : 240
+          const atCut    = attCutoffMatch2 ? parseInt(attCutoffMatch2[1]) : 75
+          const atRisk2  = Math.round(totals * 0.18)
+          return `# ${dept2} ${semLabel} — At-Risk Roster & 14-Day Recovery Plan
+**Department:** ${dept2} | **${semLabel}** | **Cohort:** ${totals.toLocaleString()} Students
+**Analysis Engine:** EduFlow Predictive Risk Model v2.4 | **Threshold:** Attendance < ${atCut}%
+
+---
+### Risk Stratification Matrix
+
+| Risk Band | Count | Primary Driver | Intervention Tier |
+|---|---|---|---|
+| **High Risk (Score 70–100)** 🔴 | ${Math.round(atRisk2*0.55)} students | Attendance < 60% + 3+ backlogs | Tier 3: HOD + Parent Conference |
+| **Moderate Risk (Score 40–69)** ⚠️ | ${Math.round(atRisk2*0.45)} students | Attendance 60–${atCut}% + 1-2 backlogs | Tier 2: Remedial coaching |
+| **Low Risk (Score 0–39)** ✅ | ${totals - atRisk2} students | Standard attendance | Tier 1: Routine monitoring |
+
+---
+### High-Risk Student Roster (${dept2} ${semLabel})
+
+| Student Name | Roll No | Attendance | Backlogs | Risk Score | Assigned Mentor |
+|---|---|---|---|---|---|
+| **Rahul Sharma** | ${dept2}-042 | 48% 🔴 | 4 | 88/100 | Dr. S. K. Murthy |
+| **Pooja Verma** | ${dept2}-019 | 54% 🔴 | 3 | 82/100 | Prof. N. Shweta |
+| **Karthik Nair** | ${dept2}-031 | 58% 🔴 | 3 | 78/100 | Dr. H. Rajesh |
+| **Sneha Patel** | ${dept2}-088 | 61% ⚠️ | 2 | 65/100 | Prof. V. Ananya |
+| **Amit Kumar** | ${dept2}-012 | 63% ⚠️ | 2 | 61/100 | Dr. P. Ramesh |
+
+---
+### 14-Day Academic Recovery Protocol
+
+| Day | Action | Owner |
+|---|---|---|
+| **Day 1-2** | Automated SMS & WhatsApp alerts to students & parents | EduFlow Automation |
+| **Day 3-4** | Individual mentor counseling sessions booked | Faculty Proctors |
+| **Day 5-7** | Compulsory remedial doubt-clearing batches (daily 1 hr) | Dept. Coordinator |
+| **Day 8-10** | Mid-recovery check — attendance & IA re-assessment | HOD Review |
+| **Day 11-14** | Parent-teacher conference for unresolved High-Risk cases | Principal / Dean |
+
+Estimated hours saved: 14 hrs | Projected retention value: Rs. ${(atRisk2*85000).toLocaleString()}`
+        }
+
+        // Keyword-specific static responses ────────────────────────────────────
         if (userLower.includes('mentor') || userLower.includes('remediat') || userLower.includes('intervention plan')) {
           return `# Student Success: Mentor Remediation & Academic Recovery Roadmap
 **Target Cohort:** 12 Flagged At-Risk Students | **Faculty Mentors Assigned:** 6 Senior Mentors
@@ -703,7 +1000,7 @@ Estimated hours saved: 4 hrs | Reconciled revenue saved: ₹3,200`
 - ✅ Weekly mentor-mentee check-in logs registered into ERP portal.
 - 14-day progress audit scheduled for next Academic Review Board.
 
-Estimated hours saved: 14 hrs | Projected retention value: ₹7,50,000`
+Estimated hours saved: 14 hrs | Projected retention value: Rs. 7,50,000`
         }
 
         if (userLower.includes('attendance') || userLower.includes('backlog') || userLower.includes('correlation')) {
@@ -719,12 +1016,12 @@ Estimated hours saved: 14 hrs | Projected retention value: ₹7,50,000`
 | **> 85% (Exemplary)** | 780 students | 8.42 | 0.08 backlogs/student | 1.0x (Baseline - Safe) |
 | **75% - 84% (Standard)** | 340 students | 7.35 | 0.42 backlogs/student | 1.4x (Low Risk) |
 | **65% - 74% (Borderline)** | 85 students | 6.15 | 1.85 backlogs/student | 3.8x (Moderate Risk) |
-| **< 65% (Critical Arrears)** | 45 students | 5.20 | 3.40 backlogs/student | 8.6x (Severe Risk 🔴) |
+| **< 65% (Critical)** | 45 students | 5.20 | 3.40 backlogs/student | 8.6x (Severe Risk 🔴) |
 
 ---
 ### Key Audit Takeaways
 1. **Strong Incline Point:** When biometric attendance drops below 68%, probability of 2+ course backlogs rises by 340%.
-2. **Early Predictor:** 82% of students with active backlogs had recorded attendance < 60% within the first 4 weeks of the semester.
+2. **Early Predictor:** 82% of students with active backlogs had recorded attendance < 60% within the first 4 weeks of semester.
 3. **Corrective Directives:** Immediate bi-weekly attendance thresholds enforced across all engineering departments.
 
 Estimated hours saved: 16 hrs | Academic audit time preserved: 3 days`
@@ -732,7 +1029,7 @@ Estimated hours saved: 16 hrs | Academic audit time preserved: 3 days`
 
         return `# Institutional Dropout Risk & Early Warning Assessment
 **Cohort:** B.Tech Semester 4 (All Departments)
-**High-Risk Threshold:** Score ≥ 66 | **Analysis Engine:** EduFlow Predictive Model v2.4
+**High-Risk Threshold:** Score >= 66 | **Analysis Engine:** EduFlow Predictive Model v2.4
 
 ---
 ### Executive Summary
@@ -759,7 +1056,7 @@ Estimated hours saved: 16 hrs | Academic audit time preserved: 3 days`
 - ✅ Automated SMS & WhatsApp alerts queued to designated faculty mentors.
 - ✅ 14-day attendance recovery plan generated for all 12 flagged students.
 
-Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`
+Estimated hours saved: 10 hrs | Retention value: Rs. 6,00,000`
       }
 
       // 4. Timetable Officer Domain
