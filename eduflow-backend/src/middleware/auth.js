@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
+export const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
 
 export function authMiddleware(req, res, next) {
   // Demo lockdown emergency secret bypass: allows admin tools & reset with ?secret=eduflow2026

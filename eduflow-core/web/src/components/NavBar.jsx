@@ -92,7 +92,7 @@ export default function NavBar({ routes, onMenuClick }) {
       boxShadow: isDark ? '0 8px 32px rgba(2,6,23,0.5)' : '0 4px 24px rgba(15,23,42,0.06)',
       position: 'sticky',
       top: 0,
-      zIndex: 1030,
+      zIndex: 1060,
       height: 64,
     }}>
       <div className="container-fluid px-3 px-lg-4" style={{ height: '100%' }}>

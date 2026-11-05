@@ -189,11 +189,11 @@ export function createAdminRouter() {
         if (cat === 'Security') {
           query += ` AND a.action LIKE 'AUTH_%'`
         } else if (cat === 'Officers') {
-          query += ` AND a.action LIKE 'OFFICER_%'`
+          query += ` AND (a.action LIKE 'OFFICER_%' OR a.action LIKE '%_STREAMED' OR a.action LIKE 'ACCREDITATION_%' OR a.action LIKE 'RISK_PREDICTION_%' OR a.action LIKE 'TIMETABLE_%' OR a.action LIKE 'ADMISSION_YIELD_%' OR a.action LIKE 'FINANCE_RECONCILED%')`
         } else if (cat === 'Academics') {
-          query += ` AND (a.action LIKE 'ACAD_%' OR a.action LIKE 'ATTEND_%' OR a.action LIKE 'TIMETABLE_%')`
+          query += ` AND (a.action LIKE 'ACAD_%' OR a.action LIKE 'ATTEND_%')`
         } else if (cat === 'System') {
-          query += ` AND a.action NOT LIKE 'AUTH_%' AND a.action NOT LIKE 'OFFICER_%'`
+          query += ` AND a.action NOT LIKE 'AUTH_%' AND a.action NOT LIKE 'OFFICER_%' AND a.action NOT LIKE '%_STREAMED'`
         }
       }
 
@@ -205,8 +205,16 @@ export function createAdminRouter() {
       const logs = result.rows.map(row => {
         let category = 'System'
         if (row.action.startsWith('AUTH_')) category = 'Security'
-        else if (row.action.startsWith('OFFICER_')) category = 'Officers'
-        else if (row.action.startsWith('ACAD_') || row.action.startsWith('ATTEND_') || row.action.startsWith('TIMETABLE_')) category = 'Academics'
+        else if (
+          row.action.startsWith('OFFICER_') ||
+          row.action.endsWith('_STREAMED') ||
+          row.action.startsWith('ACCREDITATION_') ||
+          row.action.startsWith('RISK_PREDICTION_') ||
+          row.action.startsWith('TIMETABLE_') ||
+          row.action.startsWith('ADMISSION_') ||
+          row.action.startsWith('FINANCE_RECONCILED')
+        ) category = 'Officers'
+        else if (row.action.startsWith('ACAD_') || row.action.startsWith('ATTEND_')) category = 'Academics'
 
         let status = 'success'
         if (row.action === 'AUTH_LOGIN_FAILED' || row.action.endsWith('_FAILED') || row.action.endsWith('_ERROR')) status = 'failed'

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Send, Download, Copy, Check, Share2, Mail,
   Paperclip, X, ChevronDown, ChevronUp, Clock, FileJson,
@@ -130,7 +130,14 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   };
 
   const [messages, setMessages] = useState([]);
-  const [inputValue, setInputValue] = useState('');
+  const [searchParams] = useSearchParams();
+  const [inputValue, setInputValue] = useState(() => {
+    try {
+      return searchParams?.get('prompt') || '';
+    } catch {
+      return '';
+    }
+  });
   const [copied, setCopied] = useState(null); // null | 'clipboard' | 'copy-btn'
   const [uploadedFile, setUploadedFile] = useState(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState(null);
@@ -155,7 +162,13 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
   };
 
   const [showWhyThis, setShowWhyThis] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(() => {
+    try {
+      return searchParams?.get('history') === 'open';
+    } catch {
+      return false;
+    }
+  });
   const [sessionHistory, setSessionHistory] = useState(() => {
     try {
       const saved = localStorage.getItem(`officer_history_${type || 'default'}`);

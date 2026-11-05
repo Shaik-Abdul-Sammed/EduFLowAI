@@ -1,180 +1,427 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  Brain,
+  ShieldCheck,
+  Calendar,
+  Users,
+  Award,
+  BookOpen,
+  Sparkles,
+  Zap,
+  Clock,
+  CheckCircle2,
+  Lock,
+  ArrowRight,
+  TrendingUp,
+  FileText,
+  BellRing,
+  HeartHandshake,
+  Layers,
+  ChevronRight,
+  Cpu,
+} from 'lucide-react'
 import { LazyMotionDiv } from '../../components/LazyMotion'
 
 export default function AboutPage() {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('officers')
 
-  const institutionInfo = {
-    overview: {
-      title: 'About EduFlow Institution',
-      icon: '🏫',
-      content: [
-        'EduFlow is a premier educational institution dedicated to fostering academic excellence and holistic development of students.',
-        'Established with a vision to create a community of learners, we combine traditional educational values with modern pedagogical approaches.',
-        'Our institution serves over 2,000+ students across various academic streams and programs.'
-      ]
+  const officers = [
+    {
+      id: 'accreditation',
+      title: 'AI Accreditation Officer',
+      badge: 'NAAC / NBA / NIRF',
+      color: '#3B82F6',
+      icon: Award,
+      summary: 'Automates institutional SSR data gathering, criteria gap analysis, and binary accreditation scoring.',
+      capabilities: [
+        'Metric-level SSR evaluation across all 7 NAAC criteria',
+        'Real-time Student-Faculty Ratio (SFR target ≤ 15:1) auditing',
+        'NIRF TLR, RPC, and GO percentile optimization projections',
+        'Automated documentation discrepancy detection and remediation checklists',
+      ],
+      impact: 'Saves 95+ hours and ₹2,40,000 in external consulting fees per cycle',
     },
-    mission: {
-      title: 'Mission & Vision',
-      icon: '🎯',
-      content: [
-        'Mission: To provide quality education that develops critical thinking, creativity, and compassion in our students.',
-        'Vision: To be a beacon of educational excellence, creating responsible global citizens equipped for the challenges of tomorrow.',
-        'Values: Integrity, Excellence, Innovation, Inclusivity, and Sustainability'
-      ]
+    {
+      id: 'timetable',
+      title: 'AI Timetable Officer',
+      badge: 'Operations Research & AICTE',
+      color: '#10B981',
+      icon: Calendar,
+      summary: 'Constraint satisfaction engine that synthesizes conflict-free master academic timetables in seconds.',
+      capabilities: [
+        'Enforces AICTE faculty contact hour ceilings (Max 16–18 hrs/week for Assistant Professors)',
+        'Zero room clashes across 120+ lecture halls and 45+ specialized computing laboratories',
+        'Contiguous 2–3 hour practical laboratory allocations with assigned technicians',
+        'Dynamic synchronization with State Gazetted holiday calendars and compensatory Saturdays',
+      ],
+      impact: 'Eliminates 40–60 hours of departmental scheduling conflicts each semester',
     },
-    academics: {
-      title: 'Academic Programs',
-      icon: '📚',
-      content: [
-        'MPC (Mathematics, Physics, Chemistry) - Science stream for engineering aspirants',
-        'BIPC (Biology, Physics, Chemistry) - Science stream for medical aspirants',
-        'MBIPC (Mathematics, Biology, Physics, Chemistry) - Combined science stream',
-        'Competitive exam coaching for JEE Mains, NEET, and other national level exams'
-      ]
+    {
+      id: 'admissions',
+      title: 'AI Admission Officer',
+      badge: 'Predictive Yield & Funnel',
+      color: '#8B5CF6',
+      icon: TrendingUp,
+      summary: 'Scores incoming applicant leads, predicts enrollment yields, and automates counseling communications.',
+      capabilities: [
+        'Predictive yield modeling based on entrance rank (JEE/State CET) and category quotas',
+        'Automated applicant follow-up queues via WhatsApp API and email',
+        'Demographic enrollment density analysis and targeted scholarship outreach',
+        'Seat matrix optimization balancing core engineering and emerging tech branches',
+      ],
+      impact: 'Boosts conversion velocity by +14% and accelerates document verification turnaround',
     },
-    facilities: {
-      title: 'Facilities & Infrastructure',
-      icon: '🏛️',
-      content: [
-        '🔬 Advanced science laboratories with modern equipment',
-        '🖥️ Computer labs with high-speed internet connectivity',
-        '📖 Well-stocked library with 10,000+ books and digital resources',
-        '🏃 Sports complex with facilities for cricket, badminton, basketball, and more',
-        '🏥 Medical room with qualified healthcare staff',
-        '🏨 Hostel facilities for both boys and girls',
-        '🍽️ Nutritious meals provided at the cafeteria'
-      ]
+    {
+      id: 'finance',
+      title: 'AI Finance Officer',
+      badge: 'UPI & Ledger Audit',
+      color: '#F59E0B',
+      icon: FileText,
+      summary: 'Instant automated reconciliation for multi-gateway fee collections, bank deposits, and defaulter aging.',
+      capabilities: [
+        'Multi-gateway reconciliation matching UPI, NEFT/RTGS, and challans against ERP ledgers',
+        'Immediate discrepancy auditing flagging duplicate UTR numbers and missing student references',
+        'Defaulter aging analysis with graduated recovery notices (1–30, 31–60, 61–90+ days)',
+        'Statutory GST validation and CAG-compliant audit trail exports',
+      ],
+      impact: 'Reduces fee reconciliation from days to seconds with 100% audit accuracy',
     },
-    achievements: {
-      title: 'Achievements & Accolades',
-      icon: '🏆',
-      content: [
-        '95%+ success rate in competitive exams over the past 5 years',
-        'Ranked among top 50 educational institutions in the region',
-        '500+ students enrolled in premier colleges and universities',
-        'Faculty recognition from national education bodies',
-        '100% digital classroom infrastructure',
-        'Awards for excellence in STEM education and innovation'
-      ]
+    {
+      id: 'student-success',
+      title: 'AI Student Success Officer',
+      badge: 'Retention & Intervention',
+      color: '#EC4899',
+      icon: HeartHandshake,
+      summary: 'Identifies academically at-risk students early, orchestrating mentor interventions and parent alerts.',
+      capabilities: [
+        'Early dropout trajectory prediction combining attendance velocity and quiz scores',
+        'Automated GuardianWatch escalation when attendance drops below the 75% statutory threshold',
+        'Personalized student remedial study plans tailored to specific subject backlogs',
+        'Proctor-student 1-on-1 counseling scheduling and intervention progress tracking',
+      ],
+      impact: 'Protects student retention, improving graduation rates and academic morale',
     },
-    contact: {
-      title: 'Get In Touch',
-      icon: '📞',
-      content: [
-          'Address: EduFlow Educational Complex, Hyderabad, Telangana',
-        'Phone: +91-40-XXXX-XXXX',
-        'Email: info@eduflow.edu.in',
-        'Hours: Monday - Saturday: 8:00 AM - 6:00 PM',
-        'Visit our campus for a guided tour and counseling session'
-      ]
-    }
-  }
+  ]
 
-  const tabs = ['overview', 'mission', 'academics', 'facilities', 'achievements', 'contact']
+  const regulatoryNorms = [
+    {
+      title: 'AICTE Workload Ceiling',
+      norm: 'Max 16–18 Contact Hrs/Week',
+      description: 'Guarantees junior and senior faculty are protected from burnout with balanced lecture and lab allocations.',
+      icon: Cpu,
+    },
+    {
+      title: 'UGC NEP-2020 Compliance',
+      norm: '≥ 90 Instructional Days/Sem',
+      description: 'Automatically shifts holidays and inserts compensatory Saturdays to ensure full curricular credit requirements.',
+      icon: BookOpen,
+    },
+    {
+      title: 'NAAC Binary Accreditation',
+      norm: 'Revised Metrics & Criteria 1-7',
+      description: 'Continuously measures institutional performance against revised binary accreditation benchmarks.',
+      icon: Award,
+    },
+    {
+      title: 'DPDP Act 2023 Sovereign Security',
+      norm: 'Indian Sovereign Data Storage',
+      description: '100% encrypted on-prem or MeitY-certified Indian cloud nodes with zero commercial telemetry or tracking.',
+      icon: ShieldCheck,
+    },
+  ]
+
+  const guardianWatchFeatures = [
+    {
+      title: 'Automated Attendance Shortage Warnings',
+      description: 'Instant WhatsApp and SMS dispatches to parents whenever student attendance dips below the statutory 75% cutoff.',
+      icon: BellRing,
+    },
+    {
+      title: 'AI-Generated Monthly Progress Reports',
+      description: 'Comprehensive, plain-language monthly PDF summaries highlighting subject grades, attendance trends, and teacher feedback.',
+      icon: FileText,
+    },
+    {
+      title: 'Two-Way Educator-Parent Channel',
+      description: 'Direct secure messaging portal between parents and designated faculty mentors for proactive problem-solving.',
+      icon: Users,
+    },
+    {
+      title: 'Parent Portal Verification',
+      description: 'Single-click guardian account authorization, linked directly to enrolled student profiles with audit trails.',
+      icon: Lock,
+    },
+  ]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', paddingTop: '2rem', paddingBottom: '3rem' }}>
-      {/* Navigation */}
-      <nav style={{ position: 'sticky', top: 0, background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(148,163,184,0.2)', zIndex: 100 }}>
-        <div className="container-fluid px-3 px-lg-4" style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
-          <a href="/entry" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <span style={{ fontSize: '1.4rem' }}>🏫</span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 800, background: 'linear-gradient(135deg,#2563EB,#06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EduFlow</span>
-          </a>
+    <div style={{ minHeight: '100vh', background: 'var(--app-bg, #071226)', color: 'var(--app-text, #f8fafc)' }}>
+      {/* Hero Section */}
+      <section style={{ padding: '4rem 1rem 3rem', background: 'linear-gradient(180deg, rgba(37,99,235,0.12) 0%, transparent 100%)' }}>
+        <div className="container text-center" style={{ maxWidth: '960px' }}>
+          <LazyMotionDiv>
+            <div className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-3" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#93c5fd', fontSize: '0.85rem', fontWeight: 600 }}>
+              <Sparkles size={15} /> EduFlow AI Operating System v2.4
+            </div>
+            <h1 className="display-4 fw-bold mb-3" style={{ letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              The Autonomous AI Operating System for <span style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #818cf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Higher Education</span>
+            </h1>
+            <p className="lead text-muted mb-4" style={{ fontSize: '1.15rem', lineHeight: 1.6, maxWidth: '780px', margin: '0 auto' }}>
+              EduFlow AI replaces fragmented legacy campus software with a coordinated swarm of 5 Autonomous AI Officers. From conflict-free timetable synthesis and statutory NAAC compliance to automated parent attendance alerts, EduFlow orchestrates institutional excellence.
+            </p>
+            <div className="d-flex flex-wrap justify-content-center gap-3">
+              <Link to="/officers-dashboard" className="btn btn-primary px-4 py-2.5 d-inline-flex align-items-center gap-2 shadow" style={{ borderRadius: '0.75rem', fontWeight: 600 }}>
+                Explore AI Officers Hub <ArrowRight size={16} />
+              </Link>
+              <Link to="/docs" className="btn btn-outline-secondary px-4 py-2.5 d-inline-flex align-items-center gap-2" style={{ borderRadius: '0.75rem', fontWeight: 600, color: 'var(--app-text)' }}>
+                <BookOpen size={16} /> Technical Documentation
+              </Link>
+            </div>
+          </LazyMotionDiv>
         </div>
-      </nav>
+      </section>
 
-      <div className="container py-5">
-        {/* Hero Section */}
-        <LazyMotionDiv style={{ textAlign: 'center', marginBottom: '3rem', color: 'white' }}>
-          <h1 style={{ fontSize: 'clamp(1.75rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2 }}>
-            About EduFlow Institution
-          </h1>
-          <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.7)', maxWidth: '600px', margin: '0 auto' }}>
-            Nurturing minds, shaping futures, transforming lives
-          </p>
-        </LazyMotionDiv>
-
-        {/* Tab Navigation */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: '2rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-          {tabs.map(tab => {
-            const info = institutionInfo[tab]
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '2rem',
-                  border: 'none',
-                  background: activeTab === tab ? 'linear-gradient(135deg,#2563EB,#06B6D4)' : 'rgba(148,163,184,0.1)',
-                  color: activeTab === tab ? 'white' : 'rgba(255,255,255,0.7)',
-                  fontWeight: activeTab === tab ? 700 : 600,
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease',
-                  boxShadow: activeTab === tab ? '0 4px 16px rgba(37,99,235,0.3)' : 'none'
-                }}
-              >
-                {info.icon} {info.title.split(' ')[0]}
-              </button>
-            )
-          })}
+      {/* Metrics Bar */}
+      <section className="py-4 border-top border-bottom" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(15,23,42,0.4)' }}>
+        <div className="container">
+          <div className="row g-4 text-center">
+            <div className="col-6 col-md-3">
+              <div className="h2 fw-bold text-primary mb-1">5</div>
+              <div className="small text-muted text-uppercase fw-semibold">Autonomous AI Officers</div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="h2 fw-bold text-success mb-1">100%</div>
+              <div className="small text-muted text-uppercase fw-semibold">UGC / AICTE Norm Compliant</div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="h2 fw-bold text-info mb-1">40–95 hrs</div>
+              <div className="small text-muted text-uppercase fw-semibold">Admin Time Saved / Dept</div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="h2 fw-bold text-warning mb-1">0 Clashes</div>
+              <div className="small text-muted text-uppercase fw-semibold">Mathematical Schedule Solvers</div>
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* Content Section */}
-        <LazyMotionDiv style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {tabs.map(tab => activeTab === tab && (
-            <div key={tab} style={{ animation: 'fadeInUp 0.3s ease' }}>
-              <div className="card border-0 shadow-lg" style={{ borderRadius: '1.5rem', background: 'rgba(30,41,59,0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(148,163,184,0.2)', overflow: 'hidden' }}>
-                <div style={{
-                  height: '4px',
-                  background: 'linear-gradient(90deg, #2563EB, #06B6D4)'
-                }} />
-                <div className="card-body p-5">
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1.5rem', color: 'white' }}>
-                    {institutionInfo[tab].icon} {institutionInfo[tab].title}
-                  </h2>
-                  <div style={{ display: 'grid', gap: '1rem' }}>
-                    {institutionInfo[tab].content.map((item, idx) => (
-                      <div key={idx} style={{
-                        padding: '1rem',
-                        borderLeft: '3px solid #2563EB',
-                        background: 'rgba(37,99,235,0.05)',
-                        borderRadius: '0.5rem'
-                      }}>
-                        <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', lineHeight: 1.6 }}>
-                          {item}
-                        </p>
+      {/* Interactive Tabs Section */}
+      <section className="py-5">
+        <div className="container" style={{ maxWidth: '1140px' }}>
+          {/* Tab Navigation */}
+          <div className="d-flex flex-wrap justify-content-center gap-2 mb-4 p-1.5 rounded-3 border" style={{ background: 'var(--card-bg, #0f172a)', borderColor: 'var(--border-color, rgba(148,163,184,0.15))' }}>
+            {[
+              { id: 'officers', label: '5 AI Officers', icon: Brain },
+              { id: 'statutory', label: 'Statutory Engines', icon: ShieldCheck },
+              { id: 'guardian', label: 'GuardianWatch Portal', icon: BellRing },
+              { id: 'impact', label: 'Societal & Institutional ROI', icon: Zap },
+              { id: 'architecture', label: 'System Architecture', icon: Layers },
+            ].map((tab) => {
+              const Icon = tab.icon
+              const active = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className="btn btn-sm d-flex align-items-center gap-2 px-3 py-2"
+                  style={{
+                    borderRadius: '0.5rem',
+                    fontWeight: active ? 700 : 500,
+                    background: active ? '#2563EB' : 'transparent',
+                    color: active ? '#ffffff' : 'var(--app-text-muted, #94a3b8)',
+                    border: 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Icon size={16} />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Tab 1: Officers */}
+          {activeTab === 'officers' && (
+            <div className="row g-4">
+              {officers.map((officer) => {
+                const Icon = officer.icon
+                return (
+                  <div key={officer.id} className="col-12 col-md-6 col-lg-4">
+                    <div className="card h-100 border p-4 shadow-sm" style={{ background: 'var(--card-bg, #0f172a)', borderColor: 'var(--border-color, rgba(148,163,184,0.18))', borderRadius: '1rem' }}>
+                      <div className="d-flex align-items-center justify-content-between mb-3">
+                        <div className="p-2.5 rounded-3 d-flex align-items-center justify-content-center" style={{ background: `${officer.color}20`, color: officer.color }}>
+                          <Icon size={24} />
+                        </div>
+                        <span className="badge border px-2.5 py-1 text-uppercase" style={{ borderColor: `${officer.color}50`, color: officer.color, fontSize: '0.68rem', fontWeight: 700 }}>
+                          {officer.badge}
+                        </span>
                       </div>
-                    ))}
+                      <h5 className="fw-bold mb-2">{officer.title}</h5>
+                      <p className="small text-muted mb-3" style={{ lineHeight: 1.5 }}>{officer.summary}</p>
+                      <div className="mb-3">
+                        <div className="small fw-bold text-uppercase text-muted mb-2" style={{ fontSize: '0.7rem' }}>Key Capabilities:</div>
+                        <ul className="list-unstyled mb-0 small" style={{ display: 'grid', gap: '0.4rem' }}>
+                          {officer.capabilities.map((cap, i) => (
+                            <li key={i} className="d-flex align-items-start gap-2" style={{ color: 'var(--app-text, #cbd5e1)' }}>
+                              <CheckCircle2 size={14} className="text-primary flex-shrink-0 mt-0.5" />
+                              <span>{cap}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-auto pt-3 border-top small" style={{ borderColor: 'rgba(255,255,255,0.08)', color: '#38bdf8' }}>
+                        ⚡ <strong>ROI:</strong> {officer.impact}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Tab 2: Statutory Engines */}
+          {activeTab === 'statutory' && (
+            <div className="row g-4">
+              <div className="col-12 mb-2 text-center">
+                <h3 className="fw-bold">Statutory & Regulatory Verification Engine</h3>
+                <p className="text-muted" style={{ maxWidth: '640px', margin: '0 auto' }}>
+                  EduFlow embeds official national regulatory frameworks directly into every algorithm, ensuring higher education leaders remain audit-ready 365 days a year.
+                </p>
+              </div>
+              {regulatoryNorms.map((norm, i) => {
+                const Icon = norm.icon
+                return (
+                  <div key={i} className="col-12 col-md-6">
+                    <div className="card h-100 p-4 border shadow-sm" style={{ background: 'var(--card-bg, #0f172a)', borderColor: 'var(--border-color, rgba(148,163,184,0.18))', borderRadius: '1rem' }}>
+                      <div className="d-flex align-items-center gap-3 mb-3">
+                        <div className="p-3 rounded-3 bg-primary bg-opacity-10 text-primary">
+                          <Icon size={24} />
+                        </div>
+                        <div>
+                          <h5 className="fw-bold mb-0">{norm.title}</h5>
+                          <span className="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 small">
+                            {norm.norm}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>{norm.description}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Tab 3: GuardianWatch Portal */}
+          {activeTab === 'guardian' && (
+            <div className="row g-4">
+              <div className="col-12 mb-2 text-center">
+                <h3 className="fw-bold">GuardianWatch Parent Engagement & Attendance Escrow</h3>
+                <p className="text-muted" style={{ maxWidth: '640px', margin: '0 auto' }}>
+                  Bridging the communication gap between educational institutions and families with real-time statutory attendance alerts and progress insights.
+                </p>
+              </div>
+              {guardianWatchFeatures.map((feat, i) => {
+                const Icon = feat.icon
+                return (
+                  <div key={i} className="col-12 col-md-6">
+                    <div className="card h-100 p-4 border shadow-sm" style={{ background: 'var(--card-bg, #0f172a)', borderColor: 'var(--border-color, rgba(148,163,184,0.18))', borderRadius: '1rem' }}>
+                      <div className="d-flex align-items-center gap-3 mb-2">
+                        <div className="p-2.5 rounded-3 bg-warning bg-opacity-10 text-warning">
+                          <Icon size={22} />
+                        </div>
+                        <h5 className="fw-bold mb-0">{feat.title}</h5>
+                      </div>
+                      <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>{feat.description}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Tab 4: Societal & Institutional ROI */}
+          {activeTab === 'impact' && (
+            <div className="card p-4 p-md-5 border shadow-sm" style={{ background: 'var(--card-bg, #0f172a)', borderColor: 'var(--border-color, rgba(148,163,184,0.18))', borderRadius: '1.25rem' }}>
+              <h3 className="fw-bold mb-3">Societal and Institutional Impact</h3>
+              <p className="text-muted mb-4" style={{ lineHeight: 1.7 }}>
+                Higher education institutions in India spend an estimated 2,000+ administrative hours per year manually generating timetables, reconciling fee receipts, chasing low-attendance students, and assembling accreditation files. EduFlow AI reclaims this time for educators, returning their energy to teaching, student mentorship, and world-class research.
+              </p>
+              <div className="row g-4">
+                <div className="col-12 col-md-4">
+                  <div className="p-3.5 rounded-3 border h-100" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h4 fw-bold text-primary mb-1">Zero Clashes</div>
+                    <p className="small text-muted mb-0">Constraint satisfaction guarantees 100% clash-free room, laboratory, and faculty contact scheduling.</p>
+                  </div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <div className="p-3.5 rounded-3 border h-100" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h4 fw-bold text-success mb-1">Instant Recovery</div>
+                    <p className="small text-muted mb-0">Automated UPI/NEFT reconciliation and defaulter aging reduces institutional revenue leakage by up to 92%.</p>
+                  </div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <div className="p-3.5 rounded-3 border h-100" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h4 fw-bold text-warning mb-1">Guardian Trust</div>
+                    <p className="small text-muted mb-0">Proactive attendance notifications prevent end-of-semester exam detentions and foster parent partnerships.</p>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
-        </LazyMotionDiv>
+          )}
 
-        {/* Call to Action */}
-        <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-          <div className="card border-0 shadow-lg" style={{ borderRadius: '1.5rem', background: 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(6,182,212,0.1))', border: '1px solid rgba(37,99,235,0.3)', maxWidth: '600px', margin: '0 auto', padding: '2rem' }}>
-            <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 700 }}>Ready to Join Us?</h3>
-            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '1.5rem' }}>
-              Take the first step towards your academic excellence journey
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="/entry" className="btn" style={{ background: 'linear-gradient(135deg,#2563EB,#06B6D4)', color: 'white', border: 'none', fontWeight: 700, borderRadius: '0.875rem', padding: '0.7rem 1.5rem', textDecoration: 'none' }}>
-                📖 Explore Roles
-              </a>
-              <a href="mailto:info@eduflow.edu.in" className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700, borderRadius: '0.875rem', padding: '0.7rem 1.5rem', textDecoration: 'none' }}>
-                📧 Contact Us
-              </a>
+          {/* Tab 5: Architecture */}
+          {activeTab === 'architecture' && (
+            <div className="card p-4 p-md-5 border shadow-sm" style={{ background: 'var(--card-bg, #0f172a)', borderColor: 'var(--border-color, rgba(148,163,184,0.18))', borderRadius: '1.25rem' }}>
+              <h3 className="fw-bold mb-3">Enterprise System Architecture & Data Sovereignty</h3>
+              <p className="text-muted mb-4" style={{ lineHeight: 1.7 }}>
+                EduFlow AI is engineered for mission-critical institutional uptime with a dual-pipeline AI architecture, robust in-memory database caching, and complete compliance with Indian data sovereignty laws.
+              </p>
+              <div className="row g-4">
+                <div className="col-12 col-md-6">
+                  <h6 className="fw-bold text-primary text-uppercase small mb-2">Dual-Engine AI Inference Pipeline</h6>
+                  <p className="small text-muted mb-3" style={{ lineHeight: 1.6 }}>
+                    Live requests route to frontier LLMs (Gemini / Claude / OpenAI) with strict context injection. If cloud connectivity is disrupted, EduFlow seamlessly engages local deterministic solvers and rule-based fallback engines without service disruption.
+                  </p>
+                  <h6 className="fw-bold text-primary text-uppercase small mb-2">PostgreSQL & In-Memory Pool</h6>
+                  <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>
+                    Backed by hardened PostgreSQL schemas with automated memory fallback mode, guaranteeing instant recovery and flawless demonstration continuity.
+                  </p>
+                </div>
+                <div className="col-12 col-md-6">
+                  <h6 className="fw-bold text-success text-uppercase small mb-2">DPDP Act 2023 & Indian Data Sovereignty</h6>
+                  <p className="small text-muted mb-3" style={{ lineHeight: 1.6 }}>
+                    All student, parent, and institutional ledger records reside in MeitY-certified sovereign Indian cloud zones with AES-256 encryption at rest and TLS 1.3 in transit.
+                  </p>
+                  <h6 className="fw-bold text-success text-uppercase small mb-2">Granular Role-Based Access Control</h6>
+                  <p className="small text-muted mb-0" style={{ lineHeight: 1.6 }}>
+                    Distinct authorized security perimeters for System Administrators, Academic Deans, HODs, Faculty Members, Students, and Guardians.
+                  </p>
+                </div>
+              </div>
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section className="py-5 border-top" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'linear-gradient(180deg, transparent 0%, rgba(37,99,235,0.08) 100%)' }}>
+        <div className="container text-center" style={{ maxWidth: '720px' }}>
+          <h3 className="fw-bold mb-3">Ready to transform your institution?</h3>
+          <p className="text-muted mb-4">
+            Join forward-thinking colleges across India automating their academic operations and regulatory accreditation.
+          </p>
+          <div className="d-flex flex-wrap justify-content-center gap-3">
+            <Link to="/officers-dashboard" className="btn btn-primary px-4 py-2.5 shadow" style={{ borderRadius: '0.75rem', fontWeight: 600 }}>
+              Launch AI Officers Dashboard
+            </Link>
+            <Link to="/attendance-intelligence" className="btn btn-outline-secondary px-4 py-2.5" style={{ borderRadius: '0.75rem', fontWeight: 600, color: 'var(--app-text)' }}>
+              Explore Attendance Intelligence
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

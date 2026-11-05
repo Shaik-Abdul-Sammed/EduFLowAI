@@ -206,7 +206,8 @@ export default function AcademicCalendarPage() {
     yearStr = selectedYear,
     daysRequired = totalWorkingDaysRequired,
     startStr = collegeStartDate,
-    endStr = collegeEndDate
+    endStr = collegeEndDate,
+    currentState = selectedState
   ) => {
     const yStart = parseInt(String(yearStr).split('-')[0], 10) || 2026
     const yEnd = yStart + 1
@@ -215,18 +216,25 @@ export default function AcademicCalendarPage() {
     const eStart = `${yEnd}-01-05`
     const eEnd = `${yEnd}-04-30`
 
+    const computedHols = getHolidaysForAcademicYear(yStart, currentState, customOptionalHolidays)
+    setHolidays(computedHols)
+    setDiagnosisReport(runHolidayDiagnosis(yearStr, currentState))
+
     const workingDays = Math.max(75, Number(daysRequired) || 92)
 
     setCalendarData({
       id: 1,
       academic_year: yearStr,
+      stateCode: currentState,
       status: 'DRAFT',
       total_working_days: workingDays * 2,
-      total_holidays: 28,
+      total_holidays: computedHols.length,
+      holidays: computedHols,
       oddSemester: {
         name: `Odd Semester (Term I ${yStart})`,
         startDate: oStart,
         endDate: oEnd,
+        totalWorkingDays: workingDays,
         workingDays: workingDays,
         midExams: `${yStart}-09-14 to ${yStart}-09-19`,
         labExams: `${yStart}-11-10 to ${yStart}-11-15`,
@@ -236,6 +244,7 @@ export default function AcademicCalendarPage() {
         name: `Even Semester (Term II ${yEnd})`,
         startDate: eStart,
         endDate: eEnd,
+        totalWorkingDays: workingDays,
         workingDays: workingDays,
         midExams: `${yEnd}-02-15 to ${yEnd}-02-20`,
         labExams: `${yEnd}-04-10 to ${yEnd}-04-15`,
@@ -269,13 +278,16 @@ export default function AcademicCalendarPage() {
           setCalendarData(data.calendar)
           setEvents(data.events || data.calendar.events || [])
           setAdjustments(data.adjustments || [])
+          if (data.calendar.holidays) {
+            setHolidays(data.calendar.holidays)
+          }
           return
         }
       }
       // Demo fallback if backend has no saved calendar yet
-      if (isMounted) loadDefaultCalendar(selectedYear)
+      if (isMounted) loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate, selectedState)
     } catch {
-      if (isMounted) loadDefaultCalendar(selectedYear)
+      if (isMounted) loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate, selectedState)
     }
   }
 
@@ -413,13 +425,17 @@ export default function AcademicCalendarPage() {
         if (data.calendar?.events) {
           setEvents(data.calendar.events)
         }
-        addToast('Academic calendar generated with custom settings & holiday sync!', 'success')
+        const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+        const syncedHols = data.calendar?.holidays || getHolidaysForAcademicYear(yStart, selectedState, customOptionalHolidays)
+        setHolidays(syncedHols)
+        setDiagnosisReport(runHolidayDiagnosis(selectedYear, selectedState))
+        addToast(`Academic calendar generated for ${selectedState} with custom settings & holiday sync!`, 'success')
       } else {
-        loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate)
-        addToast('Calendar generated successfully with custom settings', 'success')
+        loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate, selectedState)
+        addToast(`Calendar generated successfully for ${selectedState}`, 'success')
       }
     } catch {
-      loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate)
+      loadDefaultCalendar(selectedYear, totalWorkingDaysRequired, collegeStartDate, collegeEndDate, selectedState)
       addToast('Calendar generated successfully', 'success')
     } finally {
       setIsGenerating(false)
@@ -689,7 +705,18 @@ export default function AcademicCalendarPage() {
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label small fw-bold text-muted mb-1">State Holiday Rule</label>
-              <select className="form-select form-select-sm" value={stateCode} onChange={(e) => setStateCode(e.target.value)}>
+              <select
+                className="form-select form-select-sm"
+                value={stateCode}
+                onChange={(e) => {
+                  const newState = e.target.value
+                  setStateCode(newState)
+                  const yStart = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+                  const computedHols = getHolidaysForAcademicYear(yStart, newState, customOptionalHolidays)
+                  setHolidays(computedHols)
+                  setDiagnosisReport(runHolidayDiagnosis(selectedYear, newState))
+                }}
+              >
                 <option value="KA">Karnataka (Bengaluru/Mysuru)</option>
                 <option value="MH">Maharashtra (Mumbai/Pune)</option>
                 <option value="TN">Tamil Nadu (Chennai)</option>

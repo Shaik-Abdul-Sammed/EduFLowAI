@@ -182,7 +182,7 @@ export default function NotificationCenter() {
   }
 
   return (
-    <div className="position-relative" ref={dropdownRef}>
+    <div className="position-relative" ref={dropdownRef} style={{ zIndex: open ? 2600 : 'auto' }}>
       <button
         type="button"
         aria-label="Notification center"
@@ -232,9 +232,9 @@ export default function NotificationCenter() {
             right: 0,
             width: '380px',
             maxWidth: 'calc(100vw - 24px)',
-            zIndex: 1250,
+            zIndex: 2600,
             borderRadius: '1rem',
-            background: isDark ? '#0f172a' : '#ffffff',
+            background: isDark ? '#0b1120' : '#ffffff',
             border: isDark ? '1px solid rgba(148, 163, 184, 0.25)' : '1px solid #e2e8f0',
             boxShadow: isDark
               ? '0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12)'
@@ -333,7 +333,7 @@ export default function NotificationCenter() {
             style={{
               maxHeight: '380px',
               overflowY: 'auto',
-              background: isDark ? '#0f172a' : '#ffffff',
+              background: isDark ? '#0b1120' : '#ffffff',
             }}
           >
             {notifications.length === 0 ? (
@@ -392,21 +392,21 @@ export default function NotificationCenter() {
                         ? '3px solid #3b82f6'
                         : '3px solid transparent',
                       background: isUnread
-                        ? (isDark ? 'rgba(30, 58, 138, 0.22)' : '#f0f7ff')
-                        : (isDark ? '#0f172a' : '#ffffff'),
+                        ? (isDark ? '#172554' : '#f0f7ff')
+                        : (isDark ? '#0b1120' : '#ffffff'),
                       cursor: 'pointer',
                       transition: 'background 0.15s ease',
                       boxSizing: 'border-box',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = isUnread
-                        ? (isDark ? 'rgba(30, 58, 138, 0.35)' : '#e0f0fe')
+                        ? (isDark ? '#1e3a8a' : '#e0f0fe')
                         : (isDark ? 'rgba(255, 255, 255, 0.05)' : '#f8fafc')
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = isUnread
-                        ? (isDark ? 'rgba(30, 58, 138, 0.22)' : '#f0f7ff')
-                        : (isDark ? '#0f172a' : '#ffffff')
+                        ? (isDark ? '#172554' : '#f0f7ff')
+                        : (isDark ? '#0b1120' : '#ffffff')
                     }}
                   >
                     <div

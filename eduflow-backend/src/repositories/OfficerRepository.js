@@ -15,11 +15,19 @@ export class OfficerRepository {
   }
 
   static async getRecentActivity(institutionId, limit = 6) {
-    // Assuming audit_logs has officer activity logged with action like 'OFFICER_CHAT'
+    // Query officer activities from audit_logs
     const result = await pool.query(`
       SELECT action, metadata, created_at
       FROM audit_logs
-      WHERE institution_id = $1 AND action LIKE 'OFFICER_%'
+      WHERE institution_id = $1 AND (
+        action LIKE 'OFFICER_%' OR
+        action LIKE '%_STREAMED' OR
+        action LIKE 'ACCREDITATION_%' OR
+        action LIKE 'TIMETABLE_%' OR
+        action LIKE 'RISK_PREDICTION_%' OR
+        action LIKE 'ADMISSION_YIELD_%' OR
+        action LIKE 'FINANCE_RECONCILED%'
+      )
       ORDER BY created_at DESC
       LIMIT $2
     `, [institutionId, limit])
@@ -28,11 +36,12 @@ export class OfficerRepository {
 
   static async logSession(institutionId, officerType, messages, lastOutput, hoursSaved, moneySaved) {
     try {
+      const normalizedOfficerType = String(officerType || '').toLowerCase().replace('-', '_')
       const result = await pool.query(`
         INSERT INTO officer_sessions (institution_id, officer_type, messages, last_output, roi_hours_saved, roi_money_saved)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
-      `, [institutionId, officerType, JSON.stringify(messages), JSON.stringify(lastOutput), hoursSaved, moneySaved])
+      `, [institutionId, normalizedOfficerType, JSON.stringify(messages), JSON.stringify(lastOutput), hoursSaved, moneySaved])
       return result.rows[0]
     } catch (err) {
       return null

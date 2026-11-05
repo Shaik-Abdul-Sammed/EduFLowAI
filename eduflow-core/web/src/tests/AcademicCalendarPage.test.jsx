@@ -75,4 +75,22 @@ describe('AcademicCalendarPage Component', () => {
     expect(screen.getByText(/Adjust Academic Schedule/i)).toBeInTheDocument()
     expect(screen.getByText(/Adjustment Type/i)).toBeInTheDocument()
   })
+
+  test('Dynamically updates holidays when state selection is changed', async () => {
+    render(
+      <MemoryRouter>
+        <AcademicCalendarPage />
+      </MemoryRouter>
+    )
+
+    const stateSelect = screen.getByRole('combobox', { name: /State Holiday Rule/i }) || screen.getAllByRole('combobox')[0]
+    fireEvent.change(stateSelect, { target: { value: 'MH' } })
+
+    const holidaysTab = screen.getByRole('button', { name: /Government & Festival Holidays/i })
+    fireEvent.click(holidaysTab)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Chhatrapati Shivaji Maharaj Jayanti/i)).toBeInTheDocument()
+    })
+  })
 })

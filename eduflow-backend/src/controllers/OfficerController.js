@@ -173,7 +173,7 @@ export async function buildInstitutionalDataContext(institutionId = 1) {
 ==================
 Institution: Sri Sudha Institute of Technology
 Total Students: ${stats.totalStudents || 1250}
-Total Faculty (Teaching Staff): ${stats.totalFaculty || 85}
+Total Faculty: ${stats.totalFaculty || 85} (Teaching Staff: ${stats.totalFaculty || 85})
 Non-Teaching Staff: 45
 Total Staff: ${Number(stats.totalFaculty || 85) + 45}
 PhD Faculty: ${stats.phdFaculty || 40} (${Math.round(stats.phdRatio || 47)} percent)
@@ -201,7 +201,7 @@ Use this data to generate the report.
 ==================
 Institution: Sri Sudha Institute of Technology
 Total Students: 1250
-Total Faculty (Teaching Staff): 85
+Total Faculty: 85 (Teaching Staff: 85)
 Non-Teaching Staff: 45
 Total Staff: 130
 PhD Faculty: 40 (47 percent)
@@ -392,19 +392,36 @@ export class OfficerController {
       
       res.json({
         officers: VALID_OFFICERS.map(id => {
-          const lastAct = recentActivity.find(a => a.action === `OFFICER_CHAT_${id.toUpperCase()}`)
+          const norm = id.toUpperCase().replace('-', '_')
+          const lastAct = recentActivity.find(a => 
+            a.action === `OFFICER_CHAT_${id.toUpperCase()}` ||
+            a.action === `OFFICER_${norm}_STREAMED` ||
+            a.action === `OFFICER_${norm}_GENERATED` ||
+            (a.action && (a.action.toUpperCase().includes(norm) || a.action.toUpperCase().includes(id.toUpperCase())))
+          )
           return {
             id,
             endpoint: `/api/v1/officers/${id}/chat`,
             status: 'available',
-            lastAction: lastAct ? `Performed action at ${new Date(lastAct.created_at).toLocaleTimeString()}` : 'No recent activity'
+            lastAction: lastAct ? `Performed action at ${new Date(lastAct.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'No recent activity'
           }
         }),
-        recentActivity: recentActivity.map(a => ({
-          officer: a.action.replace('OFFICER_CHAT_', ''),
-          time: a.created_at,
-          metadata: a.metadata
-        }))
+        recentActivity: recentActivity.map(a => {
+          let officerName = (a.action || '')
+            .replace('OFFICER_CHAT_', '')
+            .replace('OFFICER_', '')
+            .replace('_STREAMED', '')
+            .replace('_GENERATED', '')
+            .toLowerCase()
+          if (officerName === 'student_success') officerName = 'student-success'
+          return {
+            id: a.id || `${a.action}-${a.created_at}`,
+            officer: officerName,
+            action: a.action,
+            time: a.created_at,
+            metadata: a.metadata || {}
+          }
+        })
       })
     } catch (err) {
       res.status(500).json({ error: 'Failed to get officers summary' })
@@ -583,7 +600,7 @@ export class OfficerController {
       'accreditation',
       prompt,
       'generate_naac_report',
-      'ACCREDITATION_REPORT_STREAMED',
+      'OFFICER_ACCREDITATION_STREAMED',
       { criterion }
     )
   }
@@ -596,7 +613,7 @@ export class OfficerController {
       'student-success',
       prompt,
       'risk_analysis',
-      'RISK_PREDICTION_STREAMED'
+      'OFFICER_STUDENT_SUCCESS_STREAMED'
     )
   }
 
@@ -608,7 +625,7 @@ export class OfficerController {
       'timetable',
       prompt,
       'generate_timetable',
-      'TIMETABLE_STREAMED'
+      'OFFICER_TIMETABLE_STREAMED'
     )
   }
 
@@ -620,7 +637,7 @@ export class OfficerController {
       'admissions',
       prompt,
       'process_application',
-      'ADMISSION_YIELD_STREAMED'
+      'OFFICER_ADMISSIONS_STREAMED'
     )
   }
 
@@ -632,7 +649,7 @@ export class OfficerController {
       'finance',
       prompt,
       'reconcile_fees',
-      'FINANCE_RECONCILED_STREAMED'
+      'OFFICER_FINANCE_STREAMED'
     )
   }
 

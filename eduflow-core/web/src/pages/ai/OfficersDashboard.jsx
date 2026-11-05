@@ -1,8 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert, CheckCircle2, Brain, ArrowLeft } from 'lucide-react';
+import {
+  Cpu, Bell, Settings, ArrowUp, ArrowDown, Clock, TrendingUp, ShieldAlert,
+  CheckCircle2, Brain, ArrowLeft, Trash2, X, ExternalLink
+} from 'lucide-react';
 import { getFullApiUrl } from '../../config/apiConfig';
 import { EXPERT_SYSTEMS, evaluateExpertSystem } from '../../services/expertSystemRules';
+
+function getOfficerLocalHistory(officerId) {
+  try {
+    if (!officerId) return [];
+    const raw = localStorage.getItem(`officer_history_${officerId}`) ||
+                localStorage.getItem(`officer_history_${String(officerId).replace(/-/g, '_')}`) ||
+                localStorage.getItem(`officer_history_${String(officerId).replace(/_/g, '-')}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 const OFFICER_META = {
   'accreditation': { icon: '🏛️', color: '#8B5CF6', name: 'AI Accreditation Officer', desc: 'NAAC, NBA, AICTE & UGC report generation, gap analysis, readiness scoring', statLabel: 'Reports Generated' },
@@ -12,13 +29,22 @@ const OFFICER_META = {
   'student-success': { icon: '📊', color: '#EF4444', name: 'AI Student Success Officer', desc: 'Dropout prediction, attendance monitoring, placement readiness, intervention plans', statLabel: 'Students Monitored' }
 };
 
+const DEFAULT_OFFICERS = Object.keys(OFFICER_META).map((id) => ({
+  id,
+  endpoint: `/api/v1/officers/${id}/chat`,
+  status: 'available',
+  lastAction: 'No recent activity',
+}));
+
 export default function OfficersDashboard() {
   const navigate = useNavigate();
   const [roi, setRoi] = useState(null);
-  const [officers, setOfficers] = useState([]);
+  const [officers, setOfficers] = useState(DEFAULT_OFFICERS);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [selectedOfficerHistory, setSelectedOfficerHistory] = useState(null);
+  const [historyKey, setHistoryKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,6 +140,84 @@ export default function OfficersDashboard() {
       isMounted = false;
     };
   }, [navigate]);
+
+  // Clear history for an officer
+  const handleClearOfficerHistory = (officerId) => {
+    try {
+      localStorage.removeItem(`officer_history_${officerId}`);
+      localStorage.removeItem(`officer_history_${String(officerId).replace(/-/g, '_')}`);
+      localStorage.removeItem(`officer_history_${String(officerId).replace(/_/g, '-')}`);
+      setHistoryKey((k) => k + 1);
+    } catch {}
+  };
+
+  // Aggregate local officer prompts across all 5 officers
+  const allLocalActivities = useMemo(() => {
+    const list = [];
+    Object.keys(OFFICER_META).forEach((id) => {
+      const hist = getOfficerLocalHistory(id);
+      hist.forEach((item, idx) => {
+        const promptText = typeof item === 'string' ? item : (item.prompt || item.preview || '');
+        const previewText = typeof item === 'string' ? item : (item.preview || item.prompt || '');
+        const timeText = typeof item === 'object' && item.timestamp ? item.timestamp : 'Recent';
+        list.push({
+          id: item.id || `local-${id}-${idx}`,
+          officer: id,
+          title: previewText,
+          prompt: promptText,
+          time: timeText,
+          rawTime: typeof item.id === 'number' ? item.id : Date.now() - idx * 60000,
+          isLocal: true,
+        });
+      });
+    });
+    return list.sort((a, b) => b.rawTime - a.rawTime);
+  }, [historyKey]);
+
+  // Merge backend activity and local officer history
+  const displayedRecentActivity = useMemo(() => {
+    const combined = [];
+    const seenPrompts = new Set();
+
+    allLocalActivities.forEach((act) => {
+      const key = `${act.officer}:${act.prompt.trim()}`;
+      if (!seenPrompts.has(key)) {
+        seenPrompts.add(key);
+        combined.push(act);
+      }
+    });
+
+    (recentActivity || []).forEach((act) => {
+      const p = act.metadata?.prompt || act.action || '';
+      const key = `${act.officer}:${p.trim()}`;
+      if (!seenPrompts.has(key)) {
+        seenPrompts.add(key);
+        combined.push({
+          id: act.id,
+          officer: act.officer,
+          title: act.metadata?.prompt || `${act.metadata?.actionType || act.action || 'Request'} processed`,
+          prompt: act.metadata?.prompt || '',
+          time: act.time ? new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          isLocal: false,
+        });
+      }
+    });
+
+    return combined.slice(0, 15);
+  }, [allLocalActivities, recentActivity]);
+
+  // Overall ROI hours and savings
+  const totalLocalPrompts = useMemo(() => {
+    return Object.keys(OFFICER_META).reduce((sum, id) => sum + getOfficerLocalHistory(id).length, 0);
+  }, [historyKey]);
+
+  const computedTotalHours = Math.round(totalLocalPrompts * 2.5 * 10) / 10;
+  const totalHoursSaved = (roi?.totalHoursSaved && roi.totalHoursSaved > 0)
+    ? roi.totalHoursSaved
+    : (computedTotalHours > 0 ? computedTotalHours : 0);
+  const totalMoneySaved = (roi?.totalMoneySaved && roi.totalMoneySaved > 0)
+    ? roi.totalMoneySaved
+    : Math.round(totalHoursSaved * 600);
 
   return (
     <div style={{
@@ -272,7 +376,7 @@ export default function OfficersDashboard() {
                 <Clock size={16} /> Hours Saved This Month
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
-                <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{roi?.totalHoursSaved || 0}</span>
+                <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{totalHoursSaved}</span>
                 <span style={{ fontSize: '0.875rem', color: '#10B981', display: 'flex', alignItems: 'center' }}><ArrowUp size={14} /> Active</span>
               </div>
             </div>
@@ -282,7 +386,7 @@ export default function OfficersDashboard() {
                 <TrendingUp size={16} /> Money Saved
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
-                <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>₹{roi?.totalMoneySaved?.toLocaleString() || 0}</span>
+                <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>₹{totalMoneySaved?.toLocaleString()}</span>
                 <span style={{ fontSize: '0.875rem', color: '#10B981', display: 'flex', alignItems: 'center' }}><ArrowUp size={14} /> Active</span>
               </div>
             </div>
@@ -366,8 +470,23 @@ export default function OfficersDashboard() {
           display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '3rem'
         }}>
           {loading ? <div>Loading Officers...</div> : officers.map((officer, idx) => {
-            const meta = OFFICER_META[officer.id];
-            const officerRoi = roi?.byOfficer?.find(o => o.type === officer.id);
+            const meta = OFFICER_META[officer.id] || { name: officer.id, color: '#2563EB', icon: '🤖', desc: '' };
+            const localHistory = getOfficerLocalHistory(officer.id);
+            const officerRoi = roi?.byOfficer?.find(o => o.type === officer.id || o.type === officer.id?.replace('-', '_'));
+
+            const localHours = Math.round(localHistory.length * 2.5 * 10) / 10;
+            const hoursSaved = (officerRoi?.hoursSaved && officerRoi.hoursSaved > 0)
+              ? officerRoi.hoursSaved
+              : (localHours > 0 ? localHours : 0);
+
+            let lastActionDisplay = officer.lastAction;
+            if ((!lastActionDisplay || lastActionDisplay === 'No recent activity') && localHistory.length > 0) {
+              const latest = localHistory[0];
+              const pPreview = typeof latest === 'string' ? latest : (latest.preview || latest.prompt || 'Session prompt executed');
+              const pTime = typeof latest === 'object' && latest.timestamp ? latest.timestamp : 'Recently';
+              lastActionDisplay = `${pTime}: "${pPreview.length > 34 ? pPreview.slice(0, 34) + '…' : pPreview}"`;
+            }
+
             return (
               <div key={officer.id || `officer-${idx}`} className="glass-card officer-card" style={{
                 padding: '1.5rem', display: 'flex', flexDirection: 'column', '--hover-color': meta.color
@@ -401,32 +520,55 @@ export default function OfficersDashboard() {
                   {meta.desc}
                 </p>
                 
-                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.25rem' }}>
-                    Hours Saved
+                <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '10px', padding: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)' }}>
+                      Hours Saved
+                    </div>
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      background: localHistory.length > 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                      color: localHistory.length > 0 ? '#93c5fd' : 'rgba(255, 255, 255, 0.45)',
+                      padding: '0.15rem 0.55rem',
+                      borderRadius: '999px',
+                      border: localHistory.length > 0 ? '1px solid rgba(59, 130, 246, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)'
+                    }}>
+                      {`${localHistory.length} ${localHistory.length === 1 ? 'Prompt' : 'Prompts'}`}
+                    </span>
                   </div>
-                  <div style={{ fontWeight: 'bold' }}>{officerRoi?.hoursSaved || 0} hrs</div>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <Clock size={12} style={{ display: 'inline', marginRight: '4px', position: 'relative', top: '-1px' }}/>
-                    {officer.lastAction}
+                  <div style={{ fontWeight: 'bold', fontSize: '1.25rem', color: '#f8fafc' }}>{hoursSaved} hrs</div>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.75)', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Clock size={12} style={{ flexShrink: 0, color: '#60a5fa' }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {lastActionDisplay}
+                    </span>
                   </div>
                 </div>
                 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <Link to={`/officer/${officer.id}`} style={{
                     flex: 1, background: '#2563EB', color: 'white', textDecoration: 'none',
-                    textAlign: 'center', padding: '0.625rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500,
+                    textAlign: 'center', padding: '0.625rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
                     transition: 'background 0.2s'
                   }} onMouseOver={e => e.target.style.background = '#1d4ed8'} onMouseOut={e => e.target.style.background = '#2563EB'}>
                     Open
                   </Link>
-                  <Link to="/admin-dashboard/audit-logs?category=Officers" style={{
-                    flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white',
-                    textAlign: 'center', padding: '0.625rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500,
-                    cursor: 'pointer', transition: 'background 0.2s', textDecoration: 'none'
-                  }} onMouseOver={e => e.target.style.background = 'rgba(255,255,255,0.05)'} onMouseOut={e => e.target.style.background = 'transparent'}>
-                    View History
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOfficerHistory(officer.id)}
+                    style={{
+                      flex: 1, background: localHistory.length > 0 ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                      border: localHistory.length > 0 ? '1px solid rgba(59, 130, 246, 0.35)' : '1px solid rgba(255,255,255,0.2)',
+                      color: localHistory.length > 0 ? '#93c5fd' : 'white',
+                      textAlign: 'center', padding: '0.625rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.25)'}
+                    onMouseOut={e => e.currentTarget.style.background = localHistory.length > 0 ? 'rgba(59, 130, 246, 0.12)' : 'transparent'}
+                  >
+                    View History {localHistory.length > 0 ? `(${localHistory.length})` : ''}
+                  </button>
                 </div>
               </div>
             )
@@ -434,46 +576,278 @@ export default function OfficersDashboard() {
         </div>
 
         {/* Recent Activity */}
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Recent AI Activity</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>Recent AI Activity</h2>
+          {displayedRecentActivity.length > 0 && (
+            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+              Showing {displayedRecentActivity.length} recent institutional prompt &amp; generation events
+            </span>
+          )}
+        </div>
         
         <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '3rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {recentActivity.length === 0 ? <div style={{ color: 'rgba(255,255,255,0.5)' }}>No recent activity to show.</div> : null}
-            {recentActivity.map((activity, idx) => {
-              const meta = OFFICER_META[activity.officer.toLowerCase()] || {};
+            {displayedRecentActivity.length === 0 ? (
+              <div style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '2rem 1rem' }}>
+                <Clock size={28} style={{ opacity: 0.4, margin: '0 auto 0.5rem' }} />
+                <div>No recent activity to show.</div>
+                <div style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Interact with any AI Officer above to see your live audit trail here.</div>
+              </div>
+            ) : null}
+            {displayedRecentActivity.map((activity, idx) => {
+              const meta = OFFICER_META[activity.officer?.toLowerCase()] || { name: activity.officer, icon: '🤖', color: '#60a5fa' };
               return (
                 <React.Fragment key={activity.id || `activity-${idx}`}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '1rem 0' }}>
                     <div style={{
-                      width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                      background: `${meta.color || '#fff'}20`,
+                      width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
+                      background: `${meta.color || '#fff'}20`, border: `1px solid ${meta.color || '#fff'}35`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem'
                     }}>
                       {meta.icon || '🤖'}
                     </div>
-                    <div style={{ flexGrow: 1 }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 'bold', color: meta.color || '#fff', marginBottom: '0.25rem' }}>
-                        {meta.name || activity.officer}
+                    <div style={{ flexGrow: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 'bold', color: meta.color || '#fff' }}>
+                          {meta.name || activity.officer}
+                        </span>
+                        {activity.isLocal && (
+                          <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.15)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.05rem 0.4rem', borderRadius: '999px', fontWeight: 600 }}>
+                            Session Prompt
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontSize: '0.95rem' }}>
-                        {activity.metadata?.actionType || 'General Request'} processed
+                      <div style={{ fontSize: '0.92rem', color: '#f8fafc', lineHeight: 1.4, wordBreak: 'break-word' }}>
+                        {activity.title}
+                      </div>
+                      <div style={{ marginTop: '0.35rem' }}>
+                        <Link
+                          to={`/officer/${activity.officer}?history=open&prompt=${encodeURIComponent(activity.prompt || activity.title)}`}
+                          style={{ fontSize: '0.78rem', color: '#60a5fa', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                        >
+                          <span>Open in Officer →</span>
+                        </Link>
                       </div>
                     </div>
                     <div style={{
-                      fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.05)',
-                      padding: '0.25rem 0.5rem', borderRadius: '4px', whiteSpace: 'nowrap'
+                      fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.05)',
+                      padding: '0.25rem 0.55rem', borderRadius: '4px', whiteSpace: 'nowrap', flexShrink: 0
                     }}>
-                      {new Date(activity.time).toLocaleString()}
+                      {activity.time}
                     </div>
                   </div>
-                  {idx < recentActivity.length - 1 && (
-                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginLeft: '56px' }} />
+                  {idx < displayedRecentActivity.length - 1 && (
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', marginLeft: '54px' }} />
                   )}
                 </React.Fragment>
               )
             })}
           </div>
         </div>
+
+        {/* Officer History Modal */}
+        {selectedOfficerHistory && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(3, 7, 18, 0.8)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1100,
+              padding: '1.25rem',
+            }}
+            onClick={() => setSelectedOfficerHistory(null)}
+          >
+            <div
+              className="glass-card"
+              style={{
+                width: '100%',
+                maxWidth: '680px',
+                maxHeight: '85vh',
+                background: '#0F172A',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.95)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255, 255, 255, 0.02)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>{OFFICER_META[selectedOfficerHistory]?.icon}</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 'bold' }}>
+                      {OFFICER_META[selectedOfficerHistory]?.name} — Session History
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      {getOfficerLocalHistory(selectedOfficerHistory).length} Saved Prompts &amp; Generations
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOfficerHistory(null)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '1.5rem',
+                    cursor: 'pointer',
+                    padding: '0.25rem 0.5rem',
+                    lineHeight: 1,
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {getOfficerLocalHistory(selectedOfficerHistory).length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'rgba(255, 255, 255, 0.4)' }}>
+                    <Clock size={32} style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                    <p style={{ margin: 0, fontWeight: 600 }}>No prompts recorded in this session yet.</p>
+                    <p style={{ margin: '0.25rem 0 1.25rem', fontSize: '0.8rem' }}>Interact with the officer to build your history.</p>
+                    <Link
+                      to={`/officer/${selectedOfficerHistory}`}
+                      style={{
+                        display: 'inline-block',
+                        background: '#2563EB',
+                        color: 'white',
+                        padding: '0.55rem 1.1rem',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Open Officer Now →
+                    </Link>
+                  </div>
+                ) : (
+                  getOfficerLocalHistory(selectedOfficerHistory).map((item, idx) => {
+                    const promptText = typeof item === 'string' ? item : (item.prompt || item.preview || '');
+                    const previewText = typeof item === 'string' ? item : (item.preview || item.prompt || '');
+                    const timeText = typeof item === 'object' && item.timestamp ? item.timestamp : 'Recent';
+                    return (
+                      <div
+                        key={item.id || idx}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '10px',
+                          padding: '1rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Clock size={12} /> {timeText}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.4)' }}>
+                            Prompt #{getOfficerLocalHistory(selectedOfficerHistory).length - idx}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.88rem', color: '#f8fafc', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+                          {promptText}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          <Link
+                            to={`/officer/${selectedOfficerHistory}?history=open&prompt=${encodeURIComponent(promptText)}`}
+                            style={{
+                              background: 'rgba(37, 99, 235, 0.2)',
+                              border: '1px solid rgba(37, 99, 235, 0.4)',
+                              color: '#93c5fd',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '6px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                            }}
+                          >
+                            <span>Open in Officer</span>
+                            <ExternalLink size={12} />
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div style={{
+                padding: '0.9rem 1.5rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.25)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <Link
+                    to="/admin-dashboard/audit-logs?category=Officers"
+                    style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.65)', textDecoration: 'underline' }}
+                  >
+                    View Institutional Audit Logs →
+                  </Link>
+                  {getOfficerLocalHistory(selectedOfficerHistory).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleClearOfficerHistory(selectedOfficerHistory)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#f87171',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        padding: 0,
+                      }}
+                    >
+                      <Trash2 size={12} /> Clear Local
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOfficerHistory(null)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Bottom Nav Links */}
         <div style={{

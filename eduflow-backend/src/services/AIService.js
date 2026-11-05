@@ -262,7 +262,7 @@ export function resolveAccreditationFallback(prompt = '', context = {}) {
   if (cTarget === '1' || cTarget === 'criterion 1' || cTarget === 'criteria 1' || combined.includes('criterion 1') || combined.includes('criteria 1') || combined.includes('curricular')) {
     return NAAC_CRITERIA_FALLBACKS.criterion1
   }
-  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('table 2.1') || combined.includes('table-2.1')) {
+  if (cTarget === '2' || cTarget === 'criterion 2' || cTarget === 'criteria 2' || combined.includes('criterion 2') || combined.includes('criteria 2') || combined.includes('table 2.1') || combined.includes('table-2.1') || combined.includes('teaching-learning') || combined.includes('teaching learning')) {
     return NAAC_CRITERIA_FALLBACKS.criterion2
   }
   if (cTarget === '4' || cTarget === 'criterion 4' || cTarget === 'criteria 4' || combined.includes('criterion 4') || combined.includes('criteria 4') || combined.includes('infrastructure')) {
@@ -320,25 +320,26 @@ const OFFICER_FALLBACK_TEXTS = {
 Estimated hours saved: 10 hrs | Retention value: ₹6,00,000`,
 
   timetable: `# Optimized Academic Timetable Schedule (Conflict-Free)
-**Department:** Computer Science & Engineering (CSE) | **Semester:** Even 2026
-**Optimization Constraints:** Max 18 hrs/week per faculty | Zero Room Conflicts | 3 Integrated Labs
+**Department:** Computer Science & Engineering (CSE) | **Academic Session:** 2026–2027 / Present Academic Calendar
+**Optimization Constraints:** Max 18 hrs/week per faculty | Zero Room Conflicts | 4 Integrated Labs
 
 ---
-### Master Schedule Grid (Preview)
+### Master Schedule Grid (Comprehensive 6-Day View)
 
-| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:15 - 12:15 | 01:15 - 03:15 (Lab) |
-|---|---|---|---|---|
-| **Mon** | CS401 (OS) - Hall 201 | CS402 (DBMS) - Hall 201 | CS403 (DAA) - Hall 203 | Lab A: OS & Unix Lab |
-| **Tue** | CS403 (DAA) - Hall 201 | CS404 (CN) - Hall 201 | Math-IV - Hall 201 | Lab B: Database Lab |
-| **Wed** | CS402 (DBMS) - Hall 202 | CS401 (OS) - Hall 202 | Elective-I - Seminar 1 | Lab C: Algorithms Lab |
-| **Thu** | CS404 (CN) - Hall 201 | Math-IV - Hall 201 | CS401 (OS) - Hall 201 | Mini-Project Studio |
-| **Fri** | CS403 (DAA) - Hall 202 | CS402 (DBMS) - Hall 202 | Open Elective - Hall 105 | Library / Seminar |
+| Day | 09:00 - 10:00 | 10:00 - 11:00 | 11:15 - 12:15 | 12:15 - 01:15 | 01:15 - 03:15 (Lab) | 03:30 - 04:30 |
+|---|---|---|---|---|---|---|
+| **Mon** | CS301 (OS) - Hall 201 | CS302 (DBMS) - Hall 201 | CS303 (CN) - Hall 203 | **LUNCH** | <--- CS301P: OS & Unix Lab ---> | Mentoring / Library |
+| **Tue** | CS304 (TOC) - Hall 201 | CS305 (OE-I) - Hall 201 | CS301 (OS) - Hall 201 | **LUNCH** | <--- CS302P: Database Systems Lab ---> | Co-Curricular Club |
+| **Wed** | CS302 (DBMS) - Hall 202 | CS303 (CN) - Hall 202 | CS304 (TOC) - Seminar 1 | **LUNCH** | <--- CS303P: Computer Networks Lab ---> | Library Research |
+| **Thu** | CS303 (CN) - Hall 201 | CS304 (TOC) - Hall 201 | CS305 (OE-I) - Hall 201 | **LUNCH** | <--- CS306P: Mini-Project Studio ---> | Remedial Session |
+| **Fri** | CS301 (OS) - Hall 202 | CS302 (DBMS) - Hall 202 | CS305 (OE-I) - Hall 105 | **LUNCH** | CS307: PE-I (AI/ML) Lab | Technical Seminar |
+| **Sat** | CS307: PE-I (AI/ML) | CS302 (DBMS) Tutorial | Open Elective Revision | **LUNCH** | Industry Expert Guest Lecture / Hackathon | Sports / Recess |
 
 ---
 ### Scheduling Audit & Workload Balance
 - ✅ Conflicts Detected: 0 / 184 slot combinations.
 - ✅ Faculty Workload: Averaging 15.4 hrs/week (within 18-hour AICTE threshold).
-- ✅ Specialized Labs: 3 high-performance lab sessions allocated with zero overlaps.
+- ✅ Specialized Labs: 4 high-performance lab sessions allocated with zero overlaps.
 
 Estimated hours saved: 40 hrs | Consulting cost saved: ₹20,000`,
 
@@ -465,7 +466,7 @@ When the user asks for a specific table or data breakdown, you MUST generate a c
 Always output data in Markdown tables. Never output raw comma-separated text.
 CRITICAL INSTRUCTION: You are a data analyst. You must output the actual data provided in the context. Do NOT output generic regulatory frameworks (like AICTE rules or UGC guidelines) unless explicitly asked. If the user asks for a list of students, output their actual names and roll numbers. If the user asks for a timetable, output the actual Markdown table with classes and rooms.
 If the user asks for a chart or graph, output a JSON block formatted for Recharts (e.g., \`\`\`json { "type": "bar", "data": [...] } \`\`\`).`
-        const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 2000 })
+        const response = await aiProvider.chat([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 4000 })
         if (response && !response.includes('mock response from the fallback chain')) {
           return `${liveHeader}${response}${liveFooter}`
         }
@@ -527,7 +528,7 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
         let firstChunk = true
         let isMock = false
 
-        for await (const chunk of aiProvider.chatStream([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 2000 })) {
+        for await (const chunk of aiProvider.chatStream([{ role: 'user', content: prompt }], systemMessage, { temperature: 0.1, maxTokens: 4000 })) {
           if (firstChunk && chunk.includes('mock response from the fallback chain')) {
             isMock = true
             break

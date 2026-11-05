@@ -109,6 +109,7 @@ export function createMemoryPool() {
     users: [...demoUsers],
     refreshTokens: [],
     auditLogs: [],
+    officerSessions: [],
     currentInstitutionId: null,
     bypassRls: false,
     invoices: [
@@ -316,8 +317,62 @@ export function createMemoryPool() {
       }
 
       if (sql.includes('insert into audit_logs')) {
-        state.auditLogs.push({ institutionId: params[0], userId: params[1], action: params[2], created_at: new Date().toISOString() })
-        return { rows: [], rowCount: 1 }
+        const newLog = {
+          id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          institution_id: params[0],
+          institutionId: params[0],
+          user_id: params[1],
+          userId: params[1],
+          action: params[2],
+          ip_address: params[3] || '127.0.0.1',
+          ip: params[3] || '127.0.0.1',
+          user_agent: params[4] || 'EduFlow-Client',
+          metadata: params[5] ? (typeof params[5] === 'string' ? JSON.parse(params[5]) : params[5]) : {},
+          created_at: new Date().toISOString()
+        }
+        state.auditLogs.unshift(newLog)
+        return { rows: [newLog], rowCount: 1 }
+      }
+
+      if (sql.includes('insert into officer_sessions')) {
+        const newSession = {
+          id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          institution_id: params[0],
+          officer_type: params[1],
+          messages: params[2],
+          last_output: params[3],
+          roi_hours_saved: Number(params[4]) || 0,
+          roi_money_saved: Number(params[5]) || 0,
+          created_at: new Date().toISOString()
+        }
+        state.officerSessions.unshift(newSession)
+        return { rows: [newSession], rowCount: 1 }
+      }
+
+      if (sql.includes('from officer_sessions')) {
+        const instId = params && params.length > 0 ? params[0] : null
+        const filtered = state.officerSessions.filter(s => !instId || String(s.institution_id) === String(instId) || s.institution_id === 1)
+        
+        if (sql.includes('group by officer_type')) {
+          const map = {}
+          filtered.forEach(s => {
+            const type = s.officer_type
+            if (!map[type]) map[type] = { total_hours: 0, total_money: 0, officer_type: type }
+            map[type].total_hours += Number(s.roi_hours_saved) || 0
+            map[type].total_money += Number(s.roi_money_saved) || 0
+          })
+          return { rows: Object.values(map), rowCount: Object.values(map).length }
+        }
+        return { rows: filtered, rowCount: filtered.length }
+      }
+
+      if (sql.includes('from audit_logs')) {
+        let rows = state.auditLogs.slice()
+        if (params && params.length > 0 && sql.includes('institution_id = $1')) {
+          const instId = params[0]
+          rows = rows.filter(a => !instId || String(a.institution_id || a.institutionId) === String(instId) || a.institutionId === 1)
+        }
+        return { rows, rowCount: rows.length }
       }
 
       if (sql.includes('update refresh_tokens set revoked = true')) {
