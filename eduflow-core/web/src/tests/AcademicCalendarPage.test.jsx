@@ -93,4 +93,25 @@ describe('AcademicCalendarPage Component', () => {
       expect(screen.getByText(/Chhatrapati Shivaji Maharaj Jayanti/i)).toBeInTheDocument()
     })
   })
+
+  test('Opens export modal and supports toggling between 2 PDF formats', async () => {
+    render(
+      <MemoryRouter>
+        <AcademicCalendarPage />
+      </MemoryRouter>
+    )
+
+    const exportBtn = screen.getByRole('button', { name: /Export PDF/i })
+    fireEvent.click(exportBtn)
+
+    expect(screen.getByText(/Export Official Academic Calendar PDF/i)).toBeInTheDocument()
+    expect(screen.getByText(/Institutional Weekly Grid Matrix/i)).toBeInTheDocument()
+    expect(screen.getByText(/Official Administrative Gazette Dossier/i)).toBeInTheDocument()
+
+    // Select Format 2 (Gazette)
+    const gazetteCard = screen.getByText(/Official Administrative Gazette Dossier/i)
+    fireEvent.click(gazetteCard)
+
+    expect(screen.getByText(/Download Gazette Dossier PDF/i)).toBeInTheDocument()
+  })
 })

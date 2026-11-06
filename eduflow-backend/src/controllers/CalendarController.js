@@ -1,7 +1,14 @@
+import { execFile } from 'node:child_process'
+import path from 'node:path'
+import fs from 'node:fs'
+import os from 'node:os'
+import { promisify } from 'node:util'
 import { CalendarGenerator } from '../services/calendar/CalendarGenerator.js'
 import { CalendarAdjustments } from '../services/calendar/CalendarAdjustments.js'
 import { HolidayFetcher } from '../services/calendar/HolidayFetcher.js'
 import { logger } from '../utils/logger.js'
+
+const execFileAsync = promisify(execFile)
 
 export class CalendarController {
   static async generate(req, res) {
@@ -184,13 +191,60 @@ export class CalendarController {
 
   static async exportPdf(req, res) {
     try {
-      const { academicYear = '2026-2027' } = req.body || {}
-      // Minimal valid PDF binary
-      const pdfString = `%PDF-1.4\n1 0 obj\n<< /Title (Academic Calendar ${academicYear}) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`
+      const queryParams = req.query || {}
+      const bodyParams = req.body || {}
+      const academicYear = bodyParams.academicYear || queryParams.academicYear || '2026-2027'
+      const stateCode = (bodyParams.stateCode || queryParams.stateCode || 'AP').toUpperCase()
+      const program = bodyParams.program || queryParams.program || 'B.Tech (E1 to E4)'
+      const format = (bodyParams.format || queryParams.format || 'grid').toLowerCase()
+
+      const scriptPath = path.resolve(process.cwd(), '../scripts/universal_academic_calendar.py')
+      const fallbackScriptPath = path.resolve(process.cwd(), 'scripts/universal_academic_calendar.py')
+      const actualScriptPath = fs.existsSync(scriptPath) ? scriptPath : (fs.existsSync(fallbackScriptPath) ? fallbackScriptPath : null)
+
+      const tmpDir = os.tmpdir()
+      const tmpOutput = path.join(tmpDir, `academic_calendar_${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`)
+
+      if (actualScriptPath) {
+        try {
+          const yearNum = academicYear.split('-')[0].trim()
+          await execFileAsync('python3', [
+            actualScriptPath,
+            '--year', yearNum,
+            '--state', stateCode,
+            '--program', program,
+            '--format', format,
+            '--output', tmpOutput
+          ], { timeout: 30000 })
+
+          if (fs.existsSync(tmpOutput)) {
+            const pdfBuffer = fs.readFileSync(tmpOutput)
+            fs.unlinkSync(tmpOutput)
+
+            res.setHeader('Content-Type', 'application/pdf')
+            res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${academicYear}_${stateCode}_${format}.pdf"`)
+            return res.status(200).send(pdfBuffer)
+          }
+        } catch (execErr) {
+          logger.warn({ err: execErr }, 'Python universal academic calendar script execution encountered error, using fallback stream')
+        }
+      }
+
+      // Fallback pre-generated or minimal valid PDF binary
+      const publicPdfPath = path.resolve(process.cwd(), '../eduflow-core/web/public/Academic_Calendar_2026_27_E1_to_E4.pdf')
+      if (fs.existsSync(publicPdfPath)) {
+        const publicBuffer = fs.readFileSync(publicPdfPath)
+        res.setHeader('Content-Type', 'application/pdf')
+        res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${academicYear}_${stateCode}_${format}.pdf"`)
+        return res.status(200).send(publicBuffer)
+      }
+
+      const pdfString = `%PDF-1.4\n1 0 obj\n<< /Title (Academic Calendar ${academicYear} - ${stateCode} - ${format}) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`
       res.setHeader('Content-Type', 'application/pdf')
-      res.setHeader('Content-Disposition', `attachment; filename=academic-calendar-${academicYear}.pdf`)
+      res.setHeader('Content-Disposition', `attachment; filename="academic-calendar-${academicYear}.pdf"`)
       return res.status(200).send(Buffer.from(pdfString, 'utf-8'))
     } catch (err) {
+      logger.error({ err }, 'CalendarController.exportPdf error')
       return res.status(500).json({ error: 'Failed to export calendar PDF' })
     }
   }

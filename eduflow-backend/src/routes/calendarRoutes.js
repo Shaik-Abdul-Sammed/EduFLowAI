@@ -8,6 +8,7 @@ const router = express.Router()
 router.get('/holidays/:year', CalendarController.getHolidays)
 router.get('/:institutionId/:academicYear', CalendarController.getCalendar)
 router.get('/:institutionId/:academicYear/events', CalendarController.getEvents)
+router.get('/export-pdf', CalendarController.exportPdf)
 
 // Admin/HOD operations
 router.use(authMiddleware)
