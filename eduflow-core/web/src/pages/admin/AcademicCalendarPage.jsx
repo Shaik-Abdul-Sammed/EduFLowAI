@@ -471,8 +471,18 @@ export default function AcademicCalendarPage() {
   }
 
   const handleExportPdf = () => {
-    window.print()
-    addToast('Print dialog triggered for Academic Calendar', 'info')
+    try {
+      const link = document.createElement('a')
+      link.href = '/Academic_Calendar_2026_27_E1_to_E4.pdf'
+      link.download = 'Academic_Calendar_2026_27_E1_to_E4.pdf'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      addToast('Official Academic Calendar PDF downloaded successfully', 'success')
+    } catch {
+      window.print()
+      addToast('Print dialog triggered for Academic Calendar', 'info')
+    }
   }
 
   const handleModifyVacation = (vacationId, delta) => {
