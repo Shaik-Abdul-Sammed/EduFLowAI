@@ -35,6 +35,8 @@ export default function WhatsAppAttendancePage() {
   const [simMessage, setSimMessage] = useState('CSE 3A present 48 absent 2')
   const [simulating, setSimulating] = useState(false)
   const [simResult, setSimResult] = useState(null)
+  const [selectedRawRecord, setSelectedRawRecord] = useState(null)
+  const [showAllStaged, setShowAllStaged] = useState(false)
 
   // Interactive Live WhatsApp Chat Preview (matching Figure 9 from Whitepaper)
   const [chatHistory, setChatHistory] = useState([
@@ -322,6 +324,43 @@ export default function WhatsAppAttendancePage() {
     } catch (err) {
       setActionMsg('Failed to reject staged record: ' + err.message)
     }
+  }
+
+  const handleConfirmAllPending = async () => {
+    try {
+      const res = await fetch(getFullApiUrl('/v1/whatsapp/staged/confirm-all'), {
+        method: 'POST',
+        headers: getAuthHeaders()
+      })
+      if (res.ok) {
+        setActionMsg('All pending staged attendance records have been approved and synced into attendance ledger!')
+        await Promise.all([fetchStaged(), fetchLogs()])
+      }
+    } catch (err) {
+      setActionMsg('Failed to approve all records: ' + err.message)
+    }
+  }
+
+  const handleExportAttendanceCsv = () => {
+    const headers = ['ID', 'Course', 'Section', 'Faculty Phone', 'Present', 'Absent', 'Status', 'Raw Message']
+    const rows = stagedList.map(item => [
+      item.id,
+      item.course_code,
+      item.section,
+      `"${item.faculty_phone || ''}"`,
+      item.present_count,
+      item.absent_count,
+      item.status,
+      `"${(item.raw_message || '').replace(/"/g, '""')}"`
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `WhatsApp_Attendance_Log_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -704,13 +743,31 @@ export default function WhatsAppAttendancePage() {
 
       {/* Row 2: Staged Attendance Queue */}
       <div className="card shadow-sm border-0 p-4 mb-4">
-        <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <h5 className="fw-bold mb-0 d-flex align-items-center">
             <Clock size={18} className="me-2 text-warning" /> Staged Attendance Queue
           </h5>
-          <span className="badge bg-light text-dark border">
-            {stagedList.filter(s => s.status === 'PENDING').length} Pending Confirmations
-          </span>
+          <div className="d-flex align-items-center gap-2">
+            {stagedList.filter(s => s.status === 'PENDING').length > 0 && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-success d-flex align-items-center gap-1 shadow-sm"
+                onClick={handleConfirmAllPending}
+              >
+                <Check size={14} /> Approve All Pending ({stagedList.filter(s => s.status === 'PENDING').length})
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 shadow-sm"
+              onClick={handleExportAttendanceCsv}
+            >
+              📥 Export CSV
+            </button>
+            <span className="badge bg-light text-dark border">
+              {stagedList.filter(s => s.status === 'PENDING').length} Pending Confirmations
+            </span>
+          </div>
         </div>
 
         <div className="table-responsive">
@@ -735,7 +792,7 @@ export default function WhatsAppAttendancePage() {
                   </td>
                 </tr>
               ) : (
-                stagedList.slice(0, 8).map((item) => (
+                (showAllStaged ? stagedList : stagedList.slice(0, 15)).map((item) => (
                   <tr key={item.id}>
                     <td>#{item.id}</td>
                     <td className="fw-semibold">{item.course_code} ({item.section})</td>
@@ -751,8 +808,15 @@ export default function WhatsAppAttendancePage() {
                         {item.status}
                       </span>
                     </td>
-                    <td className="text-muted small text-truncate" style={{ maxWidth: '200px' }}>
-                      {item.raw_message}
+                    <td style={{ maxWidth: '240px' }}>
+                      <span
+                        className="text-muted small text-truncate d-inline-block"
+                        style={{ maxWidth: '200px', cursor: 'pointer', verticalAlign: 'middle' }}
+                        title="Click to inspect raw message"
+                        onClick={() => setSelectedRawRecord(item)}
+                      >
+                        🔍 {item.raw_message}
+                      </span>
                     </td>
                     <td className="text-end">
                       {item.status === 'PENDING' && (
@@ -782,6 +846,18 @@ export default function WhatsAppAttendancePage() {
             </tbody>
           </table>
         </div>
+
+        {stagedList.length > 15 && (
+          <div className="text-center mt-3">
+            <button
+              type="button"
+              className="btn btn-sm btn-link text-decoration-none"
+              onClick={() => setShowAllStaged(!showAllStaged)}
+            >
+              {showAllStaged ? '▲ Show Recent 15 Only' : `▼ View All ${stagedList.length} Staged Records`}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Row 3: Recent Messages Log & Faculty Registry */}
@@ -1116,6 +1192,83 @@ export default function WhatsAppAttendancePage() {
           </div>
         </div>
       </div>
+
+      {/* Raw Message Payload Inspector Modal */}
+      {selectedRawRecord && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1060,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: '1rem',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              border: '2px solid #e2e8f0',
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 style={{ margin: 0, fontWeight: 800 }}>📱 WhatsApp Raw Payload Inspector</h5>
+              <button type="button" className="btn-close" onClick={() => setSelectedRawRecord(null)} aria-label="Close" />
+            </div>
+
+            <div className="mb-2 small">
+              <strong>Staged Record:</strong> #{selectedRawRecord.id} &bull; {selectedRawRecord.course_code} ({selectedRawRecord.section})
+            </div>
+            <div className="mb-2 small">
+              <strong>Sender Mobile:</strong> {selectedRawRecord.faculty_phone}
+            </div>
+            <div className="mb-2 small">
+              <strong>Computed Headcount:</strong> <span className="text-success fw-bold">{selectedRawRecord.present_count} Present</span>, <span className="text-danger fw-bold">{selectedRawRecord.absent_count} Absent</span>
+            </div>
+
+            <div className="mt-3">
+              <label className="form-label text-muted small fw-bold">RAW SENDER TEXT (UNTRUNCATED):</label>
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '0.5rem',
+                  padding: '0.85rem',
+                  fontFamily: 'monospace',
+                  fontSize: '0.85rem',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                }}
+              >
+                {selectedRawRecord.raw_message}
+              </div>
+            </div>
+
+            <div className="text-end mt-3">
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                onClick={() => setSelectedRawRecord(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

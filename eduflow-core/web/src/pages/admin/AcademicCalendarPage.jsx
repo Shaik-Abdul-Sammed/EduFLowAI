@@ -717,6 +717,20 @@ export default function AcademicCalendarPage() {
             <Clock size={15} /> Adjust Schedule
           </button>
           <button
+            type="button"
+            className="btn btn-outline-info btn-sm d-flex align-items-center gap-1 shadow-sm"
+            onClick={() => {
+              const currentStart = parseInt(selectedYear.split('-')[0], 10) || 2026
+              const nextYear = `${currentStart + 1}-${currentStart + 2}`
+              setSelectedYear(nextYear)
+              loadDefaultCalendar(nextYear)
+              addToast(`Academic Calendar duplicated & projected for AY ${nextYear}!`, 'success')
+            }}
+            title="Duplicate current structure and compute milestones for next academic cycle"
+          >
+            <CalendarCheck size={15} /> Clone to Next AY
+          </button>
+          <button
             className="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm"
             onClick={handleGenerate}
             disabled={isGenerating}
@@ -2070,7 +2084,7 @@ export default function AcademicCalendarPage() {
                 <h5 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.6rem' }}>
                   Gazetted Holidays &amp; Statutory Observances Preview
                 </h5>
-                <div style={{ border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                <div style={{ border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '0.75rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                   <table className="table table-sm mb-0" style={{ color: 'var(--app-text, #f8fafc)', fontSize: '0.8rem' }}>
                     <thead style={{ background: 'rgba(0, 0, 0, 0.3)' }}>
                       <tr>

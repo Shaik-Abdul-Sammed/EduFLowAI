@@ -14,12 +14,14 @@ export function createWhatsAppRouter() {
 
   // Staged Attendance Queue
   router.get('/staged', WhatsAppWebhookController.getStaged)
+  router.post('/staged/confirm-all', WhatsAppWebhookController.confirmAllStaged)
   router.post('/staged/:id/confirm', WhatsAppWebhookController.confirmStaged)
   router.post('/staged/:id/reject', WhatsAppWebhookController.rejectStaged)
 
-  // Logs & Directory
+  // Logs & Directory & Export
   router.get('/logs', WhatsAppWebhookController.getLogs)
   router.get('/faculty', WhatsAppWebhookController.getFaculty)
+  router.get('/export-csv', WhatsAppWebhookController.exportCsv)
 
   // Governance Summaries & Leave Management
   router.get('/hod-daily-summary', WhatsAppWebhookController.getHodDailySummary)

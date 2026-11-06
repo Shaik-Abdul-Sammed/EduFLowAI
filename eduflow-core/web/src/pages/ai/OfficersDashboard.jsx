@@ -763,7 +763,7 @@ export default function OfficersDashboard() {
                             Prompt #{getOfficerLocalHistory(selectedOfficerHistory).length - idx}
                           </span>
                         </div>
-                        <div style={{ fontSize: '0.88rem', color: '#f8fafc', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+                        <div style={{ fontSize: '0.88rem', color: '#f8fafc', lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere', maxHeight: '180px', overflowY: 'auto' }}>
                           {promptText}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>

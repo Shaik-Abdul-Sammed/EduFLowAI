@@ -14,8 +14,10 @@ const DEMO_ONBOARDING_REPLIES = [
 
 const SUGGESTIONS = [
   { icon: '📄', title: 'Import documents', desc: 'Upload PDF, brochure or prospectus', msg: 'I want to upload my institution prospectus to extract details automatically.' },
+  { icon: '📅', title: 'Academic Calendar', desc: 'Generate multi-format UGC calendar', msg: 'Generate an academic calendar conforming to UGC norms with working days and gazetted holidays for both Grid and Gazette formats.' },
+  { icon: '💬', title: 'WhatsApp Attendance', desc: 'Detect anomalies & sync shortage alerts', msg: 'Run WhatsApp attendance audit: identify classes below 75% statutory attendance and draft guardian alerts.' },
+  { icon: '⚠️', title: 'Double-Booking Audit', desc: 'Detect faculty & room clashes', msg: 'Audit current semester timetable for faculty and room double-booking clashes and suggest conflict-free slots.' },
   { icon: '🎨', title: 'Customize theme', desc: 'Change colors, fonts, branding', msg: 'Help me customize the theme and branding for my institution app.' },
-  { icon: '📱', title: 'Add a module', desc: 'Hostel, Transport, Library, etc.', msg: 'What modules can I add to my institution app?' },
   { icon: '🚀', title: 'Build & Release', desc: 'Compile APK and AAB for Play Store', msg: 'I want to build and release my institution Flutter app.' },
 ]
 
@@ -147,7 +149,7 @@ export default function AITerminal() {
   const sidebarW = sidebarOpen ? 260 : 64
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#0A0E27', color: 'white', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100dvh', minHeight: '100dvh', background: '#0A0E27', color: 'white', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
       {/* Sidebar */}
       <div style={{ width: sidebarW, minWidth: sidebarW, background: 'rgba(255,255,255,0.03)', borderRight: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', transition: 'width 0.3s ease', overflow: 'hidden' }}>
         {/* Logo */}
@@ -234,8 +236,39 @@ export default function AITerminal() {
         </div>
 
         {/* Input bar */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+        <div style={{ padding: '0.75rem 1.5rem 1rem', borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
           <div style={{ maxWidth: 800, margin: '0 auto' }}>
+            {/* Quick Suggestions Chips */}
+            {messages.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '0.4rem', scrollbarWidth: 'none' }}>
+                {[
+                  'Generate AY 2026-27 UGC Academic Calendar',
+                  'Run WhatsApp attendance audit for shortages',
+                  'Audit timetable for double-booking clashes',
+                  'Simulate borderline grace marks (+2.5%)'
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => sendMessage(chip)}
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '999px',
+                      padding: '0.3rem 0.75rem',
+                      color: 'rgba(255,255,255,0.7)',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,99,235,0.2)'; e.currentTarget.style.color = '#93c5fd' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '0.6rem 0.75rem' }}>
               <button onClick={() => fileRef.current?.click()} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.4rem', borderRadius: 8, display: 'flex', alignItems: 'center', flexShrink: 0, transition: 'color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#2563EB'}

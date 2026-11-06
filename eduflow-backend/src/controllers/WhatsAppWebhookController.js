@@ -262,6 +262,55 @@ export class WhatsAppWebhookController {
   }
 
   /**
+   * POST /api/v1/whatsapp/staged/confirm-all
+   */
+  static async confirmAllStaged(req, res) {
+    try {
+      const store = WhatsAppAttendance.getStagedStore()
+      let updatedCount = 0
+      store.forEach(r => {
+        if (r.status === 'PENDING') {
+          r.status = 'CONFIRMED'
+          updatedCount++
+        }
+      })
+      try {
+        await pool.query(`UPDATE whatsapp_staged_attendance SET status = 'CONFIRMED' WHERE status = 'PENDING'`)
+      } catch {}
+      await processConfirmedStagedAttendance().catch(() => {})
+      return res.status(200).json({ success: true, message: `Approved all pending attendance records`, updated: updatedCount })
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
+  /**
+   * GET /api/v1/whatsapp/export-csv
+   */
+  static async exportCsv(req, res) {
+    try {
+      let stagedRows = [...WhatsAppAttendance.getStagedStore()].reverse()
+      const headers = ['ID', 'Course', 'Section', 'Faculty Phone', 'Present', 'Absent', 'Status', 'Date']
+      const rows = stagedRows.map(r => [
+        r.id,
+        r.course_code,
+        r.section,
+        `"${r.faculty_phone || ''}"`,
+        r.present_count,
+        r.absent_count,
+        r.status,
+        r.date || new Date().toISOString().split('T')[0]
+      ])
+      const csv = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+      res.setHeader('Content-Type', 'text/csv')
+      res.setHeader('Content-Disposition', 'attachment; filename="whatsapp_attendance_audit.csv"')
+      return res.status(200).send(csv)
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
+
+  /**
    * POST /api/v1/whatsapp/staged/:id/reject
    */
   static async rejectStaged(req, res) {

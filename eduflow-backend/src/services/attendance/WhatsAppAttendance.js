@@ -93,9 +93,11 @@ export class WhatsAppAttendance {
     const ratioMatch = clean.match(/([A-Z]{2,5}[-\s]?\d{3}[A-Z]?)\s+(\d+)\s*\/\s*(\d+)/i)
     if (ratioMatch) {
       courseCode = ratioMatch[1].replace(/\s+/g, '-').toUpperCase()
-      presentCount = parseInt(ratioMatch[2], 10)
-      const total = parseInt(ratioMatch[3], 10)
-      absentCount = Math.max(0, total - presentCount)
+      const rawPresent = parseInt(ratioMatch[2], 10)
+      const rawTotal = parseInt(ratioMatch[3], 10)
+      // Broken Rule Fix: Present count cannot exceed total enrolled capacity
+      presentCount = Math.min(rawPresent, rawTotal)
+      absentCount = Math.max(0, rawTotal - presentCount)
       section = 'A'
     } else {
       // Pattern 2: "CSE 3A present 45 absent 5" or "attendance CSE-3A today 48 present"
