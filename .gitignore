@@ -1,111 +1,143 @@
-# Dependencies
+# ==============================================================================
+# EduFlow AI OS — Root Git Ignore Specification
+# ==============================================================================
+
+# Node.js & Dependencies
 node_modules/
 .pnp
 .pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
 
-# Testing
+# Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# Testing & Coverage
 coverage/
 *.lcov
 .nyc_output/
+.clinic/
 
-# Environment variables
-.env
-.env.local
-.env.production
-.env.*.local
-backups/
-**/backups/
-*.sql.gz
-*backups-manifest.json
+# Python & AI Scripts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+.coverage.*
+.venv/
+venv/
+env/
+ENV/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Build outputs
+# Build Outputs & Bundles
 dist/
 build/
-.cache/
-
-# Cypress (E2E)
-cypress/videos/
-cypress/screenshots/
-cypress/results/
-
-# Firebase local
-.firebase/
-firebase-debug.log
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Temporary files
-tmp/
-temp/
-
-# Package managers
-# Removed to ensure deterministic builds in production
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
-
-# Backend build/dist
-backend/dist/
-backend/build/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-postgres_data/
-redis_data/
-
-# Docker volumes
-volumes/
-data/
-
-# VSCode settings (user-specific)
-.vscode/settings.json
-.vscode/launch.json
-
-# Runtime
-.pid
-
-# Next.js
-.next/
 out/
+.next/
+.cache/
+.vite/
+.turbo/
+.parcel-cache/
+.eslintcache
+.stylelintcache
 
-# Flutter/Dart
+# Android & Keystores (Security Critical)
+*.jks
+*.keystore
+*.p12
+*.pfx
+key.properties
+local.properties
+.gradle/
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+
+# Flutter / Dart Mobile
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
-build/
-*.a
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
 *.apk
 *.aab
 *.app
-*.app.zip
-*.dylib
-*.exe
-*.framework
 *.ipa
-*.lib
-*.so
+*.dylib
+*.framework
 
-# macOS
+# Database Files & Dumps
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+postgres_data/
+redis_data/
+backups/
+**/backups/
+*.sql.gz
+*backups-manifest.json
+
+# Docker Volumes
+volumes/
+data/
+
+# IDE & Editor Settings
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*.bak
+*~
+
+# Operating System Files
 .DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+
+# Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+tmp/
+temp/
+.pid
+.pid.lock
+
+# E2E & Browser Automation
+cypress/videos/
+cypress/screenshots/
+cypress/results/
+
+# Firebase Local Cache
+.firebase/
+firebase-debug.log
