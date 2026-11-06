@@ -29,6 +29,21 @@ android {
         resValues = true
     }
 
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    val keystoreProperties = java.util.Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias") ?: "eduflow"
+            keyPassword = keystoreProperties.getProperty("keyPassword") ?: "eduflow2026"
+            storeFile = if (keystoreProperties.getProperty("storeFile") != null) file(keystoreProperties.getProperty("storeFile")) else file("eduflow-release.jks")
+            storePassword = keystoreProperties.getProperty("storePassword") ?: "eduflow2026"
+        }
+    }
+
     buildTypes {
         release {
             // Production Release Configuration
@@ -38,7 +53,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
 }

@@ -43,6 +43,7 @@ import academicEscalationRouter from './routes/academicEscalationRoutes.js'
 import { createSSORouter } from './routes/ssoRoutes.js'
 import { createComplianceRouter } from './routes/complianceRoutes.js'
 import { createLiveDataRouter } from './routes/liveDataRoutes.js'
+import { createPaymentRouter } from './routes/paymentRoutes.js'
 import { authMiddleware } from './middleware/auth.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
@@ -170,6 +171,8 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/compliance', createComplianceRouter())
   app.use('/api/v1/admin/compliance', createComplianceRouter())
   app.use('/api/v1/live-data', createLiveDataRouter())
+  app.use('/api/v1/payments', createPaymentRouter())
+  app.use('/api/v1/payment', createPaymentRouter())
   app.get('/api/v1/activity', authMiddleware, InsightsController.activity)
 
   // Manual Backup Verification trigger

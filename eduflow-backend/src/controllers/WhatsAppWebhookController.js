@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { WhatsAppAttendance } from '../services/attendance/WhatsAppAttendance.js'
 import { processConfirmedStagedAttendance } from '../workers/whatsappAttendanceProcessor.js'
 import { pool } from '../db/pool.js'
@@ -41,6 +42,16 @@ export class WhatsAppWebhookController {
    */
   static async handleInboundMessage(req, res) {
     try {
+      // Production HMAC-SHA256 signature validation (Meta Cloud API)
+      if (process.env.WHATSAPP_APP_SECRET && req.headers['x-hub-signature-256']) {
+        const signature = req.headers['x-hub-signature-256']
+        const hmac = crypto.createHmac('sha256', process.env.WHATSAPP_APP_SECRET)
+        const digest = 'sha256=' + hmac.update(typeof req.body === 'string' ? req.body : JSON.stringify(req.body)).digest('hex')
+        if (signature !== digest) {
+          return res.status(401).json({ error: 'Unauthorized: Invalid Meta webhook HMAC-SHA256 signature' })
+        }
+      }
+
       let from = ''
       let to = ''
       let body = ''
