@@ -94,7 +94,7 @@ class WelcomeScreen extends StatelessWidget {
               width: 90,
               height: 90,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const Center(
+              errorBuilder: (_, _, _) => const Center(
                 child: Icon(
                   Icons.school,
                   size: 48,
