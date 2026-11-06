@@ -1,9 +1,9 @@
 # EduFlow AI — Institutional Intelligence and Automation OS for Indian Higher Education
 
-[![Backend Tests](https://img.shields.io/badge/backend%20tests-186%2F186%20passed-brightgreen)](#testing)
-[![Frontend Tests](https://img.shields.io/badge/frontend%20tests-76%2F76%20passed-brightgreen)](#testing)
+[![Backend Tests](https://img.shields.io/badge/backend%20tests-505%2F505%20passed-brightgreen)](#testing)
+[![Frontend Tests](https://img.shields.io/badge/frontend%20tests-237%2F237%20passed-brightgreen)](#testing)
 [![Code Quality](https://img.shields.io/badge/lint-0%20errors-brightgreen)](#testing)
-[![Production Hardened](https://img.shields.io/badge/security-helmet%20%7C%20rate--limit%20%7C%20timeout-blue)](#production-hardening)
+[![Production Hardened](https://img.shields.io/badge/security-helmet%20%7C%20rate--limit%20%7C%20RLS%20%7C%20HMAC-blue)](#production-hardening)
 [![Deployment](https://img.shields.io/badge/render-blueprint%20ready-blueviolet)](#render-cloud-deployment)
 
 EduFlow AI is an autonomous institutional automation operating system engineered specifically for Indian colleges and universities. Powered by a specialized multi-LLM engine, EduFlow AI eliminates administrative bottlenecks through five streaming autonomous AI Officers, turnkey accreditation analysis (NAAC/NBA), predictive student retention, conflict-free scheduling, and an automated lead-to-cash service delivery pipeline.
@@ -221,6 +221,13 @@ Set `AI_PROVIDER` to one of `gemini`, `openai`, `claude`, or `ollama`. When runn
 | `RATE_LIMIT_WINDOW_MS` | Rate limiting sliding window in milliseconds | `900000` (15m) | No |
 | `LEAD_NOTIFICATION_EMAIL` | Admin email address for new lead notifications | — | No |
 | `COMPANY_ADDRESS` | Address printed on generated GST invoices | `Hyderabad, India` | No |
+| `RAZORPAY_KEY_ID` | Razorpay API public key ID | `rzp_test_eduflow2026` | For Online Fees |
+| `RAZORPAY_KEY_SECRET` | Razorpay API secret for signature verification | `eduflow_secret_2026` | For Online Fees |
+| `RAZORPAY_WEBHOOK_SECRET`| Secret used to verify incoming payment webhooks | `eduflow_webhook_secret_2026` | For Online Fees |
+| `WHATSAPP_PHONE_ID` | Meta WhatsApp Cloud API registered Phone Number ID | — | For Live WhatsApp |
+| `WHATSAPP_TOKEN` | Meta System User permanent bearer access token | — | For Live WhatsApp |
+| `WHATSAPP_VERIFY_TOKEN` | Verification token for Meta webhook subscription | `eduflow_verify_token` | For Live WhatsApp |
+| `WHATSAPP_APP_SECRET` | Meta App Secret for incoming HMAC-SHA256 signature verification | — | For Live WhatsApp |
 
 ### Frontend (`eduflow-core/web/.env`)
 
@@ -262,11 +269,14 @@ EduFlow AI includes a turn-key Render Blueprint specification (`render.yaml`) to
 EduFlow AI maintains comprehensive test coverage across both backend and frontend layers:
 
 ```bash
-# Run all backend tests (186 tests across 39 suites)
+# Run all backend tests (505 tests across 102 suites)
 npm --prefix eduflow-backend test
 
-# Run all frontend tests (76 tests across 23 suites)
+# Run all frontend tests (237 tests across 66 suites)
 npm --prefix eduflow-core/web test
+
+# Run mobile static analysis
+cd eduflow-core/mobile && flutter analyze
 
 # Run code linting
 npm --prefix eduflow-core/web run lint
@@ -279,9 +289,10 @@ bash scripts/run-all-tests.sh
 ```
 
 ### Current Test Statistics
-- **Backend Tests:** **186 / 186 passed** (Auth, JWT, Zod schemas, Officer SSE streams, Leads CRM, Invoices, Delivery tokens, Database persistence, Failover recovery)
-- **Frontend Tests:** **76 / 76 passed** (Component renders, Hooks, Streaming officer edge cases, Observation mode, Services directory, Lead intake with honeypot rejection)
-- **Total Test Suites:** **62 suites, 262 tests, 0 failures**
+- **Backend Tests:** **505 / 505 passed** (Auth, JWT, Zod schemas, Officer SSE streams, Leads CRM, Invoices, Delivery tokens, Database persistence, Failover recovery, Payment HMAC webhooks, Admin operations)
+- **Frontend Tests:** **237 / 237 passed** (Component renders, Hooks, Streaming officer edge cases, Observation mode, Services directory, Lead intake with honeypot rejection, Parent portal, Fee receipts, Workload metrics)
+- **Flutter Mobile Analysis:** **0 errors, 0 warnings** (`flutter analyze` passing)
+- **Total Tests:** **742 tests, 168 suites, 0 failures**
 
 ---
 
@@ -314,10 +325,13 @@ node eduflow-backend/scripts/restore.js
 | **Report Delivery** | ✅ Fully Built | Public 32-char hex token URLs, pure-JS PDF buffer generator, and view analytics. |
 | **Invoice Generator** | ✅ Fully Built | Auto-incrementing `EDU-YYYY-XXXX`, 18% GST calculation, and downloadable invoice PDFs. |
 | **Auth & Security** | ✅ Fully Built | JWT tokens, bcrypt hash validation, rate limiting, helmet, and request timeouts. |
+| **Universal Academic Calendar Engine** | ✅ Fully Built | Dual-format ReportLab engine (Format 1 Grid + Format 2 Gazette), state holiday database (AP, TS, KA, MH, TN, DL, UP), and dynamic PDF streaming controller. |
+| **Payment Gateway & Webhook** | ✅ Fully Built | Razorpay & UPI order creation, timing-safe HMAC-SHA256 signature verification, live webhook processing (`payment.captured`), and transaction ledger. |
+| **WhatsApp Attendance & Sync Gateway** | ✅ Fully Built | Inbound NLP parser, ratio bounds clamping (`present <= total`), staging desk, bulk approval, CSV streaming, and Meta HMAC-SHA256 verification. |
+| **DB-Level Row Level Security (RLS)**| ✅ Fully Built | PostgreSQL-native tenant isolation (`sql/002_rls.sql`) enforcing tenant boundaries at database engine level. |
+| **Cross-Platform Mobile App (Flutter)** | ✅ Fully Built | Dart/Flutter client with secure local token storage, ProGuard minification, and automated Android production release keystore signing. |
+| **Administrative Operations CRUD** | ✅ Fully Built | REST endpoints for Students, Faculty workload, Fees, Hostel rooms (capacity <= 4), Exams, Results moderation (+2.5%), Payroll, Parent alerts, and Timetable clash detection. |
 | **Student / Faculty Portals** | ⚠️ Mock / Demo UI | 70+ presentation screens demonstrating future ERP module interface layouts. |
-| **Payment Gateway** | ⏳ Phase 3 Planned | Direct Razorpay / UPI checkout integration. |
-| **WhatsApp / SMS Gateway** | ⏳ Phase 3 Planned | Automated notification alerts for admission yield and fee defaulters. |
-| **DB-Level Row Level Security (RLS)**| ⏳ Phase 3 Planned | PostgreSQL-native tenant isolation (currently isolated at application query layer). |
 
 ---
 
