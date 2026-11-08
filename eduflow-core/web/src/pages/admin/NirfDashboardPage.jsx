@@ -363,7 +363,7 @@ export default function NirfDashboardPage() {
               </div>
               <div className="d-flex justify-content-between align-items-center">
                 <span className="small text-white-50">Model Confidence</span>
-                <span className="small fw-semibold text-white">{(scoreData.confidence * 100).toFixed(0)}%</span>
+                <span className="small fw-semibold text-white">{(Number(scoreData.confidence || 0) * 100).toFixed(0)}%</span>
               </div>
             </div>
 
@@ -904,7 +904,7 @@ export default function NirfDashboardPage() {
                   Score: <strong style={{ color: 'var(--app-text, #f8fafc)' }}>{item.score}</strong>
                 </div>
                 <span className="badge bg-success bg-opacity-10 text-success small mt-1">
-                  +{(item.score - 60).toFixed(1)} pts
+                  +{(Number(item.score || 60) - 60).toFixed(1)} pts
                 </span>
               </div>
             </div>
@@ -1015,7 +1015,7 @@ export default function NirfDashboardPage() {
                   </thead>
                   <tbody>
                     {Object.entries(parameters).map(([key, item]) => {
-                      const weighted = (item.score * item.weight).toFixed(2)
+                      const weighted = ((Number(item.score) || 0) * (Number(item.weight) || 0)).toFixed(2)
                       return (
                         <tr key={key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                           <td style={{ padding: '0.65rem 1rem', fontWeight: 700, color: '#60a5fa' }}>{key}</td>

@@ -19,19 +19,24 @@ export class AttendanceComplianceService {
     condonationFloor = 65.0,
     condonationFeeINR = 1500
   }) {
+    const recordList = Array.isArray(records) ? records : []
     const eligibleStudents = []
     const condonationStudents = []
     const barredStudents = []
 
-    records.forEach(student => {
-      const percentage = student.totalClasses > 0
-        ? Number(((student.attendedClasses / student.totalClasses) * 100).toFixed(1))
+    recordList.forEach(student => {
+      const total = Number(student.totalClasses) || 0
+      const attended = Number(student.attendedClasses) || 0
+      const percentage = total > 0
+        ? Number(((attended / total) * 100).toFixed(1))
         : 100.0
 
       const studentData = {
         ...student,
+        totalClasses: total,
+        attendedClasses: attended,
         percentage,
-        deficitClassesToReach75: Math.max(0, Math.ceil((0.75 * student.totalClasses) - student.attendedClasses))
+        deficitClassesToReach75: Math.max(0, Math.ceil((0.75 * total) - attended))
       }
 
       if (percentage >= statutoryCutoff) {
@@ -54,18 +59,20 @@ export class AttendanceComplianceService {
       }
     })
 
+    const overallRate = recordList.length > 0
+      ? Number((recordList.reduce((sum, r) => sum + ((Number(r.attendedClasses) || 0) / Math.max(1, Number(r.totalClasses) || 1)), 0) / recordList.length * 100).toFixed(1))
+      : 0
+
     return {
       academicYear: '2026-27',
       statutoryThreshold: `${statutoryCutoff}%`,
       condonationBand: `${condonationFloor}% - ${statutoryCutoff}%`,
       summary: {
-        totalEvaluated: records.length,
+        totalEvaluated: recordList.length,
         eligibleCount: eligibleStudents.length,
         condonationCount: condonationStudents.length,
         barredCount: barredStudents.length,
-        overallInstitutionalAttendanceRate: Number(
-          (records.reduce((sum, r) => sum + (r.attendedClasses / Math.max(1, r.totalClasses)), 0) / Math.max(1, records.length) * 100).toFixed(1)
-        )
+        overallInstitutionalAttendanceRate: overallRate
       },
       eligibleList: eligibleStudents,
       condonationList: condonationStudents,
@@ -85,10 +92,15 @@ export class AttendanceComplianceService {
     gazettedHolidays = ['2026-08-15', '2026-10-02', '2026-01-26']
   }) {
     const anomalies = []
+    const sessionList = Array.isArray(sessions) ? [...sessions] : []
+    const holidays = Array.isArray(gazettedHolidays) ? gazettedHolidays : []
 
-    sessions.forEach((session, idx) => {
+    // Sort chronologically for accurate consecutive difference analysis
+    sessionList.sort((a, b) => new Date(a.submittedAt || 0).getTime() - new Date(b.submittedAt || 0).getTime())
+
+    sessionList.forEach((session, idx) => {
       // 1. Holiday ghost logging
-      if (gazettedHolidays.includes(session.date)) {
+      if (holidays.includes(session.date)) {
         anomalies.push({
           type: 'GHOST_LOGGING_ON_HOLIDAY',
           severity: 'HIGH',
@@ -101,36 +113,40 @@ export class AttendanceComplianceService {
 
       // 2. Proxy rapid submission (< 5 mins between consecutive submissions for same course)
       if (idx > 0) {
-        const prevSession = sessions[idx - 1]
+        const prevSession = sessionList[idx - 1]
         if (prevSession.course === session.course && prevSession.date === session.date) {
           const t1 = new Date(prevSession.submittedAt).getTime()
           const t2 = new Date(session.submittedAt).getTime()
-          const diffMinutes = (t2 - t1) / (1000 * 60)
-          if (diffMinutes < 5) {
-            anomalies.push({
-              type: 'RAPID_PROXY_SPIKE',
-              severity: 'MEDIUM',
-              sessionId: session.id,
-              faculty: session.faculty,
-              details: `Duplicate or rapid consecutive submission within ${diffMinutes.toFixed(1)} minutes.`
-            })
+          if (!isNaN(t1) && !isNaN(t2)) {
+            const diffMinutes = Math.abs(t2 - t1) / (1000 * 60)
+            if (diffMinutes < 5) {
+              anomalies.push({
+                type: 'RAPID_PROXY_SPIKE',
+                severity: 'MEDIUM',
+                sessionId: session.id,
+                faculty: session.faculty,
+                details: `Duplicate or rapid consecutive submission within ${diffMinutes.toFixed(1)} minutes.`
+              })
+            }
           }
         }
       }
 
       // 3. Ratio bounds violation
-      if (session.present > session.total) {
+      const present = Number(session.present) || 0
+      const total = Number(session.total) || 0
+      if (present > total && total > 0) {
         anomalies.push({
           type: 'BOUNDS_VIOLATION',
           severity: 'HIGH',
           sessionId: session.id,
-          details: `Present count (${session.present}) exceeds enrolled capacity (${session.total}).`
+          details: `Present count (${present}) exceeds enrolled capacity (${total}).`
         })
       }
     })
 
     return {
-      totalAnalyzed: sessions.length,
+      totalAnalyzed: sessionList.length,
       anomaliesDetectedCount: anomalies.length,
       isClean: anomalies.length === 0,
       anomalies
@@ -141,10 +157,16 @@ export class AttendanceComplianceService {
    * Need 19: Offline Low-Network Attendance Reconciliation Queue
    */
   static processOfflineAttendanceQueue(pendingQueue = []) {
+    const queue = Array.isArray(pendingQueue) ? pendingQueue : []
     const reconciled = []
     const rejected = []
 
-    pendingQueue.forEach(item => {
+    queue.forEach(item => {
+      if (!item || typeof item !== 'object') {
+        rejected.push({ item, reason: 'Malformed offline attendance packet' })
+        return
+      }
+
       // Validate structure
       if (!item.course || !item.faculty || !item.date || item.present === undefined) {
         rejected.push({ item, reason: 'Malformed offline attendance packet' })

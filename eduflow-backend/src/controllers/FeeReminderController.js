@@ -8,19 +8,21 @@ export class FeeReminderController {
     try {
       const institutionId = req.user?.institutionId || 1
       const overdue = await FeeReminderService.findOverdueInvoices(institutionId)
-      const categorized = FeeReminderService.categorizeByOverdueDays(overdue)
+      const overdueList = Array.isArray(overdue) ? overdue : []
+      const categorized = FeeReminderService.categorizeByOverdueDays(overdueList)
 
-      const totalOverdueAmount = overdue.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0)
+      const totalOverdueAmount = overdueList.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0)
       const history = await FeeReminderService.getHistory(institutionId, 100)
-      const paidAfterReminder = history.filter(h => h.status === 'PAID').length
-      const recoveryRate = history.length > 0 ? Math.round((paidAfterReminder / history.length) * 100) : 68
+      const historyList = Array.isArray(history) ? history : []
+      const paidAfterReminder = historyList.filter(h => h.status === 'PAID').length
+      const recoveryRate = historyList.length > 0 ? Math.round((paidAfterReminder / historyList.length) * 100) : 68
 
       return res.status(200).json({
         totalOverdue: totalOverdueAmount,
-        overdueCount: overdue.length,
-        remindersSentThisMonth: history.length,
+        overdueCount: overdueList.length,
+        remindersSentThisMonth: historyList.length,
         recoveryRate,
-        invoices: overdue,
+        invoices: overdueList,
         tiers: {
           tier1: categorized.tier1,
           tier2: categorized.tier2,

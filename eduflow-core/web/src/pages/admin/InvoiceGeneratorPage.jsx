@@ -224,7 +224,7 @@ export default function InvoiceGeneratorPage() {
                   className="btn btn-sm btn-outline-primary"
                   style={{ fontSize: '0.75rem', fontWeight: 600 }}
                 >
-                  ₹{(pkg.rate / 1000).toFixed(0)}k: {pkg.name.split(' ')[0]}
+                  ₹{(Number(pkg.rate || 0) / 1000).toFixed(0)}k: {(pkg.name || '').split(' ')[0]}
                 </button>
               ))}
             </div>

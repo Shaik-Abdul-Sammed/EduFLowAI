@@ -44,10 +44,10 @@ export default function ChildTracking() {
                   <div>
                     <p className="text-success mb-2 fw-semibold">Receiving live updates for {childData.name}</p>
                     <p className="text-muted small font-monospace mb-0">
-                      Lat: {childData.lat.toFixed(5)} | Lng: {childData.lng.toFixed(5)}
+                      Lat: {typeof childData.lat === 'number' ? childData.lat.toFixed(5) : '—'} | Lng: {typeof childData.lng === 'number' ? childData.lng.toFixed(5) : '—'}
                     </p>
                     <p className="text-muted small mt-2">
-                      Last Updated: {new Date(childData.timestamp).toLocaleTimeString()}
+                      Last Updated: {childData.timestamp ? new Date(childData.timestamp).toLocaleTimeString() : '—'}
                     </p>
                   </div>
                 ) : (

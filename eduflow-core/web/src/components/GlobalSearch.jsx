@@ -36,12 +36,17 @@ function loadLocalRecent(role) {
 }
 
 function storeLocalRecent(role, item) {
-  const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) || '{}')
-  const existing = parsed[role] || []
-  const deduped = [item, ...existing.filter((x) => x.routePath !== item.routePath)].slice(0, 6)
-  parsed[role] = deduped
-  localStorage.setItem(RECENT_KEY, JSON.stringify(parsed))
-  return deduped
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    const parsed = raw ? JSON.parse(raw) : {}
+    const existing = parsed[role] || []
+    const deduped = [item, ...existing.filter((x) => x.routePath !== item.routePath)].slice(0, 6)
+    parsed[role] = deduped
+    localStorage.setItem(RECENT_KEY, JSON.stringify(parsed))
+    return deduped
+  } catch {
+    return [item]
+  }
 }
 
 export default function GlobalSearch({ routes = [], currentRole = 'student', className = '' }) {

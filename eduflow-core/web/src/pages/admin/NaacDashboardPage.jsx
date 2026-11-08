@@ -522,7 +522,7 @@ export default function NaacDashboardPage() {
                       {c.rawScore} <span style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 400 }}>/ {c.maxScore}</span>
                     </span>
                     <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>
-                      CGPA: <strong style={{ color: '#F3F4F6' }}>{c.score || (c.percentage * 0.04).toFixed(2)}</strong>
+                      CGPA: <strong style={{ color: '#F3F4F6' }}>{c.score || (Number(c.percentage || 0) * 0.04).toFixed(2)}</strong>
                     </span>
                   </div>
 

@@ -326,11 +326,11 @@ export default function ObservationMode() {
               </div>
               <div className="obs-roi-values">
                 <div className="obs-roi-item">
-                  <h3>{accumulatedROI.hoursSaved.toFixed(1)} hrs</h3>
+                  <h3>{Number(accumulatedROI?.hoursSaved || 0).toFixed(1)} hrs</h3>
                   <p>Faculty & Admin Hours Saved</p>
                 </div>
                 <div className="obs-roi-item">
-                  <h3>₹{accumulatedROI.moneySaved.toLocaleString('en-IN')}</h3>
+                  <h3>₹{Number(accumulatedROI?.moneySaved || 0).toLocaleString('en-IN')}</h3>
                   <p>Direct Institutional Savings</p>
                 </div>
               </div>

@@ -126,9 +126,9 @@ export default function Page() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, maxWidth: 300 }}>
               <div style={{ flex: 1, height: 8, background: '#e2e8f0', borderRadius: 4 }}>
-                <div style={{ height: '100%', width: `${Math.round(doneCount/todayPlan.length*100)}%`, background: `linear-gradient(90deg,${CYAN},#10B981)`, borderRadius: 4, transition: 'width 0.5s' }} />
+                <div style={{ height: '100%', width: `${todayPlan.length > 0 ? Math.round(doneCount / todayPlan.length * 100) : 0}%`, background: `linear-gradient(90deg,${CYAN},#10B981)`, borderRadius: 4, transition: 'width 0.5s' }} />
               </div>
-              <span style={{ fontWeight: 800, color: CYAN, fontSize: '0.85rem', minWidth: 36 }}>{Math.round(doneCount/todayPlan.length*100)}%</span>
+              <span style={{ fontWeight: 800, color: CYAN, fontSize: '0.85rem', minWidth: 36 }}>{todayPlan.length > 0 ? Math.round(doneCount / todayPlan.length * 100) : 0}%</span>
             </div>
           </div>
         )}

@@ -108,7 +108,7 @@ export function createAuthRouter() {
    */
   router.post('/refresh', async (req, res) => {
     try {
-      const { refreshToken } = req.body
+      const { refreshToken } = req.body || {}
       if (!refreshToken) return res.status(400).json({ error: 'Refresh token required' })
 
       // Verify signature
@@ -149,7 +149,7 @@ export function createAuthRouter() {
    */
   router.post('/logout', async (req, res) => {
     try {
-      const { refreshToken } = req.body
+      const { refreshToken } = req.body || {}
       if (refreshToken) {
         // Attempt decode to find user id without throwing if expired
         const decoded = jwt.decode(refreshToken)
@@ -178,7 +178,7 @@ export function createAuthRouter() {
    */
   router.post('/register', validateRequest(registerUserSchema), async (req, res) => {
     try {
-      const { institutionId = 1, username, email, password, name, role } = req.body
+      const { institutionId = 1, username, email, password, name, role } = req.body || {}
       const effectiveUsername = username || email
 
       // Check if user already exists

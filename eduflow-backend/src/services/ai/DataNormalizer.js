@@ -37,10 +37,10 @@ export class DataNormalizer {
       non_teaching_staff: nonTeachingStaff,
       total_staff: totalStaff,
       phd_faculty_count: Number(raw.phdFaculty ?? raw.phd_count ?? 40),
-      phd_faculty_percentage: Number((Number(raw.phdRatio ?? (40 / totalFaculty * 100))).toFixed(1)),
+      phd_faculty_percentage: Number((Number(raw.phdRatio ?? (totalFaculty > 0 ? (40 / totalFaculty * 100) : 0))).toFixed(1)),
       average_cgpa: Number((Number(raw.averageCgpa ?? raw.avg_cgpa ?? 7.8)).toFixed(2)),
       average_attendance_percentage: Number((Number(raw.averageAttendance ?? raw.avg_attendance ?? 82.0)).toFixed(1)),
-      student_faculty_ratio: Number((Number(raw.sfr ?? (totalStudents / totalFaculty))).toFixed(1)),
+      student_faculty_ratio: Number((Number(raw.sfr ?? (totalFaculty > 0 ? (totalStudents / totalFaculty) : 0))).toFixed(1)),
       placement_percentage: Number((Number(raw.placementPercentage ?? 62.0)).toFixed(1)),
       median_package_lpa: Number((Number(raw.medianPackageLpa ?? 5.5)).toFixed(2)),
       total_research_publications: Number(raw.totalResearch ?? 450),
@@ -123,10 +123,12 @@ export class DataNormalizer {
    * Normalizes intake and seats.
    */
   static normalizeIntake(raw = {}) {
+    const sanctioned = Number(raw.totalSanctioned ?? 480)
+    const filled = Number(raw.totalFilled ?? 440)
     return {
-      total_sanctioned_seats: Number(raw.totalSanctioned ?? 480),
-      total_filled_seats: Number(raw.totalFilled ?? 440),
-      enrollment_ratio_percentage: Number((Number(raw.ratio ?? (440 / 480 * 100))).toFixed(2)),
+      total_sanctioned_seats: sanctioned,
+      total_filled_seats: filled,
+      enrollment_ratio_percentage: Number((Number(raw.ratio ?? (sanctioned > 0 ? (filled / sanctioned * 100) : 0))).toFixed(2)),
       total_active_students: Number(raw.totalStudents ?? 1250),
     }
   }

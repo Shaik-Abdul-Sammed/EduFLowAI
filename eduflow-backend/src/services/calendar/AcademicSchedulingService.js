@@ -14,15 +14,18 @@ export class AcademicSchedulingService {
     reasons = ['Unseasonal Heavy Rainfall Alert', 'District Transport Strike'],
     semesterEndDate = '2026-11-28',
     candidateSaturdays = ['2026-09-05', '2026-09-19', '2026-10-10', '2026-10-24', '2026-11-07']
-  }) {
+  } = {}) {
     const assignedCompensations = []
+    const reasonList = Array.isArray(reasons) && reasons.length > 0 ? reasons : ['Emergency Disruption']
+    const lostList = Array.isArray(lostDates) ? lostDates : []
+    const saturdays = Array.isArray(candidateSaturdays) ? candidateSaturdays : []
 
-    for (let i = 0; i < lostInstructionDaysCount && i < candidateSaturdays.length; i++) {
+    for (let i = 0; i < lostInstructionDaysCount && i < saturdays.length; i++) {
       assignedCompensations.push({
-        compensatoryWorkingSaturday: candidateSaturdays[i],
-        compensatesForDate: lostDates[i] || 'Emergency Closure Day',
-        reason: reasons[i % reasons.length] || 'Emergency Disruption',
-        timetableFollowed: `Follow Tuesday Timetable on ${candidateSaturdays[i]}`,
+        compensatoryWorkingSaturday: saturdays[i],
+        compensatesForDate: lostList[i] || 'Emergency Closure Day',
+        reason: reasonList[i % reasonList.length],
+        timetableFollowed: `Follow Tuesday Timetable on ${saturdays[i]}`,
         status: 'SCHEDULED'
       })
     }
@@ -49,18 +52,20 @@ export class AcademicSchedulingService {
       { code: 'OE04', title: 'Financial Engineering & Fintech', faculty: 'Dr. Sunita Rao', enrolledStudents: 110 }
     ],
     designatedSlotTime = 'Tuesday & Thursday 03:00 PM – 04:30 PM'
-  }) {
-    const scheduledElectives = electives.map((elec, idx) => ({
+  } = {}) {
+    const branchList = Array.isArray(branches) ? branches : []
+    const electiveList = Array.isArray(electives) ? electives : []
+    const scheduledElectives = electiveList.map((elec, idx) => ({
       ...elec,
       assignedSlot: designatedSlotTime,
       venue: `Auditorium / LH-${idx + 101}`,
-      participatingBranches: branches,
+      participatingBranches: branchList,
       clashFree: true
     }))
 
     return {
       synchronizedTimeSlot: designatedSlotTime,
-      totalParticipatingBranches: branches.length,
+      totalParticipatingBranches: branchList.length,
       totalElectivesSynchronized: scheduledElectives.length,
       synchronizationStatus: 'CONCURRENT_NON_CONFLICTING',
       schedule: scheduledElectives

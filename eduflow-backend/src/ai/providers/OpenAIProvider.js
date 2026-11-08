@@ -48,20 +48,18 @@ export class OpenAIProvider extends BaseProvider {
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     })
-    return JSON.parse(res.choices[0].message.content)
+    return this.safeJsonParse(res.choices[0]?.message?.content || '{}', {})
   }
 
   async generateCode(spec) {
     const prompt = `Generate Flutter Clean Architecture code for:\n${JSON.stringify(spec)}\nReturn ONLY a JSON array of {filename, content} objects.`
     const res = await this.client.chat.completions.create({ model: this.model, messages: [{ role: 'user', content: prompt }] })
-    const raw = res.choices[0].message.content.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(res.choices[0]?.message?.content || '[]', [])
   }
 
   async analyzeAndRepair(errorLog, codeFiles) {
     const prompt = `Fix this Flutter build error.\nError:\n${errorLog}\nFiles:\n${JSON.stringify(codeFiles)}\nReturn ONLY a JSON array of {filename, content} with fixes applied.`
     const res = await this.client.chat.completions.create({ model: this.model, messages: [{ role: 'user', content: prompt }] })
-    const raw = res.choices[0].message.content.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(res.choices[0]?.message?.content || '[]', [])
   }
 }

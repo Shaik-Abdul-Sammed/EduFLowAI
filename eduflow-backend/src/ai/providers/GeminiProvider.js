@@ -133,21 +133,18 @@ export class GeminiProvider extends BaseProvider {
   async extractStructured(text, schema) {
     const prompt = `Extract structured information from the following text and return ONLY valid JSON matching this schema:\n${JSON.stringify(schema, null, 2)}\n\nText:\n${text}\n\nRespond with ONLY the JSON object, no explanation.`
     const responseText = await this.chat([{ role: 'user', content: prompt }])
-    const raw = responseText.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(responseText || '{}', {})
   }
 
   async generateCode(spec) {
     const prompt = `You are an expert Flutter developer following Clean Architecture.\nGenerate Flutter code for the following specification:\n${JSON.stringify(spec, null, 2)}\nReturn a JSON array of {filename, content} objects. Return ONLY the JSON array.`
     const responseText = await this.chat([{ role: 'user', content: prompt }])
-    const raw = responseText.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(responseText || '[]', [])
   }
 
   async analyzeAndRepair(errorLog, codeFiles) {
     const prompt = `You are an expert Flutter developer. Fix the following build error.\n\nError:\n${errorLog}\n\nCode Files:\n${JSON.stringify(codeFiles, null, 2)}\n\nReturn the fixed files as a JSON array of {filename, content} objects. Return ONLY the JSON array.`
     const responseText = await this.chat([{ role: 'user', content: prompt }])
-    const raw = responseText.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(responseText || '[]', [])
   }
 }

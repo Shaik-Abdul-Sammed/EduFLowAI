@@ -10,139 +10,80 @@ import { HostelMessService } from '../services/hostel/HostelMessService.js'
 import { FacultyGovernanceService } from '../services/faculty/FacultyGovernanceService.js'
 import { UniversalDirectoryIndex } from '../services/search/UniversalDirectoryIndex.js'
 
+function safeHandle(fn) {
+  return (req, res, next) => {
+    try {
+      const result = fn(req, res)
+      if (result && typeof result.then === 'function') {
+        result.then(data => res.json(data)).catch(next)
+      } else {
+        res.json(result)
+      }
+    } catch (err) {
+      next(err)
+    }
+  }
+}
+
 export function createInstitutionalNeedsRouter() {
   const router = Router()
 
   // Phase 1: Accreditation & Statutory Quality
-  router.post('/compliance/co-po-attainment', (req, res) => {
-    res.json(StatutoryQualityService.calculateCOPOAttainment(req.body))
-  })
-  router.post('/compliance/ugc-90-days', (req, res) => {
-    res.json(StatutoryQualityService.verifyUGC90DayRule(req.body))
-  })
-  router.get('/compliance/aicte-sfr', (_req, res) => {
-    res.json(StatutoryQualityService.checkAICTESFRCompliance())
-  })
-  router.post('/compliance/iqac-minutes', (req, res) => {
-    res.json(StatutoryQualityService.generateIQACMinutes(req.body))
-  })
-  router.post('/compliance/peer-team-mock', (req, res) => {
-    res.json(StatutoryQualityService.simulatePeerTeamMockVisit(req.body))
-  })
+  router.post('/compliance/co-po-attainment', safeHandle(req => StatutoryQualityService.calculateCOPOAttainment(req.body || {})))
+  router.post('/compliance/ugc-90-days', safeHandle(req => StatutoryQualityService.verifyUGC90DayRule(req.body || {})))
+  router.get('/compliance/aicte-sfr', safeHandle(() => StatutoryQualityService.checkAICTESFRCompliance()))
+  router.post('/compliance/iqac-minutes', safeHandle(req => StatutoryQualityService.generateIQACMinutes(req.body || {})))
+  router.post('/compliance/peer-team-mock', safeHandle(req => StatutoryQualityService.simulatePeerTeamMockVisit(req.body || {})))
 
   // Phase 2: Attendance & WhatsApp Compliance
-  router.post('/attendance/barring-manifest', (req, res) => {
-    res.json(AttendanceComplianceService.generateHallTicketBarringManifest(req.body))
-  })
-  router.post('/attendance/anomalies', (req, res) => {
-    res.json(AttendanceComplianceService.detectAttendanceAnomalies(req.body))
-  })
-  router.post('/attendance/offline-reconcile', (req, res) => {
-    res.json(AttendanceComplianceService.processOfflineAttendanceQueue(req.body.queue))
-  })
-  router.post('/attendance/biometric-turnstile', (req, res) => {
-    res.json(AttendanceComplianceService.ingestBiometricTurnstileRecord(req.body))
-  })
+  router.post('/attendance/barring-manifest', safeHandle(req => AttendanceComplianceService.generateHallTicketBarringManifest(req.body || {})))
+  router.post('/attendance/anomalies', safeHandle(req => AttendanceComplianceService.detectAttendanceAnomalies(req.body || {})))
+  router.post('/attendance/offline-reconcile', safeHandle(req => AttendanceComplianceService.processOfflineAttendanceQueue((req.body && req.body.queue) || [])))
+  router.post('/attendance/biometric-turnstile', safeHandle(req => AttendanceComplianceService.ingestBiometricTurnstileRecord(req.body || {})))
 
   // Phase 3: Exam Operations
-  router.post('/exams/randomized-seating', (req, res) => {
-    res.json(ExamOperationsService.generateRandomizedSeatingBlueprint(req.body))
-  })
-  router.post('/exams/invigilation-workload', (req, res) => {
-    res.json(ExamOperationsService.balanceInvigilationWorkload(req.body))
-  })
-  router.post('/exams/blooms-taxonomy-audit', (req, res) => {
-    res.json(ExamOperationsService.analyzeQuestionPaperBloomsTaxonomy(req.body))
-  })
-  router.post('/exams/re-evaluation-request', (req, res) => {
-    res.json(ExamOperationsService.processReEvaluationRequest(req.body))
-  })
+  router.post('/exams/randomized-seating', safeHandle(req => ExamOperationsService.generateRandomizedSeatingBlueprint(req.body || {})))
+  router.post('/exams/invigilation-workload', safeHandle(req => ExamOperationsService.balanceInvigilationWorkload(req.body || {})))
+  router.post('/exams/blooms-taxonomy-audit', safeHandle(req => ExamOperationsService.analyzeQuestionPaperBloomsTaxonomy(req.body || {})))
+  router.post('/exams/re-evaluation-request', safeHandle(req => ExamOperationsService.processReEvaluationRequest(req.body || {})))
 
   // Phase 4: Academic Scheduling
-  router.post('/calendar/compensatory-saturdays', (req, res) => {
-    res.json(AcademicSchedulingService.scheduleCompensatoryWorkingSaturdays(req.body))
-  })
-  router.post('/calendar/elective-sync', (req, res) => {
-    res.json(AcademicSchedulingService.synchronizeElectiveTimeSlots(req.body))
-  })
-  router.get('/calendar/cie-milestones', (_req, res) => {
-    res.json(AcademicSchedulingService.generateCIEMilestoneSchedule({}))
-  })
+  router.post('/calendar/compensatory-saturdays', safeHandle(req => AcademicSchedulingService.scheduleCompensatoryWorkingSaturdays(req.body || {})))
+  router.post('/calendar/elective-sync', safeHandle(req => AcademicSchedulingService.synchronizeElectiveTimeSlots(req.body || {})))
+  router.get('/calendar/cie-milestones', safeHandle(() => AcademicSchedulingService.generateCIEMilestoneSchedule({})))
 
   // Phase 5: Bursary & Fee Reconciliation
-  router.post('/finance/brs-match', (req, res) => {
-    res.json(BursaryReconciliationService.autoMatchBankStatementUTR(req.body))
-  })
-  router.post('/finance/escalation-tiers', (req, res) => {
-    res.json(BursaryReconciliationService.generateEscalationReminderTiers(req.body))
-  })
-  router.post('/finance/scholarship-split', (req, res) => {
-    res.json(BursaryReconciliationService.calculateGovernmentScholarshipSplit(req.body))
-  })
-  router.post('/finance/no-dues-clearance', (req, res) => {
-    res.json(BursaryReconciliationService.generateDigitalNoDuesClearance(req.body))
-  })
+  router.post('/finance/brs-match', safeHandle(req => BursaryReconciliationService.autoMatchBankStatementUTR(req.body || {})))
+  router.post('/finance/escalation-tiers', safeHandle(req => BursaryReconciliationService.generateEscalationReminderTiers(req.body || {})))
+  router.post('/finance/scholarship-split', safeHandle(req => BursaryReconciliationService.calculateGovernmentScholarshipSplit(req.body || {})))
+  router.post('/finance/no-dues-clearance', safeHandle(req => BursaryReconciliationService.generateDigitalNoDuesClearance(req.body || {})))
 
   // Phase 6: Student Lifecycle & Placement
-  router.post('/students/mentor-allocation', (req, res) => {
-    res.json(StudentLifecycleService.allocateFacultyMentors(req.body))
-  })
-  router.post('/students/placement-filter', (req, res) => {
-    res.json(StudentLifecycleService.filterCampusPlacementEligible(req.body))
-  })
-  router.get('/students/360-dossier/:roll', (req, res) => {
-    res.json(StudentLifecycleService.generateStudent360Dossier({ studentRoll: req.params.roll }))
-  })
-  router.post('/students/bonafide-cert', (req, res) => {
-    res.json(StudentLifecycleService.generateSignedBonafideCertificate(req.body))
-  })
+  router.post('/students/mentor-allocation', safeHandle(req => StudentLifecycleService.allocateFacultyMentors(req.body || {})))
+  router.post('/students/placement-filter', safeHandle(req => StudentLifecycleService.filterCampusPlacementEligible(req.body || {})))
+  router.get('/students/360-dossier/:roll', safeHandle(req => StudentLifecycleService.generateStudent360Dossier({ studentRoll: req.params.roll })))
+  router.post('/students/bonafide-cert', safeHandle(req => StudentLifecycleService.generateSignedBonafideCertificate(req.body || {})))
 
   // Phase 7: Parent Engagement
-  router.post('/parents/multilingual-notice', (req, res) => {
-    res.json(ParentEngagementService.dispatchMultilingualParentNotice(req.body))
-  })
-  router.post('/parents/hostel-outing-leave', (req, res) => {
-    res.json(ParentEngagementService.processHostelOutingPermission(req.body))
-  })
-  router.post('/parents/ptm-slot', (req, res) => {
-    res.json(ParentEngagementService.schedulePTMAppointmentSlot(req.body))
-  })
+  router.post('/parents/multilingual-notice', safeHandle(req => ParentEngagementService.dispatchMultilingualParentNotice(req.body || {})))
+  router.post('/parents/hostel-outing-leave', safeHandle(req => ParentEngagementService.processHostelOutingPermission(req.body || {})))
+  router.post('/parents/ptm-slot', safeHandle(req => ParentEngagementService.schedulePTMAppointmentSlot(req.body || {})))
 
   // Phase 8: Hostel & Mess
-  router.post('/hostel/mess-rebate', (req, res) => {
-    res.json(HostelMessService.calculateMessRebate(req.body))
-  })
-  router.post('/hostel/maintenance-ticket', (req, res) => {
-    res.json(HostelMessService.createMaintenanceTicket(req.body))
-  })
-  router.post('/hostel/roommate-match', (req, res) => {
-    res.json(HostelMessService.matchRoommatePreferences(req.body))
-  })
-  router.post('/hostel/curfew-checkin', (req, res) => {
-    res.json(HostelMessService.logNightCurfewGateEntry(req.body))
-  })
+  router.post('/hostel/mess-rebate', safeHandle(req => HostelMessService.calculateMessRebate(req.body || {})))
+  router.post('/hostel/maintenance-ticket', safeHandle(req => HostelMessService.createMaintenanceTicket(req.body || {})))
+  router.post('/hostel/roommate-match', safeHandle(req => HostelMessService.matchRoommatePreferences(req.body || {})))
+  router.post('/hostel/curfew-checkin', safeHandle(req => HostelMessService.logNightCurfewGateEntry(req.body || {})))
 
   // Phase 9: Faculty Governance
-  router.post('/faculty/leave-application', (req, res) => {
-    res.json(FacultyGovernanceService.processFacultyLeaveApplication(req.body))
-  })
-  router.post('/faculty/api-cas-score', (req, res) => {
-    res.json(FacultyGovernanceService.calculateUGCAPIScore(req.body))
-  })
-  router.post('/faculty/guest-honorarium', (req, res) => {
-    res.json(FacultyGovernanceService.calculateGuestFacultyHonorarium(req.body))
-  })
-  router.get('/faculty/research-metrics/:name', (req, res) => {
-    res.json(FacultyGovernanceService.trackResearchCitations({ facultyName: req.params.name }))
-  })
+  router.post('/faculty/leave-application', safeHandle(req => FacultyGovernanceService.processFacultyLeaveApplication(req.body || {})))
+  router.post('/faculty/api-cas-score', safeHandle(req => FacultyGovernanceService.calculateUGCAPIScore(req.body || {})))
+  router.post('/faculty/guest-honorarium', safeHandle(req => FacultyGovernanceService.calculateGuestFacultyHonorarium(req.body || {})))
+  router.get('/faculty/research-metrics/:name', safeHandle(req => FacultyGovernanceService.trackResearchCitations({ facultyName: req.params.name })))
 
   // Phase 10: Universal Search & Self-Healing
-  router.get('/search/universal', (req, res) => {
-    res.json(UniversalDirectoryIndex.searchDirectory(req.query.q, req.query.type))
-  })
-  router.get('/system/ai-health-chain', (_req, res) => {
-    res.json(UniversalDirectoryIndex.verifySelfHealingAIFallback({}))
-  })
+  router.get('/search/universal', safeHandle(req => UniversalDirectoryIndex.searchDirectory(req.query.q, req.query.type)))
+  router.get('/system/ai-health-chain', safeHandle(() => UniversalDirectoryIndex.verifySelfHealingAIFallback({})))
 
   return router
 }

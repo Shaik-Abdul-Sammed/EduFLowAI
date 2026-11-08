@@ -12,8 +12,8 @@ export default function Page() {
   const filtered = subFilter === 'all' ? weeklyTests : weeklyTests.filter(t => t.subject === subFilter)
 
   const avg = filtered.reduce((a, t) => a + (t.score / t.max) * 100, 0) / (filtered.length || 1)
-  const best = filtered.reduce((a, t) => (t.score / t.max) > (a.score / a.max) ? t : a, filtered[0])
-  const bestPct = best ? Math.round((best.score / best.max) * 100) : 0
+  const best = filtered.length > 0 ? filtered.reduce((a, t) => ((t.score || 0) / Math.max(1, t.max || 1)) > ((a.score || 0) / Math.max(1, a.max || 1)) ? t : a, filtered[0]) : null
+  const bestPct = best && best.max > 0 ? Math.round((best.score / best.max) * 100) : 0
 
   return (
     <RolePageTemplate role="Student" title="Weekly Exams" description="Track your weekly test scores, ranks, and performance trends.">
@@ -82,7 +82,7 @@ export default function Page() {
         {weeks.map(week => {
           const weekTests = filtered.filter(t => t.week === week)
           if (!weekTests.length) return null
-          const weekAvg = weekTests.reduce((a, t) => a + (t.score / t.max) * 100, 0) / weekTests.length
+          const weekAvg = weekTests.length > 0 ? weekTests.reduce((a, t) => a + ((t.max > 0 ? (t.score / t.max) : 0) * 100), 0) / weekTests.length : 0
           return (
             <div key={week} className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden' }}>
               <div style={{ padding: '0.875rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-bg)' }}>
@@ -100,14 +100,14 @@ export default function Page() {
                   </thead>
                   <tbody>
                     {weekTests.map((t, i) => {
-                      const p = Math.round((t.score / t.max) * 100)
+                      const p = t.max > 0 ? Math.round((t.score / t.max) * 100) : 0
                       return (
                         <tr key={i}>
                           <td style={{ fontWeight: 600, fontSize: '0.875rem' }}>{t.subject}</td>
                           <td style={{ fontWeight: 800, color: pctColor(p) }}>{t.score}</td>
                           <td style={{ color: '#94a3b8' }}>{t.max}</td>
                           <td><span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: `${pctColor(p)}15`, color: pctColor(p), fontWeight: 700, fontSize: '0.78rem' }}>{p}%</span></td>
-                          <td style={{ color: '#64748b' }}>{((t.classAvg / t.max) * 100).toFixed(0)}%</td>
+                          <td style={{ color: '#64748b' }}>{t.max > 0 ? ((t.classAvg / t.max) * 100).toFixed(0) : '0'}%</td>
                           <td><span style={{ fontWeight: 700, color: t.rank === 1 ? '#F59E0B' : '#2563EB' }}>#{t.rank}</span></td>
                         </tr>
                       )

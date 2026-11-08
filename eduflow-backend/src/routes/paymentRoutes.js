@@ -59,10 +59,10 @@ export function createPaymentRouter() {
    */
   router.post('/order', optionalAuth, async (req, res) => {
     try {
-      const { amount, currency = 'INR', studentRoll, studentName, term, notes = {} } = req.body
+      const { amount, currency = 'INR', studentRoll, studentName, term, notes = {} } = req.body || {}
 
       const numAmount = Number(amount)
-      if (!numAmount || numAmount <= 0) {
+      if (!numAmount || numAmount <= 0 || isNaN(numAmount)) {
         return res.status(400).json({ error: 'Valid positive amount in INR is required' })
       }
 
@@ -118,7 +118,7 @@ export function createPaymentRouter() {
    */
   router.post('/verify', async (req, res) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {}
 
       if (!razorpay_order_id || !razorpay_payment_id) {
         return res.status(400).json({ error: 'order_id and payment_id are required' })
@@ -128,14 +128,14 @@ export function createPaymentRouter() {
 
       // Verify signature if provided
       if (razorpay_signature) {
-        const body = razorpay_order_id + '|' + razorpay_payment_id
+        const body = String(razorpay_order_id) + '|' + String(razorpay_payment_id)
         const expectedSignature = crypto
           .createHmac('sha256', keySecret)
           .update(body.toString())
           .digest('hex')
 
         const expectedBuf = Buffer.from(expectedSignature)
-        const receivedBuf = Buffer.from(razorpay_signature)
+        const receivedBuf = Buffer.from(String(razorpay_signature))
 
         if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
           return res.status(400).json({ success: false, error: 'Invalid payment signature' })
@@ -168,21 +168,28 @@ export function createPaymentRouter() {
 
   /**
    * POST /api/v1/payments/webhook
-   * Production Webhook with HMAC-SHA256 signature verification
+   * Production Webhook with HMAC-SHA256 timing-safe signature verification
    */
   router.post('/webhook', async (req, res) => {
     try {
       const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || 'eduflow_webhook_secret_2026'
       const signature = req.headers['x-razorpay-signature']
 
-      if (signature) {
-        const hmac = crypto.createHmac('sha256', webhookSecret)
-        const digest = hmac.update(typeof req.body === 'string' ? req.body : JSON.stringify(req.body)).digest('hex')
+      // Enforce webhook signature header in production / testing
+      if (!signature) {
+        logger.warn('Payment webhook missing signature header')
+        return res.status(401).json({ error: 'Missing x-razorpay-signature header' })
+      }
 
-        if (signature !== digest) {
-          logger.warn('Payment webhook signature mismatch')
-          return res.status(401).json({ error: 'Invalid webhook signature' })
-        }
+      const hmac = crypto.createHmac('sha256', webhookSecret)
+      const digest = hmac.update(typeof req.body === 'string' ? req.body : JSON.stringify(req.body)).digest('hex')
+
+      const signatureBuf = Buffer.from(String(signature))
+      const digestBuf = Buffer.from(digest)
+
+      if (signatureBuf.length !== digestBuf.length || !crypto.timingSafeEqual(signatureBuf, digestBuf)) {
+        logger.warn('Payment webhook signature mismatch')
+        return res.status(401).json({ error: 'Invalid webhook signature' })
       }
 
       const event = req.body?.event

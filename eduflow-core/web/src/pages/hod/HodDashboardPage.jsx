@@ -38,7 +38,7 @@ export default function HodDashboardPage() {
       if (res.ok) {
         const data = await safeJson(res)
         const approvals = data.approvals || []
-        const local = JSON.parse(localStorage.getItem('eduflow-demo-pending-approvals') || '[]')
+        const local = (() => { try { return JSON.parse(localStorage.getItem('eduflow-demo-pending-approvals') || '[]') } catch (_) { return [] } })()
         if (isMounted) {
           setPendingApprovals(approvals.length > 0 ? approvals : (local.length > 0 ? local : [
             {
@@ -54,7 +54,7 @@ export default function HodDashboardPage() {
           ]))
         }
       } else {
-        const local = JSON.parse(localStorage.getItem('eduflow-demo-pending-approvals') || '[]')
+        const local = (() => { try { return JSON.parse(localStorage.getItem('eduflow-demo-pending-approvals') || '[]') } catch (_) { return [] } })()
         if (isMounted) {
           setPendingApprovals(local.length > 0 ? local : [
             {

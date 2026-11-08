@@ -327,7 +327,11 @@ export function createMemoryPool() {
           ip_address: params[3] || '127.0.0.1',
           ip: params[3] || '127.0.0.1',
           user_agent: params[4] || 'EduFlow-Client',
-          metadata: params[5] ? (typeof params[5] === 'string' ? JSON.parse(params[5]) : params[5]) : {},
+          metadata: (() => {
+            if (!params[5]) return {}
+            if (typeof params[5] === 'object') return params[5]
+            try { return JSON.parse(params[5]) } catch (_) { return { raw: String(params[5]) } }
+          })(),
           created_at: new Date().toISOString()
         }
         state.auditLogs.unshift(newLog)

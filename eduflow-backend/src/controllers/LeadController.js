@@ -109,7 +109,7 @@ export class LeadController {
   static async updateLead(req, res) {
     try {
       const { id } = req.params
-      const { status, notes } = req.body
+      const { status, notes } = req.body || {}
 
       const validStatuses = ['NEW', 'CONTACTED', 'PILOT_OFFERED', 'PILOT_DELIVERED', 'WON', 'LOST']
       if (status && !validStatuses.includes(status)) {

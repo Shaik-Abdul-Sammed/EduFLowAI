@@ -20,10 +20,10 @@ export class StatutoryQualityService {
 
     coList.forEach((co, idx) => {
       // Calculate average score across direct assessments for this CO
-      const assessmentsForCO = directAssessments.filter(a => a.co === co || !a.co)
+      const assessmentsForCO = directAssessments.filter(a => a && (a.co === co || !a.co))
       let directScore = 2.5 // default on 3.0 scale
       if (assessmentsForCO.length > 0) {
-        const avgPct = assessmentsForCO.reduce((sum, a) => sum + (a.marksObtained / a.maxMarks), 0) / assessmentsForCO.length
+        const avgPct = assessmentsForCO.reduce((sum, a) => sum + (Number(a.maxMarks) > 0 ? (Number(a.marksObtained || 0) / Number(a.maxMarks)) : 0), 0) / Math.max(1, assessmentsForCO.length)
         directScore = Number((avgPct * 3.0).toFixed(2))
       } else {
         directScore = Number((2.2 + (idx * 0.1)).toFixed(2))
@@ -61,9 +61,9 @@ export class StatutoryQualityService {
       academicYear: '2026-27',
       coAttainment,
       poMatrix,
-      overallCourseAttainment: Number(
-        (Object.values(coAttainment).reduce((s, c) => s + c.overallAttainment, 0) / coList.length).toFixed(2)
-      )
+      overallCourseAttainment: coList.length > 0
+        ? Number((Object.values(coAttainment).reduce((s, c) => s + c.overallAttainment, 0) / coList.length).toFixed(2))
+        : 0
     }
   }
 
@@ -79,11 +79,12 @@ export class StatutoryQualityService {
     midtermExamDays = 6,
     finalExamDays = 12,
     workingSaturdays = 8
-  }) {
+  } = {}) {
     const start = new Date(startDate)
     const end = new Date(endDate)
-    const diffTime = Math.abs(end - start)
-    const totalCalendarDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    const validDates = !isNaN(start.getTime()) && !isNaN(end.getTime())
+    const diffTime = validDates ? Math.max(0, end - start) : 0
+    const totalCalendarDays = validDates ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 : 0
     const totalWeeks = Math.floor(totalCalendarDays / 7)
 
     const sundays = totalWeeks
@@ -150,9 +151,11 @@ export class StatutoryQualityService {
       }
     })
 
-    const overallStudents = departments.reduce((s, d) => s + d.ugStudents + (d.pgStudents || 0), 0)
-    const overallFaculty = departments.reduce((s, d) => s + d.faculty, 0)
-    const institutionalRatio = Number((overallStudents / Math.max(1, overallFaculty)).toFixed(1))
+    const overallStudents = departments.reduce((s, d) => s + (Number(d.ugStudents) || 0) + (Number(d.pgStudents) || 0), 0)
+    const overallFaculty = departments.reduce((s, d) => s + (Number(d.faculty) || 0), 0)
+    const institutionalRatio = overallFaculty > 0
+      ? Number((overallStudents / overallFaculty).toFixed(1))
+      : 0
 
     return {
       institutionWideRatio: `1:${institutionalRatio}`,

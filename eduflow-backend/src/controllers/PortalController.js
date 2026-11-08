@@ -165,15 +165,21 @@ export class PortalController {
         ]
       }
 
-      const previewRecords = students.map((s, idx) => ({
-        roll_no: s.roll_no || s.registration_number || `24CSE${String(idx + 1).padStart(3, '0')}`,
-        name: s.name || `${s.first_name || 'Student'} ${s.last_name || ''}`.trim(),
-        department: s.department || 'CSE',
-        attendance_percentage: parseFloat(s.attendance_percentage || 85.0),
-        status: parseFloat(s.attendance_percentage || 85.0) >= 75 ? 'ELIGIBLE' : 'AT_RISK',
-        cgpa: parseFloat(s.cgpa || 7.5),
-        last_sync: new Date().toISOString(),
-      }))
+      const previewRecords = students.map((s, idx) => {
+        const attPct = Number(parseFloat(s.attendance_percentage))
+        const safeAttendance = !isNaN(attPct) ? attPct : 85.0
+        const parsedCgpa = Number(parseFloat(s.cgpa))
+        const safeCgpa = !isNaN(parsedCgpa) ? parsedCgpa : 7.5
+        return {
+          roll_no: s.roll_no || s.registration_number || `24CSE${String(idx + 1).padStart(3, '0')}`,
+          name: s.name || `${s.first_name || 'Student'} ${s.last_name || ''}`.trim(),
+          department: s.department || 'CSE',
+          attendance_percentage: safeAttendance,
+          status: safeAttendance >= 75 ? 'ELIGIBLE' : 'AT_RISK',
+          cgpa: safeCgpa,
+          last_sync: new Date().toISOString(),
+        }
+      })
 
       const newSource = {
         id: memorySources.length + 1,

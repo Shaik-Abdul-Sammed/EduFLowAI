@@ -20,9 +20,13 @@ export class StudentLifecycleService {
       { roll: '1ST21CS004', name: 'Sneha Kulkarni', cgpa: 8.41 },
       { roll: '1ST21CS005', name: 'Vikram Rao', cgpa: 6.95 }
     ]
-  }) {
+  } = {}) {
+    const facList = Array.isArray(facultyList) && facultyList.length > 0 ? facultyList : [
+      { id: 'FAC_DEFAULT', name: 'General Mentor', department: 'Academics' }
+    ]
+    const studList = Array.isArray(studentList) ? studentList : []
     const allocations = {}
-    facultyList.forEach(f => {
+    facList.forEach(f => {
       allocations[f.id] = {
         facultyName: f.name,
         department: f.department,
@@ -31,8 +35,8 @@ export class StudentLifecycleService {
     })
 
     // Distribute students round-robin
-    studentList.forEach((student, idx) => {
-      const assignedFac = facultyList[idx % facultyList.length]
+    studList.forEach((student, idx) => {
+      const assignedFac = facList[idx % facList.length]
       allocations[assignedFac.id].mentees.push({
         ...student,
         mentoringLogId: `LOG_${student.roll}_2026`,
@@ -42,8 +46,8 @@ export class StudentLifecycleService {
 
     return {
       academicYear: '2026-27',
-      totalStudentsAssigned: studentList.length,
-      averageMenteesPerFaculty: Number((studentList.length / Math.max(1, facultyList.length)).toFixed(1)),
+      totalStudentsAssigned: studList.length,
+      averageMenteesPerFaculty: Number((studList.length / Math.max(1, facList.length)).toFixed(1)),
       allocations
     }
   }
@@ -65,34 +69,49 @@ export class StudentLifecycleService {
       minTwelfthPercentage: 60.0,
       eligibleBranches: ['CSE', 'ECE']
     }
-  }) {
+  } = {}) {
+    const studList = Array.isArray(students) ? students : []
+    const crit = criteria || {}
+    const minCGPA = Number(crit.minCGPA ?? 7.5)
+    const maxBacklogs = Number(crit.maxAllowedBacklogs ?? 0)
+    const minTenth = Number(crit.minTenthPercentage ?? 60.0)
+    const minTwelfth = Number(crit.minTwelfthPercentage ?? 60.0)
+    const allowedBranches = Array.isArray(crit.eligibleBranches) ? crit.eligibleBranches : ['CSE', 'ECE']
+
     const eligible = []
     const ineligible = []
 
-    students.forEach(s => {
-      const meetsCGPA = s.cgpa >= criteria.minCGPA
-      const meetsBacklogs = s.activeBacklogs <= criteria.maxAllowedBacklogs
-      const meetsTenth = s.tenthPct >= criteria.minTenthPercentage
-      const meetsTwelfth = s.twelfthPct >= criteria.minTwelfthPercentage
-      const meetsBranch = criteria.eligibleBranches.includes(s.branch)
+    studList.forEach(s => {
+      if (!s) return
+      const cgpa = Number(s.cgpa) || 0
+      const backlogs = Number(s.activeBacklogs) || 0
+      const tenth = Number(s.tenthPct) || 0
+      const twelfth = Number(s.twelfthPct) || 0
+      const branch = s.branch || 'Unknown'
+
+      const meetsCGPA = cgpa >= minCGPA
+      const meetsBacklogs = backlogs <= maxBacklogs
+      const meetsTenth = tenth >= minTenth
+      const meetsTwelfth = twelfth >= minTwelfth
+      const meetsBranch = allowedBranches.includes(branch)
 
       if (meetsCGPA && meetsBacklogs && meetsTenth && meetsTwelfth && meetsBranch) {
         eligible.push(s)
       } else {
         const failureReasons = []
-        if (!meetsCGPA) failureReasons.push(`CGPA (${s.cgpa}) below cutoff (${criteria.minCGPA})`)
-        if (!meetsBacklogs) failureReasons.push(`Active backlogs (${s.activeBacklogs}) exceed limit (${criteria.maxAllowedBacklogs})`)
-        if (!meetsBranch) failureReasons.push(`Branch ${s.branch} not in recruiter eligible list`)
+        if (!meetsCGPA) failureReasons.push(`CGPA (${cgpa}) below cutoff (${minCGPA})`)
+        if (!meetsBacklogs) failureReasons.push(`Active backlogs (${backlogs}) exceed limit (${maxBacklogs})`)
+        if (!meetsBranch) failureReasons.push(`Branch ${branch} not in recruiter eligible list`)
         ineligible.push({ ...s, failureReasons })
       }
     })
 
     return {
-      recruiterCriteria: criteria,
-      totalEvaluated: students.length,
+      recruiterCriteria: crit,
+      totalEvaluated: studList.length,
       eligibleCount: eligible.length,
       ineligibleCount: ineligible.length,
-      yieldRate: `${Math.round((eligible.length / Math.max(1, students.length)) * 100)}%`,
+      yieldRate: `${Math.round((eligible.length / Math.max(1, studList.length)) * 100)}%`,
       eligibleCandidates: eligible,
       ineligibleCandidates: ineligible
     }

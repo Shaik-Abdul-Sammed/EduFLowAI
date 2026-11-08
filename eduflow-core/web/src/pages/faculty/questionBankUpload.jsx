@@ -56,7 +56,7 @@ export default function Page() {
           {[
             { label: 'Total Questions', value: questions.length, color: EMERALD },
             { label: 'Subjects',        value: [...new Set(questions.map(q => q.subject))].length, color: '#2563EB' },
-            { label: 'Avg Marks',       value: Math.round(questions.reduce((a, q) => a + q.marks, 0) / questions.length), color: '#F59E0B' },
+            { label: 'Avg Marks',       value: questions.length > 0 ? Math.round(questions.reduce((a, q) => a + (Number(q.marks) || 0), 0) / questions.length) : 0, color: '#F59E0B' },
           ].map(s => (
             <div key={s.label} className="card border-0 shadow-sm" style={{ borderRadius: '1rem', padding: '1.25rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.85rem', fontWeight: 800, color: s.color }}>{s.value}</div>

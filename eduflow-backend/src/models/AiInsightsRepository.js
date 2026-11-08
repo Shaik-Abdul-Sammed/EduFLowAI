@@ -65,10 +65,10 @@ export class AiInsightsRepository {
         return {
           ...result.rows[0],
           input_context: typeof result.rows[0].input_context === 'string'
-            ? JSON.parse(result.rows[0].input_context)
+            ? (() => { try { return JSON.parse(result.rows[0].input_context) } catch (_) { return result.rows[0].input_context } })()
             : result.rows[0].input_context,
           output_data: typeof result.rows[0].output_data === 'string'
-            ? JSON.parse(result.rows[0].output_data)
+            ? (() => { try { return JSON.parse(result.rows[0].output_data) } catch (_) { return result.rows[0].output_data } })()
             : result.rows[0].output_data,
         }
       }

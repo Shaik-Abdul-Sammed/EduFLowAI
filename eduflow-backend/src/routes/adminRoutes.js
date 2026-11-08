@@ -249,10 +249,14 @@ export function createAdminRouter() {
       const altManifestPath = path.resolve(process.cwd(), 'backups-manifest.json')
 
       let manifest = null
-      if (fs.existsSync(manifestPath)) {
-        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
-      } else if (fs.existsSync(altManifestPath)) {
-        manifest = JSON.parse(fs.readFileSync(altManifestPath, 'utf-8'))
+      try {
+        if (fs.existsSync(manifestPath)) {
+          manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+        } else if (fs.existsSync(altManifestPath)) {
+          manifest = JSON.parse(fs.readFileSync(altManifestPath, 'utf-8'))
+        }
+      } catch (_) {
+        manifest = null
       }
 
       if (!manifest) {
@@ -335,7 +339,7 @@ export function createAdminRouter() {
   })
 
   router.post('/students', (req, res) => {
-    const { name, roll, stream = 'CSE', year = 1, phone = '', email = '', cgpa = 8.0 } = req.body
+    const { name, roll, stream = 'CSE', year = 1, phone = '', email = '', cgpa = 8.0 } = req.body || {}
     if (!name || !roll) return res.status(400).json({ error: 'Name and Roll number are required' })
 
     const cleanPhone = String(phone).replace(/\D/g, '')
@@ -376,7 +380,7 @@ export function createAdminRouter() {
   })
 
   router.post('/faculty', (req, res) => {
-    const { name, department = 'CSE', designation = 'Assistant Professor', email = '', phone = '', workloadHours = 14 } = req.body
+    const { name, department = 'CSE', designation = 'Assistant Professor', email = '', phone = '', workloadHours = 14 } = req.body || {}
     if (!name || !email) return res.status(400).json({ error: 'Name and Email are required' })
 
     if (adminFaculty.some(f => f.email.toLowerCase() === email.trim().toLowerCase())) {
@@ -400,8 +404,8 @@ export function createAdminRouter() {
   router.put('/faculty/:id', (req, res) => {
     const fac = adminFaculty.find(f => f.id === req.params.id)
     if (!fac) return res.status(404).json({ error: 'Faculty not found' })
-    if (req.body.active !== undefined) fac.active = Boolean(req.body.active)
-    if (req.body.workloadHours !== undefined) fac.workloadHours = Number(req.body.workloadHours)
+    if (req.body && req.body.active !== undefined) fac.active = Boolean(req.body.active)
+    if (req.body && req.body.workloadHours !== undefined) fac.workloadHours = Number(req.body.workloadHours)
     res.json({ success: true, faculty: fac })
   })
 
@@ -412,7 +416,7 @@ export function createAdminRouter() {
   })
 
   router.post('/fees', (req, res) => {
-    const { studentRoll, studentName, amount, mode = 'Online', term = 'Term Fee' } = req.body
+    const { studentRoll, studentName, amount, mode = 'Online', term = 'Term Fee' } = req.body || {}
     const numAmount = Number(amount)
     if (!numAmount || numAmount <= 0) return res.status(400).json({ error: 'Positive fee amount required' })
 
@@ -436,7 +440,7 @@ export function createAdminRouter() {
   })
 
   router.post('/hostel/allocate', (req, res) => {
-    const { roomId, studentName } = req.body
+    const { roomId, studentName } = req.body || {}
     const room = adminRooms.find(r => r.id === roomId || r.roomNo === roomId)
     if (!room) return res.status(404).json({ error: 'Room not found' })
     if (room.occupants.length >= room.capacity) {
@@ -447,7 +451,7 @@ export function createAdminRouter() {
   })
 
   router.post('/hostel/evict', (req, res) => {
-    const { roomId, studentName } = req.body
+    const { roomId, studentName } = req.body || {}
     const room = adminRooms.find(r => r.id === roomId || r.roomNo === roomId)
     if (!room) return res.status(404).json({ error: 'Room not found' })
     room.occupants = room.occupants.filter(s => s !== studentName)
@@ -460,7 +464,7 @@ export function createAdminRouter() {
   })
 
   router.post('/exams', (req, res) => {
-    const { course, date, time = '10:00 AM – 01:00 PM', hall = 'LH-101', maxMarks = 100 } = req.body
+    const { course, date, time = '10:00 AM – 01:00 PM', hall = 'LH-101', maxMarks = 100 } = req.body || {}
     if (!course || !date) return res.status(400).json({ error: 'Course and exam date are required' })
     if (Number(maxMarks) <= 0) return res.status(400).json({ error: 'Maximum marks must be greater than zero' })
 
@@ -497,7 +501,7 @@ export function createAdminRouter() {
   })
 
   router.post('/results/moderate', (req, res) => {
-    const gracePercentage = Number(req.body.gracePercentage) || 2.5
+    const gracePercentage = Number(req.body && req.body.gracePercentage) || 2.5
     adminResults = adminResults.map(r => {
       const boost = Math.round(r.maxMarks * (gracePercentage / 100))
       return {
@@ -516,7 +520,7 @@ export function createAdminRouter() {
   })
 
   router.post('/payroll', (req, res) => {
-    const { employeeName, role, base = 80000, bonus = 0, deductions = 0 } = req.body
+    const { employeeName, role, base = 80000, bonus = 0, deductions = 0 } = req.body || {}
     const numBase = Number(base)
     const numBonus = Number(bonus)
     const numDed = Number(deductions)
@@ -542,7 +546,7 @@ export function createAdminRouter() {
   })
 
   router.post('/parents', (req, res) => {
-    const { name, student, relation = 'Father', email = '', phone = '' } = req.body
+    const { name, student, relation = 'Father', email = '', phone = '' } = req.body || {}
     const cleanPhone = String(phone).replace(/\D/g, '')
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       return res.status(400).json({ error: 'Valid 10-digit Indian phone number required' })
@@ -569,7 +573,7 @@ export function createAdminRouter() {
   })
 
   router.post('/parents/dispatch-alert', (req, res) => {
-    const { parentId, type, message } = req.body
+    const { parentId, type, message } = req.body || {}
     res.json({ success: true, message: `Statutory ${type || 'attendance'} notice dispatched via SMS & WhatsApp gateway`, parentId })
   })
 
@@ -579,7 +583,7 @@ export function createAdminRouter() {
   })
 
   router.post('/timetable/slots', (req, res) => {
-    const { day, time, room, course, faculty, section = 'General' } = req.body
+    const { day, time, room, course, faculty, section = 'General' } = req.body || {}
 
     // Heuristic Double-Booking Detector
     const clash = adminTimetableSlots.find(s =>

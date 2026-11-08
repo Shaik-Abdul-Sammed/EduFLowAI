@@ -15,10 +15,11 @@ export class HostelMessService {
     leaveEndDate = '2026-06-14',
     dailyMessRateINR = 140,
     minQualifyingDays = 5
-  }) {
+  } = {}) {
     const start = new Date(leaveStartDate)
     const end = new Date(leaveEndDate)
-    const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1
+    const validDates = !isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start
+    const diffDays = validDates ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 0
 
     const isEligibleForRebate = diffDays >= minQualifyingDays
     const totalRebateAmountINR = isEligibleForRebate ? diffDays * dailyMessRateINR : 0
@@ -102,12 +103,19 @@ export class HostelMessService {
     studentName = 'Siddharth Rao',
     checkInTimeString = '21:35', // 9:35 PM
     curfewCutoff = '21:00' // 9:00 PM
-  }) {
-    const isLate = checkInTimeString > curfewCutoff
-    const minutesLate = isLate
-      ? (parseInt(checkInTimeString.split(':')[0]) * 60 + parseInt(checkInTimeString.split(':')[1])) -
-        (parseInt(curfewCutoff.split(':')[0]) * 60 + parseInt(curfewCutoff.split(':')[1]))
-      : 0
+  } = {}) {
+    const checkParts = String(checkInTimeString || '').split(':')
+    const checkH = Number(checkParts[0]) || 0
+    const checkM = Number(checkParts[1]) || 0
+    const checkTotalMins = checkH * 60 + checkM
+
+    const cutoffParts = String(curfewCutoff || '').split(':')
+    const cutoffH = Number(cutoffParts[0]) || 0
+    const cutoffM = Number(cutoffParts[1]) || 0
+    const cutoffTotalMins = cutoffH * 60 + cutoffM
+
+    const isLate = checkTotalMins > cutoffTotalMins
+    const minutesLate = isLate ? checkTotalMins - cutoffTotalMins : 0
 
     return {
       entryLogId: `CURFEW_${Date.now()}`,

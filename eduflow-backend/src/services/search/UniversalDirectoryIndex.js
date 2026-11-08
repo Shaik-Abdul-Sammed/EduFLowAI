@@ -20,11 +20,12 @@ export class UniversalDirectoryIndex {
    */
   static searchDirectory(query = '', typeFilter = 'ALL') {
     const startTime = Date.now()
-    const cleanQ = query.trim().toLowerCase()
+    const cleanQ = String(query || '').trim().toLowerCase()
+    const cleanFilter = String(typeFilter || 'ALL').toUpperCase()
 
     if (!cleanQ) {
       return {
-        query,
+        query: cleanQ,
         count: this.directoryCache.length,
         executionTimeMs: Date.now() - startTime,
         results: this.directoryCache
@@ -32,10 +33,10 @@ export class UniversalDirectoryIndex {
     }
 
     const matched = this.directoryCache.filter(item => {
-      const matchesType = typeFilter === 'ALL' || item.type.toUpperCase() === typeFilter.toUpperCase()
-      const matchesText = item.title.toLowerCase().includes(cleanQ) ||
-                          item.id.toLowerCase().includes(cleanQ) ||
-                          item.subtitle.toLowerCase().includes(cleanQ)
+      const matchesType = cleanFilter === 'ALL' || item.type.toUpperCase() === cleanFilter
+      const matchesText = (item.title && item.title.toLowerCase().includes(cleanQ)) ||
+                          (item.id && item.id.toLowerCase().includes(cleanQ)) ||
+                          (item.subtitle && item.subtitle.toLowerCase().includes(cleanQ))
       return matchesType && matchesText
     })
 

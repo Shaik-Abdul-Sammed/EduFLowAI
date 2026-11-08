@@ -25,21 +25,18 @@ export class ClaudeProvider extends BaseProvider {
   async extractStructured(text, schema) {
     const prompt = `Extract structured information and respond with ONLY valid JSON matching:\n${JSON.stringify(schema)}\n\nText:\n${text}`
     const res = await this.client.messages.create({ model: this.model, max_tokens: 2048, messages: [{ role: 'user', content: prompt }] })
-    const raw = res.content[0].text.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(res.content[0]?.text || '{}', {})
   }
 
   async generateCode(spec) {
     const prompt = `Generate Flutter Clean Architecture code for:\n${JSON.stringify(spec)}\nReturn ONLY a JSON array of {filename, content} objects.`
     const res = await this.client.messages.create({ model: this.model, max_tokens: 8192, messages: [{ role: 'user', content: prompt }] })
-    const raw = res.content[0].text.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(res.content[0]?.text || '[]', [])
   }
 
   async analyzeAndRepair(errorLog, codeFiles) {
     const prompt = `Fix this Flutter build error:\n${errorLog}\nFiles:\n${JSON.stringify(codeFiles)}\nReturn ONLY a JSON array of {filename, content}.`
     const res = await this.client.messages.create({ model: this.model, max_tokens: 8192, messages: [{ role: 'user', content: prompt }] })
-    const raw = res.content[0].text.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(res.content[0]?.text || '[]', [])
   }
 }

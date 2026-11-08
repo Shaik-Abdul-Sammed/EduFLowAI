@@ -136,8 +136,8 @@ STU202603,Rohan Verma,rohan.verma@student.edu,+919812345672,MECH,B.Tech,2024,3,7
 
   static async step2Departments(req, res) {
     try {
-      const institutionId = req.user?.institutionId || req.body.institutionId || 1
-      const { departments } = req.body
+      const institutionId = req.user?.institutionId || req.body?.institutionId || 1
+      const { departments } = req.body || {}
 
       if (!Array.isArray(departments) || departments.length === 0) {
         return res.status(400).json({ error: 'At least one department is required' })

@@ -21,16 +21,19 @@ export class ExamOperationsService {
     const totalCapacity = rows * columns
     const seatingGrid = []
     
-    // Create pools of students by subject
-    const pools = studentBatches.map(b => ({ code: b.code, list: [...b.students] }))
-    let currentPoolIndex = 0
+    // Create pools of students by subject with empty array guard
+    const batchList = Array.isArray(studentBatches) && studentBatches.length > 0 ? studentBatches : [
+      { subject: 'General', code: 'GEN101', students: [] }
+    ]
+    const pools = batchList.map(b => ({ code: b.code || 'GEN', list: Array.isArray(b.students) ? [...b.students] : [] }))
+    const poolCount = Math.max(1, pools.length)
 
     for (let r = 0; r < rows; r++) {
       const rowSeats = []
       for (let c = 0; c < columns; c++) {
         // Alternate subject code using checkerboard logic
-        const targetPool = pools[(r + c) % pools.length]
-        const studentRoll = targetPool.list.length > 0 ? targetPool.list.shift() : 'VACANT'
+        const targetPool = pools[(r + c) % poolCount]
+        const studentRoll = targetPool && targetPool.list.length > 0 ? targetPool.list.shift() : 'VACANT'
 
         rowSeats.push({
           seatNumber: `R${r + 1}C${c + 1}`,
@@ -69,15 +72,18 @@ export class ExamOperationsService {
     examSlotsCount = 12 // 3 hours each = 36 total invigilation hours needed
   }) {
     const assignments = []
-    const updatedFaculty = facultyList.map(f => ({ ...f, currentAssignedHours: 0 }))
+    const rawList = Array.isArray(facultyList) && facultyList.length > 0 ? facultyList : [
+      { id: 'F_DEFAULT', name: 'Duty Faculty', designation: 'Invigilator', assignedHours: 0, maxAllowed: 18 }
+    ]
+    const updatedFaculty = rawList.map(f => ({ ...f, currentAssignedHours: 0, maxAllowed: Math.max(1, Number(f.maxAllowed) || 12) }))
 
     for (let slot = 1; slot <= examSlotsCount; slot++) {
       // Pick faculty with lowest workload ratio (current / maxAllowed)
       const sorted = [...updatedFaculty].sort((a, b) => 
-        (a.currentAssignedHours / a.maxAllowed) - (b.currentAssignedHours / b.maxAllowed)
+        (a.currentAssignedHours / Math.max(1, a.maxAllowed)) - (b.currentAssignedHours / Math.max(1, b.maxAllowed))
       )
 
-      const selected = sorted[0]
+      const selected = sorted[0] || updatedFaculty[0]
       selected.currentAssignedHours += 3 // 3-hour exam block
 
       assignments.push({
@@ -96,7 +102,7 @@ export class ExamOperationsService {
         facultyName: f.name,
         designation: f.designation,
         dutyHours: f.currentAssignedHours,
-        utilization: `${Math.round((f.currentAssignedHours / f.maxAllowed) * 100)}%`
+        utilization: `${Math.round((f.currentAssignedHours / Math.max(1, f.maxAllowed)) * 100)}%`
       })),
       assignments
     }
@@ -115,18 +121,20 @@ export class ExamOperationsService {
       { qNo: 5, text: 'Design a LRU cache system using doubly linked lists and hash tables.', marks: 20, bloomsLevel: 'Create', difficulty: 'Hard' }
     ]
   }) {
-    const totalMarks = questions.reduce((s, q) => s + q.marks, 0)
+    const qList = Array.isArray(questions) ? questions : []
+    const totalMarks = qList.reduce((s, q) => s + (Number(q.marks) || 0), 0)
     const bloomsBreakdown = {}
     const difficultyBreakdown = { Easy: 0, Medium: 0, Hard: 0 }
 
-    questions.forEach(q => {
-      bloomsBreakdown[q.bloomsLevel] = (bloomsBreakdown[q.bloomsLevel] || 0) + q.marks
-      difficultyBreakdown[q.difficulty] = (difficultyBreakdown[q.difficulty] || 0) + q.marks
+    qList.forEach(q => {
+      const marks = Number(q.marks) || 0
+      bloomsBreakdown[q.bloomsLevel || 'Remember'] = (bloomsBreakdown[q.bloomsLevel || 'Remember'] || 0) + marks
+      difficultyBreakdown[q.difficulty || 'Medium'] = (difficultyBreakdown[q.difficulty || 'Medium'] || 0) + marks
     })
 
-    const easyPct = Math.round((difficultyBreakdown.Easy / totalMarks) * 100)
-    const mediumPct = Math.round((difficultyBreakdown.Medium / totalMarks) * 100)
-    const hardPct = Math.round((difficultyBreakdown.Hard / totalMarks) * 100)
+    const easyPct = totalMarks > 0 ? Math.round((difficultyBreakdown.Easy / totalMarks) * 100) : 0
+    const mediumPct = totalMarks > 0 ? Math.round((difficultyBreakdown.Medium / totalMarks) * 100) : 0
+    const hardPct = totalMarks > 0 ? Math.round((difficultyBreakdown.Hard / totalMarks) * 100) : 0
 
     const isBalanced = easyPct >= 15 && easyPct <= 30 && mediumPct >= 30 && mediumPct <= 50 && hardPct >= 20 && hardPct <= 40
 
@@ -140,7 +148,7 @@ export class ExamOperationsService {
         targetRecommendation: '20% Easy / 45% Medium / 35% Hard'
       },
       bloomsTaxonomyWeights: Object.fromEntries(
-        Object.entries(bloomsBreakdown).map(([k, v]) => [k, `${Math.round((v / totalMarks) * 100)}%`])
+        Object.entries(bloomsBreakdown).map(([k, v]) => [k, `${totalMarks > 0 ? Math.round((v / totalMarks) * 100) : 0}%`])
       ),
       isBalanced,
       evaluationVerdict: isBalanced

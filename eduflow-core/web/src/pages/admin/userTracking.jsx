@@ -73,9 +73,9 @@ export default function UserTracking() {
                       <td className="px-4 py-3">
                         <span className="badge bg-primary bg-opacity-10 text-primary">{u.role}</span>
                       </td>
-                      <td className="px-4 py-3 text-muted" style={{ fontFamily: 'monospace' }}>{u.lat.toFixed(5)}</td>
-                      <td className="px-4 py-3 text-muted" style={{ fontFamily: 'monospace' }}>{u.lng.toFixed(5)}</td>
-                      <td className="px-4 py-3 text-muted small">{new Date(u.timestamp).toLocaleTimeString()}</td>
+                      <td className="px-4 py-3 text-muted" style={{ fontFamily: 'monospace' }}>{typeof u.lat === 'number' ? u.lat.toFixed(5) : '—'}</td>
+                      <td className="px-4 py-3 text-muted" style={{ fontFamily: 'monospace' }}>{typeof u.lng === 'number' ? u.lng.toFixed(5) : '—'}</td>
+                      <td className="px-4 py-3 text-muted small">{u.timestamp ? new Date(u.timestamp).toLocaleTimeString() : '—'}</td>
                     </tr>
                   ))
                 )}

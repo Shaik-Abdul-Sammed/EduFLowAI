@@ -24,21 +24,18 @@ export class OllamaProvider extends BaseProvider {
   async extractStructured(text, schema) {
     const prompt = `Extract structured info and return ONLY valid JSON matching:\n${JSON.stringify(schema)}\n\nText:\n${text}`
     const content = await this._chat([{ role: 'user', content: prompt }], '')
-    const raw = content.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(content || '{}', {})
   }
 
   async generateCode(spec) {
     const prompt = `Generate Flutter Clean Architecture code for:\n${JSON.stringify(spec)}\nReturn ONLY a JSON array of {filename, content}.`
     const content = await this._chat([{ role: 'user', content: prompt }], '')
-    const raw = content.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(content || '[]', [])
   }
 
   async analyzeAndRepair(errorLog, codeFiles) {
     const prompt = `Fix this Flutter build error:\n${errorLog}\nFiles:\n${JSON.stringify(codeFiles)}\nReturn ONLY a JSON array of {filename, content}.`
     const content = await this._chat([{ role: 'user', content: prompt }], '')
-    const raw = content.replace(/```json|```/g, '').trim()
-    return JSON.parse(raw)
+    return this.safeJsonParse(content || '[]', [])
   }
 }
