@@ -50,11 +50,23 @@ export class AttendanceComplianceService {
           medicalCertificateRequired: true
         })
       } else {
+        // Below 65% attendance: Ethical AI policy
+        // If a student falls below 65% attendance, the system triggers counseling_required.
+        // The faculty mentor MUST log a Counseling Note before any punitive action (like hall-ticket barring) can be automated.
+        // The AI should only suggest, not enforce.
+        const hasCounselingNote = Boolean(student.hasCounselingNote || student.counseling_note_logged || student.counselingNote)
+        const counselingRequired = !hasCounselingNote
+
         barredStudents.push({
           ...studentData,
-          hallTicketStatus: 'BARRED',
-          status: 'STRICTLY_BARRED',
-          appealAllowed: false
+          hallTicketStatus: hasCounselingNote ? 'BARRED' : 'PENDING_COUNSELING_REVIEW',
+          status: hasCounselingNote ? 'STRICTLY_BARRED' : 'COUNSELING_REQUIRED',
+          counseling_required: counselingRequired,
+          hasCounselingNote,
+          aiRecommendation: counselingRequired
+            ? 'Suggested: Faculty mentor must log a Counseling Note before statutory barring can be enforced.'
+            : 'Counseling note recorded. Statutory barring confirmed by faculty mentor.',
+          appealAllowed: true
         })
       }
     })
@@ -214,6 +226,55 @@ export class AttendanceComplianceService {
       timestamp,
       verified: true,
       action: gateDirection === 'IN' ? 'CAMPUS_ENTRY_LOGGED' : 'CAMPUS_EXIT_LOGGED'
+    }
+  }
+
+  /**
+   * Ethical AI: Generate Attendance Alert with counseling_required trigger
+   * If a student falls below 65% attendance, the system triggers counseling_required.
+   */
+  static generateAttendanceAlert({
+    studentId,
+    studentName,
+    departmentName,
+    attendancePercentage,
+    institutionId = 1
+  }) {
+    const pct = Number(attendancePercentage) || 0
+    const counselingRequired = pct < 65.0
+    const alertLevel = pct < 65.0 ? 'CRITICAL' : (pct < 75.0 ? 'WARNING' : 'NOTICE')
+
+    return {
+      institutionId,
+      studentId,
+      studentName,
+      departmentName,
+      attendancePercentage: pct,
+      alertLevel,
+      counseling_required: counselingRequired,
+      counseling_note: null,
+      parentNotified: true,
+      notificationChannel: 'WHATSAPP_AND_SMS',
+      policy: 'Early Academic Support Alert System: Faculty mentor counseling mandatory prior to disciplinary measures.'
+    }
+  }
+
+  /**
+   * Ethical AI: Record Mentor Counseling Note
+   */
+  static logMentorCounselingNote({
+    alert,
+    mentorId,
+    counselingNote
+  }) {
+    if (!alert) return null
+    return {
+      ...alert,
+      counseling_required: false,
+      counseling_note: counselingNote || 'Completed 1-on-1 academic advisory dialogue.',
+      counseling_logged_by: mentorId || 1,
+      counseling_logged_at: new Date().toISOString(),
+      status: 'COUNSELING_COMPLETED'
     }
   }
 }

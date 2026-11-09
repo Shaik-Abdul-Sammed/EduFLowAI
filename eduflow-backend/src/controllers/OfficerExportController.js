@@ -1,7 +1,9 @@
 /**
  * Controller for exporting AI Officer reports as branded PDF documents.
  */
+import fs from 'node:fs'
 import { logger } from '../utils/logger.js'
+import { enqueueJob, getDocumentStatus, UPLOADS_DIR } from '../workers/queueWorker.js'
 
 function escapePdfText(str) {
   if (!str) return ''
@@ -11,7 +13,7 @@ function escapePdfText(str) {
     .replace(/\)/g, '\\)')
 }
 
-function generatePdfBuffer({ title, institutionName, text, officerType }) {
+export function generatePdfBuffer({ title, institutionName, text, officerType }) {
   const institution = institutionName || 'Sri Siddhartha Institute of Technology'
   const lines = (text || '').split('\n')
   const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
@@ -323,6 +325,10 @@ export class OfficerExportController {
         return res.status(400).json({ error: `Invalid officer type: ${type}` })
       }
 
+      const isAsyncRequested = req.query?.async === 'true' ||
+        req.headers?.['x-async-job'] === 'true' ||
+        req.body?.async === true
+
       if (type === 'naac-grade-report') {
         const { institutionName = 'Sri Sudha Institute of Technology', prediction } = req.body || {}
         let reportPrediction = prediction
@@ -333,6 +339,27 @@ export class OfficerExportController {
           } catch {
             reportPrediction = null
           }
+        }
+
+        const jobId = `job_naac_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+        // Enqueue to background worker queue
+        await enqueueJob('pdf-generation', {
+          jobId,
+          type,
+          title: 'NAAC SSR Grade Prediction Report',
+          institutionName,
+          prediction: reportPrediction,
+          userId: req.user?.id || 1,
+        })
+
+        if (isAsyncRequested) {
+          return res.status(202).json({
+            success: true,
+            jobId,
+            status: 'Processing...',
+            statusUrl: `/api/v1/officers/export-pdf/status/${jobId}`,
+            downloadUrl: `/api/v1/officers/export-pdf/download/${jobId}`,
+          })
         }
 
         const pdfBuffer = generateNaacGradeReportPdf({
@@ -352,13 +379,35 @@ export class OfficerExportController {
 
       const officerTitles = {
         accreditation: 'AI Accreditation & NAAC/NBA Compliance Report',
-        'student-success': 'AI Student Success & Dropout Risk Report',
+        'student-success': 'AI Student Success & Early Support Report',
         timetable: 'AI Academic Timetable & Scheduling Optimization',
         admissions: 'AI Admissions Yield & Conversion Analysis',
         finance: 'AI Financial Fee Reconciliation Audit',
       }
 
       const title = officerTitles[type] || `AI ${type} Officer Report`
+      const jobId = `job_${type}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+
+      // Enqueue job to background queue
+      await enqueueJob('pdf-generation', {
+        jobId,
+        type,
+        title,
+        institutionName,
+        text,
+        userId: req.user?.id || 1,
+      })
+
+      if (isAsyncRequested) {
+        return res.status(202).json({
+          success: true,
+          jobId,
+          status: 'Processing...',
+          statusUrl: `/api/v1/officers/export-pdf/status/${jobId}`,
+          downloadUrl: `/api/v1/officers/export-pdf/download/${jobId}`,
+        })
+      }
+
       const pdfBuffer = generatePdfBuffer({
         title,
         institutionName,
@@ -375,6 +424,43 @@ export class OfficerExportController {
     } catch (err) {
       logger.error('PDF export error:', err)
       return res.status(500).json({ error: 'Failed to generate PDF export' })
+    }
+  }
+
+  static async getStatus(req, res) {
+    try {
+      const { jobId } = req.params
+      const status = await getDocumentStatus(jobId)
+      if (!status) {
+        return res.status(404).json({ error: 'Job not found' })
+      }
+      return res.json({
+        jobId: status.jobId,
+        status: status.status,
+        filename: status.filename,
+        downloadUrl: status.downloadUrl || `/api/v1/officers/export-pdf/download/${jobId}`,
+        createdAt: status.createdAt,
+        updatedAt: status.updatedAt,
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to retrieve document status' })
+    }
+  }
+
+  static async downloadPdf(req, res) {
+    try {
+      const { jobId } = req.params
+      const status = await getDocumentStatus(jobId)
+      if (!status || status.status !== 'Ready' || !status.filePath || !fs.existsSync(status.filePath)) {
+        return res.status(404).json({ error: 'Document not ready or file not found' })
+      }
+      const data = fs.readFileSync(status.filePath)
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename="${status.filename || 'report.pdf'}"`)
+      res.setHeader('Content-Length', data.length)
+      return res.end(data)
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to download document' })
     }
   }
 }

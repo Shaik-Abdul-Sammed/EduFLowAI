@@ -408,8 +408,8 @@ export default function LeadManagementPage() {
                 {error}
               </div>
             ) : (
-              <div className="table-responsive">
-                <table className="table table-hover mb-0" style={{ verticalAlign: 'middle' }}>
+              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                <table className="table table-hover mb-0" style={{ verticalAlign: 'middle', minWidth: '700px' }}>
                   <thead>
                     <tr style={{ background: 'var(--surface-bg)' }}>
                       {['Date', 'College', 'Service', 'Contact', 'Email', 'Phone', 'Status', 'Actions'].map(

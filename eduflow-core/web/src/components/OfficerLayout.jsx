@@ -139,6 +139,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     }
   });
   const [copied, setCopied] = useState(null); // null | 'clipboard' | 'copy-btn'
+  const [pdfExportStatus, setPdfExportStatus] = useState('idle'); // 'idle' | 'Processing...' | 'Ready'
   const [uploadedFile, setUploadedFile] = useState(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState(null);
   const [previewPicModal, setPreviewPicModal] = useState(null); // { url, name, size }
@@ -372,7 +373,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
     }
   };
 
-  // ── Export PDF ─────────────────────────────────────────────────────────────
+  // ── Export PDF with Background Async Worker & Polling ─────────────────────
   const handleDownloadPdf = async (content) => {
     const text = content || latestAssistantContent;
     if (!text) {
@@ -380,27 +381,101 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       return;
     }
     try {
+      setPdfExportStatus('Processing...');
+      addToast('⏳ PDF generation queued in background worker. Processing...', 'info');
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      const response = await fetch(`${getApiBaseURL()}${exportEndpoint}`, {
+      
+      const response = await fetch(`${getApiBaseURL()}${exportEndpoint}?async=true`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-async-job': 'true',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ text, institutionName }),
+        body: JSON.stringify({ text, institutionName, async: true }),
       });
+
       if (!response.ok) throw new Error('PDF export failed');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `eduflow-${type}-report-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      addToast('PDF report downloaded successfully.', 'success');
+      const contentType = response.headers.get('content-type') || '';
+
+      if (contentType.includes('application/pdf')) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `eduflow-${type}-report-${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        setPdfExportStatus('Ready');
+        addToast('✅ PDF report downloaded successfully.', 'success');
+        setTimeout(() => setPdfExportStatus('idle'), 2000);
+        return;
+      }
+
+      const jobData = await response.json();
+      const jobId = jobData.jobId;
+
+      if (!jobId) {
+        throw new Error('No job ID returned from PDF queue');
+      }
+
+      // Poll background worker for PDF status ("Processing...", "Ready")
+      let attempts = 0;
+      const maxAttempts = 30;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const statusRes = await fetch(`${getApiBaseURL()}/api/v1/officers/export-pdf/status/${jobId}`, {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          });
+
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            if (statusData.status === 'Ready') {
+              clearInterval(pollInterval);
+              setPdfExportStatus('Ready');
+              addToast('✅ PDF ready! Downloading document...', 'success');
+
+              const downloadRes = await fetch(`${getApiBaseURL()}/api/v1/officers/export-pdf/download/${jobId}`, {
+                headers: {
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+              });
+              if (!downloadRes.ok) throw new Error('Download request failed');
+              const blob = await downloadRes.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = statusData.filename || `eduflow-${type}-report-${Date.now()}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+              setTimeout(() => setPdfExportStatus('idle'), 2500);
+            } else if (statusData.status === 'Failed') {
+              clearInterval(pollInterval);
+              setPdfExportStatus('idle');
+              addToast(`PDF generation failed: ${statusData.errorMessage || 'Error'}`, 'danger');
+            } else {
+              setPdfExportStatus('Processing...');
+            }
+          }
+        } catch {
+          // Poll retry
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          setPdfExportStatus('idle');
+          addToast('PDF generation timed out. Please try again.', 'warning');
+        }
+      }, 800);
     } catch {
+      setPdfExportStatus('idle');
       addToast('PDF export failed. Please try again.', 'danger');
     }
   };

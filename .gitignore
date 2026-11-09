@@ -141,3 +141,7 @@ cypress/results/
 # Firebase Local Cache
 .firebase/
 firebase-debug.log
+
+# Uploads
+eduflow-backend/uploads/*
+!eduflow-backend/uploads/.gitkeep

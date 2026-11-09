@@ -11,9 +11,28 @@ const { Pool } = pg
 export const institutionContext = new AsyncLocalStorage()
 
 export function attachInstitutionContext(req, res, next) {
-  const institutionId = req.user?.institutionId || req.user?.institution_id || req.headers['x-institution-id'] || req.query?.institutionId || 1
-  const bypassRls = req.headers['x-bypass-rls'] === 'true' || (req.user?.role === 'superadmin' && req.headers['x-bypass-rls'] === 'true')
-  institutionContext.run({ institutionId: Number(institutionId), bypassRls: Boolean(bypassRls) }, () => {
+  // PHASE 1: Fix RLS Security Bypass
+  // An attacker sending x-bypass-rls header without a valid superadmin JWT where institutionId === 'ALL' must be rejected with 403 Forbidden
+  if (req.headers && req.headers['x-bypass-rls']) {
+    const isSuperadminAll = req.user?.role === 'superadmin' &&
+      (String(req.user?.institutionId || req.user?.institution_id).toUpperCase() === 'ALL')
+    if (!isSuperadminAll) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Unauthorized RLS bypass attempt. Superadmin credentials required.'
+      })
+    }
+  }
+
+  // RLS bypass must ONLY be allowed if the JWT token explicitly contains role === 'superadmin' AND institutionId === 'ALL'
+  const isSuperadminAll = req.user?.role === 'superadmin' &&
+    (String(req.user?.institutionId || req.user?.institution_id).toUpperCase() === 'ALL')
+  const bypassRls = Boolean(isSuperadminAll)
+
+  const rawInstId = req.user?.institutionId || req.user?.institution_id || req.headers?.['x-institution-id'] || req.query?.institutionId || 1
+  const institutionId = bypassRls ? 'ALL' : Number(rawInstId) || 1
+
+  institutionContext.run({ institutionId, bypassRls }, () => {
     next()
   })
 }
@@ -29,8 +48,12 @@ const isTest = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'test
   process.execArgv.some(a => String(a).includes('test'))
 const isProduction = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'production'
 const forcePostgres = dbMode === 'postgres' || isProduction
+const allowMemoryFallback = isTest || dbMode === 'memory'
 
-if (forcePostgres && !databaseUrl) {
+if (isProduction && !databaseUrl) {
+  logger.error('FATAL: DATABASE_URL environment variable is required in production (NODE_ENV=production)')
+  process.exit(1)
+} else if (forcePostgres && !databaseUrl) {
   logger.error('FATAL: DATABASE_URL environment variable is required when DB_MODE=postgres or NODE_ENV=production')
 }
 
@@ -66,6 +89,10 @@ const realPool = useMemoryOnly ? null : new Pool(realPoolConfig);
 if (realPool) {
   realPool.on('error', (err) => {
     logger.error('Unexpected error on idle PostgreSQL client pool:', err)
+    if (isProduction) {
+      logger.error('FATAL: Idle client pool failure in production. Crashing process for container restart.')
+      process.exit(1)
+    }
   })
 }
 
@@ -115,6 +142,20 @@ export const pool = {
       return { mode: 'memory', persistent: false, warning: 'Fallback to memory active' }
     }
 
+    if (isProduction) {
+      if (!realPool) {
+        logger.error('FATAL: No PostgreSQL connection pool available in production.')
+        process.exit(1)
+      }
+      try {
+        await realPool.query('SELECT 1')
+        return { mode: 'postgres', persistent: true }
+      } catch (err) {
+        logger.error('FATAL: PostgreSQL health check failed in production. Crashing process for container restart:', err)
+        process.exit(1)
+      }
+    }
+
     if (forcePostgres) {
       if (!realPool) {
         return { mode: 'memory', persistent: false, warning: 'No PostgreSQL connection pool available' }
@@ -134,14 +175,20 @@ export const pool = {
         await realPool.query('SELECT 1')
         return { mode: 'postgres', persistent: true }
       } catch (err) {
-        logMemoryFallbackWarningOnce()
-        activeFallbackToMemory = true
-        return { mode: 'memory', persistent: false, warning: 'Fallback to memory active: ' + err.message }
+        if (allowMemoryFallback) {
+          logMemoryFallbackWarningOnce()
+          activeFallbackToMemory = true
+          return { mode: 'memory', persistent: false, warning: 'Fallback to memory active: ' + err.message }
+        }
+        throw err
       }
     }
 
-    logMemoryFallbackWarningOnce()
-    return { mode: 'memory', persistent: false }
+    if (allowMemoryFallback) {
+      logMemoryFallbackWarningOnce()
+      return { mode: 'memory', persistent: false }
+    }
+    throw new Error('FATAL: Database connection unavailable and memory fallback not permitted')
   },
 
   async connect() {
@@ -172,7 +219,11 @@ export const pool = {
       }
       return client
     } catch (error) {
-      if (isConnectionFailure(error)) {
+      if (isProduction) {
+        logger.error('FATAL: PostgreSQL connection failed in production. Crashing process to avoid volatile memory data loss:', error)
+        process.exit(1)
+      }
+      if (isConnectionFailure(error) && allowMemoryFallback) {
         logMemoryFallbackWarningOnce()
         activeFallbackToMemory = true
         return {
@@ -221,7 +272,11 @@ export const pool = {
       }
       return await realPool.query(text, params)
     } catch (error) {
-      if (isConnectionFailure(error)) {
+      if (isProduction) {
+        logger.error('FATAL: PostgreSQL query failed in production. Crashing process to avoid volatile memory data loss:', error)
+        process.exit(1)
+      }
+      if (isConnectionFailure(error) && allowMemoryFallback) {
         logMemoryFallbackWarningOnce()
         activeFallbackToMemory = true
         return memoryPool.query(text, params)

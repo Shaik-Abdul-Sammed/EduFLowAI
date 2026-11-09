@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import FocusTrap from 'focus-trap-react';
 import { Share2, Copy, Check, MessageCircle, X } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
@@ -129,20 +130,21 @@ export default function ShareReportModal({
       }}
       onClick={handleClose}
     >
-      <div
-        ref={modalRef}
-        style={{
-          backgroundColor: '#111827',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '520px',
-          padding: '1.75rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          color: '#F9FAFB',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <FocusTrap focusTrapOptions={{ initialFocus: false, escapeDeactivates: false, allowOutsideClick: true }}>
+        <div
+          ref={modalRef}
+          style={{
+            backgroundColor: '#111827',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '520px',
+            padding: '1.75rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            color: '#F9FAFB',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -249,7 +251,8 @@ export default function ShareReportModal({
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </FocusTrap>
     </div>
   );
 }

@@ -686,8 +686,8 @@ export default function LiveDataPage() {
               </div>
               <span className="badge bg-danger-subtle text-danger">{holidaysData?.state || 'Karnataka'}</span>
             </div>
-            <div className="table-responsive" style={{ maxHeight: 240, overflowY: 'auto' }}>
-              <table className="table table-sm table-hover align-middle mb-0">
+            <div className="table-responsive" style={{ maxHeight: 240, overflowY: 'auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+              <table className="table table-sm table-hover align-middle mb-0" style={{ minWidth: '380px' }}>
                 <tbody>
                   {(holidaysData?.holidays || [
                     { name: 'Republic Day', date: '2026-01-26', type: 'National Holiday' },
@@ -887,8 +887,8 @@ export default function LiveDataPage() {
                   <h6 className="fw-bold text-dark d-flex align-items-center gap-1.5 small">
                     <TrendingUp size={16} className="text-warning" /> Codified Quantitative Benchmarks
                   </h6>
-                  <div className="table-responsive">
-                    <table className="table table-sm table-bordered small mb-0">
+                  <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                    <table className="table table-sm table-bordered small mb-0" style={{ minWidth: '400px' }}>
                       <thead className="table-light">
                         <tr>
                           <th>Statutory Metric</th>

@@ -80,6 +80,8 @@ export function createOfficerRouter() {
    */
   router.post('/:type/export-pdf', requireRole(['admin', 'hod', 'faculty', 'staff']), OfficerExportController.exportPdf)
   router.get('/:type/export-pdf', requireRole(['admin', 'hod', 'faculty', 'staff']), OfficerExportController.exportPdf)
+  router.get('/export-pdf/status/:jobId', OfficerExportController.getStatus)
+  router.get('/export-pdf/download/:jobId', OfficerExportController.downloadPdf)
 
   /**
    * POST /api/v1/officers/:type/upload

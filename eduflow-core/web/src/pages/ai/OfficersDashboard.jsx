@@ -26,7 +26,7 @@ const OFFICER_META = {
   'timetable': { icon: '📅', color: '#2563EB', name: 'AI Timetable Officer', desc: 'Conflict-free timetable generation considering faculty workload and room availability', statLabel: 'Conflicts Resolved' },
   'admissions': { icon: '🎓', color: '#10B981', name: 'AI Admission Officer', desc: 'End-to-end admissions automation — queries, verification, documents, counselling', statLabel: 'Applications Processed' },
   'finance': { icon: '💰', color: '#F59E0B', name: 'AI Finance Officer', desc: 'Fee reconciliation, UPI matching, bank statement analysis, scholarship tracking', statLabel: 'Amount Reconciled' },
-  'student-success': { icon: '📊', color: '#EF4444', name: 'AI Student Success Officer', desc: 'Dropout prediction, attendance monitoring, placement readiness, intervention plans', statLabel: 'Students Monitored' }
+  'student-success': { icon: '📊', color: '#EF4444', name: 'AI Student Success Officer', desc: 'Early Academic Support Alert System, attendance monitoring, placement readiness, intervention plans', statLabel: 'Students Monitored' }
 };
 
 const DEFAULT_OFFICERS = Object.keys(OFFICER_META).map((id) => ({

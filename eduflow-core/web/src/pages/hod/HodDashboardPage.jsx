@@ -480,7 +480,7 @@ export default function HodDashboardPage() {
                 <ArrowRight size={14} />
               </Link>
               <Link to="/officer/student-success" className="btn btn-outline-secondary btn-sm text-start d-flex justify-content-between align-items-center text-light">
-                <span>🎓 Predict Semester Dropout Risk</span>
+                <span>🎓 Early Academic Support Alert System</span>
                 <ArrowRight size={14} />
               </Link>
             </div>
