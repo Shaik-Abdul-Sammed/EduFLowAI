@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Send, Download, Copy, Check, Share2, Mail,
-  Paperclip, X, ChevronDown, ChevronUp, Clock, FileJson,
-  Sparkles, Printer, Eye, Edit, Brain, ShieldCheck, CheckCircle, AlertTriangle,
-  PanelLeftClose, PanelLeftOpen, PanelLeft, Image as ImageIcon, ZoomIn, ZoomOut,
+  Paperclip, X, ChevronDown, ChevronUp, Clock,
+  Sparkles, Printer, Eye, Edit, Brain, ShieldCheck,
+  PanelLeftClose, PanelLeftOpen, Image as ImageIcon, ZoomIn, ZoomOut,
   RotateCw, Table as TableIcon, Code, FileText, Trash2,
 } from 'lucide-react';
 import { getApiBaseURL } from '../config/apiConfig';
@@ -100,7 +100,9 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       const next = !prev;
       try {
         localStorage.setItem('officer_sidebar_open', String(next));
-      } catch {}
+      } catch (_e) {
+        // storage disabled or quota exceeded
+      }
       return next;
     });
   };
@@ -119,7 +121,9 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       const next = !prev;
       try {
         sessionStorage.setItem(`officer_temp_chat_${type || 'default'}`, String(next));
-      } catch {}
+      } catch (_e) {
+        // storage disabled or quota exceeded
+      }
       if (next) {
         addToast('⚡ Temporary Chat activated. Messages will not be saved to history.', 'info');
       } else {
@@ -647,7 +651,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       <button type="button" onClick={() => handleDownloadPdf(content)}
         title="Download PDF report"
         style={{ ...btnStyle, background: accentLight, border: `1px solid ${accentBorder}`, color: accentColor }}>
-        <Download size={13} /> PDF
+        <Download size={13} /> {pdfExportStatus !== 'idle' ? pdfExportStatus : 'PDF'}
       </button>
       <button type="button" onClick={() => handleDownloadCsv(content)}
         title="Download CSV spreadsheet"

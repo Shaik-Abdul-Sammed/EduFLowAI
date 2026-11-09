@@ -2,7 +2,7 @@ import { getFullApiUrl } from '../config/apiConfig'
 import { wakeUpFetch, safeJson } from '../utils/wakeUpHandler'
 
 export function mapAuthError(err, status) {
-  if (process.env.NODE_ENV !== 'test') {
+  if (typeof process !== 'undefined' && process?.env?.NODE_ENV !== 'test') {
     console.error('Auth error detail:', err)
   }
 

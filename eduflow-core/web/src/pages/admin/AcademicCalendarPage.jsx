@@ -13,16 +13,12 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Info,
   ShieldAlert,
   CalendarCheck,
   Settings,
   Plus,
   Trash2,
   Search,
-  Tag,
-  Filter,
-  FileText,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -33,27 +29,6 @@ import {
   getFestivalDates,
   generateAcademicYearOptions,
 } from '../../services/indianHolidayRules'
-
-const DEFAULT_HOLIDAYS = [
-  { name: 'Republic Day', date: '2026-01-26', type: 'CENTRAL_GAZETTED' },
-  { name: 'Maha Shivratri', date: '2026-02-17', type: 'FESTIVAL' },
-  { name: 'Holi', date: '2026-03-04', type: 'FESTIVAL' },
-  { name: 'Ugadi / Gudi Padwa', date: '2026-03-20', type: 'STATE_GAZETTED' },
-  { name: 'Good Friday', date: '2026-04-03', type: 'CENTRAL_GAZETTED' },
-  { name: 'Dr. B.R. Ambedkar Jayanti', date: '2026-04-14', type: 'CENTRAL_GAZETTED' },
-  { name: 'Eid-ul-Fitr (Ramzan)', date: '2026-04-20', type: 'CENTRAL_GAZETTED' },
-  { name: 'Buddha Purnima', date: '2026-05-12', type: 'CENTRAL_GAZETTED' },
-  { name: 'Bakrid / Eid-ul-Adha', date: '2026-06-27', type: 'CENTRAL_GAZETTED' },
-  { name: 'Muharram', date: '2026-07-26', type: 'CENTRAL_GAZETTED' },
-  { name: 'Independence Day', date: '2026-08-15', type: 'NATIONAL_HOLIDAY' },
-  { name: 'Milad-un-Nabi (Id-e-Milad)', date: '2026-09-04', type: 'CENTRAL_GAZETTED' },
-  { name: 'Gandhi Jayanti', date: '2026-10-02', type: 'NATIONAL_HOLIDAY' },
-  { name: 'Dussehra (Vijayadashami)', date: '2026-10-20', type: 'FESTIVAL' },
-  { name: 'Diwali (Deepavali)', date: '2026-11-08', type: 'FESTIVAL' },
-  { name: 'Guru Nanak Jayanti', date: '2026-11-24', type: 'CENTRAL_GAZETTED' },
-  { name: 'Christmas Day', date: '2026-12-25', type: 'CENTRAL_GAZETTED' },
-  { name: 'Makar Sankranti / Pongal', date: '2027-01-14', type: 'STATE_GAZETTED' },
-]
 
 const ACADEMIC_MONTHS = [
   { name: 'July', month: 6, isEven: false },
@@ -336,7 +311,9 @@ export default function AcademicCalendarPage() {
     setCustomOptionalHolidays(updated)
     try {
       localStorage.setItem('custom_optional_holidays', JSON.stringify(updated))
-    } catch {}
+    } catch (_e) {
+      // storage quota or private window
+    }
     setShowOptionalModal(false)
     setOptionalForm({ name: '', date: '', reason: '', stateCode: 'ALL', applicableTo: 'ALL' })
     addToast(`Declared "${newHoliday.name}" as an Optional / Restricted Holiday!`, 'success')
@@ -347,7 +324,9 @@ export default function AcademicCalendarPage() {
     setCustomOptionalHolidays(updated)
     try {
       localStorage.setItem('custom_optional_holidays', JSON.stringify(updated))
-    } catch {}
+    } catch (_e) {
+      // storage quota or private window
+    }
     addToast('Declared optional holiday removed', 'info')
   }
 

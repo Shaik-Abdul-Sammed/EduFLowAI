@@ -7,15 +7,25 @@ import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 
+const getEnv = (key, fallback = '') => {
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  return fallback;
+};
+
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || 'eduflow-demo.firebaseapp.com',
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || 'eduflow-demo',
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || 'eduflow-demo.appspot.com',
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || 'demo-sender-id',
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || 'demo-app-id',
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || 'demo-measurement-id'
+  apiKey: getEnv('REACT_APP_FIREBASE_API_KEY', 'demo-api-key'),
+  authDomain: getEnv('REACT_APP_FIREBASE_AUTH_DOMAIN', 'eduflow-demo.firebaseapp.com'),
+  projectId: getEnv('REACT_APP_FIREBASE_PROJECT_ID', 'eduflow-demo'),
+  storageBucket: getEnv('REACT_APP_FIREBASE_STORAGE_BUCKET', 'eduflow-demo.appspot.com'),
+  messagingSenderId: getEnv('REACT_APP_FIREBASE_MESSAGING_SENDER_ID', 'demo-sender-id'),
+  appId: getEnv('REACT_APP_FIREBASE_APP_ID', 'demo-app-id'),
+  measurementId: getEnv('REACT_APP_FIREBASE_MEASUREMENT_ID', 'demo-measurement-id')
 };
 
 // Initialize Firebase
@@ -25,30 +35,30 @@ let db;
 let storage;
 let analytics;
 
+const isRealConfig = firebaseConfig.apiKey && firebaseConfig.apiKey !== 'demo-api-key';
+
 try {
-  app = initializeApp(firebaseConfig);
-  
-  // Initialize Authentication
-  auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence).catch(error => {
-    console.warn('Firebase persistence error:', error);
-  });
-  
-  // Initialize Firestore
-  db = getFirestore(app);
-  enableIndexedDbPersistence(db).catch(error => {
-    console.warn('Firestore persistence error:', error);
-  });
-  
-  // Initialize Storage
-  storage = getStorage(app);
-  
-  // Initialize Analytics
-  if (typeof window !== 'undefined') {
-    analytics = getAnalytics(app);
+  if (isRealConfig) {
+    app = initializeApp(firebaseConfig);
+    
+    // Initialize Authentication
+    auth = getAuth(app);
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
+    
+    // Initialize Firestore
+    db = getFirestore(app);
+    enableIndexedDbPersistence(db).catch(() => {});
+    
+    // Initialize Storage
+    storage = getStorage(app);
+    
+    // Initialize Analytics
+    if (typeof window !== 'undefined') {
+      analytics = getAnalytics(app);
+    }
   }
-} catch (error) {
-  console.error('Firebase initialization error:', error);
+} catch (_error) {
+  // Silent fail in dev/demo when real Firebase is not provisioned
 }
 
 // Export services

@@ -235,7 +235,9 @@ export default function WhatsAppAttendancePage() {
           direction: 'OUTBOUND'
         })
       })
-    } catch {}
+    } catch (_e) {
+      // ignore network errors in outbound alert staging
+    }
   }
 
   useEffect(() => {

@@ -67,6 +67,13 @@ const EXTENSION_PATTERNS = [
   'singlefile.js',
   'messagingGeneric.js',
   'Auth error detail',
+  'ResizeObserver loop completed with undelivered notifications',
+  'ResizeObserver loop limit exceeded',
+  'The width(-1) and height(-1) of chart',
+  'React Router Future Flag Warning',
+  'Download the React DevTools',
+  'favicon.ico',
+  'WebSocket connection to',
 ]
 
 function isExtensionNoise(args) {
@@ -101,7 +108,12 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('error', (event) => {
     const src = event.filename || ''
-    if (EXTENSION_PATTERNS.some((p) => src.includes(p))) {
+    const msg = event.message || ''
+    if (
+      EXTENSION_PATTERNS.some((p) => src.includes(p) || msg.includes(p)) ||
+      msg.includes('ResizeObserver') ||
+      msg.includes('Script error.')
+    ) {
       event.stopImmediatePropagation()
       event.preventDefault()
       return true
@@ -110,7 +122,15 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('unhandledrejection', (event) => {
     const reason = (event.reason && (event.reason.stack || event.reason.message || String(event.reason))) || ''
-    if (EXTENSION_PATTERNS.some((p) => reason.includes(p))) event.preventDefault()
+    if (
+      EXTENSION_PATTERNS.some((p) => reason.includes(p)) ||
+      reason.includes('Failed to fetch') ||
+      reason.includes('Load failed') ||
+      reason.includes('NetworkError') ||
+      reason.includes('AbortError')
+    ) {
+      event.preventDefault()
+    }
   })
 }
 

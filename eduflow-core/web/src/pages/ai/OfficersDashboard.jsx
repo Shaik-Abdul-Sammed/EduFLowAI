@@ -148,7 +148,9 @@ export default function OfficersDashboard() {
       localStorage.removeItem(`officer_history_${String(officerId).replace(/-/g, '_')}`);
       localStorage.removeItem(`officer_history_${String(officerId).replace(/_/g, '-')}`);
       setHistoryKey((k) => k + 1);
-    } catch {}
+    } catch (_e) {
+      // storage unavailable
+    }
   };
 
   // Aggregate local officer prompts across all 5 officers
@@ -740,7 +742,6 @@ export default function OfficersDashboard() {
                 ) : (
                   getOfficerLocalHistory(selectedOfficerHistory).map((item, idx) => {
                     const promptText = typeof item === 'string' ? item : (item.prompt || item.preview || '');
-                    const previewText = typeof item === 'string' ? item : (item.preview || item.prompt || '');
                     const timeText = typeof item === 'object' && item.timestamp ? item.timestamp : 'Recent';
                     return (
                       <div
