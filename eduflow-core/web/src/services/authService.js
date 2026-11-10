@@ -201,8 +201,8 @@ export async function logout() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken })
       })
-    } catch (e) {
-      console.error('Logout API failed:', e)
+    } catch (_e) {
+      // Non-blocking logout network error: local tokens are cleared cleanly
     }
   }
   

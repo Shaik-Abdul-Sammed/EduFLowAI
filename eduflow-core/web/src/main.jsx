@@ -67,6 +67,8 @@ const EXTENSION_PATTERNS = [
   'singlefile.js',
   'messagingGeneric.js',
   'Auth error detail',
+  'Logout API failed',
+  'auth/logout',
   'ResizeObserver loop completed with undelivered notifications',
   'ResizeObserver loop limit exceeded',
   'The width(-1) and height(-1) of chart',

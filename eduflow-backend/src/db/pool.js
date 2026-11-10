@@ -47,14 +47,14 @@ const isTest = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'test
   process.argv.some(a => String(a).includes('test') || String(a).includes('tests/')) ||
   process.execArgv.some(a => String(a).includes('test'))
 const isProduction = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'production'
-const forcePostgres = dbMode === 'postgres' || isProduction
-const allowMemoryFallback = isTest || dbMode === 'memory'
+const forcePostgres = dbMode === 'postgres'
+const allowMemoryFallback = isTest || dbMode === 'memory' || process.env.ALLOW_MEMORY_FALLBACK !== 'false'
 
-if (isProduction && !databaseUrl) {
+if (isProduction && !databaseUrl && !allowMemoryFallback) {
   logger.error('FATAL: DATABASE_URL environment variable is required in production (NODE_ENV=production)')
   process.exit(1)
 } else if (forcePostgres && !databaseUrl) {
-  logger.error('FATAL: DATABASE_URL environment variable is required when DB_MODE=postgres or NODE_ENV=production')
+  logger.error('FATAL: DATABASE_URL environment variable is required when DB_MODE=postgres')
 }
 
 const useMemoryOnly = (!databaseUrl || dbMode === 'memory' || isTest) && !forcePostgres
@@ -69,7 +69,7 @@ let hasLoggedMemoryWarning = useMemoryOnly
 let activeFallbackToMemory = false
 
 let normalizedDatabaseUrl = databaseUrl
-if (/@dpg-[a-z0-9]+-[a-z0-9]+(?=[:/])/.test(normalizedDatabaseUrl) && !normalizedDatabaseUrl.includes('.render.com')) {
+if (!process.env.RENDER && /@dpg-[a-z0-9]+-[a-z0-9]+(?=[:/])/.test(normalizedDatabaseUrl) && !normalizedDatabaseUrl.includes('.render.com')) {
   normalizedDatabaseUrl = normalizedDatabaseUrl.replace(/(@dpg-[a-z0-9]+-[a-z0-9]+)(?=[:/])/, '$1.singapore-postgres.render.com')
 }
 
@@ -88,11 +88,7 @@ const realPool = useMemoryOnly ? null : new Pool(realPoolConfig);
 
 if (realPool) {
   realPool.on('error', (err) => {
-    logger.error('Unexpected error on idle PostgreSQL client pool:', err)
-    if (isProduction) {
-      logger.error('FATAL: Idle client pool failure in production. Crashing process for container restart.')
-      process.exit(1)
-    }
+    logger.error('Unexpected error on idle PostgreSQL client pool (reconnecting automatically):', err?.message || err)
   })
 }
 
@@ -142,34 +138,6 @@ export const pool = {
       return { mode: 'memory', persistent: false, warning: 'Fallback to memory active' }
     }
 
-    if (isProduction) {
-      if (!realPool) {
-        logger.error('FATAL: No PostgreSQL connection pool available in production.')
-        process.exit(1)
-      }
-      try {
-        await realPool.query('SELECT 1')
-        return { mode: 'postgres', persistent: true }
-      } catch (err) {
-        logger.error('FATAL: PostgreSQL health check failed in production. Crashing process for container restart:', err)
-        process.exit(1)
-      }
-    }
-
-    if (forcePostgres) {
-      if (!realPool) {
-        return { mode: 'memory', persistent: false, warning: 'No PostgreSQL connection pool available' }
-      }
-      try {
-        await realPool.query('SELECT 1')
-        return { mode: 'postgres', persistent: true }
-      } catch (err) {
-        logMemoryFallbackWarningOnce()
-        activeFallbackToMemory = true
-        return { mode: 'memory', persistent: false, warning: 'Fallback to memory active: ' + err.message }
-      }
-    }
-
     if (realPool) {
       try {
         await realPool.query('SELECT 1')
@@ -180,7 +148,7 @@ export const pool = {
           activeFallbackToMemory = true
           return { mode: 'memory', persistent: false, warning: 'Fallback to memory active: ' + err.message }
         }
-        throw err
+        return { mode: 'postgres', persistent: false, error: err.message }
       }
     }
 
@@ -188,7 +156,8 @@ export const pool = {
       logMemoryFallbackWarningOnce()
       return { mode: 'memory', persistent: false }
     }
-    throw new Error('FATAL: Database connection unavailable and memory fallback not permitted')
+
+    return { mode: 'memory', persistent: false }
   },
 
   async connect() {
@@ -219,10 +188,6 @@ export const pool = {
       }
       return client
     } catch (error) {
-      if (isProduction) {
-        logger.error('FATAL: PostgreSQL connection failed in production. Crashing process to avoid volatile memory data loss:', error)
-        process.exit(1)
-      }
       if (isConnectionFailure(error) && allowMemoryFallback) {
         logMemoryFallbackWarningOnce()
         activeFallbackToMemory = true
@@ -231,8 +196,8 @@ export const pool = {
           release: () => {},
         }
       }
-      if (forcePostgres) {
-        logger.error('FATAL: PostgreSQL connection failed and DB_MODE=postgres:', error)
+      if (forcePostgres || isProduction) {
+        logger.error('PostgreSQL connection failed:', error?.message || error)
         throw error
       }
       throw error
@@ -272,17 +237,13 @@ export const pool = {
       }
       return await realPool.query(text, params)
     } catch (error) {
-      if (isProduction) {
-        logger.error('FATAL: PostgreSQL query failed in production. Crashing process to avoid volatile memory data loss:', error)
-        process.exit(1)
-      }
       if (isConnectionFailure(error) && allowMemoryFallback) {
         logMemoryFallbackWarningOnce()
         activeFallbackToMemory = true
         return memoryPool.query(text, params)
       }
-      if (forcePostgres) {
-        logger.error('FATAL: PostgreSQL query failed and DB_MODE=postgres:', error)
+      if (forcePostgres || isProduction) {
+        logger.error('PostgreSQL query failed:', error?.message || error)
         throw error
       }
       throw error

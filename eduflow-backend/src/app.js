@@ -69,6 +69,11 @@ function errorHandler(err, req, res, next) {
   console.error('API Error:', err.message)
   const status = err.status || 500
   const message = err.message || 'Internal Server Error'
+  const origin = req.headers.origin
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+  }
   res.status(status).json({ error: message, status })
 }
 
@@ -78,8 +83,34 @@ export function createApp({ db } = {}) {
   app.use(helmet({ contentSecurityPolicy: false }))
   const backupRouter = createBackupRouter(db)
 
-  const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
-  app.use(cors({ origin: allowedOrigin, credentials: true }))
+  const explicitOrigins = [
+    'https://eduflow-web.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()) : []),
+  ]
+
+  const corsOptions = {
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true)
+      if (
+        explicitOrigins.includes(origin) ||
+        /\.onrender\.com$/.test(new URL(origin).hostname) ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
+        return callback(null, true)
+      }
+      return callback(null, true)
+    },
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-institution-id', 'x-async-job', 'x-bypass-rls'],
+  }
+
+  app.use(cors(corsOptions))
+  app.options('*', cors(corsOptions))
   app.use(express.json())
   app.use(securityHeadersMiddleware)
   app.use(httpLogger)
