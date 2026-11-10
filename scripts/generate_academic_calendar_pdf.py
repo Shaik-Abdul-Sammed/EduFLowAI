@@ -637,9 +637,14 @@ def build_page4(filename):
 # MAIN ORCHESTRATOR & ASSEMBLY
 # =========================================================================
 def generate_master_calendar_pdf(output_paths=None):
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    public_target = os.path.join(repo_root, "eduflow-core", "web", "public", "Academic_Calendar_2026_27_E1_to_E4.pdf")
+    root_target = os.path.join(repo_root, "Academic_Calendar_2026_27_E1_to_E4.pdf")
+
     if output_paths is None:
         output_paths = [
-            "/home/rgukt/Github/EduFLowAI/Academic_Calendar_2026_27_E1_to_E4.pdf",
+            root_target,
+            public_target,
             "/home/rgukt/.gemini/antigravity/brain/485cec2e-6fb5-44a7-8b28-b2980d838b01/Academic_Calendar_2026_27_E1_to_E4.pdf"
         ]
 
@@ -667,4 +672,20 @@ def generate_master_calendar_pdf(output_paths=None):
         return output_paths[0]
 
 if __name__ == '__main__':
-    generate_master_calendar_pdf()
+    targets = []
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        if args[i] in ['--output', '-o'] and i + 1 < len(args):
+            targets.append(args[i + 1])
+            i += 2
+        elif not args[i].startswith('-'):
+            targets.append(args[i])
+            i += 1
+        else:
+            i += 1
+    
+    if targets:
+        generate_master_calendar_pdf(targets)
+    else:
+        generate_master_calendar_pdf()

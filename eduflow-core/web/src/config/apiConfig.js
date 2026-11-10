@@ -21,7 +21,10 @@ export function getApiBaseURL() {
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
 
   if (envUrl && envUrl.trim() !== '') {
-    apiBaseURL = envUrl.replace(/\/v1\/?$/, '').replace(/\/+$/, '')
+    let cleaned = envUrl.replace(/\/v1\/?$/, '').replace(/\/+$/, '')
+    // Auto-fix typo in Render backend hostname (1vn8 -> jvn8)
+    cleaned = cleaned.replace(/eduflow-backend-1vn8/gi, 'eduflow-backend-jvn8')
+    apiBaseURL = cleaned
   } else if (isLocalhost) {
     apiBaseURL = 'http://localhost:3000/api'
   } else {

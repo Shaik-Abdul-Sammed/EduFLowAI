@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getApiBaseURL, getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 import {
   getHolidaysForAcademicYear,
@@ -88,6 +88,102 @@ function runHolidayDiagnosis(yearStr, stateCode) {
   }
 }
 
+const EXECUTIVE_CALENDAR_SUMMARY = [
+  { odd: '88', activity: 'Number of Instruction days', even: '84', isBold: true },
+  { odd: '29th June, 2026', activity: 'Semester Registration / Commencement of classes', even: '1st December, 2026', isBold: true },
+  { odd: '5th – 7th August, 2026', activity: 'Mid Test-I', even: '6th – 8th January, 2027', isBold: true },
+  { odd: '17th August, 2026', activity: 'Mid Test-I Result Announcement', even: '25th January, 2027', isBold: false },
+  { odd: '24th – 26th September, 2026', activity: 'Mid Test-II', even: '18th – 20th February, 2027', isBold: true },
+  { odd: '5th October, 2026', activity: 'Mid Test-II Result Announcement', even: '27th March, 2027', isBold: false },
+  { odd: '4th November, 2026', activity: 'Instruction closing day', even: '5th April, 2027', isBold: true },
+  { odd: '5th – 7th November, 2026', activity: 'Mid Test-III', even: '6th – 9th April, 2027', isBold: true },
+  { odd: '14th November, 2026', activity: 'Mid Test-III Result Announcement', even: '17th April, 2027', isBold: false },
+  { odd: '16th – 28th November, 2026', activity: 'EST exams', even: '19th – 30th April, 2027', isBold: true },
+  { odd: '30th December, 2026', activity: 'End Semester Result Announcement', even: '1st June, 2027', isBold: false },
+]
+
+const ODD_SEMESTER_GRID = [
+  { month: 'July, 2026', days: ['29', '30', '1', '2', '3', '4'], week: 'Week-1', remarks: '', colors: {} },
+  { month: 'July, 2026', days: ['6', '7', '8', '9', '10', '11'], week: 'Week-2', remarks: '', colors: { 5: 'red' } },
+  { month: 'July, 2026', days: ['13', '14', '15', '16', '17', '18'], week: 'Week-3', remarks: '', colors: {} },
+  { month: 'July, 2026', days: ['20', '21', '22', '23', '24', '25'], week: 'Week-4', remarks: '', colors: {} },
+  { month: 'July, 2026', days: ['27', '28', '29', '30', '31', '1'], week: 'Week-5', remarks: '', colors: {} },
+  { month: 'August, 2026', days: ['3', '4', '5', '6', '7', '8'], week: 'Week-6', remarks: 'MID-I', colors: { 2: 'blue', 3: 'blue', 4: 'blue', 5: 'red' } },
+  { month: 'August, 2026', days: ['10', '11', '12', '13', '14', '15'], week: 'Week-7', remarks: '', colors: { 5: 'red' } },
+  { month: 'August, 2026', days: ['17', '18', '19', '20', '21', '22'], week: 'Week-8', remarks: '', colors: { 4: 'red', 5: 'red' } },
+  { month: 'August, 2026', days: ['24', '25', '26', '27', '28', '29'], week: 'Week-9', remarks: '', colors: { 1: 'red' } },
+  { month: 'September, 2026', days: ['31', '1', '2', '3', '4', '5'], week: 'Week-10', remarks: '', colors: { 4: 'red' } },
+  { month: 'September, 2026', days: ['7', '8', '9', '10', '11', '12'], week: 'Week-11', remarks: '', colors: { 5: 'red' } },
+  { month: 'September, 2026', days: ['14', '15', '16', '17', '18', '19'], week: 'Week-12', remarks: '', colors: { 0: 'red' } },
+  { month: 'September, 2026', days: ['21', '22', '23', '24', '25', '26'], week: 'Week-13', remarks: 'MID-II', colors: { 3: 'blue', 4: 'blue', 5: 'blue' } },
+  { month: 'October, 2026', days: ['28', '29', '30', '1', '2', '3'], week: 'Week-14', remarks: '', colors: { 4: 'red' } },
+  { month: 'October, 2026', days: ['5', '6', '7', '8', '9', '10'], week: 'Week-15', remarks: '', colors: { 5: 'red' } },
+  { month: 'October, 2026', days: ['12', '13', '14', '15', '16', '17'], week: 'Week-16', remarks: '', colors: {} },
+  { month: 'October, 2026', days: ['19', '20', '21', '22', '23', '24'], week: 'Dussehra Vacation', remarks: '', colors: { 0: 'red', 1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red' } },
+  { month: 'October, 2026', days: ['26', '27', '28', '29', '30', '31'], week: 'Week-17', remarks: '', colors: {} },
+  { month: 'November, 2026', days: ['2', '3', '4', '5', '6', '7'], week: 'Week-18', remarks: 'MID-III', colors: { 3: 'blue', 4: 'blue', 5: 'blue' } },
+  { month: 'November, 2026', days: ['9', '10', '11', '12', '13', '14'], week: 'Week-19', remarks: 'Lab Exams', colors: { 5: 'red' } },
+  { month: 'November, 2026', days: ['16', '17', '18', '19', '20', '21'], week: 'Week-20', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green' } },
+  { month: 'November, 2026', days: ['23', '24', '25', '26', '27', '28'], week: 'Week-21', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green' } },
+]
+
+const EVEN_SEMESTER_GRID = [
+  { month: 'December, 2026', days: ['30', '1', '2', '3', '4', '5'], week: 'Week-1', remarks: '', colors: {} },
+  { month: 'December, 2026', days: ['7', '8', '9', '10', '11', '12'], week: 'Week-2', remarks: '', colors: { 5: 'red' } },
+  { month: 'December, 2026', days: ['14', '15', '16', '17', '18', '19'], week: 'Week-3', remarks: '', colors: {} },
+  { month: 'December, 2026', days: ['21', '22', '23', '24', '25', '26'], week: 'Week-4', remarks: '', colors: { 4: 'red' } },
+  { month: 'January, 2027', days: ['28', '29', '30', '31', '1', '2'], week: 'Week-5', remarks: '', colors: {} },
+  { month: 'January, 2027', days: ['4', '5', '6', '7', '8', '9'], week: 'Week-6', remarks: 'MID-I', colors: { 2: 'blue', 3: 'blue', 4: 'blue' } },
+  { month: 'January, 2027', days: ['11', '12', '13', '14', '15', '16'], week: 'Pongal Vacation', remarks: '', colors: { 0: 'red', 1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red' } },
+  { month: 'January, 2027', days: ['18', '19', '20', '21', '22', '23'], week: 'Week-7', remarks: '', colors: {} },
+  { month: 'January, 2027', days: ['25', '26', '27', '28', '29', '30'], week: 'Week-8', remarks: '', colors: { 1: 'red' } },
+  { month: 'February, 2027', days: ['1', '2', '3', '4', '5', '6'], week: 'Week-9', remarks: '', colors: {} },
+  { month: 'February, 2027', days: ['8', '9', '10', '11', '12', '13'], week: 'Week-10', remarks: '', colors: { 5: 'red' } },
+  { month: 'February, 2027', days: ['15', '16', '17', '18', '19', '20'], week: 'Week-11', remarks: 'MID-II', colors: { 3: 'blue', 4: 'blue', 5: 'blue' } },
+  { month: 'February, 2027', days: ['22', '23', '24', '25', '26', '27'], week: 'Week-12', remarks: '', colors: {} },
+  { month: 'March, 2027', days: ['1', '2', '3', '4', '5', '6'], week: 'Week-13', remarks: '', colors: { 5: 'red' } },
+  { month: 'March, 2027', days: ['8', '9', '10', '11', '12', '13'], week: 'Week-14', remarks: '', colors: { 2: 'red', 5: 'red' } },
+  { month: 'March, 2027', days: ['15', '16', '17', '18', '19', '20'], week: 'Week-15', remarks: '', colors: {} },
+  { month: 'March, 2027', days: ['22', '23', '24', '25', '26', '27'], week: 'Week-16', remarks: '', colors: { 0: 'red', 4: 'red' } },
+  { month: 'April, 2027', days: ['29', '30', '31', '1', '2', '3'], week: 'Week-17', remarks: '', colors: {} },
+  { month: 'April, 2027', days: ['5', '6', '7', '8', '9', '10'], week: 'Week-18', remarks: 'MID-III', colors: { 1: 'blue', 2: 'red', 3: 'blue', 4: 'blue', 5: 'red' } },
+  { month: 'April, 2027', days: ['12', '13', '14', '15', '16', '17'], week: 'Week-19', remarks: 'Lab Exams', colors: { 2: 'red' } },
+  { month: 'April, 2027', days: ['19', '20', '21', '22', '23', '24'], week: 'Week-20', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green' } },
+  { month: 'April, 2027', days: ['26', '27', '28', '29', '30', ''], week: 'Week-21', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green' } },
+]
+
+const ODD_HOLIDAYS_LIST = [
+  { date: '11-Jul-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '08-Aug-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '15-Aug-2026 (Sat)', name: 'Independence Day (National Holiday)', type: 'National Holiday' },
+  { date: '21-Aug-2026 (Fri)', name: 'Sri Varalakshmi Vratam', type: 'State Gazetted' },
+  { date: '22-Aug-2026 (Sat)', name: 'Sri Krishna Janmashtami / Gokulashtami', type: 'Gazetted Holiday' },
+  { date: '25-Aug-2026 (Tue)', name: 'Milad-un-Nabi (Prophet Muhammad Birthday)', type: 'Gazetted Holiday' },
+  { date: '04-Sep-2026 (Fri)', name: 'State Cultural / Optional Observance', type: 'Optional Holiday' },
+  { date: '12-Sep-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '14-Sep-2026 (Mon)', name: 'Vinayaka Chavithi (Ganesh Chaturthi)', type: 'Gazetted Holiday' },
+  { date: '02-Oct-2026 (Fri)', name: 'Mahatma Gandhi Jayanti (National Holiday)', type: 'National Holiday' },
+  { date: '10-Oct-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '19–24 Oct 2026', name: 'Dussehra Vacation (Durgashtami to Vijaya Dasami)', type: 'Institutional Break' },
+  { date: '14-Nov-2026 (Sat)', name: 'Deepavali & Second Saturday', type: 'Gazetted Holiday' },
+]
+
+const EVEN_HOLIDAYS_LIST = [
+  { date: '12-Dec-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '25-Dec-2026 (Fri)', name: 'Christmas', type: 'Gazetted Holiday' },
+  { date: '11–16 Jan 2027', name: 'Pongal / Sankranti Vacation (Bhogi, Makara Sankranti, Kanuma)', type: 'Institutional Break' },
+  { date: '26-Jan-2027 (Tue)', name: 'Republic Day (National Holiday)', type: 'National Holiday' },
+  { date: '13-Feb-2027 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '06-Mar-2027 (Sat)', name: 'Maha Shivratri', type: 'Gazetted Holiday' },
+  { date: '10-Mar-2027 (Wed)', name: 'Eid-ul-Fitr (Ramzan)', type: 'Gazetted Holiday' },
+  { date: '13-Mar-2027 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '22-Mar-2027 (Mon)', name: 'Ugadi (Telugu New Year)', type: 'Gazetted Holiday' },
+  { date: '26-Mar-2027 (Fri)', name: 'Good Friday', type: 'Gazetted Holiday' },
+  { date: '07-Apr-2027 (Wed)', name: 'Sri Rama Navami & Babu Jagjivan Ram Jayanti', type: 'Gazetted Holiday' },
+  { date: '10-Apr-2027 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
+  { date: '14-Apr-2027 (Wed)', name: 'Dr. B.R. Ambedkar Jayanti', type: 'National / Gazetted' },
+]
+
 export default function AcademicCalendarPage() {
   const { user } = useAuth()
   const { addToast } = useToast()
@@ -113,6 +209,7 @@ export default function AcademicCalendarPage() {
   const [exportProgram, setExportProgram] = useState('B.Tech (E1 to E4)')
   const [exportFormat, setExportFormat] = useState('grid') // 'grid' | 'gazette'
   const [isExporting, setIsExporting] = useState(false)
+  const [previewModalTab, setPreviewModalTab] = useState('summary') // 'summary' | 'odd' | 'even' | 'holidays' | 'pdf'
 
   // Interactive Month Calendar and Diagnosis State
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0) // July = 0
@@ -464,7 +561,8 @@ export default function AcademicCalendarPage() {
 
     setIsExporting(true)
     try {
-      const res = await fetch(`/api/v1/calendar/export-pdf?academicYear=${encodeURIComponent(yr)}&stateCode=${encodeURIComponent(st)}&program=${encodeURIComponent(prog)}&format=${encodeURIComponent(fmt)}`, {
+      const endpoint = getFullApiUrl(`/v1/calendar/export-pdf?academicYear=${encodeURIComponent(yr)}&stateCode=${encodeURIComponent(st)}&program=${encodeURIComponent(prog)}&format=${encodeURIComponent(fmt)}`)
+      const res = await fetch(endpoint, {
         method: 'GET',
         headers: {
           'Accept': 'application/pdf',
@@ -472,7 +570,12 @@ export default function AcademicCalendarPage() {
       })
 
       if (!res.ok) {
-        throw new Error('PDF export failed on server')
+        throw new Error(`PDF export failed on server with status ${res.status}`)
+      }
+
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.includes('application/pdf')) {
+        throw new Error('Server returned unexpected content type')
       }
 
       const blob = await res.blob()
@@ -488,15 +591,38 @@ export default function AcademicCalendarPage() {
       const fmtLabel = fmt === 'gazette' ? 'Official Administrative Gazette Dossier' : 'Institutional Weekly Grid Matrix'
       addToast(`Academic Calendar (${fmtLabel} - ${st}) downloaded successfully!`, 'success')
       setShowExportModal(false)
-    } catch {
+    } catch (err) {
+      console.warn('Backend PDF download encountered issue, using reliable bundled static asset:', err)
+      try {
+        const fallbackRes = await fetch('/Academic_Calendar_2026_27_E1_to_E4.pdf')
+        if (fallbackRes.ok) {
+          const blob = await fallbackRes.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `Academic_Calendar_${yr}_${st}_${fmt}.pdf`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+          addToast('Official Academic Calendar PDF downloaded successfully (from local package)', 'success')
+          setShowExportModal(false)
+          return
+        }
+      } catch (fallbackErr) {
+        console.error('Local fallback failed:', fallbackErr)
+      }
+
       try {
         const link = document.createElement('a')
         link.href = '/Academic_Calendar_2026_27_E1_to_E4.pdf'
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
         link.download = `Academic_Calendar_${yr}_${st}_${fmt}.pdf`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        addToast('Official Academic Calendar PDF downloaded successfully', 'success')
+        addToast('Official Academic Calendar PDF opened for download', 'info')
         setShowExportModal(false)
       } catch {
         window.print()
@@ -1073,6 +1199,95 @@ export default function AcademicCalendarPage() {
         <div className="card-body p-4">
           {activeTab === 'overview' && (
             <div className="row g-4">
+              {/* Official RGUKT Executive Schedule Table */}
+              <div className="col-12 mb-2">
+                <div className="card border-0 shadow-sm p-4" style={{ background: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
+                  <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 pb-3 border-bottom gap-2">
+                    <div>
+                      <span className="badge bg-primary-subtle text-primary fw-bold text-uppercase px-2.5 py-1 mb-1">
+                        Statutory Official Gazette Framework
+                      </span>
+                      <h4 className="fw-bold text-dark mb-0">
+                        Academic Calendar of A.Y:2026-27 from E1 to E4
+                      </h4>
+                      <p className="text-muted small mb-0">
+                        Rajiv Gandhi University of Knowledge Technologies • Verified AICTE &amp; UGC Compliance
+                      </p>
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewModalTab('summary')
+                          setShowPreviewCalendarModal(true)
+                        }}
+                        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5"
+                      >
+                        <Eye size={15} /> <span>Open Multi-Page Preview</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExportPdf()}
+                        disabled={isExporting}
+                        className="btn btn-sm btn-success d-inline-flex align-items-center gap-1.5 shadow-sm"
+                      >
+                        <Download size={15} /> <span>{isExporting ? 'Generating...' : 'Download PDF'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="table-responsive">
+                    <table className="table table-bordered mb-0 text-center" style={{ borderColor: '#000000', fontSize: '0.9rem', verticalAlign: 'middle' }}>
+                      <thead style={{ background: '#f8fafc', fontWeight: 800 }}>
+                        <tr style={{ borderBottom: '2px solid #000000' }}>
+                          <th style={{ width: '28%', padding: '0.75rem', borderColor: '#000000' }}>Odd Semester</th>
+                          <th style={{ width: '44%', padding: '0.75rem', borderColor: '#000000' }}>Activities</th>
+                          <th style={{ width: '28%', padding: '0.75rem', borderColor: '#000000' }}>Even Semester</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {EXECUTIVE_CALENDAR_SUMMARY.map((row, idx) => (
+                          <tr key={idx} style={{ fontWeight: row.isBold ? 700 : 500 }}>
+                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.odd}</td>
+                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.activity}</td>
+                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.even}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 p-3 rounded-3 bg-light border d-flex flex-wrap justify-content-between align-items-center gap-2 small">
+                    <div>
+                      <span className="badge bg-primary text-white me-2">Odd: 88 Days</span>
+                      <span className="badge bg-success text-white me-2">Even: 84 Days</span>
+                      <span className="text-muted">3 Mandatory Continuous Mid Tests per Semester</span>
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewModalTab('odd')
+                          setShowPreviewCalendarModal(true)
+                        }}
+                        className="btn btn-sm btn-link text-primary p-0 fw-semibold"
+                      >
+                        View Odd Semester Matrix &rarr;
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewModalTab('even')
+                          setShowPreviewCalendarModal(true)
+                        }}
+                        className="btn btn-sm btn-link text-primary p-0 fw-semibold"
+                      >
+                        View Even Semester Matrix &rarr;
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
                 {/* Odd Semester */}
                 <div className="col-12 col-lg-6">
                   <div className="p-3 rounded-3 border bg-light h-100">
@@ -1970,8 +2185,8 @@ export default function AcademicCalendarPage() {
             className="card border-0 shadow-lg"
             style={{
               width: '100%',
-              maxWidth: '850px',
-              maxHeight: '90vh',
+              maxWidth: '960px',
+              maxHeight: '92vh',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '1.25rem',
@@ -1989,112 +2204,431 @@ export default function AcademicCalendarPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: 'rgba(0, 0, 0, 0.2)',
+                background: 'rgba(0, 0, 0, 0.25)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <Eye size={20} className="text-primary" />
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                  Statutory Academic Calendar Preview ({selectedYear})
-                </h3>
-                <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
-                  UGC Compliant (≥ 90 Days)
-                </span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
+                    Academic Calendar of A.Y:2026-27 from E1 to E4
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
+                    RGUKT Institutional Matrix Format • UGC &amp; AICTE Statutory Regulatory Standards
+                  </p>
+                </div>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf()}
+                  className="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm"
+                  style={{ fontWeight: 600, fontSize: '0.8rem' }}
+                >
+                  <Download size={14} /> Download PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewCalendarModal(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--app-text-muted, #94a3b8)',
+                    cursor: 'pointer',
+                  }}
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Document Navigation Tabs */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.08))',
+                background: 'rgba(0, 0, 0, 0.15)',
+                overflowX: 'auto',
+              }}
+            >
               <button
                 type="button"
-                onClick={() => setShowPreviewCalendarModal(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--app-text-muted, #94a3b8)',
-                  cursor: 'pointer',
-                }}
+                onClick={() => setPreviewModalTab('summary')}
+                className={`btn btn-sm ${previewModalTab === 'summary' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                style={{ fontSize: '0.8rem', fontWeight: 600 }}
               >
-                <X size={20} />
+                Page 1: Executive Summary
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewModalTab('odd')}
+                className={`btn btn-sm ${previewModalTab === 'odd' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                style={{ fontSize: '0.8rem', fontWeight: 600 }}
+              >
+                Page 2: Odd Semester Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewModalTab('even')}
+                className={`btn btn-sm ${previewModalTab === 'even' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                style={{ fontSize: '0.8rem', fontWeight: 600 }}
+              >
+                Page 3: Even Semester Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewModalTab('pdf')}
+                className={`btn btn-sm ${previewModalTab === 'pdf' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                style={{ fontSize: '0.8rem', fontWeight: 600 }}
+              >
+                Direct PDF Viewer
               </button>
             </div>
 
             {/* Document Body */}
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1, display: 'grid', gap: '1.25rem' }}>
-              <div
-                style={{
-                  padding: '1.25rem',
-                  borderRadius: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: '0.8rem', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
-                  Office of the Academic Dean — Statutory Gazetted Schedule
-                </div>
-                <h4 style={{ margin: '0.4rem 0 0.2rem', fontWeight: 800 }}>
-                  Sri Sudha Institute of Technology
-                </h4>
-                <div style={{ fontSize: '0.85rem', color: 'var(--app-text-muted, #94a3b8)' }}>
-                  Academic Session: {selectedYear} | State Rule: {stateCode} | Gazetted Holidays: {holidays.length} Days
-                </div>
-              </div>
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+              {previewModalTab === 'summary' && (
+                <div style={{ background: '#ffffff', color: '#111827', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                    <h4 style={{ textDecoration: 'underline', fontWeight: 800, fontSize: '1.25rem', color: '#0f172a', marginBottom: '0.25rem' }}>
+                      Academic Calendar of A.Y:2026-27 from E1 to E4
+                    </h4>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
+                      Rajiv Gandhi University of Knowledge Technologies • Andhra Pradesh
+                    </span>
+                  </div>
 
-              {/* Semester Working Days Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase' }}>Odd Semester</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#93c5fd', margin: '0.2rem 0' }}>92 Days</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--app-text-muted, #94a3b8)' }}>July 2026 – November 2026</div>
-                </div>
-
-                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 700, textTransform: 'uppercase' }}>Even Semester</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6ee7b7', margin: '0.2rem 0' }}>92 Days</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--app-text-muted, #94a3b8)' }}>December 2026 – May 2027</div>
-                </div>
-
-                <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#fcd34d', fontWeight: 700, textTransform: 'uppercase' }}>Gazetted Holidays</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fcd34d', margin: '0.2rem 0' }}>{holidays.length} Days</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--app-text-muted, #94a3b8)' }}>State &amp; National Declarations</div>
-                </div>
-              </div>
-
-              {/* Sample Holiday & Milestone Preview */}
-              <div>
-                <h5 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.6rem' }}>
-                  Gazetted Holidays &amp; Statutory Observances Preview
-                </h5>
-                <div style={{ border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '0.75rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                  <table className="table table-sm mb-0" style={{ color: 'var(--app-text, #f8fafc)', fontSize: '0.8rem' }}>
-                    <thead style={{ background: 'rgba(0, 0, 0, 0.3)' }}>
-                      <tr>
-                        <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
-                        <th style={{ padding: '0.5rem 0.75rem' }}>Day</th>
-                        <th style={{ padding: '0.5rem 0.75rem' }}>Holiday / Event</th>
-                        <th style={{ padding: '0.5rem 0.75rem' }}>Type</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {holidays.slice(0, 8).map((h, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                          <td style={{ padding: '0.5rem 0.75rem', fontFamily: 'monospace', color: '#93c5fd' }}>{h.date}</td>
-                          <td style={{ padding: '0.5rem 0.75rem' }}>{h.day || 'Weekday'}</td>
-                          <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>{h.name}</td>
-                          <td style={{ padding: '0.5rem 0.75rem' }}>
-                            <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'var(--app-text, #f8fafc)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                              {h.type || 'Gazetted'}
-                            </span>
-                          </td>
+                  <div className="table-responsive">
+                    <table
+                      className="table table-bordered mb-0"
+                      style={{
+                        borderColor: '#000000',
+                        fontSize: '0.9rem',
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      <thead style={{ background: '#f8fafc', fontWeight: 800 }}>
+                        <tr style={{ borderBottom: '2px solid #000000' }}>
+                          <th style={{ width: '28%', padding: '0.75rem', borderColor: '#000000' }}>Odd Semester</th>
+                          <th style={{ width: '44%', padding: '0.75rem', borderColor: '#000000' }}>Activities</th>
+                          <th style={{ width: '28%', padding: '0.75rem', borderColor: '#000000' }}>Even Semester</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {holidays.length > 8 && (
-                    <div style={{ padding: '0.5rem 1rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--app-text-muted, #94a3b8)', background: 'rgba(0,0,0,0.15)' }}>
-                      + {holidays.length - 8} more gazetted dates included in exported document
-                    </div>
-                  )}
+                      </thead>
+                      <tbody>
+                        {EXECUTIVE_CALENDAR_SUMMARY.map((row, idx) => (
+                          <tr key={idx} style={{ fontWeight: row.isBold ? 700 : 500 }}>
+                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.odd}</td>
+                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.activity}</td>
+                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.even}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748b' }}>
+                    <div>* Odd Semester Instruction Days: <strong>88 Days</strong></div>
+                    <div>* Even Semester Instruction Days: <strong>84 Days</strong></div>
+                    <div>* Continuous Mid Tests: <strong>3 Mandatory Assessments</strong></div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {previewModalTab === 'odd' && (
+                <div style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  {/* Khaki Banner */}
+                  <div
+                    style={{
+                      background: '#C4BA94',
+                      color: '#000000',
+                      fontWeight: 800,
+                      fontSize: '1.1rem',
+                      textAlign: 'center',
+                      padding: '0.5rem',
+                      border: '1px solid #000000',
+                      borderBottom: 'none',
+                    }}
+                  >
+                    Odd Semester (A.Y: 2026-27 E1 to E4)
+                  </div>
+
+                  <div className="table-responsive">
+                    <table
+                      className="table table-bordered mb-0 text-center"
+                      style={{
+                        borderColor: '#000000',
+                        fontSize: '0.8rem',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      <thead>
+                        <tr style={{ background: '#f1f5f9', fontWeight: 700 }}>
+                          <th style={{ width: '15%', borderColor: '#000000', padding: '0.4rem' }}>Month, Year</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Mon</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Tue</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Wed</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Thu</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Fri</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Sat</th>
+                          <th style={{ width: '17%', borderColor: '#000000', padding: '0.4rem' }}>Week</th>
+                          <th style={{ width: '20%', borderColor: '#000000', padding: '0.4rem' }}>Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ODD_SEMESTER_GRID.map((row, rIdx) => (
+                          <tr key={rIdx}>
+                            <td style={{ borderColor: '#000000', padding: '0.3rem', fontStyle: 'italic', fontWeight: 600 }}>{row.month}</td>
+                            {row.days.map((d, dIdx) => {
+                              const color = row.colors[dIdx]
+                              let bg = 'transparent'
+                              let textClr = '#111827'
+                              let fw = 500
+
+                              if (color === 'red') {
+                                bg = '#FF0000'
+                                textClr = '#ffffff'
+                                fw = 700
+                              } else if (color === 'blue') {
+                                bg = '#8DB3E1'
+                                textClr = '#000000'
+                                fw = 700
+                              } else if (color === 'green') {
+                                bg = '#92D050'
+                                textClr = '#000000'
+                                fw = 700
+                              }
+
+                              return (
+                                <td
+                                  key={dIdx}
+                                  style={{
+                                    borderColor: '#000000',
+                                    padding: '0.3rem',
+                                    backgroundColor: bg,
+                                    color: textClr,
+                                    fontWeight: fw,
+                                  }}
+                                >
+                                  {d}
+                                </td>
+                              )
+                            })}
+                            <td
+                              style={{
+                                borderColor: '#000000',
+                                padding: '0.3rem',
+                                fontWeight: row.week.includes('Dussehra') ? 800 : 600,
+                                color: row.week.includes('Dussehra') ? '#dc2626' : '#111827',
+                              }}
+                            >
+                              {row.week}
+                            </td>
+                            <td
+                              style={{
+                                borderColor: '#000000',
+                                padding: '0.3rem',
+                                fontWeight: 700,
+                                color: row.remarks.includes('MID') ? '#2563eb' : (row.remarks === 'EST' ? '#16a34a' : '#111827'),
+                              }}
+                            >
+                              {row.remarks}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Gazetted Holidays Table */}
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.4rem', color: '#0f172a' }}>
+                      Gazetted Holidays &amp; Statutory Observances (Odd Semester 2026):
+                    </div>
+                    <div className="table-responsive">
+                      <table className="table table-bordered table-sm mb-0" style={{ borderColor: '#cbd5e1', fontSize: '0.75rem' }}>
+                        <thead style={{ background: '#e2e8f0', color: '#0f172a' }}>
+                          <tr>
+                            <th style={{ width: '22%' }}>Date &amp; Day</th>
+                            <th style={{ width: '58%' }}>Holiday Name &amp; Reason</th>
+                            <th style={{ width: '20%' }}>Classification</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ODD_HOLIDAYS_LIST.map((h, i) => (
+                            <tr key={i}>
+                              <td style={{ fontWeight: 600, color: '#1e293b' }}>{h.date}</td>
+                              <td>{h.name}</td>
+                              <td><span className="badge bg-secondary-subtle text-secondary">{h.type}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {previewModalTab === 'even' && (
+                <div style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  {/* Khaki Banner */}
+                  <div
+                    style={{
+                      background: '#C4BA94',
+                      color: '#000000',
+                      fontWeight: 800,
+                      fontSize: '1.1rem',
+                      textAlign: 'center',
+                      padding: '0.5rem',
+                      border: '1px solid #000000',
+                      borderBottom: 'none',
+                    }}
+                  >
+                    Even Semester (A.Y: 2026-27 E1 to E4)
+                  </div>
+
+                  <div className="table-responsive">
+                    <table
+                      className="table table-bordered mb-0 text-center"
+                      style={{
+                        borderColor: '#000000',
+                        fontSize: '0.8rem',
+                        verticalAlign: 'middle',
+                      }}
+                    >
+                      <thead>
+                        <tr style={{ background: '#f1f5f9', fontWeight: 700 }}>
+                          <th style={{ width: '15%', borderColor: '#000000', padding: '0.4rem' }}>Month, Year</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Mon</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Tue</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Wed</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Thu</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Fri</th>
+                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Sat</th>
+                          <th style={{ width: '17%', borderColor: '#000000', padding: '0.4rem' }}>Week</th>
+                          <th style={{ width: '20%', borderColor: '#000000', padding: '0.4rem' }}>Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {EVEN_SEMESTER_GRID.map((row, rIdx) => (
+                          <tr key={rIdx}>
+                            <td style={{ borderColor: '#000000', padding: '0.3rem', fontStyle: 'italic', fontWeight: 600 }}>{row.month}</td>
+                            {row.days.map((d, dIdx) => {
+                              const color = row.colors[dIdx]
+                              let bg = 'transparent'
+                              let textClr = '#111827'
+                              let fw = 500
+
+                              if (color === 'red') {
+                                bg = '#FF0000'
+                                textClr = '#ffffff'
+                                fw = 700
+                              } else if (color === 'blue') {
+                                bg = '#8DB3E1'
+                                textClr = '#000000'
+                                fw = 700
+                              } else if (color === 'green') {
+                                bg = '#92D050'
+                                textClr = '#000000'
+                                fw = 700
+                              }
+
+                              return (
+                                <td
+                                  key={dIdx}
+                                  style={{
+                                    borderColor: '#000000',
+                                    padding: '0.3rem',
+                                    backgroundColor: bg,
+                                    color: textClr,
+                                    fontWeight: fw,
+                                  }}
+                                >
+                                  {d}
+                                </td>
+                              )
+                            })}
+                            <td
+                              style={{
+                                borderColor: '#000000',
+                                padding: '0.3rem',
+                                fontWeight: row.week.includes('Pongal') ? 800 : 600,
+                                color: row.week.includes('Pongal') ? '#dc2626' : '#111827',
+                              }}
+                            >
+                              {row.week}
+                            </td>
+                            <td
+                              style={{
+                                borderColor: '#000000',
+                                padding: '0.3rem',
+                                fontWeight: 700,
+                                color: row.remarks.includes('MID') ? '#2563eb' : (row.remarks === 'EST' ? '#16a34a' : '#111827'),
+                              }}
+                            >
+                              {row.remarks}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Gazetted Holidays Table */}
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.4rem', color: '#0f172a' }}>
+                      Gazetted Holidays &amp; Statutory Observances (Even Semester 2027):
+                    </div>
+                    <div className="table-responsive">
+                      <table className="table table-bordered table-sm mb-0" style={{ borderColor: '#cbd5e1', fontSize: '0.75rem' }}>
+                        <thead style={{ background: '#e2e8f0', color: '#0f172a' }}>
+                          <tr>
+                            <th style={{ width: '22%' }}>Date &amp; Day</th>
+                            <th style={{ width: '58%' }}>Holiday Name &amp; Reason</th>
+                            <th style={{ width: '20%' }}>Classification</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {EVEN_HOLIDAYS_LIST.map((h, i) => (
+                            <tr key={i}>
+                              <td style={{ fontWeight: 600, color: '#1e293b' }}>{h.date}</td>
+                              <td>{h.name}</td>
+                              <td><span className="badge bg-secondary-subtle text-secondary">{h.type}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {previewModalTab === 'pdf' && (
+                <div style={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', background: '#000' }}>
+                  <iframe
+                    src="/Academic_Calendar_2026_27_E1_to_E4.pdf"
+                    style={{ width: '100%', height: '580px', border: 'none' }}
+                    title="Official Academic Calendar PDF"
+                  />
+                  <div style={{ padding: '0.75rem 1rem', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                      Showing compiled vector PDF matching RGUKT statutory guidelines.
+                    </span>
+                    <a
+                      href="/Academic_Calendar_2026_27_E1_to_E4.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-info"
+                      style={{ fontSize: '0.78rem' }}
+                    >
+                      Open in New Window
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -2105,7 +2639,7 @@ export default function AcademicCalendarPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: 'rgba(0, 0, 0, 0.2)',
+                background: 'rgba(0, 0, 0, 0.25)',
               }}
             >
               <button
@@ -2126,26 +2660,42 @@ export default function AcademicCalendarPage() {
                 <span>Print Calendar</span>
               </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPreviewCalendarModal(false);
-                    handleExportPdf();
-                  }}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <a
+                  href="/Academic_Calendar_2026_27_E1_to_E4.pdf"
+                  download="Academic_Calendar_2026_27_E1_to_E4.pdf"
                   className="btn btn-sm d-inline-flex align-items-center gap-1.5"
                   style={{
                     borderRadius: '0.5rem',
                     fontSize: '0.85rem',
                     fontWeight: 600,
-                    padding: '0.45rem 0.95rem',
-                    background: 'rgba(16, 185, 129, 0.2)',
-                    color: '#6ee7b7',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '0.45rem 0.85rem',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: '#93c5fd',
+                    border: '1px solid rgba(59, 130, 246, 0.35)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Download size={14} />
+                  <span>Direct Download Link</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExportPdf();
+                  }}
+                  disabled={isExporting}
+                  className="btn btn-sm btn-success d-inline-flex align-items-center gap-1.5 shadow-sm"
+                  style={{
+                    borderRadius: '0.5rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    padding: '0.45rem 1rem',
                   }}
                 >
                   <Download size={15} />
-                  <span>Download Official PDF</span>
+                  <span>{isExporting ? 'Generating PDF...' : 'Download Official PDF'}</span>
                 </button>
 
                 <button

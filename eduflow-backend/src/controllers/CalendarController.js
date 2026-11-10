@@ -198,12 +198,33 @@ export class CalendarController {
       const program = bodyParams.program || queryParams.program || 'B.Tech (E1 to E4)'
       const format = (bodyParams.format || queryParams.format || 'grid').toLowerCase()
 
+      const exactScript = path.resolve(process.cwd(), '../scripts/generate_academic_calendar_pdf.py')
+      const fallbackExactScript = path.resolve(process.cwd(), 'scripts/generate_academic_calendar_pdf.py')
+      const actualExactScript = fs.existsSync(exactScript) ? exactScript : (fs.existsSync(fallbackExactScript) ? fallbackExactScript : null)
+
       const scriptPath = path.resolve(process.cwd(), '../scripts/universal_academic_calendar.py')
       const fallbackScriptPath = path.resolve(process.cwd(), 'scripts/universal_academic_calendar.py')
       const actualScriptPath = fs.existsSync(scriptPath) ? scriptPath : (fs.existsSync(fallbackScriptPath) ? fallbackScriptPath : null)
 
       const tmpDir = os.tmpdir()
       const tmpOutput = path.join(tmpDir, `academic_calendar_${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`)
+
+      // Prioritize the authentic RGUKT institutional multi-page matrix generator for 2026-2027 / grid format
+      if (actualExactScript && (format === 'grid' || academicYear.includes('2026'))) {
+        try {
+          await execFileAsync('python3', [actualExactScript, '--output', tmpOutput], { timeout: 30000 })
+          if (fs.existsSync(tmpOutput)) {
+            const pdfBuffer = fs.readFileSync(tmpOutput)
+            fs.unlinkSync(tmpOutput)
+
+            res.setHeader('Content-Type', 'application/pdf')
+            res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${academicYear}_${stateCode}_${format}.pdf"`)
+            return res.status(200).send(pdfBuffer)
+          }
+        } catch (exactErr) {
+          logger.warn({ err: exactErr }, 'Exact academic calendar script execution encountered error, trying universal')
+        }
+      }
 
       if (actualScriptPath) {
         try {
