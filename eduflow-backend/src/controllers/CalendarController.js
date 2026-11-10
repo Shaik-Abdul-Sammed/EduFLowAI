@@ -209,10 +209,18 @@ export class CalendarController {
       const tmpDir = os.tmpdir()
       const tmpOutput = path.join(tmpDir, `academic_calendar_${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`)
 
+      const yearNum = academicYear.split('-')[0].trim() || '2026'
+
       // Prioritize the authentic RGUKT institutional multi-page matrix generator for 2026-2027 / grid format
       if (actualExactScript && (format === 'grid' || academicYear.includes('2026'))) {
         try {
-          await execFileAsync('python3', [actualExactScript, '--output', tmpOutput], { timeout: 30000 })
+          await execFileAsync('python3', [
+            actualExactScript,
+            '--year', yearNum,
+            '--state', stateCode,
+            '--program', program,
+            '--output', tmpOutput
+          ], { timeout: 30000 })
           if (fs.existsSync(tmpOutput)) {
             const pdfBuffer = fs.readFileSync(tmpOutput)
             fs.unlinkSync(tmpOutput)

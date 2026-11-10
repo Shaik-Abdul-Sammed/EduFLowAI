@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Calendar,
   Sparkles,
@@ -29,6 +29,14 @@ import {
   getFestivalDates,
   generateAcademicYearOptions,
 } from '../../services/indianHolidayRules'
+import {
+  STATE_NAMES,
+  getExecutiveCalendarSummary,
+  getOddSemesterGrid,
+  getEvenSemesterGrid,
+  getOddHolidaysList,
+  getEvenHolidaysList,
+} from '../../utils/calendarMatrixGenerator'
 
 const ACADEMIC_MONTHS = [
   { name: 'July', month: 6, isEven: false },
@@ -88,102 +96,6 @@ function runHolidayDiagnosis(yearStr, stateCode) {
   }
 }
 
-const EXECUTIVE_CALENDAR_SUMMARY = [
-  { odd: '88', activity: 'Number of Instruction days', even: '84', isBold: true },
-  { odd: '29th June, 2026', activity: 'Semester Registration / Commencement of classes', even: '1st December, 2026', isBold: true },
-  { odd: '5th – 7th August, 2026', activity: 'Mid Test-I', even: '6th – 8th January, 2027', isBold: true },
-  { odd: '17th August, 2026', activity: 'Mid Test-I Result Announcement', even: '25th January, 2027', isBold: false },
-  { odd: '24th – 26th September, 2026', activity: 'Mid Test-II', even: '18th – 20th February, 2027', isBold: true },
-  { odd: '5th October, 2026', activity: 'Mid Test-II Result Announcement', even: '27th March, 2027', isBold: false },
-  { odd: '4th November, 2026', activity: 'Instruction closing day', even: '5th April, 2027', isBold: true },
-  { odd: '5th – 7th November, 2026', activity: 'Mid Test-III', even: '6th – 9th April, 2027', isBold: true },
-  { odd: '14th November, 2026', activity: 'Mid Test-III Result Announcement', even: '17th April, 2027', isBold: false },
-  { odd: '16th – 28th November, 2026', activity: 'EST exams', even: '19th – 30th April, 2027', isBold: true },
-  { odd: '30th December, 2026', activity: 'End Semester Result Announcement', even: '1st June, 2027', isBold: false },
-]
-
-const ODD_SEMESTER_GRID = [
-  { month: 'July, 2026', days: ['29', '30', '1', '2', '3', '4'], week: 'Week-1', remarks: '', colors: {} },
-  { month: 'July, 2026', days: ['6', '7', '8', '9', '10', '11'], week: 'Week-2', remarks: '', colors: { 5: 'red' } },
-  { month: 'July, 2026', days: ['13', '14', '15', '16', '17', '18'], week: 'Week-3', remarks: '', colors: {} },
-  { month: 'July, 2026', days: ['20', '21', '22', '23', '24', '25'], week: 'Week-4', remarks: '', colors: {} },
-  { month: 'July, 2026', days: ['27', '28', '29', '30', '31', '1'], week: 'Week-5', remarks: '', colors: {} },
-  { month: 'August, 2026', days: ['3', '4', '5', '6', '7', '8'], week: 'Week-6', remarks: 'MID-I', colors: { 2: 'blue', 3: 'blue', 4: 'blue', 5: 'red' } },
-  { month: 'August, 2026', days: ['10', '11', '12', '13', '14', '15'], week: 'Week-7', remarks: '', colors: { 5: 'red' } },
-  { month: 'August, 2026', days: ['17', '18', '19', '20', '21', '22'], week: 'Week-8', remarks: '', colors: { 4: 'red', 5: 'red' } },
-  { month: 'August, 2026', days: ['24', '25', '26', '27', '28', '29'], week: 'Week-9', remarks: '', colors: { 1: 'red' } },
-  { month: 'September, 2026', days: ['31', '1', '2', '3', '4', '5'], week: 'Week-10', remarks: '', colors: { 4: 'red' } },
-  { month: 'September, 2026', days: ['7', '8', '9', '10', '11', '12'], week: 'Week-11', remarks: '', colors: { 5: 'red' } },
-  { month: 'September, 2026', days: ['14', '15', '16', '17', '18', '19'], week: 'Week-12', remarks: '', colors: { 0: 'red' } },
-  { month: 'September, 2026', days: ['21', '22', '23', '24', '25', '26'], week: 'Week-13', remarks: 'MID-II', colors: { 3: 'blue', 4: 'blue', 5: 'blue' } },
-  { month: 'October, 2026', days: ['28', '29', '30', '1', '2', '3'], week: 'Week-14', remarks: '', colors: { 4: 'red' } },
-  { month: 'October, 2026', days: ['5', '6', '7', '8', '9', '10'], week: 'Week-15', remarks: '', colors: { 5: 'red' } },
-  { month: 'October, 2026', days: ['12', '13', '14', '15', '16', '17'], week: 'Week-16', remarks: '', colors: {} },
-  { month: 'October, 2026', days: ['19', '20', '21', '22', '23', '24'], week: 'Dussehra Vacation', remarks: '', colors: { 0: 'red', 1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red' } },
-  { month: 'October, 2026', days: ['26', '27', '28', '29', '30', '31'], week: 'Week-17', remarks: '', colors: {} },
-  { month: 'November, 2026', days: ['2', '3', '4', '5', '6', '7'], week: 'Week-18', remarks: 'MID-III', colors: { 3: 'blue', 4: 'blue', 5: 'blue' } },
-  { month: 'November, 2026', days: ['9', '10', '11', '12', '13', '14'], week: 'Week-19', remarks: 'Lab Exams', colors: { 5: 'red' } },
-  { month: 'November, 2026', days: ['16', '17', '18', '19', '20', '21'], week: 'Week-20', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green' } },
-  { month: 'November, 2026', days: ['23', '24', '25', '26', '27', '28'], week: 'Week-21', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green' } },
-]
-
-const EVEN_SEMESTER_GRID = [
-  { month: 'December, 2026', days: ['30', '1', '2', '3', '4', '5'], week: 'Week-1', remarks: '', colors: {} },
-  { month: 'December, 2026', days: ['7', '8', '9', '10', '11', '12'], week: 'Week-2', remarks: '', colors: { 5: 'red' } },
-  { month: 'December, 2026', days: ['14', '15', '16', '17', '18', '19'], week: 'Week-3', remarks: '', colors: {} },
-  { month: 'December, 2026', days: ['21', '22', '23', '24', '25', '26'], week: 'Week-4', remarks: '', colors: { 4: 'red' } },
-  { month: 'January, 2027', days: ['28', '29', '30', '31', '1', '2'], week: 'Week-5', remarks: '', colors: {} },
-  { month: 'January, 2027', days: ['4', '5', '6', '7', '8', '9'], week: 'Week-6', remarks: 'MID-I', colors: { 2: 'blue', 3: 'blue', 4: 'blue' } },
-  { month: 'January, 2027', days: ['11', '12', '13', '14', '15', '16'], week: 'Pongal Vacation', remarks: '', colors: { 0: 'red', 1: 'red', 2: 'red', 3: 'red', 4: 'red', 5: 'red' } },
-  { month: 'January, 2027', days: ['18', '19', '20', '21', '22', '23'], week: 'Week-7', remarks: '', colors: {} },
-  { month: 'January, 2027', days: ['25', '26', '27', '28', '29', '30'], week: 'Week-8', remarks: '', colors: { 1: 'red' } },
-  { month: 'February, 2027', days: ['1', '2', '3', '4', '5', '6'], week: 'Week-9', remarks: '', colors: {} },
-  { month: 'February, 2027', days: ['8', '9', '10', '11', '12', '13'], week: 'Week-10', remarks: '', colors: { 5: 'red' } },
-  { month: 'February, 2027', days: ['15', '16', '17', '18', '19', '20'], week: 'Week-11', remarks: 'MID-II', colors: { 3: 'blue', 4: 'blue', 5: 'blue' } },
-  { month: 'February, 2027', days: ['22', '23', '24', '25', '26', '27'], week: 'Week-12', remarks: '', colors: {} },
-  { month: 'March, 2027', days: ['1', '2', '3', '4', '5', '6'], week: 'Week-13', remarks: '', colors: { 5: 'red' } },
-  { month: 'March, 2027', days: ['8', '9', '10', '11', '12', '13'], week: 'Week-14', remarks: '', colors: { 2: 'red', 5: 'red' } },
-  { month: 'March, 2027', days: ['15', '16', '17', '18', '19', '20'], week: 'Week-15', remarks: '', colors: {} },
-  { month: 'March, 2027', days: ['22', '23', '24', '25', '26', '27'], week: 'Week-16', remarks: '', colors: { 0: 'red', 4: 'red' } },
-  { month: 'April, 2027', days: ['29', '30', '31', '1', '2', '3'], week: 'Week-17', remarks: '', colors: {} },
-  { month: 'April, 2027', days: ['5', '6', '7', '8', '9', '10'], week: 'Week-18', remarks: 'MID-III', colors: { 1: 'blue', 2: 'red', 3: 'blue', 4: 'blue', 5: 'red' } },
-  { month: 'April, 2027', days: ['12', '13', '14', '15', '16', '17'], week: 'Week-19', remarks: 'Lab Exams', colors: { 2: 'red' } },
-  { month: 'April, 2027', days: ['19', '20', '21', '22', '23', '24'], week: 'Week-20', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green' } },
-  { month: 'April, 2027', days: ['26', '27', '28', '29', '30', ''], week: 'Week-21', remarks: 'EST', colors: { 0: 'green', 1: 'green', 2: 'green', 3: 'green', 4: 'green' } },
-]
-
-const ODD_HOLIDAYS_LIST = [
-  { date: '11-Jul-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '08-Aug-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '15-Aug-2026 (Sat)', name: 'Independence Day (National Holiday)', type: 'National Holiday' },
-  { date: '21-Aug-2026 (Fri)', name: 'Sri Varalakshmi Vratam', type: 'State Gazetted' },
-  { date: '22-Aug-2026 (Sat)', name: 'Sri Krishna Janmashtami / Gokulashtami', type: 'Gazetted Holiday' },
-  { date: '25-Aug-2026 (Tue)', name: 'Milad-un-Nabi (Prophet Muhammad Birthday)', type: 'Gazetted Holiday' },
-  { date: '04-Sep-2026 (Fri)', name: 'State Cultural / Optional Observance', type: 'Optional Holiday' },
-  { date: '12-Sep-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '14-Sep-2026 (Mon)', name: 'Vinayaka Chavithi (Ganesh Chaturthi)', type: 'Gazetted Holiday' },
-  { date: '02-Oct-2026 (Fri)', name: 'Mahatma Gandhi Jayanti (National Holiday)', type: 'National Holiday' },
-  { date: '10-Oct-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '19–24 Oct 2026', name: 'Dussehra Vacation (Durgashtami to Vijaya Dasami)', type: 'Institutional Break' },
-  { date: '14-Nov-2026 (Sat)', name: 'Deepavali & Second Saturday', type: 'Gazetted Holiday' },
-]
-
-const EVEN_HOLIDAYS_LIST = [
-  { date: '12-Dec-2026 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '25-Dec-2026 (Fri)', name: 'Christmas', type: 'Gazetted Holiday' },
-  { date: '11–16 Jan 2027', name: 'Pongal / Sankranti Vacation (Bhogi, Makara Sankranti, Kanuma)', type: 'Institutional Break' },
-  { date: '26-Jan-2027 (Tue)', name: 'Republic Day (National Holiday)', type: 'National Holiday' },
-  { date: '13-Feb-2027 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '06-Mar-2027 (Sat)', name: 'Maha Shivratri', type: 'Gazetted Holiday' },
-  { date: '10-Mar-2027 (Wed)', name: 'Eid-ul-Fitr (Ramzan)', type: 'Gazetted Holiday' },
-  { date: '13-Mar-2027 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '22-Mar-2027 (Mon)', name: 'Ugadi (Telugu New Year)', type: 'Gazetted Holiday' },
-  { date: '26-Mar-2027 (Fri)', name: 'Good Friday', type: 'Gazetted Holiday' },
-  { date: '07-Apr-2027 (Wed)', name: 'Sri Rama Navami & Babu Jagjivan Ram Jayanti', type: 'Gazetted Holiday' },
-  { date: '10-Apr-2027 (Sat)', name: 'Second Saturday (State Educational Rule)', type: 'State Gazetted' },
-  { date: '14-Apr-2027 (Wed)', name: 'Dr. B.R. Ambedkar Jayanti', type: 'National / Gazetted' },
-]
-
 export default function AcademicCalendarPage() {
   const { user } = useAuth()
   const { addToast } = useToast()
@@ -210,6 +122,15 @@ export default function AcademicCalendarPage() {
   const [exportFormat, setExportFormat] = useState('grid') // 'grid' | 'gazette'
   const [isExporting, setIsExporting] = useState(false)
   const [previewModalTab, setPreviewModalTab] = useState('summary') // 'summary' | 'odd' | 'even' | 'holidays' | 'pdf'
+
+  const yStartNum = parseInt(String(selectedYear).split('-')[0], 10) || 2026
+  const yEndNum = yStartNum + 1
+  const currentStateName = STATE_NAMES[selectedState] || selectedState
+  const dynamicSummary = useMemo(() => getExecutiveCalendarSummary(yStartNum, selectedState), [yStartNum, selectedState])
+  const dynamicOddGrid = useMemo(() => getOddSemesterGrid(yStartNum, selectedState), [yStartNum, selectedState])
+  const dynamicEvenGrid = useMemo(() => getEvenSemesterGrid(yStartNum, selectedState), [yStartNum, selectedState])
+  const dynamicOddHolidays = useMemo(() => getOddHolidaysList(yStartNum, selectedState, holidays), [yStartNum, selectedState, holidays])
+  const dynamicEvenHolidays = useMemo(() => getEvenHolidaysList(yStartNum, selectedState, holidays), [yStartNum, selectedState, holidays])
 
   // Interactive Month Calendar and Diagnosis State
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0) // July = 0
@@ -1208,10 +1129,10 @@ export default function AcademicCalendarPage() {
                         Statutory Official Gazette Framework
                       </span>
                       <h4 className="fw-bold text-dark mb-0">
-                        Academic Calendar of A.Y:2026-27 from E1 to E4
+                        Academic Calendar of A.Y:{selectedYear} from E1 to E4
                       </h4>
                       <p className="text-muted small mb-0">
-                        Rajiv Gandhi University of Knowledge Technologies • Verified AICTE &amp; UGC Compliance
+                        Rajiv Gandhi University of Knowledge Technologies • {currentStateName} • Verified AICTE &amp; UGC Compliance
                       </p>
                     </div>
                     <div className="d-flex gap-2">
@@ -1246,7 +1167,7 @@ export default function AcademicCalendarPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {EXECUTIVE_CALENDAR_SUMMARY.map((row, idx) => (
+                        {dynamicSummary.map((row, idx) => (
                           <tr key={idx} style={{ fontWeight: row.isBold ? 700 : 500 }}>
                             <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.odd}</td>
                             <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.activity}</td>
@@ -1259,8 +1180,8 @@ export default function AcademicCalendarPage() {
 
                   <div className="mt-3 p-3 rounded-3 bg-light border d-flex flex-wrap justify-content-between align-items-center gap-2 small">
                     <div>
-                      <span className="badge bg-primary text-white me-2">Odd: 88 Days</span>
-                      <span className="badge bg-success text-white me-2">Even: 84 Days</span>
+                      <span className="badge bg-primary text-white me-2">Odd: {dynamicSummary[0].odd} Days</span>
+                      <span className="badge bg-success text-white me-2">Even: {dynamicSummary[0].even} Days</span>
                       <span className="text-muted">3 Mandatory Continuous Mid Tests per Semester</span>
                     </div>
                     <div className="d-flex gap-2">
@@ -2211,10 +2132,10 @@ export default function AcademicCalendarPage() {
                 <Eye size={20} className="text-primary" />
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                    Academic Calendar of A.Y:2026-27 from E1 to E4
+                    Academic Calendar of A.Y:{selectedYear} from E1 to E4
                   </h3>
                   <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
-                    RGUKT Institutional Matrix Format • UGC &amp; AICTE Statutory Regulatory Standards
+                    RGUKT Institutional Matrix Format • {currentStateName} • UGC &amp; AICTE Statutory Regulatory Standards
                   </p>
                 </div>
               </div>
@@ -2294,10 +2215,10 @@ export default function AcademicCalendarPage() {
                 <div style={{ background: '#ffffff', color: '#111827', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                   <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
                     <h4 style={{ textDecoration: 'underline', fontWeight: 800, fontSize: '1.25rem', color: '#0f172a', marginBottom: '0.25rem' }}>
-                      Academic Calendar of A.Y:2026-27 from E1 to E4
+                      Academic Calendar of A.Y:{selectedYear} from E1 to E4
                     </h4>
                     <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
-                      Rajiv Gandhi University of Knowledge Technologies • Andhra Pradesh
+                      Rajiv Gandhi University of Knowledge Technologies • {currentStateName}
                     </span>
                   </div>
 
@@ -2319,7 +2240,7 @@ export default function AcademicCalendarPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {EXECUTIVE_CALENDAR_SUMMARY.map((row, idx) => (
+                        {dynamicSummary.map((row, idx) => (
                           <tr key={idx} style={{ fontWeight: row.isBold ? 700 : 500 }}>
                             <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.odd}</td>
                             <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.activity}</td>
@@ -2331,8 +2252,8 @@ export default function AcademicCalendarPage() {
                   </div>
 
                   <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748b' }}>
-                    <div>* Odd Semester Instruction Days: <strong>88 Days</strong></div>
-                    <div>* Even Semester Instruction Days: <strong>84 Days</strong></div>
+                    <div>* Odd Semester Instruction Days: <strong>{dynamicSummary[0].odd} Days</strong></div>
+                    <div>* Even Semester Instruction Days: <strong>{dynamicSummary[0].even} Days</strong></div>
                     <div>* Continuous Mid Tests: <strong>3 Mandatory Assessments</strong></div>
                   </div>
                 </div>
@@ -2353,7 +2274,7 @@ export default function AcademicCalendarPage() {
                       borderBottom: 'none',
                     }}
                   >
-                    Odd Semester (A.Y: 2026-27 E1 to E4)
+                    Odd Semester (A.Y: {selectedYear} E1 to E4)
                   </div>
 
                   <div className="table-responsive">
@@ -2379,7 +2300,7 @@ export default function AcademicCalendarPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {ODD_SEMESTER_GRID.map((row, rIdx) => (
+                        {dynamicOddGrid.map((row, rIdx) => (
                           <tr key={rIdx}>
                             <td style={{ borderColor: '#000000', padding: '0.3rem', fontStyle: 'italic', fontWeight: 600 }}>{row.month}</td>
                             {row.days.map((d, dIdx) => {
@@ -2446,7 +2367,7 @@ export default function AcademicCalendarPage() {
                   {/* Gazetted Holidays Table */}
                   <div style={{ marginTop: '1.25rem' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.4rem', color: '#0f172a' }}>
-                      Gazetted Holidays &amp; Statutory Observances (Odd Semester 2026):
+                      Gazetted Holidays &amp; Statutory Observances (Odd Semester {yStartNum}):
                     </div>
                     <div className="table-responsive">
                       <table className="table table-bordered table-sm mb-0" style={{ borderColor: '#cbd5e1', fontSize: '0.75rem' }}>
@@ -2458,7 +2379,7 @@ export default function AcademicCalendarPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {ODD_HOLIDAYS_LIST.map((h, i) => (
+                          {dynamicOddHolidays.map((h, i) => (
                             <tr key={i}>
                               <td style={{ fontWeight: 600, color: '#1e293b' }}>{h.date}</td>
                               <td>{h.name}</td>
@@ -2487,7 +2408,7 @@ export default function AcademicCalendarPage() {
                       borderBottom: 'none',
                     }}
                   >
-                    Even Semester (A.Y: 2026-27 E1 to E4)
+                    Even Semester (A.Y: {selectedYear} E1 to E4)
                   </div>
 
                   <div className="table-responsive">
@@ -2513,7 +2434,7 @@ export default function AcademicCalendarPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {EVEN_SEMESTER_GRID.map((row, rIdx) => (
+                        {dynamicEvenGrid.map((row, rIdx) => (
                           <tr key={rIdx}>
                             <td style={{ borderColor: '#000000', padding: '0.3rem', fontStyle: 'italic', fontWeight: 600 }}>{row.month}</td>
                             {row.days.map((d, dIdx) => {
@@ -2555,8 +2476,8 @@ export default function AcademicCalendarPage() {
                               style={{
                                 borderColor: '#000000',
                                 padding: '0.3rem',
-                                fontWeight: row.week.includes('Pongal') ? 800 : 600,
-                                color: row.week.includes('Pongal') ? '#dc2626' : '#111827',
+                                fontWeight: row.week.includes('Vacation') ? 800 : 600,
+                                color: row.week.includes('Vacation') ? '#dc2626' : '#111827',
                               }}
                             >
                               {row.week}
@@ -2580,7 +2501,7 @@ export default function AcademicCalendarPage() {
                   {/* Gazetted Holidays Table */}
                   <div style={{ marginTop: '1.25rem' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.4rem', color: '#0f172a' }}>
-                      Gazetted Holidays &amp; Statutory Observances (Even Semester 2027):
+                      Gazetted Holidays &amp; Statutory Observances (Even Semester {yEndNum}):
                     </div>
                     <div className="table-responsive">
                       <table className="table table-bordered table-sm mb-0" style={{ borderColor: '#cbd5e1', fontSize: '0.75rem' }}>
@@ -2592,7 +2513,7 @@ export default function AcademicCalendarPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {EVEN_HOLIDAYS_LIST.map((h, i) => (
+                          {dynamicEvenHolidays.map((h, i) => (
                             <tr key={i}>
                               <td style={{ fontWeight: 600, color: '#1e293b' }}>{h.date}</td>
                               <td>{h.name}</td>
