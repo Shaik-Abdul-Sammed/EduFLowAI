@@ -94,13 +94,21 @@ export function createApp({ db } = {}) {
   const corsOptions = {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true)
-      if (
-        explicitOrigins.includes(origin) ||
-        /\.onrender\.com$/.test(new URL(origin).hostname) ||
-        origin.includes('localhost') ||
-        origin.includes('127.0.0.1')
-      ) {
-        return callback(null, true)
+      try {
+        const parsed = new URL(origin)
+        if (
+          explicitOrigins.includes(origin) ||
+          /\.onrender\.com$/.test(parsed.hostname) ||
+          origin.includes('localhost') ||
+          origin.includes('127.0.0.1')
+        ) {
+          return callback(null, true)
+        }
+      } catch {
+        // Fallback for custom schemes or simple origin strings
+        if (explicitOrigins.includes(origin) || origin.includes('onrender.com')) {
+          return callback(null, true)
+        }
       }
       return callback(null, true)
     },

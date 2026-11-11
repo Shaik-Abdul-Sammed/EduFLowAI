@@ -1045,8 +1045,8 @@ export default function WhatsAppAttendancePage() {
                 width: '100%',
                 maxWidth: '520px',
                 borderRadius: '16px',
-                background: '#ffffff',
-                color: '#1e293b',
+                background: 'var(--card-bg, #ffffff)',
+                color: 'var(--app-text, #1e293b)',
               }}
             >
               <div className="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3 px-4">
@@ -1214,14 +1214,14 @@ export default function WhatsAppAttendancePage() {
         >
           <div
             style={{
-              background: '#ffffff',
-              color: '#0f172a',
+              background: 'var(--card-bg, #ffffff)',
+              color: 'var(--app-text, #0f172a)',
               borderRadius: '1rem',
               maxWidth: '520px',
               width: '100%',
               padding: '1.75rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              border: '2px solid #e2e8f0',
+              border: '2px solid var(--border-color, #e2e8f0)',
             }}
           >
             <div className="d-flex justify-content-between align-items-center mb-3">

@@ -614,29 +614,86 @@ input[type="radio"] {
   filter: invert(1); /* Fix the dropdown arrow color */
 }
 
-[data-theme='dark'] table,
-[data-theme='dark'] th,
-[data-theme='dark'] td {
+[data-theme='dark'] table:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] th:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] td:not(.paper-sheet):not(.paper-sheet *) {
   background-color: transparent !important;
   color: var(--app-text, #e2e8f0) !important;
   border-color: var(--border-color, #334155) !important;
 }
 
 /* Fix any hardcoded text-dark or bg-white classes */
-[data-theme='dark'] .text-dark {
+[data-theme='dark'] .text-dark:not(.paper-sheet):not(.paper-sheet *) {
   color: var(--app-text) !important;
 }
 
-[data-theme='dark'] .bg-white {
+[data-theme='dark'] .bg-white:not(.paper-sheet):not(.paper-sheet *) {
   background-color: var(--card-bg) !important;
 }
 
-[data-theme='dark'] .bg-light {
+[data-theme='dark'] .bg-light:not(.paper-sheet):not(.paper-sheet *) {
   background-color: var(--surface-bg) !important;
 }
 
-[data-theme='dark'] * {
+/* Force dark mode theme variables on any hardcoded inline white cards */
+[data-theme='dark'] [style*="background: #ffffff"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background:#ffffff"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background: white"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background:white"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background-color: #ffffff"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background-color:#ffffff"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background-color: white"]:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] [style*="background-color:white"]:not(.paper-sheet):not(.paper-sheet *) {
+  background: var(--card-bg) !important;
+  background-color: var(--card-bg) !important;
+  color: var(--app-text) !important;
   border-color: var(--border-color) !important;
+}
+
+/* Dedicated Paper Print Preview Container (prevents white-on-white invisibility in modal previews) */
+.paper-sheet,
+.paper-preview {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+.paper-sheet *,
+.paper-preview * {
+  border-color: #cbd5e1 !important;
+}
+[data-theme='dark'] .paper-sheet,
+[data-theme='dark'] .paper-preview {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+[data-theme='dark'] .paper-sheet h1,
+[data-theme='dark'] .paper-sheet h2,
+[data-theme='dark'] .paper-sheet h3,
+[data-theme='dark'] .paper-sheet h4,
+[data-theme='dark'] .paper-sheet h5,
+[data-theme='dark'] .paper-sheet h6,
+[data-theme='dark'] .paper-sheet p,
+[data-theme='dark'] .paper-sheet span:not(.badge),
+[data-theme='dark'] .paper-sheet strong,
+[data-theme='dark'] .paper-sheet td,
+[data-theme='dark'] .paper-sheet th {
+  color: #0f172a !important;
+}
+[data-theme='dark'] .paper-sheet .text-muted,
+[data-theme='dark'] .paper-sheet td[style*="font-style: italic"] {
+  color: #475569 !important;
+}
+[data-theme='dark'] .paper-sheet thead tr {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+}
+[data-theme='dark'] .paper-sheet thead th {
+  color: #0f172a !important;
+}
+
+[data-theme='dark'] * {
+  border-color: var(--border-color);
 }
 [data-theme='dark'] .accordion-body, 
 [data-theme='dark'] .card-body {

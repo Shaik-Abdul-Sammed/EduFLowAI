@@ -49,9 +49,10 @@ export function useSocketEvents() {
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['polling'],
-      reconnectionAttempts: 3,
-      reconnectionDelay: 2000,
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1500,
+      reconnectionDelayMax: 5000,
       timeout: 10000,
     })
 
@@ -61,10 +62,13 @@ export function useSocketEvents() {
       setIsConnected(true)
     })
     socket.on('disconnect', () => setIsConnected(false))
-    socket.on('connect_error', () => {
+    socket.on('connect_error', (err) => {
       failedAttempts += 1
       setIsConnected(false)
-      if (failedAttempts >= 3) {
+      if (err?.message?.includes('Session ID unknown') || err?.description === 400) {
+        socket.io.opts.transports = ['websocket', 'polling']
+      }
+      if (failedAttempts >= 5) {
         setIsFailed(true)
         socket.disconnect()
       }

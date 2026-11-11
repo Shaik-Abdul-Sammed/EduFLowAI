@@ -250,15 +250,15 @@ export default function Page() {
         >
           <div
             style={{
-              background: '#ffffff',
-              color: '#0f172a',
+              background: 'var(--card-bg, #ffffff)',
+              color: 'var(--app-text, #0f172a)',
               borderRadius: '1rem',
               maxWidth: '520px',
               width: '100%',
               padding: '2rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               position: 'relative',
-              border: '2px solid #e2e8f0',
+              border: '2px solid var(--border-color, #e2e8f0)',
             }}
           >
             <div className="text-center mb-3 border-bottom pb-3">

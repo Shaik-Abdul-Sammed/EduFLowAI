@@ -37,6 +37,7 @@ import {
   getOddHolidaysList,
   getEvenHolidaysList,
 } from '../../utils/calendarMatrixGenerator'
+import { generateAcademicCalendarClientPdfBlob } from '../../services/calendar/AcademicCalendarClientPdfBuilder'
 
 const ACADEMIC_MONTHS = [
   { name: 'July', month: 6, isEven: false },
@@ -131,6 +132,19 @@ export default function AcademicCalendarPage() {
   const dynamicEvenGrid = useMemo(() => getEvenSemesterGrid(yStartNum, selectedState), [yStartNum, selectedState])
   const dynamicOddHolidays = useMemo(() => getOddHolidaysList(yStartNum, selectedState, holidays), [yStartNum, selectedState, holidays])
   const dynamicEvenHolidays = useMemo(() => getEvenHolidaysList(yStartNum, selectedState, holidays), [yStartNum, selectedState, holidays])
+  const previewPdfUrl = useMemo(() => {
+    try {
+      const cleanYr = String(selectedYear).replace(/[^0-9-]/g, '') || '2026-2027'
+      const blob = generateAcademicCalendarClientPdfBlob({
+        academicYear: cleanYr,
+        stateCode: selectedState,
+        program: 'B.Tech (E1 to E4)',
+      })
+      return URL.createObjectURL(blob)
+    } catch {
+      return '/Academic_Calendar_2026_27_E1_to_E4.pdf'
+    }
+  }, [selectedYear, selectedState])
 
   // Interactive Month Calendar and Diagnosis State
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0) // July = 0
@@ -475,8 +489,9 @@ export default function AcademicCalendarPage() {
   }
 
   const handleExportPdf = async (customParams = null) => {
-    const yr = customParams?.academicYear || exportYear || selectedYear || '2026-2027'
-    const st = customParams?.stateCode || exportState || selectedState || 'AP'
+    const rawYr = customParams?.academicYear || exportYear || selectedYear || '2026-2027'
+    const yr = String(rawYr).replace(/[^0-9-]/g, '') || '2026-2027'
+    const st = (customParams?.stateCode || exportState || selectedState || 'AP').toUpperCase()
     const prog = customParams?.program || exportProgram || 'B.Tech (E1 to E4)'
     const fmt = customParams?.format || exportFormat || 'grid'
 
@@ -513,41 +528,28 @@ export default function AcademicCalendarPage() {
       addToast(`Academic Calendar (${fmtLabel} - ${st}) downloaded successfully!`, 'success')
       setShowExportModal(false)
     } catch (err) {
-      console.warn('Backend PDF download encountered issue, using reliable bundled static asset:', err)
+      console.warn('Backend PDF download encountered issue, generating authentic client-side vector PDF:', err)
       try {
-        const fallbackRes = await fetch('/Academic_Calendar_2026_27_E1_to_E4.pdf')
-        if (fallbackRes.ok) {
-          const blob = await fallbackRes.blob()
-          const url = window.URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          link.download = `Academic_Calendar_${yr}_${st}_${fmt}.pdf`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          window.URL.revokeObjectURL(url)
-          addToast('Official Academic Calendar PDF downloaded successfully (from local package)', 'success')
-          setShowExportModal(false)
-          return
-        }
-      } catch (fallbackErr) {
-        console.error('Local fallback failed:', fallbackErr)
-      }
-
-      try {
+        const clientPdfBlob = generateAcademicCalendarClientPdfBlob({
+          academicYear: yr,
+          stateCode: st,
+          program: prog,
+          format: fmt,
+        })
+        const url = window.URL.createObjectURL(clientPdfBlob)
         const link = document.createElement('a')
-        link.href = '/Academic_Calendar_2026_27_E1_to_E4.pdf'
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
+        link.href = url
         link.download = `Academic_Calendar_${yr}_${st}_${fmt}.pdf`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        addToast('Official Academic Calendar PDF opened for download', 'info')
+        window.URL.revokeObjectURL(url)
+        addToast(`Official Academic Calendar A.Y:${yr} (${st}) downloaded successfully!`, 'success')
         setShowExportModal(false)
-      } catch {
+        return
+      } catch (fallbackErr) {
+        console.error('Client PDF generator fallback failed:', fallbackErr)
         window.print()
-        addToast('Print dialog triggered for Academic Calendar', 'info')
       }
     } finally {
       setIsExporting(false)
@@ -607,8 +609,8 @@ export default function AcademicCalendarPage() {
       addToast(`${vacName} extended by +${delta} day(s). Downstream examinations shifted by +${delta}d. Projected teaching days: ${projectedTeachingDays}/90.`, 'info')
     } else if (delta < 0) {
       const compDates = Math.abs(delta) === 1
-        ? ['Saturday, 24 Oct 2026']
-        : ['Saturday, 24 Oct 2026', 'Saturday, 31 Oct 2026', 'Saturday, 07 Nov 2026'].slice(0, Math.abs(delta))
+        ? [`Saturday, 24 Oct ${yStartNum}`]
+        : [`Saturday, 24 Oct ${yStartNum}`, `Saturday, 31 Oct ${yStartNum}`, `Saturday, 07 Nov ${yStartNum}`].slice(0, Math.abs(delta))
       setCompensatoryClasses((prev) => [
         ...prev.filter((c) => c.vacationId !== vacationId),
         { vacationId, vacName, dates: compDates, recoveredDays: Math.abs(delta) },
@@ -1122,7 +1124,7 @@ export default function AcademicCalendarPage() {
             <div className="row g-4">
               {/* Official RGUKT Executive Schedule Table */}
               <div className="col-12 mb-2">
-                <div className="card border-0 shadow-sm p-4" style={{ background: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
+                <div className="card border-0 shadow-sm p-4" style={{ background: 'var(--card-bg, #ffffff)', color: 'var(--app-text, #1e293b)', borderRadius: '1rem', border: '1px solid var(--border-color, #e2e8f0)' }}>
                   <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 pb-3 border-bottom gap-2">
                     <div>
                       <span className="badge bg-primary-subtle text-primary fw-bold text-uppercase px-2.5 py-1 mb-1">
@@ -2212,7 +2214,7 @@ export default function AcademicCalendarPage() {
             {/* Document Body */}
             <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
               {previewModalTab === 'summary' && (
-                <div style={{ background: '#ffffff', color: '#111827', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <div className="paper-sheet shadow-lg" style={{ background: '#ffffff', color: '#111827', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                   <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
                     <h4 style={{ textDecoration: 'underline', fontWeight: 800, fontSize: '1.25rem', color: '#0f172a', marginBottom: '0.25rem' }}>
                       Academic Calendar of A.Y:{selectedYear} from E1 to E4
@@ -2260,7 +2262,7 @@ export default function AcademicCalendarPage() {
               )}
 
               {previewModalTab === 'odd' && (
-                <div style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <div className="paper-sheet shadow-lg" style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                   {/* Khaki Banner */}
                   <div
                     style={{
@@ -2394,7 +2396,7 @@ export default function AcademicCalendarPage() {
               )}
 
               {previewModalTab === 'even' && (
-                <div style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <div className="paper-sheet shadow-lg" style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                   {/* Khaki Banner */}
                   <div
                     style={{
@@ -2530,16 +2532,16 @@ export default function AcademicCalendarPage() {
               {previewModalTab === 'pdf' && (
                 <div style={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', background: '#000' }}>
                   <iframe
-                    src="/Academic_Calendar_2026_27_E1_to_E4.pdf"
+                    src={previewPdfUrl}
                     style={{ width: '100%', height: '580px', border: 'none' }}
                     title="Official Academic Calendar PDF"
                   />
                   <div style={{ padding: '0.75rem 1rem', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                      Showing compiled vector PDF matching RGUKT statutory guidelines.
+                      Showing compiled vector PDF matching RGUKT statutory guidelines for A.Y:{selectedYear} ({currentStateName}).
                     </span>
                     <a
-                      href="/Academic_Calendar_2026_27_E1_to_E4.pdf"
+                      href={previewPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-sm btn-outline-info"

@@ -6,6 +6,7 @@ import { promisify } from 'node:util'
 import { CalendarGenerator } from '../services/calendar/CalendarGenerator.js'
 import { CalendarAdjustments } from '../services/calendar/CalendarAdjustments.js'
 import { HolidayFetcher } from '../services/calendar/HolidayFetcher.js'
+import { generateAcademicCalendarPdfBuffer } from '../services/calendar/AcademicCalendarPdfBuilder.js'
 import { logger } from '../utils/logger.js'
 
 const execFileAsync = promisify(execFile)
@@ -209,10 +210,11 @@ export class CalendarController {
       const tmpDir = os.tmpdir()
       const tmpOutput = path.join(tmpDir, `academic_calendar_${Date.now()}_${Math.random().toString(36).substring(7)}.pdf`)
 
-      const yearNum = academicYear.split('-')[0].trim() || '2026'
+      const cleanYear = String(academicYear).replace(/[^0-9-]/g, '') || '2026-2027'
+      const yearNum = cleanYear.split('-')[0].trim() || '2026'
 
       // Prioritize the authentic RGUKT institutional multi-page matrix generator for 2026-2027 / grid format
-      if (actualExactScript && (format === 'grid' || academicYear.includes('2026'))) {
+      if (actualExactScript && (format === 'grid' || cleanYear.includes('2026'))) {
         try {
           await execFileAsync('python3', [
             actualExactScript,
@@ -226,7 +228,7 @@ export class CalendarController {
             fs.unlinkSync(tmpOutput)
 
             res.setHeader('Content-Type', 'application/pdf')
-            res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${academicYear}_${stateCode}_${format}.pdf"`)
+            res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${cleanYear}_${stateCode}_${format}.pdf"`)
             return res.status(200).send(pdfBuffer)
           }
         } catch (exactErr) {
@@ -236,7 +238,6 @@ export class CalendarController {
 
       if (actualScriptPath) {
         try {
-          const yearNum = academicYear.split('-')[0].trim()
           await execFileAsync('python3', [
             actualScriptPath,
             '--year', yearNum,
@@ -251,7 +252,7 @@ export class CalendarController {
             fs.unlinkSync(tmpOutput)
 
             res.setHeader('Content-Type', 'application/pdf')
-            res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${academicYear}_${stateCode}_${format}.pdf"`)
+            res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${cleanYear}_${stateCode}_${format}.pdf"`)
             return res.status(200).send(pdfBuffer)
           }
         } catch (execErr) {
@@ -259,19 +260,16 @@ export class CalendarController {
         }
       }
 
-      // Fallback pre-generated or minimal valid PDF binary
-      const publicPdfPath = path.resolve(process.cwd(), '../eduflow-core/web/public/Academic_Calendar_2026_27_E1_to_E4.pdf')
-      if (fs.existsSync(publicPdfPath)) {
-        const publicBuffer = fs.readFileSync(publicPdfPath)
-        res.setHeader('Content-Type', 'application/pdf')
-        res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${academicYear}_${stateCode}_${format}.pdf"`)
-        return res.status(200).send(publicBuffer)
-      }
-
-      const pdfString = `%PDF-1.4\n1 0 obj\n<< /Title (Academic Calendar ${academicYear} - ${stateCode} - ${format}) >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF`
+      // Guaranteed Node.js Fallback: Generates authentic 4-page Academic Calendar PDF directly in-process
+      const nodePdfBuffer = generateAcademicCalendarPdfBuffer({
+        academicYear: cleanYear,
+        stateCode,
+        program,
+        format,
+      })
       res.setHeader('Content-Type', 'application/pdf')
-      res.setHeader('Content-Disposition', `attachment; filename="academic-calendar-${academicYear}.pdf"`)
-      return res.status(200).send(Buffer.from(pdfString, 'utf-8'))
+      res.setHeader('Content-Disposition', `attachment; filename="Academic_Calendar_${cleanYear}_${stateCode}_${format}.pdf"`)
+      return res.status(200).send(nodePdfBuffer)
     } catch (err) {
       logger.error({ err }, 'CalendarController.exportPdf error')
       return res.status(500).json({ error: 'Failed to export calendar PDF' })

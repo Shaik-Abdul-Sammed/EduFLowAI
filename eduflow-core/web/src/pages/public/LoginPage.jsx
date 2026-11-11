@@ -616,6 +616,7 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="username"
                 className="form-control"
                 required
                 value={email}
@@ -673,6 +674,7 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 className="form-control"
                 required
                 value={password}

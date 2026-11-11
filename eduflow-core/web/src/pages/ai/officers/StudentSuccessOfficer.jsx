@@ -2,16 +2,16 @@ import { AlertTriangle, Users, BookOpen } from 'lucide-react';
 import OfficerLayout from '../../../components/OfficerLayout';
 
 const SUGGESTED_PROMPTS = [
-  "Run institutional dropout risk analysis for semester 4",
-  "Generate automated intervention plan for high-risk students",
-  "Audit attendance patterns and backlog correlation",
+  "Run early academic support risk analysis for semester 4",
+  "Generate personalized mentorship and counseling intervention plan",
+  "Audit attendance patterns and counseling requirements (< 65%)",
 ];
 
 const LEFT_ACTIONS = [
-  { label: 'Scan All Cohorts for Dropout Risk', icon: <AlertTriangle size={16} color="#10B981" /> },
+  { label: 'Scan Cohorts for Academic Support Needs', icon: <AlertTriangle size={16} color="#10B981" /> },
   { label: 'Generate Mentor Remediation List', icon: <Users size={16} color="#10B981" /> },
-  { label: 'Dispatch Attendance Warning SMS', icon: <AlertTriangle size={16} color="#10B981" /> },
-  { label: 'Fee Defaulter Retention Review', icon: <BookOpen size={16} color="#10B981" /> },
+  { label: 'Dispatch Early Attendance Support SMS', icon: <AlertTriangle size={16} color="#10B981" /> },
+  { label: 'Proctor Counseling Schedule Review', icon: <BookOpen size={16} color="#10B981" /> },
 ];
 
 const LEFT_STATS = (
