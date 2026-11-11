@@ -700,3 +700,18 @@ input[type="radio"] {
   background-color: var(--card-bg) !important;
   color: var(--app-text) !important;
 }
+
+[data-theme='dark'] .card-header,
+[data-theme='dark'] .card-footer {
+  background-color: var(--surface-bg) !important;
+  color: var(--app-text) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .table-light,
+[data-theme='dark'] .table-light > th,
+[data-theme='dark'] .table-light > td {
+  background-color: var(--surface-bg) !important;
+  color: var(--app-text) !important;
+  border-color: var(--border-color) !important;
+}

@@ -317,7 +317,7 @@ export default function LiveDataPage() {
   return (
     <div className="container-fluid py-4 px-4 bg-light min-vh-100">
       {/* Top Header */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom bg-white p-4 rounded shadow-sm">
+      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom p-4 rounded shadow-sm" style={{ background: 'var(--card-bg, #ffffff)' }}>
         <div>
           <div className="d-flex align-items-center gap-2">
             <Globe className="text-primary" size={30} />
@@ -394,7 +394,7 @@ export default function LiveDataPage() {
       </div>
 
       {/* Ad-Hoc Live Search Engine */}
-      <div className="card border-0 shadow-sm p-4 mb-4 bg-white">
+      <div className="card border-0 shadow-sm p-4 mb-4">
         <h5 className="fw-bold mb-2 d-flex align-items-center gap-2">
           <Search size={20} className="text-primary" />
           Live Educational Web & Regulatory Search
@@ -462,7 +462,7 @@ export default function LiveDataPage() {
             </div>
             <h6 className="fw-bold text-dark mb-1">{aiAnswer.title}</h6>
             <p className="small text-secondary mb-2">{aiAnswer.summary}</p>
-            <div className="bg-white p-2.5 rounded border small mb-2">
+            <div className="p-2.5 rounded border small mb-2" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <span className="fw-bold text-dark">Key Statutory Mandates &amp; Provisions:</span>
                 <button
@@ -483,7 +483,7 @@ export default function LiveDataPage() {
             <div className="d-flex flex-wrap gap-1 align-items-center">
               <span className="text-muted" style={{ fontSize: '0.72rem' }}>Governing Authorities:</span>
               {aiAnswer.authorities.map((auth, i) => (
-                <span key={i} className="badge bg-white text-dark border" style={{ fontSize: '0.7rem' }}>
+                <span key={i} className="badge border" style={{ fontSize: '0.7rem', background: 'var(--surface-bg, #f8fafc)', color: 'var(--app-text, #1e293b)' }}>
                   {auth}
                 </span>
               ))}
@@ -538,7 +538,7 @@ export default function LiveDataPage() {
       <div className="row g-4">
         {/* 1. NIRF Rankings */}
         <div className="col-12 col-lg-6">
-          <div className="card border-0 shadow-sm h-100 p-4 bg-white">
+          <div className="card border-0 shadow-sm h-100 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div className="d-flex align-items-center gap-2">
                 <Award className="text-warning" size={24} />
@@ -554,31 +554,31 @@ export default function LiveDataPage() {
             </div>
             <div className="row g-2 text-center mb-3">
               <div className="col-2">
-                <div className="p-2 border rounded bg-white">
+                <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                   <div className="small text-muted">TLR</div>
                   <div className="fw-bold text-primary">{nirfData?.tlrScore || '54.2'}</div>
                 </div>
               </div>
               <div className="col-2">
-                <div className="p-2 border rounded bg-white">
+                <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                   <div className="small text-muted">RPC</div>
                   <div className="fw-bold text-primary">{nirfData?.rpcScore || '28.6'}</div>
                 </div>
               </div>
               <div className="col-2">
-                <div className="p-2 border rounded bg-white">
+                <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                   <div className="small text-muted">GO</div>
                   <div className="fw-bold text-primary">{nirfData?.goScore || '61.4'}</div>
                 </div>
               </div>
               <div className="col-2">
-                <div className="p-2 border rounded bg-white">
+                <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                   <div className="small text-muted">OI</div>
                   <div className="fw-bold text-primary">{nirfData?.oiScore || '58.1'}</div>
                 </div>
               </div>
               <div className="col-2">
-                <div className="p-2 border rounded bg-white">
+                <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                   <div className="small text-muted">PR</div>
                   <div className="fw-bold text-primary">{nirfData?.prScore || '22.5'}</div>
                 </div>
@@ -598,7 +598,7 @@ export default function LiveDataPage() {
 
         {/* 2. NAAC Reforms */}
         <div className="col-12 col-lg-6">
-          <div className="card border-0 shadow-sm h-100 p-4 bg-white">
+          <div className="card border-0 shadow-sm h-100 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div className="d-flex align-items-center gap-2">
                 <BookOpen className="text-primary" size={24} />
@@ -633,7 +633,7 @@ export default function LiveDataPage() {
 
         {/* 3. AICTE Circulars */}
         <div className="col-12 col-lg-6">
-          <div className="card border-0 shadow-sm h-100 p-4 bg-white">
+          <div className="card border-0 shadow-sm h-100 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div className="d-flex align-items-center gap-2">
                 <TrendingUp className="text-success" size={24} />
@@ -656,7 +656,7 @@ export default function LiveDataPage() {
 
         {/* 4. UGC Regulations */}
         <div className="col-12 col-lg-6">
-          <div className="card border-0 shadow-sm h-100 p-4 bg-white">
+          <div className="card border-0 shadow-sm h-100 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div className="d-flex align-items-center gap-2">
                 <Database className="text-info" size={24} />
@@ -678,7 +678,7 @@ export default function LiveDataPage() {
 
         {/* 5. Gazetted Academic Holidays */}
         <div className="col-12 col-lg-6">
-          <div className="card border-0 shadow-sm h-100 p-4 bg-white">
+          <div className="card border-0 shadow-sm h-100 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div className="d-flex align-items-center gap-2">
                 <Calendar className="text-danger" size={24} />
@@ -710,7 +710,7 @@ export default function LiveDataPage() {
 
         {/* 6. Education News */}
         <div className="col-12 col-lg-6">
-          <div className="card border-0 shadow-sm h-100 p-4 bg-white">
+          <div className="card border-0 shadow-sm h-100 p-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div className="d-flex align-items-center gap-2">
                 <Newspaper className="text-secondary" size={24} />
@@ -876,7 +876,7 @@ export default function LiveDataPage() {
                 </h6>
                 <ul className="list-group list-group-flush border rounded small">
                   {selectedArticleAnalysis.statutoryClauses?.map((cl, i) => (
-                    <li key={i} className="list-group-item bg-white text-muted">
+                    <li key={i} className="list-group-item text-muted" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                       <strong>Clause {i + 1}:</strong> {cl}
                     </li>
                   ))}

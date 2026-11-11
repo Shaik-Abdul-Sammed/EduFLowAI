@@ -165,7 +165,7 @@ export default function InstitutionSettingsPage() {
 
       <form onSubmit={handleSave}>
         {/* Section 1: Branding */}
-        <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+        <div className="card shadow-sm border-0 p-4 mb-4">
           <h5 className="fw-bold mb-3 d-flex align-items-center">
             <Building className="me-2 text-primary" /> 1. Branding & Identity
           </h5>
@@ -201,7 +201,7 @@ export default function InstitutionSettingsPage() {
         </div>
 
         {/* Section 2: Contact */}
-        <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+        <div className="card shadow-sm border-0 p-4 mb-4">
           <h5 className="fw-bold mb-3 d-flex align-items-center">
             <Phone className="me-2 text-primary" /> 2. Official Contact Information
           </h5>
@@ -246,7 +246,7 @@ export default function InstitutionSettingsPage() {
         </div>
 
         {/* Section 3: Academic */}
-        <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+        <div className="card shadow-sm border-0 p-4 mb-4">
           <h5 className="fw-bold mb-3 d-flex align-items-center">
             <Calendar className="me-2 text-primary" /> 3. Academic Year & Calendar Sync
           </h5>
@@ -300,7 +300,7 @@ export default function InstitutionSettingsPage() {
         </div>
 
         {/* Section 4: Security & Session Timeout */}
-        <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+        <div className="card shadow-sm border-0 p-4 mb-4">
           <h5 className="fw-bold mb-3 d-flex align-items-center">
             <Shield className="me-2 text-primary" /> 4. Security & Access Safeguards
           </h5>
@@ -331,7 +331,7 @@ export default function InstitutionSettingsPage() {
         </div>
 
         {/* Section 5: Billing & Direct UPI */}
-        <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+        <div className="card shadow-sm border-0 p-4 mb-4">
           <h5 className="fw-bold mb-3 d-flex align-items-center">
             <CreditCard className="me-2 text-primary" /> 5. Billing & Zero-Gateway UPI Remittance
           </h5>

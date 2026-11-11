@@ -146,6 +146,7 @@ export default function ForgotPasswordPage() {
                 />
                 <input
                   type="email"
+                  autoComplete="email"
                   required
                   placeholder="e.g., admin@ssit.edu or user@eduflow.ai"
                   value={email}
@@ -171,6 +172,7 @@ export default function ForgotPasswordPage() {
               </label>
               <input
                 type="text"
+                autoComplete="organization"
                 value={institutionId}
                 onChange={(e) => setInstitutionId(e.target.value)}
                 placeholder="demo"

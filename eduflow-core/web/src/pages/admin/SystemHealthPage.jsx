@@ -95,7 +95,7 @@ export default function SystemHealthPage() {
         <div className="row g-4">
           {/* Card 1: Database Status */}
           <div className="col-md-4">
-            <div className="card shadow-sm border-0 p-3 bg-white h-100">
+            <div className="card shadow-sm border-0 p-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted fw-semibold">Database Engine</span>
                 <Database size={20} className="text-primary" />
@@ -107,7 +107,7 @@ export default function SystemHealthPage() {
 
           {/* Card 2: Uptime & Version */}
           <div className="col-md-4">
-            <div className="card shadow-sm border-0 p-3 bg-white h-100">
+            <div className="card shadow-sm border-0 p-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted fw-semibold">Backend Process Uptime</span>
                 <Server size={20} className="text-success" />
@@ -119,7 +119,7 @@ export default function SystemHealthPage() {
 
           {/* Card 3: Memory Usage */}
           <div className="col-md-4">
-            <div className="card shadow-sm border-0 p-3 bg-white h-100">
+            <div className="card shadow-sm border-0 p-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted fw-semibold">System Memory (RAM)</span>
                 <HardDrive size={20} className="text-info" />
@@ -131,7 +131,7 @@ export default function SystemHealthPage() {
 
           {/* Card 4: Backup Status */}
           <div className="col-md-6">
-            <div className="card shadow-sm border-0 p-4 bg-white">
+            <div className="card shadow-sm border-0 p-4">
               <h5 className="fw-bold mb-3 d-flex align-items-center">
                 <Clock className="me-2 text-primary" /> Nightly Backup Verification
               </h5>
@@ -150,7 +150,7 @@ export default function SystemHealthPage() {
 
           {/* Card 5: Error Telemetry */}
           <div className="col-md-6">
-            <div className="card shadow-sm border-0 p-4 bg-white">
+            <div className="card shadow-sm border-0 p-4">
               <h5 className="fw-bold mb-3 d-flex align-items-center">
                 <AlertTriangle className="me-2 text-warning" /> Error Telemetry (Last 24h)
               </h5>

@@ -240,6 +240,7 @@ export default function LeadIntakePage() {
                   </label>
                   <input
                     id="collegeName"
+                    autoComplete="organization"
                     className={`lead-input ${errors.collegeName ? 'is-invalid' : ''}`}
                     type="text"
                     name="collegeName"
@@ -256,6 +257,7 @@ export default function LeadIntakePage() {
                   </label>
                   <input
                     id="contactName"
+                    autoComplete="name"
                     className={`lead-input ${errors.contactName ? 'is-invalid' : ''}`}
                     type="text"
                     name="contactName"
@@ -272,6 +274,7 @@ export default function LeadIntakePage() {
                   </label>
                   <select
                     id="designation"
+                    autoComplete="organization-title"
                     className="lead-select"
                     name="designation"
                     value={formData.designation}
@@ -291,6 +294,7 @@ export default function LeadIntakePage() {
                   </label>
                   <input
                     id="email"
+                    autoComplete="email"
                     className={`lead-input ${errors.email ? 'is-invalid' : ''}`}
                     type="email"
                     name="email"
@@ -307,6 +311,7 @@ export default function LeadIntakePage() {
                   </label>
                   <input
                     id="phone"
+                    autoComplete="tel"
                     className={`lead-input ${errors.phone ? 'is-invalid' : ''}`}
                     type="tel"
                     name="phone"
@@ -324,6 +329,7 @@ export default function LeadIntakePage() {
                   </label>
                   <input
                     id="cityState"
+                    autoComplete="address-level2"
                     className={`lead-input ${errors.cityState ? 'is-invalid' : ''}`}
                     type="text"
                     name="cityState"

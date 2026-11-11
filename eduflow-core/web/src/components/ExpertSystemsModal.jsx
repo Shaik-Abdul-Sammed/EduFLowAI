@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import FocusTrap from 'focus-trap-react';
 import {
   Brain, ShieldCheck, AlertTriangle, CheckCircle, ExternalLink,
   X, Sparkles, BookOpen, Clock, Users, Award, DollarSign
@@ -55,21 +56,32 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '920px',
-          maxHeight: '90vh',
-          background: 'var(--app-card-bg, #111827)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          color: 'var(--app-text, #f3f4f6)'
+      <FocusTrap
+        focusTrapOptions={{
+          initialFocus: false,
+          escapeDeactivates: false,
+          allowOutsideClick: true,
+          fallbackFocus: () => document.body,
         }}
       >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="expert-systems-title"
+          style={{
+            width: '100%',
+            maxWidth: '920px',
+            maxHeight: '90vh',
+            background: 'var(--app-card-bg, #111827)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            color: 'var(--app-text, #f3f4f6)'
+          }}
+        >
         {/* Modal Header */}
         <div
           style={{
@@ -296,6 +308,7 @@ export default function ExpertSystemsModal({ isOpen, onClose }) {
           </div>
         </div>
       </div>
+      </FocusTrap>
     </div>
   );
 }

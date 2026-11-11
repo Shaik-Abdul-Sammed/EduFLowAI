@@ -454,6 +454,14 @@ export class OfficerExportController {
       if (!status || status.status !== 'Ready' || !status.filePath || !fs.existsSync(status.filePath)) {
         return res.status(404).json({ error: 'Document not ready or file not found' })
       }
+
+      // Security check: Guard against directory traversal
+      const pathModule = await import('node:path')
+      const resolved = pathModule.resolve(status.filePath)
+      if (!resolved.startsWith(pathModule.resolve(UPLOADS_DIR))) {
+        return res.status(403).json({ error: 'Access denied: Invalid file path' })
+      }
+
       const data = fs.readFileSync(status.filePath)
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `attachment; filename="${status.filename || 'report.pdf'}"`)

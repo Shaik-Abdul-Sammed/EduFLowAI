@@ -76,7 +76,7 @@ export default function UPICollectionPage() {
       <div className="row g-4">
         {/* Left: QR Code Preview */}
         <div className="col-md-5">
-          <div className="card shadow-sm border-0 p-4 text-center bg-white h-100">
+          <div className="card shadow-sm border-0 p-4 text-center h-100">
             <h5 className="fw-bold mb-1">Scan & Pay via Any UPI App</h5>
             <small className="text-muted mb-3 d-block">GPay, PhonePe, Paytm, BHIM</small>
 
@@ -108,7 +108,7 @@ export default function UPICollectionPage() {
 
         {/* Right: Payment Management */}
         <div className="col-md-7">
-          <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+          <div className="card shadow-sm border-0 p-4 mb-4">
             <h5 className="fw-bold mb-3 d-flex align-items-center">
               <Share2 className="me-2 text-primary" /> Share Payment Request
             </h5>
@@ -155,7 +155,7 @@ export default function UPICollectionPage() {
           </div>
 
           {/* Manual Verification Form */}
-          <div className="card shadow-sm border-0 p-4 bg-white">
+          <div className="card shadow-sm border-0 p-4">
             <h5 className="fw-bold mb-2 d-flex align-items-center">
               <CheckCircle className="me-2 text-success" /> Manual Receipt Verification
             </h5>

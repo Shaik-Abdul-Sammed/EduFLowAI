@@ -168,7 +168,7 @@ export default function AITerminal() {
         {/* New Chat button */}
         {sidebarOpen && (
           <div style={{ padding: '0.75rem' }}>
-            <button onClick={() => { setMessages([]); setReplyIndex(0) }} style={{ width: '100%', padding: '0.6rem 1rem', background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: 10, color: '#60a5fa', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button aria-label="Start new conversation" onClick={() => { setMessages([]); setReplyIndex(0) }} style={{ width: '100%', padding: '0.6rem 1rem', background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: 10, color: '#60a5fa', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '1rem' }}>+</span> New Conversation
             </button>
           </div>
@@ -186,7 +186,7 @@ export default function AITerminal() {
 
         {/* Toggle + footer */}
         <div style={{ padding: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <button onClick={() => setSidebarOpen(v => !v)} style={{ width: '100%', padding: '0.5rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'} onClick={() => setSidebarOpen(v => !v)} style={{ width: '100%', padding: '0.5rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
         </div>
@@ -212,7 +212,7 @@ export default function AITerminal() {
               </div>
               <h1 style={{ fontSize: 'clamp(1.5rem,4vw,2.25rem)', fontWeight: 900, marginBottom: '0.5rem', background: 'linear-gradient(135deg, #60a5fa, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EduFlow AI OS</h1>
               <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2.5rem', fontSize: '1rem' }}>Your institution's autonomous software engineer</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', maxWidth: 520, width: '100%' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', maxWidth: 520, width: '100%' }}>
                 {SUGGESTIONS.map(s => (
                   <button key={s.title} onClick={() => sendMessage(s.msg)} style={{ padding: '1rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', color: 'white' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,99,235,0.15)'; e.currentTarget.style.borderColor = 'rgba(37,99,235,0.4)' }}
@@ -270,7 +270,7 @@ export default function AITerminal() {
               </div>
             )}
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '0.6rem 0.75rem' }}>
-              <button onClick={() => fileRef.current?.click()} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.4rem', borderRadius: 8, display: 'flex', alignItems: 'center', flexShrink: 0, transition: 'color 0.2s' }}
+              <button aria-label="Attach document or image" onClick={() => fileRef.current?.click()} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '0.4rem', borderRadius: 8, display: 'flex', alignItems: 'center', flexShrink: 0, transition: 'color 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#2563EB'}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}>
                 <Paperclip size={18} />
@@ -285,6 +285,7 @@ export default function AITerminal() {
                 style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '0.93rem', resize: 'none', maxHeight: 160, lineHeight: 1.6, padding: '0.25rem 0', fontFamily: 'inherit' }}
               />
               <button
+                aria-label="Send message"
                 onClick={() => sendMessage(inputText)}
                 disabled={!inputText.trim() && !isTyping}
                 style={{ background: inputText.trim() ? 'linear-gradient(135deg, #2563EB, #1d4ed8)' : 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 10, color: 'white', cursor: inputText.trim() ? 'pointer' : 'default', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>

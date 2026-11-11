@@ -189,6 +189,15 @@ export default function DigitalTwinManager() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  fileInputRef.current?.click()
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Upload institutional prospectus or documents to train Digital Twin"
               style={{ 
                 border: `2px dashed ${isDragging ? '#2563EB' : 'rgba(255,255,255,0.2)'}`, 
                 borderRadius: 16, 

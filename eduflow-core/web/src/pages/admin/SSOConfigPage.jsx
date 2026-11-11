@@ -531,6 +531,7 @@ export default function SSOConfigPage() {
                   <label className="form-label small fw-semibold" style={{ color: 'var(--app-text, #f8fafc)' }}>Client Secret</label>
                   <input
                     type="password"
+                    autoComplete="current-password"
                     className="form-control form-control-sm font-monospace"
                     style={{ background: 'var(--surface-bg, rgba(255, 255, 255, 0.05))', color: 'var(--app-text, #f8fafc)', borderColor: 'var(--border-color, rgba(255, 255, 255, 0.15))' }}
                     value={oidcConfig.clientSecret}
@@ -627,6 +628,7 @@ export default function SSOConfigPage() {
                   <label className="form-label small fw-semibold" style={{ color: 'var(--app-text, #f8fafc)' }}>Bind Password</label>
                   <input
                     type="password"
+                    autoComplete="current-password"
                     className="form-control form-control-sm font-monospace"
                     style={{ background: 'var(--surface-bg, rgba(255, 255, 255, 0.05))', color: 'var(--app-text, #f8fafc)', borderColor: 'var(--border-color, rgba(255, 255, 255, 0.15))' }}
                     value={ldapConfig.bindPassword}
@@ -694,6 +696,7 @@ export default function SSOConfigPage() {
                   <div className="input-group input-group-sm">
                     <input
                       type="password"
+                      autoComplete="off"
                       className="form-control font-monospace"
                       readOnly
                       style={{ background: 'var(--surface-bg, rgba(255, 255, 255, 0.05))', color: 'var(--app-text, #f8fafc)', borderColor: 'var(--border-color, rgba(255, 255, 255, 0.15))' }}

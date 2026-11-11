@@ -12,5 +12,7 @@ router.post('/upload-csv', requireRole('admin', 'hod', 'staff'), AttendanceContr
 router.post('/ingest/sample', requireRole('admin', 'hod', 'staff'), AttendanceController.ingestSample)
 router.post('/sync-now', requireRole('admin', 'hod'), AttendanceController.syncNow)
 router.post('/notify-parents', requireRole('admin', 'hod'), AttendanceController.notifyParents)
+router.post('/counseling-note', AttendanceController.logCounselingNote)
+router.get('/counseling-notes', AttendanceController.getCounselingNotes)
 
 export default router

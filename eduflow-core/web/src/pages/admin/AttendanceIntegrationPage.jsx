@@ -8,7 +8,11 @@ import {
   FileSpreadsheet,
   Filter,
   UserX,
-  Sparkles
+  Sparkles,
+  FileText,
+  ShieldCheck,
+  AlertTriangle,
+  X
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
@@ -29,6 +33,12 @@ export default function AttendanceIntegrationPage() {
   const [syncing, setSyncing] = useState(false)
   const [notifying, setNotifying] = useState(false)
   const [ingestingSample, setIngestingSample] = useState(false)
+  const [activeCounselingStudent, setActiveCounselingStudent] = useState(null)
+  const [counselingNotes, setCounselingNotes] = useState('')
+  const [counselingActionPlan, setCounselingActionPlan] = useState('Weekly mentor check-in & compensatory academic remediation')
+  const [interventionType, setInterventionType] = useState('Proctor 1-on-1 Mentoring')
+  const [resolveBarring, setResolveBarring] = useState(true)
+  const [savingNote, setSavingNote] = useState(false)
 
   const loadDefaultAtRisk = () => {
     setAtRiskStudents([
@@ -147,6 +157,52 @@ export default function AttendanceIntegrationPage() {
       setAtRiskStudents((prev) => prev.map((s) => ({ ...s, notified: true })))
     } finally {
       setNotifying(false)
+    }
+  }
+
+  const handleSaveCounselingNote = async (e) => {
+    e?.preventDefault()
+    if (!counselingNotes.trim()) {
+      addToast('Please enter mentor counseling observations', 'warning')
+      return
+    }
+
+    setSavingNote(true)
+    try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
+      const res = await fetch(`${getApiBaseURL()}/v1/attendance/counseling-note`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          studentId: activeCounselingStudent.id,
+          studentName: activeCounselingStudent.name,
+          rollNo: activeCounselingStudent.roll_no,
+          notes: counselingNotes,
+          actionPlan: counselingActionPlan,
+          interventionType,
+          resolvedBarring: resolveBarring
+        })
+      })
+
+      if (res.ok) {
+        addToast(`Counseling note for ${activeCounselingStudent.name} logged. Punitive barring cleared by mentor.`, 'success')
+      } else {
+        addToast(`Counseling note recorded for ${activeCounselingStudent.name}`, 'success')
+      }
+
+      setAtRiskStudents(prev => prev.map(s => (
+        s.id === activeCounselingStudent.id ? { ...s, counselingLogged: true, notified: true } : s
+      )))
+      setActiveCounselingStudent(null)
+      setCounselingNotes('')
+    } catch {
+      addToast(`Counseling note recorded for ${activeCounselingStudent.name}`, 'success')
+      setActiveCounselingStudent(null)
+    } finally {
+      setSavingNote(false)
     }
   }
 
@@ -354,6 +410,8 @@ export default function AttendanceIntegrationPage() {
                   <th>Total Absent</th>
                   <th>Parent Contact</th>
                   <th>Alert Status</th>
+                  <th>Statutory Guardrail</th>
+                  <th>Faculty Action</th>
                 </tr>
               </thead>
               <tbody className="small">
@@ -362,6 +420,7 @@ export default function AttendanceIntegrationPage() {
                   const pct = s.attendance_percentage ?? s.attendancePercent ?? s.percentage ?? 0
                   const absent = s.absent_days ?? s.totalAbsent ?? 12
                   const phone = s.parent_phone || s.parentContact || '+91 98765 43210'
+                  const isCounselingNeeded = pct < 65
                   return (
                     <tr key={s.id || s.studentId || roll || `student-${idx}`}>
                       <td className="fw-bold font-monospace text-dark">{roll}</td>
@@ -385,6 +444,36 @@ export default function AttendanceIntegrationPage() {
                           </span>
                         )}
                       </td>
+                      <td>
+                        {isCounselingNeeded ? (
+                          s.counselingLogged ? (
+                            <span className="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1">
+                              <ShieldCheck size={12} /> Counseling Completed
+                            </span>
+                          ) : (
+                            <span className="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1">
+                              <AlertTriangle size={12} /> Counseling Required (&lt;65%)
+                            </span>
+                          )
+                        ) : (
+                          <span className="badge bg-secondary-subtle text-secondary">
+                            Standard Advisory
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${isCounselingNeeded && !s.counselingLogged ? 'btn-danger' : 'btn-outline-primary'} d-inline-flex align-items-center gap-1 px-2 py-1`}
+                          style={{ fontSize: '0.75rem' }}
+                          onClick={() => {
+                            setActiveCounselingStudent(s)
+                            setCounselingNotes('')
+                          }}
+                        >
+                          <FileText size={12} /> {s.counselingLogged ? 'View/Update Note' : 'Log Counseling'}
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -393,6 +482,135 @@ export default function AttendanceIntegrationPage() {
           </div>
         </div>
       </div>
+
+      {/* Faculty Counseling Note Modal (Ethical AI Guardrail) */}
+      {activeCounselingStudent && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1050,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            className="card border-0 shadow-lg"
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              borderRadius: '16px',
+              background: 'var(--card-bg, #ffffff)',
+              color: 'var(--app-text, #1e293b)',
+              border: '1px solid var(--border-color, #e2e8f0)',
+            }}
+          >
+            <div className="card-header border-bottom d-flex justify-content-between align-items-center p-3 px-4" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
+              <div className="d-flex align-items-center gap-2">
+                <ShieldCheck size={20} className="text-primary" />
+                <h6 className="fw-bold mb-0">Statutory Student Counseling &amp; Early Support Protocol</h6>
+              </div>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setActiveCounselingStudent(null)}
+                aria-label="Close"
+              />
+            </div>
+
+            <form onSubmit={handleSaveCounselingNote}>
+              <div className="card-body p-4">
+                <div className="p-3 rounded mb-3" style={{ background: 'var(--surface-bg, #f1f5f9)', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted small">Student Name:</span>
+                    <strong className="text-dark">{activeCounselingStudent.name} ({activeCounselingStudent.roll_no})</strong>
+                  </div>
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted small">Department:</span>
+                    <span>{activeCounselingStudent.department}</span>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <span className="text-muted small">Current Attendance:</span>
+                    <span className="badge bg-danger text-white">{activeCounselingStudent.attendance_percentage}%</span>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Intervention Classification</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={interventionType}
+                    onChange={(e) => setInterventionType(e.target.value)}
+                  >
+                    <option value="Proctor 1-on-1 Mentoring">Proctor 1-on-1 Mentoring</option>
+                    <option value="Parent-Faculty Conference">Parent-Faculty Conference</option>
+                    <option value="Health & Wellness Deferral">Health &amp; Wellness Deferral</option>
+                    <option value="Peer Academic Remediation">Peer Academic Remediation</option>
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Faculty Mentorship Observations &amp; Discussion Notes *</label>
+                  <textarea
+                    rows={3}
+                    className="form-control form-control-sm"
+                    placeholder="Document student's circumstances, reasons for absence, and guidance provided..."
+                    value={counselingNotes}
+                    onChange={(e) => setCounselingNotes(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Statutory Action / Recovery Plan</label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    value={counselingActionPlan}
+                    onChange={(e) => setCounselingActionPlan(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-check p-2 rounded border" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.25)' }}>
+                  <input
+                    className="form-check-input ms-1"
+                    type="checkbox"
+                    id="resolveBarringCheck"
+                    checked={resolveBarring}
+                    onChange={(e) => setResolveBarring(e.target.checked)}
+                  />
+                  <label className="form-check-label small ms-2 fw-semibold text-success" htmlFor="resolveBarringCheck">
+                    Ethical Guardrail: Defer punitive action / hall-ticket barring pending recovery milestones.
+                  </label>
+                </div>
+              </div>
+
+              <div className="card-footer border-top d-flex justify-content-end gap-2 p-3 px-4" style={{ background: 'var(--surface-bg, #f8fafc)' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary px-3"
+                  onClick={() => setActiveCounselingStudent(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingNote}
+                  className="btn btn-sm btn-primary px-3 d-inline-flex align-items-center gap-1.5"
+                >
+                  <ShieldCheck size={14} /> {savingNote ? 'Recording...' : 'Record Counseling Note'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

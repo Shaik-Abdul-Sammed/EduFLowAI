@@ -18,13 +18,12 @@ function getSocketUrl() {
   }
 
   try {
-    // Create URL object to safely parse host and protocol
+    // Socket.IO client expects http/https base origin; it automatically negotiates wss:// upgrades
     const url = new URL(apiBase)
-    const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${url.host}`
+    return url.origin
   } catch {
     // Ultimate fallback
-    return 'wss://eduflow-backend-jvn8.onrender.com'
+    return 'https://eduflow-backend-jvn8.onrender.com'
   }
 }
 

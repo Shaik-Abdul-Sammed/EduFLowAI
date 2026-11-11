@@ -119,6 +119,34 @@ export function createBackupRouter(db = pool) {
     })
   })
 
+  router.get('/download/:jobId', async (req, res) => {
+    try {
+      const { jobId } = req.params
+      const { getDocumentStatus, UPLOADS_DIR } = await import('../workers/queueWorker.js')
+      const status = await getDocumentStatus(jobId)
+
+      const fs = await import('node:fs')
+      const pathModule = await import('node:path')
+
+      if (!status || status.status !== 'Ready' || !status.filePath || !fs.existsSync(status.filePath)) {
+        return res.status(404).json({ error: 'Backup archive not ready or file not found' })
+      }
+
+      const resolved = pathModule.resolve(status.filePath)
+      if (!resolved.startsWith(pathModule.resolve(UPLOADS_DIR))) {
+        return res.status(403).json({ error: 'Access denied: Invalid backup path' })
+      }
+
+      const data = fs.readFileSync(status.filePath)
+      res.setHeader('Content-Type', 'application/zip')
+      res.setHeader('Content-Disposition', `attachment; filename="${status.filename || 'backup.zip'}"`)
+      res.setHeader('Content-Length', data.length)
+      return res.end(data)
+    } catch {
+      return res.status(500).json({ error: 'Failed to download backup archive' })
+    }
+  })
+
   return router
 }
 

@@ -450,6 +450,7 @@ export default function InstitutionRegister() {
                               <span className="input-group-text bg-light border-end-0 text-muted"><Building size={16} /></span>
                               <input
                                 type="text"
+                                autoComplete="organization"
                                 className={`form-control border-start-0 ${errors.institutionName ? 'is-invalid' : ''}`}
                                 name="institutionName"
                                 placeholder={t('register.placeholder_inst_name', 'e.g. Sri Sudha Institute of Technology')}
@@ -468,6 +469,7 @@ export default function InstitutionRegister() {
                               <span className="input-group-text bg-light border-end-0 text-muted"><Globe size={16} /></span>
                               <input
                                 type="text"
+                                autoComplete="off"
                                 className={`form-control border-start-0 border-end-0 font-monospace ${errors.subdomain ? 'is-invalid' : ''}`}
                                 name="subdomain"
                                 placeholder={t('register.placeholder_subdomain', 'ssit')}
@@ -575,6 +577,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><MapPin size={16} /></span>
                                 <input
                                   type="text"
+                                  autoComplete="address-level2"
                                   className={`form-control border-start-0 ${errors.cityState ? 'is-invalid' : ''}`}
                                   name="cityState"
                                   placeholder={t('register.placeholder_city', 'e.g. Bangalore, Karnataka')}
@@ -590,6 +593,7 @@ export default function InstitutionRegister() {
                               <label className="form-label fw-semibold text-dark small mb-1">{t('register.gstin_label', 'GSTIN (Optional)')}</label>
                               <input
                                 type="text"
+                                autoComplete="off"
                                 className="form-control font-monospace"
                                 name="gstin"
                                 placeholder={t('register.placeholder_gstin', '29AAAAA0000A1Z5')}
@@ -628,6 +632,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><User size={16} /></span>
                                 <input
                                   type="text"
+                                  autoComplete="name"
                                   className={`form-control border-start-0 ${errors.adminName ? 'is-invalid' : ''}`}
                                   name="adminName"
                                   placeholder={t('register.placeholder_admin_name', 'Dr. Rajesh Kumar')}
@@ -646,6 +651,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Briefcase size={16} /></span>
                                 <input
                                   type="text"
+                                  autoComplete="organization-title"
                                   className="form-control border-start-0"
                                   name="designation"
                                   placeholder={t('register.placeholder_designation', 'e.g. Principal / IQAC Director')}
@@ -664,6 +670,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Mail size={16} /></span>
                                 <input
                                   type="email"
+                                  autoComplete="email"
                                   className={`form-control border-start-0 ${errors.email ? 'is-invalid' : ''}`}
                                   name="email"
                                   placeholder={t('register.placeholder_email', 'principal@ssit.edu.in')}
@@ -681,6 +688,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Phone size={16} /></span>
                                 <input
                                   type="tel"
+                                  autoComplete="tel"
                                   className="form-control border-start-0"
                                   name="phone"
                                   placeholder={t('register.placeholder_phone', '9876543210')}
@@ -700,6 +708,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={16} /></span>
                                 <input
                                   type={showPassword ? 'text' : 'password'}
+                                  autoComplete="new-password"
                                   className={`form-control border-start-0 border-end-0 ${errors.password ? 'is-invalid' : ''}`}
                                   name="password"
                                   placeholder={t('register.placeholder_password', 'Min 8 characters')}
@@ -735,6 +744,7 @@ export default function InstitutionRegister() {
                                 <span className="input-group-text bg-light border-end-0 text-muted"><Lock size={16} /></span>
                                 <input
                                   type={showConfirmPassword ? 'text' : 'password'}
+                                  autoComplete="new-password"
                                   className={`form-control border-start-0 border-end-0 ${errors.confirmPassword ? 'is-invalid' : ''}`}
                                   name="confirmPassword"
                                   placeholder={t('register.placeholder_confirm_password', 'Re-enter password')}

@@ -255,6 +255,9 @@ export class WhatsAppWebhookController {
    */
   static async confirmStaged(req, res) {
     const id = parseInt(req.params.id, 10)
+    if (isNaN(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid record ID' })
+    }
     const inMem = WhatsAppAttendance.getStagedStore().find(r => r.id === id)
     if (inMem) inMem.status = 'CONFIRMED'
 
@@ -326,6 +329,9 @@ export class WhatsAppWebhookController {
    */
   static async rejectStaged(req, res) {
     const id = parseInt(req.params.id, 10)
+    if (isNaN(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid record ID' })
+    }
     const inMem = WhatsAppAttendance.getStagedStore().find(r => r.id === id)
     if (inMem) inMem.status = 'REJECTED'
 

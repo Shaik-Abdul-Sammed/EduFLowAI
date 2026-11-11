@@ -7,7 +7,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Image as ImageIcon, ZoomIn, ZoomOut,
   RotateCw, Table as TableIcon, Code, FileText, Trash2,
 } from 'lucide-react';
-import { getApiBaseURL } from '../config/apiConfig';
+import { getApiBaseURL, getFullApiUrl } from '../config/apiConfig';
 import { safeJson } from '../utils/wakeUpHandler';
 import { useStreamingOfficer } from '../hooks/useStreamingOfficer';
 import { useToast } from '../context/ToastContext';
@@ -431,7 +431,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
       const pollInterval = setInterval(async () => {
         attempts++;
         try {
-          const statusRes = await fetch(`${getApiBaseURL()}/api/v1/officers/export-pdf/status/${jobId}`, {
+          const statusRes = await fetch(getFullApiUrl(`/v1/officers/export-pdf/status/${jobId}`), {
             headers: {
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
@@ -444,7 +444,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               setPdfExportStatus('Ready');
               addToast('✅ PDF ready! Downloading document...', 'success');
 
-              const downloadRes = await fetch(`${getApiBaseURL()}/api/v1/officers/export-pdf/download/${jobId}`, {
+              const downloadRes = await fetch(getFullApiUrl(`/v1/officers/export-pdf/download/${jobId}`), {
                 headers: {
                   ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },

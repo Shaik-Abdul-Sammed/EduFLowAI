@@ -569,6 +569,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Institution Name</label>
                   <input
                     type="text"
+                    autoComplete="organization"
                     className="form-control"
                     value={profile.name}
                     onChange={(e) => setProfile({ ...profile, name: e.target.value })}
@@ -578,6 +579,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Short Code</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     className="form-control"
                     value={profile.shortCode}
                     onChange={(e) => setProfile({ ...profile, shortCode: e.target.value })}
@@ -588,6 +590,7 @@ export default function OnboardingWizardPage() {
                   <div className="input-group">
                     <input
                       type="text"
+                      autoComplete="off"
                       className="form-control"
                       value={profile.subdomain}
                       onChange={(e) => setProfile({ ...profile, subdomain: e.target.value })}
@@ -599,6 +602,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Established Year</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     className="form-control"
                     value={profile.establishedYear}
                     onChange={(e) => setProfile({ ...profile, establishedYear: e.target.value })}
@@ -608,6 +612,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Affiliation Body (e.g. VTU, JNTU, AICTE)</label>
                   <input
                     type="text"
+                    autoComplete="organization"
                     className="form-control"
                     value={profile.affiliationBody}
                     onChange={(e) => setProfile({ ...profile, affiliationBody: e.target.value })}
@@ -617,6 +622,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Accreditation Status</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     className="form-control"
                     value={profile.accreditationStatus}
                     onChange={(e) => setProfile({ ...profile, accreditationStatus: e.target.value })}
@@ -626,6 +632,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Official Email</label>
                   <input
                     type="email"
+                    autoComplete="email"
                     className="form-control"
                     value={profile.email}
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
@@ -634,7 +641,8 @@ export default function OnboardingWizardPage() {
                 <div className="col-md-4">
                   <label className="form-label fw-semibold">Phone Number</label>
                   <input
-                    type="text"
+                    type="tel"
+                    autoComplete="tel"
                     className="form-control"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
@@ -644,6 +652,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">State</label>
                   <input
                     type="text"
+                    autoComplete="address-level1"
                     className="form-control"
                     value={profile.state}
                     onChange={(e) => setProfile({ ...profile, state: e.target.value })}
@@ -653,6 +662,7 @@ export default function OnboardingWizardPage() {
                   <label className="form-label fw-semibold">Pincode</label>
                   <input
                     type="text"
+                    autoComplete="postal-code"
                     className="form-control"
                     value={profile.pincode}
                     onChange={(e) => setProfile({ ...profile, pincode: e.target.value })}
@@ -940,6 +950,7 @@ export default function OnboardingWizardPage() {
                 <label className="form-label fw-semibold">Finance Officer Full Name</label>
                 <input
                   type="text"
+                  autoComplete="name"
                   className="form-control"
                   placeholder="e.g. Dr. Rajesh Deshmukh"
                   value={financial.financeOfficerName}
@@ -950,6 +961,7 @@ export default function OnboardingWizardPage() {
                 <label className="form-label fw-semibold">Finance Officer Email (Invite Admin Access)</label>
                 <input
                   type="email"
+                  autoComplete="email"
                   className="form-control"
                   placeholder="fo@institution.edu"
                   value={financial.financeOfficerEmail}

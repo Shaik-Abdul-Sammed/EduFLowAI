@@ -109,8 +109,8 @@ export default function BuildManager() {
                     </td>
                     <td style={{ padding: '0.75rem', fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>{b.duration}</td>
                     <td style={{ padding: '0.75rem', fontSize: '0.83rem', color: 'rgba(255,255,255,0.6)' }}>v{b.version}</td>
-                    <td style={{ padding: '0.75rem' }}>{b.hasApk && <button style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, color: '#6ee7b7', fontSize: '0.75rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Download size={12} /> APK</button>}</td>
-                    <td style={{ padding: '0.75rem' }}>{b.hasAab && <button style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: 8, color: '#93c5fd', fontSize: '0.75rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Download size={12} /> AAB</button>}</td>
+                    <td style={{ padding: '0.75rem' }}>{b.hasApk && <button aria-label={`Download APK for ${b.id}`} style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, color: '#6ee7b7', fontSize: '0.75rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Download size={12} /> APK</button>}</td>
+                    <td style={{ padding: '0.75rem' }}>{b.hasAab && <button aria-label={`Download AAB for ${b.id}`} style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: 8, color: '#93c5fd', fontSize: '0.75rem', padding: '0.25rem 0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Download size={12} /> AAB</button>}</td>
                   </tr>
                 ))}
               </tbody>

@@ -63,23 +63,23 @@ export default function ProfilePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                   <div>
                     <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>FULL NAME</label>
-                    <input className="form-control" value={formData.name} onChange={e => setFormData(p => ({...p, name: e.target.value}))} />
+                    <input className="form-control" autoComplete="name" value={formData.name} onChange={e => setFormData(p => ({...p, name: e.target.value}))} />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>ROLE / DESIGNATION</label>
-                    <input className="form-control" value={user.role.toUpperCase()} disabled style={{ background: '#f8fafc', color: '#94a3b8' }} />
+                    <input className="form-control" value={user.role.toUpperCase()} disabled style={{ background: 'var(--surface-bg, #f8fafc)', color: 'var(--app-text-muted, #94a3b8)' }} />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>EMAIL ADDRESS</label>
-                    <input type="email" className="form-control" value={formData.email} onChange={e => setFormData(p => ({...p, email: e.target.value}))} />
+                    <input type="email" autoComplete="email" className="form-control" value={formData.email} onChange={e => setFormData(p => ({...p, email: e.target.value}))} />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>PHONE NUMBER</label>
-                    <input className="form-control" value={formData.phone} onChange={e => setFormData(p => ({...p, phone: e.target.value}))} />
+                    <input type="tel" autoComplete="tel" className="form-control" value={formData.phone} onChange={e => setFormData(p => ({...p, phone: e.target.value}))} />
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>ADDRESS</label>
-                    <textarea className="form-control" rows={2} value={formData.address} onChange={e => setFormData(p => ({...p, address: e.target.value}))} />
+                    <textarea className="form-control" autoComplete="street-address" rows={2} value={formData.address} onChange={e => setFormData(p => ({...p, address: e.target.value}))} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
@@ -96,7 +96,7 @@ export default function ProfilePage() {
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
           <div className="card-body p-4">
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>Security & Activity</h2>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '0.875rem', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'var(--surface-bg, #f8fafc)', borderRadius: '0.875rem', border: '1px solid var(--border-color, #e2e8f0)', marginBottom: '1rem' }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Two-Factor Authentication (2FA)</div>
                 <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Add an extra layer of security to your account.</div>
@@ -106,12 +106,12 @@ export default function ProfilePage() {
             
             <div>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Recent Login Activity</div>
-              <div style={{ fontSize: '0.8rem', color: '#475569', display: 'grid', gap: '0.4rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--app-text-muted, #475569)', display: 'grid', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
                   <span>Chrome on Windows (192.168.1.5)</span>
                   <span style={{ color: '#94a3b8' }}>Today, 09:41 AM</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
                   <span>Safari on iPhone (Mobile App)</span>
                   <span style={{ color: '#94a3b8' }}>Yesterday, 06:22 PM</span>
                 </div>

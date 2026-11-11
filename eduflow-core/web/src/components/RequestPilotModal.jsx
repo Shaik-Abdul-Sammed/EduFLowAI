@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, MessageSquare, Mail, Copy, CheckCircle, Sparkles } from 'lucide-react'
+import FocusTrap from 'focus-trap-react'
 import { useToast } from '../context/ToastContext'
 import { getFullApiUrl } from '../config/apiConfig'
 
@@ -158,19 +159,27 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div
-        className="card border-0 shadow-lg rounded-4 overflow-hidden"
-        style={{
-          width: '100%',
-          maxWidth: '640px',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--card-bg, #ffffff)',
-          color: 'var(--app-text, #1e293b)',
-          border: '1px solid var(--border-color, #e2e8f0)',
+      <FocusTrap
+        focusTrapOptions={{
+          initialFocus: false,
+          escapeDeactivates: false,
+          allowOutsideClick: true,
+          fallbackFocus: () => document.body,
         }}
       >
+        <div
+          className="card border-0 shadow-lg rounded-4 overflow-hidden"
+          style={{
+            width: '100%',
+            maxWidth: '640px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--card-bg, #ffffff)',
+            color: 'var(--app-text, #1e293b)',
+            border: '1px solid var(--border-color, #e2e8f0)',
+          }}
+        >
         {/* Modal Header */}
         <div
           className="d-flex align-items-center justify-content-between p-4 border-bottom"
@@ -232,6 +241,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                 <input
                   ref={instInputRef}
                   type="text"
+                  autoComplete="organization"
                   className={`form-control ${errors.institutionName ? 'is-invalid' : ''}`}
                   placeholder="e.g. Sri Siddhartha Institute of Tech"
                   value={institutionName}
@@ -248,6 +258,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                 </label>
                 <input
                   type="text"
+                  autoComplete="name"
                   className={`form-control ${errors.contactName ? 'is-invalid' : ''}`}
                   placeholder="e.g. Dr. K. Ramesh"
                   value={contactName}
@@ -264,6 +275,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                 <label className="form-label">Designation</label>
                 <select
                   className="form-select"
+                  autoComplete="organization-title"
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
                 >
@@ -282,6 +294,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                 </label>
                 <input
                   type="email"
+                  autoComplete="email"
                   className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                   placeholder="dean@college.edu"
                   value={email}
@@ -298,6 +311,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                 </label>
                 <input
                   type="tel"
+                  autoComplete="tel"
                   maxLength={10}
                   className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
                   placeholder="9876543210"
@@ -311,6 +325,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
                 <label className="form-label">City & State</label>
                 <input
                   type="text"
+                  autoComplete="address-level2"
                   className="form-control"
                   placeholder="e.g. Hyderabad, Telangana"
                   value={cityState}
@@ -409,6 +424,7 @@ export default function RequestPilotModal({ service, isOpen, onClose }) {
           )}
         </div>
       </div>
+      </FocusTrap>
     </div>
   )
 }

@@ -78,7 +78,7 @@ export default function SupportTicketsPage() {
         </button>
       </div>
 
-      <div className="card shadow-sm border-0 p-3 bg-white">
+      <div className="card shadow-sm border-0 p-3">
         {loading ? (
           <div className="text-center py-4 text-muted">Loading tickets...</div>
         ) : tickets.length === 0 ? (
