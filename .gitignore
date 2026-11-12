@@ -145,3 +145,10 @@ firebase-debug.log
 # Uploads
 eduflow-backend/uploads/*
 !eduflow-backend/uploads/.gitkeep
+
+# Binary Documents & Office Files
+*.docx
+*.doc
+*.pptx
+*.ppt
+.docs/
