@@ -100,7 +100,7 @@ export default function Page() {
                     <span className="badge text-bg-success" style={{ fontSize: '0.65rem' }}>{ref.format}</span>
                     <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>📚 {ref.tag}</span>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', margin: 0, color: '#1e293b' }}>{ref.title}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', margin: 0, color: 'var(--app-text, #1e293b)' }}>{ref.title}</div>
                 </div>
               ))}
             </div>

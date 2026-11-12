@@ -54,10 +54,17 @@ export class CalendarController {
     try {
       const { institutionId = 1, academicYear = '2026-2027' } = req.params
       const stateCode = req.query.stateCode || req.query.state || 'KA'
+      const options = {
+        targetWorkingDays: req.query.targetWorkingDays,
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+        ...req.query,
+      }
       const calendar = await CalendarGenerator.generateAcademicYear(
         Number(institutionId),
         academicYear,
-        stateCode
+        stateCode,
+        options
       )
       return res.status(200).json({
         success: true,
@@ -71,10 +78,12 @@ export class CalendarController {
   static async getEvents(req, res) {
     try {
       const { institutionId = 1, academicYear = '2026-2027' } = req.params
+      const stateCode = req.query.stateCode || req.query.state || 'KA'
       const calendar = await CalendarGenerator.generateAcademicYear(
         Number(institutionId),
         academicYear,
-        'KA'
+        stateCode,
+        req.query
       )
       return res.status(200).json({
         success: true,

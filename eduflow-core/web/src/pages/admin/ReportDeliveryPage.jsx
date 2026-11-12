@@ -180,7 +180,7 @@ export default function ReportDeliveryPage() {
 
         {/* Dispatch Form Card */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1rem', padding: '1.5rem' }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#1e293b' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--app-text, #1e293b)' }}>
             🚀 Deliver New Audit Report
           </h3>
           <form onSubmit={handleDeliver} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

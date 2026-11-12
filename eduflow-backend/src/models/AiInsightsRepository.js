@@ -7,6 +7,15 @@ let memoryRunIdCounter = 1
 const memorySnapshots = []
 let memorySnapshotIdCounter = 1
 
+function safeJsonParse(val) {
+  if (typeof val !== 'string') return val
+  try {
+    return JSON.parse(val)
+  } catch {
+    return val
+  }
+}
+
 export class AiInsightsRepository {
   /**
    * Resets in-memory stores for clean testing.
@@ -64,12 +73,8 @@ export class AiInsightsRepository {
       if (result?.rows?.[0]) {
         return {
           ...result.rows[0],
-          input_context: typeof result.rows[0].input_context === 'string'
-            ? (() => { try { return JSON.parse(result.rows[0].input_context) } catch (_) { return result.rows[0].input_context } })()
-            : result.rows[0].input_context,
-          output_data: typeof result.rows[0].output_data === 'string'
-            ? (() => { try { return JSON.parse(result.rows[0].output_data) } catch (_) { return result.rows[0].output_data } })()
-            : result.rows[0].output_data,
+          input_context: safeJsonParse(result.rows[0].input_context),
+          output_data: safeJsonParse(result.rows[0].output_data),
         }
       }
     } catch (err) {
@@ -121,8 +126,8 @@ export class AiInsightsRepository {
       if (res?.rows) {
         return res.rows.map((row) => ({
           ...row,
-          input_context: typeof row.input_context === 'string' ? JSON.parse(row.input_context) : row.input_context,
-          output_data: typeof row.output_data === 'string' ? JSON.parse(row.output_data) : row.output_data,
+          input_context: safeJsonParse(row.input_context),
+          output_data: safeJsonParse(row.output_data),
         }))
       }
     } catch (err) {

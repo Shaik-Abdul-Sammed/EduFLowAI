@@ -263,7 +263,7 @@ export default function FinanceDashboardPage() {
       <div className="row g-4 mb-4">
         <div className="col-lg-7">
           <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white py-3">
+            <div className="card-header bg-transparent py-3">
               <h6 className="fw-bold mb-0">Department-wise Overdue & Collection Breakdown</h6>
               <div className="text-muted small">Academic departments monitored for semester fee clearances.</div>
             </div>
@@ -294,7 +294,7 @@ export default function FinanceDashboardPage() {
 
         <div className="col-lg-5">
           <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white py-3">
+            <div className="card-header bg-transparent py-3">
               <h6 className="fw-bold mb-0">Tier-wise Urgency Distribution</h6>
               <div className="text-muted small">Cadence progression across institutional delay tiers.</div>
             </div>
@@ -346,7 +346,7 @@ export default function FinanceDashboardPage() {
 
       {/* SECTION 3: Fee Collection Workflow */}
       <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white py-3">
+        <div className="card-header bg-transparent py-3">
           <h6 className="fw-bold mb-0">Section 3 — Fee Collection Workflows</h6>
           <div className="text-muted small">Batch billing and direct counter-UTR reconciliation desk.</div>
         </div>
@@ -463,7 +463,7 @@ export default function FinanceDashboardPage() {
 
       {/* SECTION 4: Reconciliation Queue */}
       <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div className="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
           <div>
             <h6 className="fw-bold mb-0">Section 4 — Bank Statement Reconciliation Queue</h6>
             <div className="text-muted small">Auto-matched UPI and NEFT transactions awaiting Accounts clearance.</div>
@@ -523,7 +523,7 @@ export default function FinanceDashboardPage() {
 
       {/* SECTION 5: Scholarship and Waiver Management */}
       <div className="card shadow-sm border-0">
-        <div className="card-header bg-white py-3">
+        <div className="card-header bg-transparent py-3">
           <h6 className="fw-bold mb-0">Scholarship & Fee Waiver Governance</h6>
           <div className="text-muted small">
             Statutory separation: Waivers &lt; ₹1 Lakh decided by Finance Officer; Waivers &gt; ₹1,00,000 auto-route to Dean.

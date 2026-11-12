@@ -627,12 +627,19 @@ input[type="radio"] {
   color: var(--app-text) !important;
 }
 
-[data-theme='dark'] .bg-white:not(.paper-sheet):not(.paper-sheet *) {
+[data-theme='dark'] .bg-white:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] .card-header.bg-white:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] .card-body.bg-white:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] .card.bg-white:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] div.bg-white:not(.paper-sheet):not(.paper-sheet *),
+[data-theme='dark'] span.bg-white:not(.paper-sheet):not(.paper-sheet *) {
   background-color: var(--card-bg) !important;
+  color: var(--app-text) !important;
 }
 
 [data-theme='dark'] .bg-light:not(.paper-sheet):not(.paper-sheet *) {
   background-color: var(--surface-bg) !important;
+  color: var(--app-text) !important;
 }
 
 /* Force dark mode theme variables on any hardcoded inline white cards */

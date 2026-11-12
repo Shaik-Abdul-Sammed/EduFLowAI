@@ -304,7 +304,7 @@ export default function OnboardingWizardPage() {
       </div>
 
       {/* Stepper Progress */}
-      <div className="card shadow-sm border-0 mb-4 p-3 bg-white">
+      <div className="card shadow-sm border-0 mb-4 p-3" style={{ background: 'var(--card-bg, #ffffff)' }}>
         <div className="d-flex justify-content-between align-items-center">
           {[
             { num: 1, label: 'Profile' },
@@ -345,7 +345,7 @@ export default function OnboardingWizardPage() {
       )}
 
       {/* Main Form Content */}
-      <div className="card shadow-sm border-0 p-4 bg-white mb-4">
+      <div className="card shadow-sm border-0 p-4 mb-4" style={{ background: 'var(--card-bg, #ffffff)' }}>
         {/* STEP 1 */}
         {step === 1 && (
           <div>
@@ -448,7 +448,7 @@ export default function OnboardingWizardPage() {
 
                 {/* Extracted Data Preview */}
                 {extractedData && (
-                  <div className="bg-white p-3 rounded border">
+                  <div className="p-3 rounded border" style={{ background: 'var(--surface-bg, #ffffff)' }}>
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h6 className="fw-bold mb-0 text-success d-flex align-items-center">
                         <Check size={16} className="me-1" /> Extracted Institutional Profile

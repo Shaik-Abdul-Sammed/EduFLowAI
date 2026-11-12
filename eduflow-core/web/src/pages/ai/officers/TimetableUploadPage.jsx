@@ -259,7 +259,7 @@ export default function TimetableUploadPage() {
 
           {/* Side by side comparison table */}
           <div className="card border-0 shadow-sm mb-4">
-            <div className="card-header bg-white border-bottom p-3">
+            <div className="card-header bg-transparent border-bottom p-3">
               <h5 className="fw-bold text-dark mb-0">Schedule Delta Comparison</h5>
             </div>
             <div className="card-body p-0">

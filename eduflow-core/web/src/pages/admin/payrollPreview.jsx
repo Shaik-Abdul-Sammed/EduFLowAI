@@ -202,7 +202,7 @@ export default function Page() {
               <div style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.1em', color: '#64748b' }}>
                 CONFIDENTIAL SALARY PAYSLIP
               </div>
-              <h4 style={{ margin: '0.25rem 0', fontWeight: 800, color: '#1e293b' }}>EduFlow Autonomous College</h4>
+              <h4 style={{ margin: '0.25rem 0', fontWeight: 800, color: 'var(--app-text, #1e293b)' }}>EduFlow Autonomous College</h4>
               <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Disbursal Cycle: November 2026 &bull; Form 16 Compliant</div>
             </div>
 

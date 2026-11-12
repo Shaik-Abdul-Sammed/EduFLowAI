@@ -21,7 +21,13 @@ export default function TeacherCommunication() {
   useEffect(() => {
     // Initialize socket connection
     const backendUrl = getApiBaseURL().replace('/api', '');
-    socketRef.current = io(backendUrl);
+    const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || '';
+    socketRef.current = io(backendUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
+      timeout: 8000,
+    });
 
     socketRef.current.on('chat_message', (msg) => {
       setMessages((prev) => [...prev, msg]);

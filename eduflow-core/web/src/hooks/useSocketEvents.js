@@ -64,8 +64,17 @@ export function useSocketEvents() {
     socket.on('connect_error', (err) => {
       failedAttempts += 1
       setIsConnected(false)
-      if (err?.message?.includes('Session ID unknown') || err?.description === 400) {
-        socket.io.opts.transports = ['websocket', 'polling']
+      const errStr = String(err?.message || err?.description || '')
+      if (errStr.includes('Session ID unknown') || err?.description === 400 || errStr.includes('400')) {
+        // Server restarted on Render; disconnect stale session id and reconnect cleanly
+        try {
+          socket.disconnect()
+          setTimeout(() => {
+            if (socketRef.current) {
+              socketRef.current.connect()
+            }
+          }, 1500)
+        } catch (_) {}
       }
       if (failedAttempts >= 5) {
         setIsFailed(true)

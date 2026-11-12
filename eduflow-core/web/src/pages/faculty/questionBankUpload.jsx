@@ -145,7 +145,7 @@ export default function Page() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem' }}>
                 <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '0.375rem', flexShrink: 0, marginTop: 2 }}>Q{i+1}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem', color: '#1e293b', lineHeight: 1.5 }}>{q.text}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem', color: 'var(--app-text, #1e293b)', lineHeight: 1.5 }}>{q.text}</div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <span style={{ padding: '0.2rem 0.55rem', borderRadius: '0.375rem', background: `${typeColor[q.type] || '#64748b'}12`, color: typeColor[q.type] || '#64748b', fontSize: '0.68rem', fontWeight: 700 }}>{q.type}</span>
                     <span style={{ padding: '0.2rem 0.55rem', borderRadius: '0.375rem', background: `${diffColor[q.difficulty]}12`, color: diffColor[q.difficulty], fontSize: '0.68rem', fontWeight: 700 }}>{q.difficulty}</span>

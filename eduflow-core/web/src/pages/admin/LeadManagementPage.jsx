@@ -542,7 +542,7 @@ export default function LeadManagementPage() {
                     border: '1px solid var(--border-color)',
                   }}
                 >
-                  <h5 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#1e293b' }}>
+                  <h5 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--app-text, #1e293b)' }}>
                     {selectedLead.college_name}
                   </h5>
                   <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.25rem' }}>

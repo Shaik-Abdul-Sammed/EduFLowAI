@@ -903,7 +903,7 @@ export default function AcademicCalendarPage() {
 
       {/* Calendar Configuration */}
       <div className="card border-0 shadow-sm mb-4">
-        <div className="card-header bg-white border-bottom p-3">
+        <div className="card-header bg-transparent border-bottom p-3">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
               <h5 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
@@ -1080,7 +1080,7 @@ export default function AcademicCalendarPage() {
 
       {/* Tabs */}
       <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white border-bottom p-0">
+        <div className="card-header bg-transparent border-bottom p-0">
           <ul className="nav nav-tabs card-header-tabs m-0">
             <li className="nav-item">
               <button
@@ -1310,7 +1310,7 @@ export default function AcademicCalendarPage() {
 
               {/* Vacation Blocks & Dynamic Recalculation Engine */}
               <div className="col-12 mt-4">
-                <div className="card border bg-white shadow-sm p-3">
+                <div className="card border shadow-sm p-3" style={{ background: 'var(--surface-bg, #ffffff)' }}>
                   <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
                     <div>
                       <h5 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
@@ -1482,25 +1482,25 @@ export default function AcademicCalendarPage() {
                 {/* Monthly Summary Statistics Strip */}
                 <div className="row g-2 mb-3 text-center">
                   <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded bg-white">
+                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
                       <span className="text-muted small d-block">Teaching Days</span>
                       <strong className="text-primary fs-6">{monthlyTeachingCount} Days</strong>
                     </div>
                   </div>
                   <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded bg-white">
+                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
                       <span className="text-muted small d-block">Public Holidays</span>
                       <strong className="text-danger fs-6">{monthlyHolidayCount} Holidays</strong>
                     </div>
                   </div>
                   <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded bg-white">
+                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
                       <span className="text-muted small d-block">Examination Days</span>
                       <strong className="text-warning-emphasis fs-6">{monthlyExamCount} Days</strong>
                     </div>
                   </div>
                   <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded bg-white">
+                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
                       <span className="text-muted small d-block">Vacation Days</span>
                       <strong className="text-success fs-6">{monthlyVacationCount} Days</strong>
                     </div>
@@ -1518,7 +1518,7 @@ export default function AcademicCalendarPage() {
                 )}
 
                 {/* Calendar 7-Column Grid Table */}
-                <div className="table-responsive border rounded-3 bg-white">
+                <div className="table-responsive border rounded-3" style={{ background: 'var(--surface-bg, transparent)' }}>
                   <table className="table table-bordered mb-0" style={{ tableLayout: 'fixed' }}>
                     <thead className="table-light text-center small text-uppercase">
                       <tr>
@@ -1677,7 +1677,7 @@ export default function AcademicCalendarPage() {
 
               {/* Section 1: Predicted Festivals Table */}
               <div className="card border shadow-sm mb-4">
-                <div className="card-header bg-white py-3">
+                <div className="card-header bg-transparent py-3">
                   <h6 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                     <CalendarCheck size={18} className="text-primary" />
                     Predicted Astronomical &amp; Regional Festival Holidays ({selectedYear})
@@ -1711,7 +1711,7 @@ export default function AcademicCalendarPage() {
 
               {/* Section 2: Diagnosed Clashes & Prescriptions */}
               <div className="card border shadow-sm mb-4">
-                <div className="card-header bg-white py-3">
+                <div className="card-header bg-transparent py-3">
                   <h6 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                     <ShieldAlert size={18} className="text-warning" />
                     Diagnosed Schedule Conflicts &amp; Prescriptive AI Actions
@@ -1729,7 +1729,7 @@ export default function AcademicCalendarPage() {
                             </span>
                           </div>
                           <p className="small text-muted mb-2">{clash.detail}</p>
-                          <div className="p-2 bg-white rounded border small text-dark">
+                          <div className="p-2 rounded border small" style={{ background: 'var(--surface-bg, #ffffff)', color: 'var(--app-text)' }}>
                             <strong>AI Recommendation:</strong> {clash.recommendation}
                           </div>
                         </div>
@@ -2400,7 +2400,7 @@ export default function AcademicCalendarPage() {
                         <tbody>
                           {dynamicOddHolidays.map((h, i) => (
                             <tr key={i}>
-                              <td style={{ fontWeight: 600, color: '#1e293b' }}>{h.date}</td>
+                              <td style={{ fontWeight: 600, color: 'inherit' }}>{h.date}</td>
                               <td>{h.name}</td>
                               <td><span className="badge bg-secondary-subtle text-secondary">{h.type}</span></td>
                             </tr>
@@ -2534,7 +2534,7 @@ export default function AcademicCalendarPage() {
                         <tbody>
                           {dynamicEvenHolidays.map((h, i) => (
                             <tr key={i}>
-                              <td style={{ fontWeight: 600, color: '#1e293b' }}>{h.date}</td>
+                              <td style={{ fontWeight: 600, color: 'inherit' }}>{h.date}</td>
                               <td>{h.name}</td>
                               <td><span className="badge bg-secondary-subtle text-secondary">{h.type}</span></td>
                             </tr>

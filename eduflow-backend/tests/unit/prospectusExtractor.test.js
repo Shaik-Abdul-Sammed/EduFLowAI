@@ -2,10 +2,15 @@ import { test, describe, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import path from 'path'
 import fs from 'fs'
+import { fileURLToPath } from 'url'
 import { ProspectusExtractor } from '../../src/services/onboarding/ProspectusExtractor.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 describe('ProspectusExtractor Unit Tests', () => {
-  const samplePdfPath = path.resolve(process.cwd(), '../eduflow-core/web/public/sample-prospectus.pdf')
+  const samplePdfPath = fs.existsSync(path.resolve(__dirname, '../../../eduflow-core/web/public/sample-prospectus.pdf'))
+    ? path.resolve(__dirname, '../../../eduflow-core/web/public/sample-prospectus.pdf')
+    : path.resolve(process.cwd(), '../eduflow-core/web/public/sample-prospectus.pdf')
 
   beforeEach(() => {
     ProspectusExtractor.clearCache()

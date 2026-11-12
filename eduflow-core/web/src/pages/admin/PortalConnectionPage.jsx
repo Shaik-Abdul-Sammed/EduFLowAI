@@ -347,7 +347,7 @@ export default function PortalConnectionPage() {
 
       {/* Connected Sources Table */}
       <div className="card border-0 shadow-sm mb-4">
-        <div className="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+        <div className="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
           <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
             <Server size={18} className="text-primary" />
             Active Institutional Sources ({sources.length})
@@ -399,7 +399,7 @@ export default function PortalConnectionPage() {
 
       {/* Sync Logs */}
       <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white border-bottom p-3">
+        <div className="card-header bg-transparent border-bottom p-3">
           <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
             <Clock size={16} className="text-primary" />
             Recent Synchronization &amp; Canonical Normalization Logs

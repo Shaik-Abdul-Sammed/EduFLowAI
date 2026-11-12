@@ -141,7 +141,7 @@ export default function HodCalendarPage() {
 
       {/* Department Schedule Table */}
       <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+        <div className="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
           <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
             <BookOpen size={18} className="text-primary" />
             {deptName} Academic Timeline (Odd Semester 2026-2027)

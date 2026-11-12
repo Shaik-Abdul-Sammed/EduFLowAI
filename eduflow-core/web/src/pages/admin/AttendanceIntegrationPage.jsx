@@ -373,7 +373,7 @@ export default function AttendanceIntegrationPage() {
 
       {/* At-Risk Students Table */}
       <div className="card border-0 shadow-sm">
-        <div className="card-header bg-white border-bottom p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div className="card-header bg-transparent border-bottom p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
           <div className="d-flex align-items-center gap-2">
             <UserX size={18} className="text-danger" />
             <h5 className="fw-bold text-dark mb-0">

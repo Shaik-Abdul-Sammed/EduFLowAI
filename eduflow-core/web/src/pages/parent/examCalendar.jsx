@@ -41,7 +41,7 @@ export default function ExamCalendar() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
           padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' 
         }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--app-text, #0f172a)' }}>
             {MONTHS[month]} {year}
           </h2>
           <div style={{ display: 'flex', gap: '0.5rem' }}>

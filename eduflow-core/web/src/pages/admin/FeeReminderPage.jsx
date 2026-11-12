@@ -332,7 +332,7 @@ export default function FeeReminderPage() {
 
       {/* Progressive Tier Breakdown Tabs & Table */}
       <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white py-3">
+        <div className="card-header bg-transparent py-3">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h5 className="mb-0 fw-bold">Overdue Invoices & Action Pipeline</h5>
@@ -495,7 +495,7 @@ export default function FeeReminderPage() {
         {/* Four Tier Tone Showcase */}
         <div className="col-lg-7">
           <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white py-3">
+            <div className="card-header bg-transparent py-3">
               <h5 className="mb-0 fw-bold">4-Tier Progressive Reminder Tones</h5>
               <p className="text-muted small mb-0">Indian institutional tone guidelines calibrated for maximum compliance and empathy.</p>
             </div>
@@ -628,7 +628,7 @@ export default function FeeReminderPage() {
         {/* Automation Settings & Cadence */}
         <div className="col-lg-5">
           <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white py-3">
+            <div className="card-header bg-transparent py-3">
               <h5 className="mb-0 fw-bold">Scheduler & Cadence Settings</h5>
               <p className="text-muted small mb-0">Configure daily automated execution and recipient channels.</p>
             </div>
@@ -732,7 +732,7 @@ export default function FeeReminderPage() {
 
       {/* Dispatch History Audit Table */}
       <div className="card shadow-sm border-0">
-        <div className="card-header bg-white py-3">
+        <div className="card-header bg-transparent py-3">
           <h5 className="mb-0 fw-bold">Recent Reminder Dispatch Audit Log (Last 100)</h5>
           <p className="text-muted small mb-0">Immutable tracking of delivered reminders with timestamps and channels.</p>
         </div>

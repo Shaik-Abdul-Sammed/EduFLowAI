@@ -9,7 +9,13 @@ export default function ChildTracking() {
 
   useEffect(() => {
     const socketUrl = getApiBaseURL().replace(/\/api\/?$/, '')
-    const socket = io(socketUrl)
+    const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
+      timeout: 8000,
+    })
 
     socket.on('connect', () => {
       setIsConnected(true)
