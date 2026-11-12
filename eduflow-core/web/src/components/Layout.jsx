@@ -60,6 +60,13 @@ export default function Layout({ routes }) {
   // If user is logged in, show Sidebar + Content area + TourGuide
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--app-bg)' }}>
+      <a
+        href="#main-content"
+        className="visually-hidden-focusable position-absolute top-0 start-0 p-2 bg-primary text-white"
+        style={{ zIndex: 9999 }}
+      >
+        Skip to main content
+      </a>
       {isAuthenticated && user && (
         <Sidebar routes={routes} isOpen={sidebarOpen} setOpen={setSidebarOpen} />
       )}
@@ -80,7 +87,7 @@ export default function Layout({ routes }) {
         
         <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
         
-        <main style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
+        <main id="main-content" style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
           <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
             {!isDashboardRoot ? (
               <button

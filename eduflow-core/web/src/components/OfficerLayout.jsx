@@ -1148,9 +1148,13 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.45rem', marginTop: '0.5rem', paddingTop: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
                         <button
                           type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(msg.content);
-                            addToast('Prompt copied to clipboard.', 'success');
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(msg.content);
+                              addToast('Prompt copied to clipboard.', 'success');
+                            } catch {
+                              addToast('Could not copy to clipboard. Please select text manually.', 'warning');
+                            }
                           }}
                           title="Copy prompt"
                           aria-label="Copy prompt"
@@ -1465,7 +1469,7 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
               >
                 <Paperclip size={16} />
               </button>
-              <input ref={fileInputRef} type="file" aria-label="Attach file" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt,.png,.jpg,.jpeg,.webp,.svg,image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+              <input ref={fileInputRef} type="file" aria-label="Upload document for AI analysis" accept=".pdf,.xlsx,.xls,.csv,.docx,.txt,.png,.jpg,.jpeg,.webp,.svg,image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 
               <textarea
                 ref={textareaRef}
@@ -1898,9 +1902,13 @@ export default function OfficerLayout({ config, topBarExtra = null, payloadBuild
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
                     <button
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(previewContent);
-                        addToast('Raw content copied to clipboard.', 'success');
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(previewContent);
+                          addToast('Raw content copied to clipboard.', 'success');
+                        } catch {
+                          addToast('Could not copy to clipboard. Please select text manually.', 'warning');
+                        }
                       }}
                       style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', borderRadius: '4px', padding: '0.3rem 0.65rem', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >

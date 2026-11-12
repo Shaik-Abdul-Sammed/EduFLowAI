@@ -91,15 +91,9 @@ export default function LeadManagementPage() {
 
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
-      const created = new Date(lead.created_at).getTime()
-      if (startDate) {
-        const start = new Date(startDate).setHours(0, 0, 0, 0)
-        if (created < start) return false
-      }
-      if (endDate) {
-        const end = new Date(endDate).setHours(23, 59, 59, 999)
-        if (created > end) return false
-      }
+      const leadDateStr = String(lead.created_at || '').slice(0, 10)
+      if (startDate && leadDateStr && leadDateStr < startDate) return false
+      if (endDate && leadDateStr && leadDateStr > endDate) return false
       return true
     })
   }, [leads, startDate, endDate])
@@ -175,7 +169,8 @@ export default function LeadManagementPage() {
       }
       showToast('Notes saved')
     } catch (err) {
-      showToast(err.message, true)
+      setNotesDraft(selectedLead?.notes || '')
+      showToast(err.message || 'Failed to autosave notes', true)
     }
   }
 

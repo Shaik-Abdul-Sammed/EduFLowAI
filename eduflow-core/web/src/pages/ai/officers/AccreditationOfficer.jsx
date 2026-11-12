@@ -110,27 +110,34 @@ export default function AccreditationOfficer() {
     }
   }, [userInput]);
 
+  const detectCriterionFromText = (text) => {
+    if (!text) return null;
+    const numMatch = text.match(/criterion\s*([1-7])/i) || text.match(/criteria\s*([1-7])/i);
+    if (numMatch) return `Criterion ${numMatch[1]}`;
+    if (/all\s*criteria/i.test(text) || /full\s*ssr/i.test(text)) return 'All Criteria';
+    if (/curricular|curriculum/i.test(text)) return 'Criterion 1';
+    if (/teaching|learning|pedagogy|faculty ratio/i.test(text)) return 'Criterion 2';
+    if (/research|innovation|extension|publication|scopus/i.test(text)) return 'Criterion 3';
+    if (/infrastructure|lab|library|hostel|campus/i.test(text)) return 'Criterion 4';
+    if (/student support|progression|placement|alumni/i.test(text)) return 'Criterion 5';
+    if (/governance|leadership|management|iqac/i.test(text)) return 'Criterion 6';
+    if (/institutional values|best practice|distinctiveness|green campus/i.test(text)) return 'Criterion 7';
+    return null;
+  };
+
   const handlePromptChange = (text) => {
     setUserInput(text || '');
     if (!text) return;
-    const match = text.match(/criterion\s*([1-7])/i) || text.match(/criteria\s*([1-7])/i);
-    if (match) {
-      const num = match[1];
-      setSelectedCriterion(`Criterion ${num}`);
-    } else if (/all\s*criteria/i.test(text) || /full\s*ssr/i.test(text)) {
-      setSelectedCriterion('All Criteria');
+    const detected = detectCriterionFromText(text);
+    if (detected) {
+      setSelectedCriterion(detected);
     }
   };
 
   const payloadBuilder = (promptText) => {
     let criterionToSend = selectedCriterion;
     if (!criterionToSend && promptText) {
-      const match = promptText.match(/criterion\s*([1-7])/i) || promptText.match(/criteria\s*([1-7])/i);
-      if (match) {
-        criterionToSend = `Criterion ${match[1]}`;
-      } else if (/all\s*criteria/i.test(promptText) || /full\s*ssr/i.test(promptText)) {
-        criterionToSend = 'All Criteria';
-      }
+      criterionToSend = detectCriterionFromText(promptText) || 'All Criteria';
     }
     return {
       reportType: promptText,
@@ -148,6 +155,7 @@ export default function AccreditationOfficer() {
       <select
         id="naac-criteria-select"
         data-testid="naac-criteria-select"
+        aria-label="Select NAAC Criterion"
         value={selectedCriterion}
         onChange={(e) => {
           const val = e.target.value;

@@ -180,8 +180,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/portal')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/portal') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Student Portal & Database records"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>🎓</span>
@@ -201,8 +203,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/staff')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/staff') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Faculty & Staff directory"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>👨‍🏫</span>
@@ -222,8 +226,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/calendar')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/calendar') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Academic Calendar and courses"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>📚</span>
@@ -243,8 +249,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/attendance')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/attendance') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Today's Biometric Attendance"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>📊</span>
@@ -267,8 +275,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/attendance')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/attendance') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View At-Risk Students under statutory 75 percent attendance"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>⚠️</span>
@@ -288,8 +298,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/hod-dashboard')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/hod-dashboard') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Pending Approvals for HODs"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>⏳</span>
@@ -309,8 +321,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/leads')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/leads') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View New Unread Institutional Inquiries and Leads"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>📥</span>
@@ -330,8 +344,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100"
                 style={{ borderRadius: '1rem', padding: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/finance-dashboard')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/finance-dashboard') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Institutional Fee Collection Efficiency"
               >
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <span style={{ fontSize: '1.25rem' }}>🏛️</span>
@@ -383,8 +399,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100 p-4"
                 style={{ borderRadius: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/officer/accreditation')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/officer/accreditation') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Predicted NAAC SSR Grade and criterion analysis"
               >
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <span className="fw-bold small text-muted text-uppercase">Predicted NAAC SSR Grade</span>
@@ -412,7 +430,7 @@ export default function DashboardHome({ role, routes = [] }) {
                     <circle cx="100" cy="8" r="3" fill="#10B981" />
                     <circle cx="135" cy="2" r="4" fill="#059669" />
                   </svg>
-                  <span className="small text-success fw-bold ms-auto" style={{ fontSize: '0.75rem' }}>+8.5% YoY</span>
+                  <span className="small text-success fw-bold ms-auto" style={{ fontSize: '0.75rem' }} aria-label="Increase of 8.5% year over year">+8.5% YoY</span>
                 </div>
               </div>
             </div>
@@ -422,8 +440,10 @@ export default function DashboardHome({ role, routes = [] }) {
                 className="card border-0 shadow-sm h-100 p-4"
                 style={{ borderRadius: '1.25rem', cursor: 'pointer', background: 'var(--card-bg)' }}
                 onClick={() => navigate('/admin-dashboard/nirf')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/admin-dashboard/nirf') } }}
                 role="button"
                 tabIndex={0}
+                aria-label="View Predicted NIRF Rank Band and parameter breakdown"
               >
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <span className="fw-bold small text-muted text-uppercase">Predicted NIRF Rank</span>

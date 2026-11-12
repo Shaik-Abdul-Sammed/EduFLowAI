@@ -466,6 +466,10 @@ export default function AcademicCalendarPage() {
 
   const handlePublish = async () => {
     if (!calendarData?.id) return
+    if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+      const ok = window.confirm('Are you sure you want to officially publish this Academic Calendar? This will notify faculty, HODs, and students.')
+      if (!ok) return
+    }
     setIsPublishing(true)
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
@@ -1045,7 +1049,13 @@ export default function AcademicCalendarPage() {
                 type="date"
                 className="form-control form-control-sm"
                 value={collegeStartDate}
-                onChange={(e) => setCollegeStartDate(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setCollegeStartDate(val)
+                  if (collegeEndDate && val > collegeEndDate) {
+                    addToast('Start date cannot be later than end date of working days.', 'warning')
+                  }
+                }}
               />
             </div>
             <div className="col-12 col-md-4">
@@ -1054,7 +1064,14 @@ export default function AcademicCalendarPage() {
                 type="date"
                 className="form-control form-control-sm"
                 value={collegeEndDate}
-                onChange={(e) => setCollegeEndDate(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (collegeStartDate && val < collegeStartDate) {
+                    addToast('End date cannot be earlier than start date of college.', 'error')
+                    return
+                  }
+                  setCollegeEndDate(val)
+                }}
               />
             </div>
           </div>

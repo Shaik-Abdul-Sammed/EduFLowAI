@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { getFullApiUrl } from '../../config/apiConfig'
+import { getFullApiUrl, getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 import {
   MessageSquare,
@@ -27,7 +27,7 @@ export default function WhatsAppAttendancePage() {
     configured: false,
     service: 'Console Simulator Mode',
     senderNumber: '+91 99000 11222',
-    webhookUrl: 'https://eduflow-backend-jvn8.onrender.com/api/v1/whatsapp/webhook'
+    webhookUrl: `${getApiBaseURL()}/v1/whatsapp/webhook`
   })
 
   // Simulator state
@@ -129,11 +129,23 @@ export default function WhatsAppAttendancePage() {
       const res = await fetch(getFullApiUrl('/v1/whatsapp/logs'), { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await safeJson(res)
-        if (isMounted) setLogsList(data.logs || [])
+        if (isMounted && data.logs?.length > 0) {
+          setLogsList(data.logs)
+          return
+        }
       }
     } catch (err) {
       console.warn('Failed to fetch WhatsApp logs:', err)
     }
+    try {
+      const saved = localStorage.getItem('eduflow_whatsapp_demo_logs')
+      if (saved && isMounted) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLogsList(parsed)
+        }
+      }
+    } catch {}
   }
 
   const fetchFaculty = async (isMounted = true) => {
@@ -203,6 +215,9 @@ export default function WhatsAppAttendancePage() {
       },
     ]
     setLogsList(demoLogs)
+    try {
+      localStorage.setItem('eduflow_whatsapp_demo_logs', JSON.stringify(demoLogs))
+    } catch {}
     setActionMsg('Loaded demo reports: Attendance alerts, Fee reminders, and Leave approvals.')
     setTimeout(() => setActionMsg(''), 4000)
   }

@@ -24,10 +24,15 @@ export default function UPICollectionPage() {
   // High-resolution public QR code render using open API
   const qrImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiLink)}`
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(upiLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(upiLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   const handleMarkPaidManual = async (e) => {
@@ -80,13 +85,22 @@ export default function UPICollectionPage() {
             <h5 className="fw-bold mb-1">Scan & Pay via Any UPI App</h5>
             <small className="text-muted mb-3 d-block">GPay, PhonePe, Paytm, BHIM</small>
 
-            <div className="d-flex justify-content-center p-3 bg-light rounded border mb-3">
+            <div className="d-flex flex-column align-items-center p-3 bg-light rounded border mb-3">
               <img
                 src={qrImageSrc}
-                alt="UPI Payment QR Code"
+                alt={`UPI Payment QR Code for ₹${Number(amount || 0).toLocaleString('en-IN')} to ${institutionName} (${upiId})`}
+                aria-label={`UPI Payment QR Code for ₹${Number(amount || 0).toLocaleString('en-IN')} to ${institutionName} (${upiId})`}
                 className="img-fluid"
                 style={{ width: '220px', height: '220px' }}
+                onError={(e) => {
+                  e.target.style.display = 'none'
+                  if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'
+                }}
               />
+              <div style={{ display: 'none', width: '220px', height: '220px', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '1rem' }}>
+                <span style={{ fontSize: '2rem' }}>📱</span>
+                <span className="small mt-2 text-center text-muted">Pay ₹{Number(amount || 0).toLocaleString('en-IN')} via UPI to <strong>{upiId}</strong></span>
+              </div>
             </div>
 
             <div className="p-2 bg-light rounded text-start small mb-3">
