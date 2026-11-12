@@ -94,7 +94,7 @@ export function createOfficerRouter() {
    * Chat with a specific AI Officer.
    * Body: { messages, digitalTwin, actionType }
    */
-  router.post('/:type/chat', requireRole(['admin', 'faculty']), async (req, res) => {
+  router.post('/:type/chat', requireRole(['admin', 'hod', 'faculty', 'staff']), async (req, res) => {
     try {
       const { type } = req.params
       if (!VALID_OFFICERS.includes(type)) {

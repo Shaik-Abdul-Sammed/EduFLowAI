@@ -41,8 +41,9 @@ const stats = [
 function AnimatedNumber({ value }) {
   const [display, setDisplay] = useState('0')
   useEffect(() => {
-    const numeric = parseInt(value.replace(/\D/g, ''), 10)
-    if (isNaN(numeric)) { setTimeout(() => setDisplay(value), 0); return }
+    const raw = String(value || '').replace(/\D/g, '')
+    const numeric = raw ? parseInt(raw, 10) : NaN
+    if (Number.isNaN(numeric) || !Number.isFinite(numeric)) { setTimeout(() => setDisplay(value || '0'), 0); return }
     let start = 0
     const step = Math.ceil(numeric / 40)
     const timer = setInterval(() => {

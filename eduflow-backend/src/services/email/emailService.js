@@ -13,20 +13,30 @@ import { logger } from '../../utils/logger.js'
  * }} options
  */
 export async function sendEmail({ to, subject, html, text, attachments = [] }) {
-  logger.info({
-    to,
-    subject,
-    attachmentCount: attachments.length,
-    timestamp: new Date().toISOString(),
-  }, `[Email Dispatch] Sending email to ${to}`)
+  try {
+    logger.info({
+      to,
+      subject,
+      attachmentCount: attachments.length,
+      timestamp: new Date().toISOString(),
+    }, `[Email Dispatch] Sending email to ${to}`)
 
-  // In production with SMTP configured, this would send via nodemailer.
-  // In development / demo mode, we log cleanly and return success.
-  return {
-    success: true,
-    messageId: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-    to,
-    subject,
+    // In production with SMTP configured, this would send via nodemailer.
+    // In development / demo mode, we log cleanly and return success.
+    return {
+      success: true,
+      messageId: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      to,
+      subject,
+    }
+  } catch (error) {
+    logger.error({ error: error.message, to, subject }, '[Email Dispatch Failed]')
+    return {
+      success: false,
+      error: error.message,
+      to,
+      subject,
+    }
   }
 }
 

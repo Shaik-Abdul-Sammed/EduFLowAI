@@ -55,11 +55,21 @@ export class CacheService {
    * @param {number} [ttlMs] - Cache duration
    */
   static async getOrSet(key, fetcher, ttlMs) {
-    const cached = this.get(key)
-    if (cached !== undefined) return cached
+    try {
+      const cached = this.get(key)
+      if (cached !== undefined) return cached
+    } catch {
+      // cache read failure should not block fetching
+    }
 
     const data = await fetcher()
-    this.set(key, data, ttlMs)
+
+    try {
+      this.set(key, data, ttlMs)
+    } catch {
+      // cache write failure should not break response
+    }
+
     return data
   }
 }

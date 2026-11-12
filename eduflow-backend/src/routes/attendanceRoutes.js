@@ -8,6 +8,7 @@ router.use(authMiddleware)
 
 router.get('/stats', AttendanceController.getStats)
 router.get('/at-risk', AttendanceController.getAtRisk)
+router.get('/student/:studentId', AttendanceController.getStudentAttendance)
 router.post('/upload-csv', requireRole('admin', 'hod', 'staff'), AttendanceController.uploadCsv)
 router.post('/ingest/sample', requireRole('admin', 'hod', 'staff'), AttendanceController.ingestSample)
 router.post('/sync-now', requireRole('admin', 'hod'), AttendanceController.syncNow)

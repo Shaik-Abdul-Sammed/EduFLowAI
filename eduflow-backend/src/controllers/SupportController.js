@@ -125,4 +125,41 @@ export class SupportController {
       return res.status(500).json({ error: err.message })
     }
   }
+
+  static async resolveTicket(req, res) {
+    try {
+      const { id } = req.params
+      const { resolutionNotes } = req.body || {}
+
+      try {
+        const result = await pool.query(
+          `UPDATE support_tickets 
+           SET status = 'resolved',
+               response = COALESCE($1, response, 'Resolved by support team'),
+               resolved_at = NOW(),
+               updated_at = NOW()
+           WHERE id = $2
+           RETURNING *`,
+          [resolutionNotes || null, id]
+        )
+        if (result.rows.length > 0) {
+          return res.status(200).json({ success: true, message: 'Ticket resolved successfully', ticket: result.rows[0] })
+        }
+      } catch (err) {
+        // memory fallback
+      }
+
+      const ticket = memoryTickets.find(t => String(t.id) === String(id))
+      if (ticket) {
+        ticket.status = 'resolved'
+        ticket.response = resolutionNotes || ticket.response || 'Resolved by support team'
+        ticket.resolved_at = new Date().toISOString()
+        return res.status(200).json({ success: true, message: 'Ticket resolved successfully', ticket })
+      }
+
+      return res.status(404).json({ error: 'Support ticket not found' })
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
 }

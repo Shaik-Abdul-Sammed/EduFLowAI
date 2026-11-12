@@ -93,9 +93,11 @@ export default function InvoiceGeneratorPage() {
       const updated = [...prev]
       const item = { ...updated[index], [field]: value }
       if (field === 'quantity' || field === 'rate') {
-        const q = field === 'quantity' ? Number(value) : item.quantity
-        const r = field === 'rate' ? Number(value) : item.rate
-        item.amount = (q || 0) * (r || 0)
+        const rawQ = field === 'quantity' ? value : item.quantity
+        const rawR = field === 'rate' ? value : item.rate
+        const q = Number.isNaN(Number(rawQ)) ? 0 : Number(rawQ)
+        const r = Number.isNaN(Number(rawR)) ? 0 : Number(rawR)
+        item.amount = Math.max(0, q * r)
       }
       updated[index] = item
       return updated
@@ -348,7 +350,7 @@ export default function InvoiceGeneratorPage() {
                       required
                     />
                     <span style={{ width: '120px', fontWeight: 700, fontSize: '0.85rem', textAlign: 'right' }}>
-                      ₹{Number(item.amount).toLocaleString('en-IN')}
+                      ₹{(Number.isNaN(Number(item.amount)) ? 0 : Number(item.amount)).toLocaleString('en-IN')}
                     </span>
                     {items.length > 1 && (
                       <button

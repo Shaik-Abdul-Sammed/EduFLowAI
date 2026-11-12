@@ -13,6 +13,8 @@ router.get('/export-pdf', CalendarController.exportPdf)
 // Admin/HOD operations
 router.use(authMiddleware)
 router.post('/generate', requireRole('admin', 'hod'), CalendarController.generate)
+router.post('/event', requireRole('admin', 'hod', 'faculty', 'staff'), CalendarController.createEvent)
+router.delete('/event/:id', requireRole('admin', 'hod'), CalendarController.deleteEvent)
 router.post('/holidays/refresh', requireRole('admin'), CalendarController.refreshHolidays)
 router.post('/export-pdf', CalendarController.exportPdf)
 router.post('/:calendarId/approve', requireRole('admin'), CalendarController.approve)

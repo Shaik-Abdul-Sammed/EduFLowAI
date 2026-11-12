@@ -28,7 +28,8 @@ export default function Page() {
     e.preventDefault()
     setFormError('')
 
-    const numMarks = Number(form.maxMarks)
+    const parsed = Number(form.maxMarks)
+    const numMarks = Number.isNaN(parsed) ? 0 : parsed
     if (!numMarks || numMarks <= 0) {
       setFormError('Max marks must be greater than zero.')
       return
@@ -164,7 +165,7 @@ export default function Page() {
               </div>
               <div>
                 <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>MAX MARKS (MIN 1)</label>
-                <input type="number" min="1" max="100" className="form-control form-control-sm" value={form.maxMarks} onChange={e => setForm(p => ({ ...p, maxMarks: Number(e.target.value) }))} />
+                <input type="number" min="1" max="100" className="form-control form-control-sm" value={form.maxMarks} onChange={e => { const val = Number(e.target.value); setForm(p => ({ ...p, maxMarks: Number.isNaN(val) ? 100 : val })) }} />
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>

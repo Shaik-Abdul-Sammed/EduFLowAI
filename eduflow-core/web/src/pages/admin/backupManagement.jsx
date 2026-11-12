@@ -52,19 +52,31 @@ export default function Page() {
   }, [])
 
   async function handleSnapshot() {
-    const snapshot = await createBackupSnapshot('manual backup from admin portal')
-    setMessage(`Created snapshot ${snapshot?.id ?? 'unknown'}`)
-    await refresh()
+    try {
+      const snapshot = await createBackupSnapshot('manual backup from admin portal')
+      setMessage(`Created snapshot ${snapshot?.id ?? 'unknown'}`)
+      await refresh()
+    } catch (err) {
+      setMessage(`Snapshot failed: ${err.message || 'Unknown error'}`)
+    }
   }
 
   async function handleExport(snapshotId) {
-    const payload = await exportBackupSnapshot(snapshotId)
-    setMessage(`Prepared export for ${payload?.snapshot?.id ?? snapshotId}`)
+    try {
+      const payload = await exportBackupSnapshot(snapshotId)
+      setMessage(`Prepared export for ${payload?.snapshot?.id ?? snapshotId}`)
+    } catch (err) {
+      setMessage(`Export failed: ${err.message || 'Unknown error'}`)
+    }
   }
 
   async function handlePreviewRestore(snapshotId) {
-    const result = await restoreBackupSnapshot(snapshotId, 'preview')
-    setMessage(`Preview restore ready for ${result.snapshotId} (${result.restored} records)`)
+    try {
+      const result = await restoreBackupSnapshot(snapshotId, 'preview')
+      setMessage(`Preview restore ready for ${result.snapshotId} (${result.restored} records)`)
+    } catch (err) {
+      setMessage(`Restore preview failed: ${err.message || 'Unknown error'}`)
+    }
   }
 
   return (

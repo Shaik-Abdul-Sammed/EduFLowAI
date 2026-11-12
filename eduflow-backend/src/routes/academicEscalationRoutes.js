@@ -39,6 +39,18 @@ router.post(
   AcademicEscalationController.reject
 )
 
+// Acknowledge escalation
+router.patch(
+  '/:id/acknowledge',
+  requireRole('hod', 'admin', 'faculty', 'staff'),
+  AcademicEscalationController.acknowledge
+)
+router.post(
+  '/:id/acknowledge',
+  requireRole('hod', 'admin', 'faculty', 'staff'),
+  AcademicEscalationController.acknowledge
+)
+
 // Summary for Dean / Registrar / Finance Officer
 router.get(
   '/summary',

@@ -29,7 +29,8 @@ export default function Page() {
     setFormError('')
 
     // Broken Rule Fix: fee amount must be strictly positive
-    const numAmount = Number(form.amount)
+    const parsed = Number(form.amount)
+    const numAmount = Number.isNaN(parsed) ? 0 : parsed
     if (!numAmount || numAmount <= 0) {
       setFormError('Fee transaction amount must be greater than zero.')
       return

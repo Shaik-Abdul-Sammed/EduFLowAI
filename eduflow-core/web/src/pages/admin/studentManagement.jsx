@@ -180,7 +180,7 @@ export default function Page() {
               </div>
               <div>
                 <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>ACADEMIC YEAR</label>
-                <input type="number" min="1" max="4" className="form-control form-control-sm" value={form.year} onChange={e => setForm(p => ({ ...p, year: Number(e.target.value) }))} />
+                <input type="number" min="1" max="4" className="form-control form-control-sm" value={form.year} onChange={e => { const val = Number(e.target.value); setForm(p => ({ ...p, year: Number.isNaN(val) ? 1 : Math.max(1, Math.min(4, val)) })) }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>PARENT CONTACT PHONE (10 DIGITS)</label>

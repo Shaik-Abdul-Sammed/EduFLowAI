@@ -74,6 +74,7 @@ export default function LeadManagementPage() {
       setLeads(data.leads || [])
     } catch (err) {
       setError(err.message || 'Error fetching leads')
+      showToast(err.message || 'Error fetching leads', true)
     } finally {
       setLoading(false)
     }

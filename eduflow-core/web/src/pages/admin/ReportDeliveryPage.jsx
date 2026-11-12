@@ -121,7 +121,7 @@ export default function ReportDeliveryPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          leadId: selectedLeadId ? parseInt(selectedLeadId, 10) : null,
+          leadId: selectedLeadId && !Number.isNaN(parseInt(selectedLeadId, 10)) ? parseInt(selectedLeadId, 10) : null,
           collegeName,
           contactEmail,
           reportType,

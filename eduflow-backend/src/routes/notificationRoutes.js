@@ -83,7 +83,7 @@ export function createNotificationRouter(db = pool) {
     })
   })
 
-  router.post('/read-all', async (req, res) => {
+  const markAllAsReadHandler = async (req, res) => {
     const userId = String(req.user?.id || req.body?.userId || 'demo')
     if (!readByUser.has(userId)) {
       readByUser.set(userId, new Set())
@@ -91,7 +91,12 @@ export function createNotificationRouter(db = pool) {
     const userReads = readByUser.get(userId)
     BASE_NOTIFICATIONS.forEach((n) => userReads.add(n.id))
     res.json({ success: true, message: 'All notifications marked as read' })
-  })
+  }
+
+  router.post('/read-all', markAllAsReadHandler)
+  router.put('/read-all', markAllAsReadHandler)
+  router.put('/mark-all-read', markAllAsReadHandler)
+  router.post('/mark-all-read', markAllAsReadHandler)
 
   router.post('/:id/read', async (req, res) => {
     const { id } = req.params

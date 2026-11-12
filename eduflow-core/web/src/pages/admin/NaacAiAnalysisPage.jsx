@@ -135,6 +135,7 @@ export default function NaacAiAnalysisPage() {
   ])
 
   // Section 4: Visit Predictor
+  const [selectedAnalysisDetail, setSelectedAnalysisDetail] = useState(null)
   const [predictingVisit, setPredictingVisit] = useState(false)
   const [visitPrediction, setVisitPrediction] = useState({
     predictedScore: 3.38,
@@ -1266,7 +1267,7 @@ export default function NaacAiAnalysisPage() {
                     <td className="py-3 px-4 text-end">
                       <div className="btn-group btn-group-sm">
                         <button
-                          onClick={() => alert(`Analysis details: ${item.summary}`)}
+                          onClick={() => setSelectedAnalysisDetail(item)}
                           className="btn btn-outline-secondary text-light btn-sm"
                         >
                           View
@@ -1286,6 +1287,77 @@ export default function NaacAiAnalysisPage() {
           </div>
         </div>
       </div>
+
+      {/* Analysis Detail Modal */}
+      {selectedAnalysisDetail && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedAnalysisDetail(null)
+          }}
+        >
+          <div
+            className="card border-0 shadow-lg rounded-4 overflow-hidden"
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              backgroundColor: 'var(--card-bg, #0f172a)',
+              color: 'var(--app-text, #f1f5f9)',
+              border: '1px solid var(--border-color, #334155)',
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center p-4 border-bottom" style={{ borderColor: 'var(--border-color, #334155)' }}>
+              <div>
+                <span className="badge bg-primary-subtle text-primary mb-1">{selectedAnalysisDetail.type} Analysis</span>
+                <h5 className="mb-0 fw-bold">{selectedAnalysisDetail.criterionOrGrade}</h5>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary rounded-circle"
+                onClick={() => setSelectedAnalysisDetail(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4">
+              <h6 className="fw-semibold text-muted mb-2">Detailed Findings &amp; Statutory Recommendation</h6>
+              <p className="mb-4" style={{ lineHeight: 1.6 }}>{selectedAnalysisDetail.summary}</p>
+              <div className="d-flex justify-content-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setSelectedAnalysisDetail(null)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={() => {
+                    handleDownloadPdf(`${selectedAnalysisDetail.type} Analysis - ${selectedAnalysisDetail.criterionOrGrade}`)
+                    setSelectedAnalysisDetail(null)
+                  }}
+                >
+                  Download Report PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

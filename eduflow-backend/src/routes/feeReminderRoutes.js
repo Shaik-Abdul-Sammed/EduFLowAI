@@ -6,6 +6,8 @@ export function createFeeReminderRouter() {
 
   router.get('/pending', FeeReminderController.getPending)
   router.post('/send-now', FeeReminderController.sendNow)
+  router.post('/bulk-send', FeeReminderController.sendNow)
+  router.post('/send', FeeReminderController.sendNow)
   router.get('/history', FeeReminderController.getHistory)
   router.get('/settings', FeeReminderController.getSettings)
   router.post('/settings', FeeReminderController.updateSettings)

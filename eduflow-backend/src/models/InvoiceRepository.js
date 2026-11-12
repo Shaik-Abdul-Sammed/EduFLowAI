@@ -45,6 +45,12 @@ export class InvoiceRepository {
 
     const invoiceNumber = data.invoiceNumber || (await this.getNextInvoiceNumber())
 
+    const safeAmount = !Number.isNaN(Number(amount)) ? Number(amount) : 0
+    const safeSubtotal = !Number.isNaN(Number(subtotal)) ? Number(subtotal) : safeAmount
+    const safeTaxPercent = !Number.isNaN(Number(taxPercent)) ? Number(taxPercent) : 18.0
+    const safeTaxAmount = !Number.isNaN(Number(taxAmount)) ? Number(taxAmount) : 0
+    const safeTotalAmount = !Number.isNaN(Number(totalAmount)) ? Number(totalAmount) : (safeSubtotal + safeTaxAmount)
+
     try {
       if (!pool.isMemoryMode) {
         const query = `
@@ -66,11 +72,11 @@ export class InvoiceRepository {
           address,
           gstNumber,
           JSON.stringify(items),
-          amount,
-          subtotal,
-          taxPercent,
-          taxAmount,
-          totalAmount,
+          safeAmount,
+          safeSubtotal,
+          safeTaxPercent,
+          safeTaxAmount,
+          safeTotalAmount,
           currency,
           description,
           bankDetails,
@@ -101,11 +107,11 @@ export class InvoiceRepository {
         address,
         gst_number: gstNumber,
         items,
-        amount,
-        subtotal,
-        tax_percent: taxPercent,
-        tax_amount: taxAmount,
-        total_amount: totalAmount,
+        amount: safeAmount,
+        subtotal: safeSubtotal,
+        tax_percent: safeTaxPercent,
+        tax_amount: safeTaxAmount,
+        total_amount: safeTotalAmount,
         currency,
         description,
         status: 'UNPAID',

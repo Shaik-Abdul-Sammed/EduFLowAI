@@ -8,6 +8,7 @@ export function createSupportRouter() {
   router.post('/tickets', SupportController.createTicket)
   router.get('/tickets', SupportController.getTickets)
   router.patch('/tickets/:id', SupportController.updateTicket)
+  router.patch('/tickets/:id/resolve', SupportController.resolveTicket)
 
   return router
 }

@@ -80,8 +80,10 @@ export function generateInvoicePdfBuffer(invoice) {
   for (const item of parsedItems) {
     const desc = escapePdfText(item.description || 'Service')
     const qty = String(item.quantity || 1)
-    const rate = Number(item.rate || 0).toLocaleString('en-IN')
-    const amt = Number(item.amount || 0).toLocaleString('en-IN')
+    const numRate = Number(item.rate)
+    const numAmt = Number(item.amount)
+    const rate = (Number.isNaN(numRate) ? 0 : numRate).toLocaleString('en-IN')
+    const amt = (Number.isNaN(numAmt) ? 0 : numAmt).toLocaleString('en-IN')
 
     streamContent += `(${desc}) Tj 260 0 Td (${qty}) Tj 60 0 Td (${rate}) Tj 80 0 Td (${amt}) Tj -400 -18 Td\n`
     y -= 18
@@ -90,10 +92,17 @@ export function generateInvoicePdfBuffer(invoice) {
 
   // Totals Section
   const totalsY = Math.max(y - 20, 260)
+  const numSubtotal = Number(subtotal)
+  const numTax = Number(tax_amount)
+  const numTotal = Number(total_amount)
+  const safeSubtotal = Number.isNaN(numSubtotal) ? 0 : numSubtotal
+  const safeTax = Number.isNaN(numTax) ? 0 : numTax
+  const safeTotal = Number.isNaN(numTotal) ? 0 : numTotal
+
   streamContent += `q 0.85 0.85 0.85 rg 320 ${totalsY + 45} 242 1 re f Q\n`
-  streamContent += `BT\n/F2 10 Tf\n340 ${totalsY + 30} Td\n(Subtotal:) Tj 120 0 Td (${currency} ${Number(subtotal).toLocaleString('en-IN')}) Tj\n`
-  streamContent += `-120 -16 Td (GST @ ${tax_percent}%:) Tj 120 0 Td (${currency} ${Number(tax_amount).toLocaleString('en-IN')}) Tj\n`
-  streamContent += `/F1 11 Tf\n-120 -20 Td (TOTAL PAYABLE:) Tj 120 0 Td (${currency} ${Number(total_amount).toLocaleString('en-IN')}) Tj\n`
+  streamContent += `BT\n/F2 10 Tf\n340 ${totalsY + 30} Td\n(Subtotal:) Tj 120 0 Td (${currency} ${safeSubtotal.toLocaleString('en-IN')}) Tj\n`
+  streamContent += `-120 -16 Td (GST @ ${tax_percent}%:) Tj 120 0 Td (${currency} ${safeTax.toLocaleString('en-IN')}) Tj\n`
+  streamContent += `/F1 11 Tf\n-120 -20 Td (TOTAL PAYABLE:) Tj 120 0 Td (${currency} ${safeTotal.toLocaleString('en-IN')}) Tj\n`
   streamContent += 'ET\n'
 
   // Bank & Payment Details
@@ -243,10 +252,19 @@ export class InvoiceController {
       }
       contactEmail = contactEmail || 'billing@demo.edu'
 
-      const computedSubtotal = items.reduce((sum, item) => sum + (item.amount || item.rate * item.quantity), 0)
-      subtotal = subtotal !== undefined ? subtotal : computedSubtotal
-      taxAmount = taxAmount !== undefined ? taxAmount : (subtotal * taxPercent) / 100
-      totalAmount = totalAmount !== undefined ? totalAmount : subtotal + taxAmount
+      const computedSubtotal = items.reduce((sum, item) => {
+        const itemAmt = Number(item.amount)
+        const itemRate = Number(item.rate)
+        const itemQty = Number(item.quantity)
+        const val = !Number.isNaN(itemAmt) ? itemAmt : (!Number.isNaN(itemRate) && !Number.isNaN(itemQty) ? itemRate * itemQty : 0)
+        return sum + val
+      }, 0)
+      const numSub = Number(subtotal)
+      const numTaxPct = Number(taxPercent)
+      const safeTaxPct = Number.isNaN(numTaxPct) ? 18 : numTaxPct
+      subtotal = !Number.isNaN(numSub) ? numSub : computedSubtotal
+      taxAmount = taxAmount !== undefined && !Number.isNaN(Number(taxAmount)) ? Number(taxAmount) : (subtotal * safeTaxPct) / 100
+      totalAmount = totalAmount !== undefined && !Number.isNaN(Number(totalAmount)) ? Number(totalAmount) : subtotal + taxAmount
 
       const invoice = await InvoiceRepository.create({
         leadId: leadId ? Number(leadId) : null,

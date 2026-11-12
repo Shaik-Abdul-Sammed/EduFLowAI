@@ -34,7 +34,9 @@ export default function Page() {
 
   function addQuestion(e) {
     e.preventDefault()
-    setQuestions(prev => [{ id: Date.now(), ...form, marks: parseInt(form.marks) }, ...prev])
+    const parsedMarks = parseInt(form.marks, 10)
+    const marks = Number.isNaN(parsedMarks) || parsedMarks <= 0 ? 1 : parsedMarks
+    setQuestions(prev => [{ id: Date.now(), ...form, marks }, ...prev])
     setForm({ text: '', subject: 'Physics', difficulty: 'Medium', type: 'MCQ', marks: '2', year: '2026' })
     setShowForm(false)
     setAdded(true)

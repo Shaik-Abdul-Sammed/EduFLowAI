@@ -45,6 +45,7 @@ import { createComplianceRouter } from './routes/complianceRoutes.js'
 import { createLiveDataRouter } from './routes/liveDataRoutes.js'
 import { createPaymentRouter } from './routes/paymentRoutes.js'
 import { createInstitutionalNeedsRouter } from './routes/institutionalNeedsRoutes.js'
+import { createCampusRouter } from './routes/campusRoutes.js'
 import { authMiddleware } from './middleware/auth.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
@@ -180,6 +181,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/guardianwatch', createGuardianWatchRouter())
   app.use('/api/v1/digital-twin', createDigitalTwinRouter())
   app.use('/api/v1/user', createUserRouter())
+  app.use('/api/v1/users', createUserRouter())
   app.use('/api/v1/institutions', createInstitutionRouter())
   app.use('/api/v1/institution', createInstitutionRouter()) // alias for plan-config
   app.use('/api/v1/careerforge', createCareerForgeRouter())
@@ -213,6 +215,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/live-data', createLiveDataRouter())
   app.use('/api/v1/payments', createPaymentRouter())
   app.use('/api/v1/payment', createPaymentRouter())
+  app.use('/api/v1/campus', createCampusRouter())
   app.use('/api/v1/institution-operations', createInstitutionalNeedsRouter())
   app.get('/api/v1/activity', authMiddleware, InsightsController.activity)
 

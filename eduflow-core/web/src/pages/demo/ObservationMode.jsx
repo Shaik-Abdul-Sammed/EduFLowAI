@@ -479,7 +479,7 @@ export default function ObservationMode() {
               <button
                 type="button"
                 className="obs-cta-btn flex items-center gap-2"
-                onClick={() => alert('Initiating SSIT Institutional Production Onboarding')}
+                onClick={() => navigate('/for-colleges')}
               >
                 <span>Schedule Institutional Onboarding</span>
                 <ArrowRight size={18} />

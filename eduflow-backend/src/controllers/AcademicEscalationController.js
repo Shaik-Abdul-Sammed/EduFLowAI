@@ -123,6 +123,26 @@ export class AcademicEscalationController {
       return res.status(500).json({ error: err.message })
     }
   }
+
+  /**
+   * PATCH /api/v1/escalations/:id/acknowledge
+   */
+  static async acknowledge(req, res) {
+    try {
+      const { id } = req.params
+      const notes = req.body?.notes || 'Acknowledged by department officer'
+      return res.status(200).json({
+        success: true,
+        message: 'Escalation acknowledged',
+        escalationId: id,
+        acknowledgedBy: req.user?.id || 1,
+        acknowledgedAt: new Date().toISOString(),
+        notes
+      })
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  }
 }
 
 AcademicEscalationController.createEscalation = AcademicEscalationController.raiseEscalation

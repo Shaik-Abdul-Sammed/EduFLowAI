@@ -27,6 +27,13 @@ export default function TimetableUploadPage() {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const validExtensions = ['.csv', '.xlsx', '.xls', '.json']
+    const hasValidExt = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+    if (!hasValidExt) {
+      addToast(`Invalid file type "${file.name}". Please upload a .csv, .xlsx, or .json timetable schedule.`, 'error')
+      e.target.value = ''
+      return
+    }
     setUploadedFile(file)
     addToast(`Uploaded previous semester schedule: ${file.name}`, 'success')
   }

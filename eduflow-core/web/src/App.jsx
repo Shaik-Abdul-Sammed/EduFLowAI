@@ -499,28 +499,25 @@ function App() {
 
         <Route path="/officers" element={<DirectPathRedirect to="/officers-dashboard" />} />
         <Route path="/officer" element={<DirectPathRedirect to="/officers-dashboard" />} />
+        <Route path="/officers/accreditation" element={<Navigate to="/officer/accreditation" replace />} />
+        <Route path="/officers/timetable" element={<Navigate to="/officer/timetable" replace />} />
+        <Route path="/officers/student-success" element={<Navigate to="/officer/student-success" replace />} />
+        <Route path="/officers/admissions" element={<Navigate to="/officer/admissions" replace />} />
+        <Route path="/officers/finance" element={<Navigate to="/officer/finance" replace />} />
+        <Route path="/officers-dashboard/accreditation" element={<Navigate to="/officer/accreditation" replace />} />
+        <Route path="/officers-dashboard/timetable" element={<Navigate to="/officer/timetable" replace />} />
+        <Route path="/officers-dashboard/student-success" element={<Navigate to="/officer/student-success" replace />} />
+        <Route path="/officers-dashboard/admissions" element={<Navigate to="/officer/admissions" replace />} />
+        <Route path="/officers-dashboard/finance" element={<Navigate to="/officer/finance" replace />} />
 
-        {generatedRoutes.map((route) => {
-          const isAllowedInDemo = [
-            'audit-logs', 'leads', 'report-delivery', 'invoices',
-            'naac-dashboard', 'naac-ai-analysis', 'insights', 'nirf',
-            'staff', 'calendar', 'portal', 'attendance'
-          ].includes(route.slug)
-          return (
-            <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
-              <Route
-                path={route.routePath}
-                element={
-                  isDemoMode && !isAllowedInDemo ? (
-                    <ComingSoon moduleName={toTitleCase(route.slug)} />
-                  ) : (
-                    <route.Component />
-                  )
-                }
-              />
-            </Route>
-          )
-        })}
+        {generatedRoutes.map((route) => (
+          <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
+            <Route
+              path={route.routePath}
+              element={<route.Component />}
+            />
+          </Route>
+        ))}
 
             <Route path="*" element={<NotFoundPage />} />
           </Route>

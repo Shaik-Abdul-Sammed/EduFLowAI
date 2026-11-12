@@ -140,10 +140,14 @@ export default function AITerminal() {
   }
 
   const handleFileChange = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    await sendMessage(`Please analyse this document and extract all institution details.`, file.name)
-    e.target.value = ''
+    try {
+      const file = e.target.files?.[0]
+      if (!file) return
+      await sendMessage(`Please analyse this document and extract all institution details.`, file.name)
+      e.target.value = ''
+    } catch (err) {
+      console.error('File change handling error:', err)
+    }
   }
 
   const sidebarW = sidebarOpen ? 260 : 64

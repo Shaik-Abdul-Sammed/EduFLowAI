@@ -62,9 +62,10 @@ export default function LeadIntakePage() {
       errs.cityState = 'City & State is required'
     }
 
+    const countVal = Number(formData.studentCount)
     if (!formData.studentCount) {
       errs.studentCount = 'Number of students is required'
-    } else if (Number(formData.studentCount) <= 0) {
+    } else if (Number.isNaN(countVal) || countVal <= 0) {
       errs.studentCount = 'Must be a positive number'
     }
 
@@ -110,7 +111,7 @@ export default function LeadIntakePage() {
           email: formData.email.trim(),
           phone: formData.phone.trim(),
           cityState: formData.cityState.trim(),
-          studentCount: Number(formData.studentCount),
+          studentCount: Number.isNaN(Number(formData.studentCount)) ? 1000 : Math.max(1, Number(formData.studentCount)),
           naacCycle: formData.naacCycle,
           automationType: formData.automationType || 'accreditation',
           message: formData.message.trim(),
