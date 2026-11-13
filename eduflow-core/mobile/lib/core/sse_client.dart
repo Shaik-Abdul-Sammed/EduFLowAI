@@ -21,7 +21,13 @@ class SSEClient {
     required Map<String, dynamic> payload,
     CancelToken? cancelToken,
   }) async* {
-    final token = await _storage.read(key: 'accessToken');
+    String? token;
+    try {
+      token = await _storage.read(key: 'accessToken');
+    } catch (_) {
+      // Platform channels may be absent in pure unit test environments
+    }
+
     final String cleanType = officerType.trim().toLowerCase();
     final String path = '/officers/$cleanType/stream';
 
@@ -69,8 +75,8 @@ class SSEClient {
 
             try {
               final parsed = jsonDecode(jsonStr);
-              if (parsed is Map<String, dynamic>) {
-                yield parsed;
+              if (parsed is Map) {
+                yield Map<String, dynamic>.from(parsed);
               }
             } catch (_) {
               // Ignore partial/non-json lines
@@ -84,8 +90,8 @@ class SSEClient {
         final jsonStr = lineBuffer.trim().substring(5).trim();
         try {
           final parsed = jsonDecode(jsonStr);
-          if (parsed is Map<String, dynamic>) {
-            yield parsed;
+          if (parsed is Map) {
+            yield Map<String, dynamic>.from(parsed);
           }
         } catch (_) {}
       }

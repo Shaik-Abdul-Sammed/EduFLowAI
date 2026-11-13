@@ -103,7 +103,9 @@ class _LORScreenState extends State<LORScreen> with SingleTickerProviderStateMix
         } else if (type == 'done') {
           setState(() {
             _isStreaming = false;
-            _roiData = event['roi'] as Map<String, dynamic>?;
+            _roiData = event['roi'] != null && event['roi'] is Map
+                ? Map<String, dynamic>.from(event['roi'] as Map)
+                : null;
           });
         } else if (type == 'error') {
           setState(() {

@@ -154,6 +154,51 @@ class DashboardScreen extends StatelessWidget {
                   onTap: () => Navigator.pushNamed(context, '/passport'),
                 ),
               ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                    child: const Icon(Icons.verified_user, color: Colors.amber),
+                  ),
+                  title: const Text('NAAC Accreditation Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('7 Criteria Analysis • Grade A+ (3.42 CGPA)'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/naac-dashboard'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.red.withValues(alpha: 0.15),
+                    child: const Icon(Icons.radar, color: Colors.red),
+                  ),
+                  title: const Text('Career Placement Radar', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('AI Job Matching & Resume Synthesis'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/placement-radar'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blueGrey.withValues(alpha: 0.15),
+                    child: const Icon(Icons.info_outline, color: Colors.blueGrey),
+                  ),
+                  title: const Text('About EduFlow AI OS', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Institutional AI workforce & features overview'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/about'),
+                ),
+              ),
             ],
           ),
         ),

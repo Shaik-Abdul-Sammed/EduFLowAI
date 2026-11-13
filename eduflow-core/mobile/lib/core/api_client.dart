@@ -30,9 +30,7 @@ class ApiClient {
       validateStatus: (status) => status != null && status < 500,
     ));
 
-    if (DemoMode.isEnabled) {
-      dio.interceptors.add(_MockInterceptor());
-    }
+    dio.interceptors.add(_MockInterceptor());
 
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -63,6 +61,9 @@ class ApiClient {
 class _MockInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    if (!DemoMode.isEnabled) {
+      return handler.next(options);
+    }
     final path = options.path;
 
     if (path.contains('/auth/login')) {

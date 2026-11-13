@@ -151,4 +151,6 @@ eduflow-backend/uploads/*
 *.doc
 *.pptx
 *.ppt
+*.xlsx
+*.xls
 .docs/

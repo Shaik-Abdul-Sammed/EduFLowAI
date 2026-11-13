@@ -39,12 +39,22 @@ class InstitutionTheme {
     );
   }
 
-  static Color _colorFromHex(String hexColor) {
-    hexColor = hexColor.toUpperCase().replaceAll("#", "");
-    if (hexColor.length == 6) {
-      hexColor = "FF$hexColor";
+  static Color _colorFromHex(dynamic hexColor, {Color fallback = const Color(0xFF2563EB)}) {
+    if (hexColor == null || hexColor is! String) return fallback;
+    String cleanHex = hexColor.trim().toUpperCase().replaceAll("#", "");
+    if (cleanHex.length == 3) {
+      cleanHex = cleanHex.split('').map((c) => '$c$c').join('');
     }
-    return Color(int.parse(hexColor, radix: 16));
+    if (cleanHex.length == 6) {
+      cleanHex = "FF$cleanHex";
+    }
+    if (cleanHex.length != 8) return fallback;
+    try {
+      final value = int.parse(cleanHex, radix: 16);
+      return Color(value);
+    } catch (_) {
+      return fallback;
+    }
   }
 }
 
