@@ -15,11 +15,7 @@ import {
   Eye,
   X,
   Printer,
-  FileCode,
-  Award,
-  Globe,
-  Clock,
-  ExternalLink
+  Award
 } from 'lucide-react'
 
 export default function CompliancePage() {

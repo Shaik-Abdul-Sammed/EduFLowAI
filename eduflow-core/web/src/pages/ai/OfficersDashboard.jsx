@@ -165,6 +165,7 @@ export default function OfficersDashboard() {
 
   // Aggregate local officer prompts across all 5 officers
   const allLocalActivities = useMemo(() => {
+    void historyKey;
     const list = [];
     Object.keys(OFFICER_META).forEach((id) => {
       const hist = getOfficerLocalHistory(id);
@@ -220,6 +221,7 @@ export default function OfficersDashboard() {
 
   // Overall ROI hours and savings
   const totalLocalPrompts = useMemo(() => {
+    void historyKey;
     return Object.keys(OFFICER_META).reduce((sum, id) => sum + getOfficerLocalHistory(id).length, 0);
   }, [historyKey]);
 

@@ -129,7 +129,7 @@ export default function DashboardHome({ role, routes = [] }) {
     return () => {
       isMounted = false
     }
-  }, [role])
+  }, [role, navigate])
 
   return (
     <div style={{ animation: 'fadeInUp 0.45s ease' }}>

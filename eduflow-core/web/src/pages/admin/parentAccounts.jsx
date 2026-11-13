@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { STUDENT } from '../../utils/studentMockData'
 
 const GREEN = '#10B981'
 const RED = '#EF4444'
@@ -43,7 +42,7 @@ export default function Page() {
     setParents(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p))
   }
 
-  function handleSendAlert(type) {
+  function handleSendAlert(_type) {
     setAlertSent(true)
     setTimeout(() => {
       setAlertSent(false)

@@ -5,7 +5,6 @@ const PURPLE = '#7C3AED'
 const AMBER = '#F59E0B'
 const GREEN = '#10B981'
 const BLUE = '#2563EB'
-const RED = '#EF4444'
 
 const initialExams = [
   { id: 'EX01', name: 'Unit Assessment 1', subject: 'Mathematics I', type: 'unit', date: '2026-08-10', time: '10:00 AM - 11:30 AM', hall: 'Hall A1 (Main Block)', maxMarks: 25 },

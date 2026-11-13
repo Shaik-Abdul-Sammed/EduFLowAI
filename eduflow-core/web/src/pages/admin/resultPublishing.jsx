@@ -3,7 +3,6 @@ import RolePageTemplate from '../../components/RolePageTemplate'
 
 const GREEN = '#10B981'
 const AMBER = '#F59E0B'
-const RED = '#EF4444'
 const PURPLE = '#7C3AED'
 const BLUE = '#2563EB'
 

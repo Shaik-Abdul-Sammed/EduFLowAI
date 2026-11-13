@@ -149,7 +149,7 @@ export default function PortalConnectionPage() {
         setTestStatus('failed')
         addToast(`Connection refused (HTTP ${res.status}). Check credentials and portal URL.`, 'danger')
       }
-    } catch (err) {
+    } catch (_err) {
       setTestStatus('failed')
       addToast('Cannot reach portal server. Check URL and network.', 'danger')
     }

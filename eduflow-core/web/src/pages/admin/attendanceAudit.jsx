@@ -5,7 +5,6 @@ const GREEN = '#10B981'
 const RED = '#EF4444'
 const PURPLE = '#7C3AED'
 const BLUE = '#2563EB'
-const AMBER = '#F59E0B'
 
 const auditData = [
   { id: 1, section: 'MPC-A', subject: 'Mathematics I', faculty: 'Dr. K. Srinivas', date: '2026-07-28', present: 58, total: 60, status: 'verified' },

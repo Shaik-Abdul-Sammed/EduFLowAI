@@ -125,7 +125,7 @@ export default function LiveDataPage() {
   const [searchResults, setSearchResults] = useState(null)
   const [aiAnswer, setAiAnswer] = useState(null)
   const [selectedArticleAnalysis, setSelectedArticleAnalysis] = useState(null)
-  const [analyzingArticle, setAnalyzingArticle] = useState(false)
+  const [_analyzingArticle, setAnalyzingArticle] = useState(false)
   const [message, setMessage] = useState('')
 
   const handleAnalyzeArticle = async (article, showModal = true) => {

@@ -145,7 +145,9 @@ export default function WhatsAppAttendancePage() {
           setLogsList(parsed)
         }
       }
-    } catch {}
+    } catch (_err) {
+      void _err
+    }
   }
 
   const fetchFaculty = async (isMounted = true) => {
@@ -217,7 +219,9 @@ export default function WhatsAppAttendancePage() {
     setLogsList(demoLogs)
     try {
       localStorage.setItem('eduflow_whatsapp_demo_logs', JSON.stringify(demoLogs))
-    } catch {}
+    } catch (_err) {
+      void _err
+    }
     setActionMsg('Loaded demo reports: Attendance alerts, Fee reminders, and Leave approvals.')
     setTimeout(() => setActionMsg(''), 4000)
   }

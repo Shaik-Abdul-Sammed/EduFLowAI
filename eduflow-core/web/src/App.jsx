@@ -9,7 +9,6 @@ import Layout from './components/Layout'
 import { ToastProvider } from './components/ToastProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import SkeletonLoader from './components/SkeletonLoader'
-import ComingSoon from './components/ComingSoon'
 
 const EntryPage = lazy(() => import('./pages/public/EntryPage'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))

@@ -65,7 +65,7 @@ export default function SSOConfigPage() {
   })
 
   // SCIM 2.0 State
-  const [scimConfig, setScimConfig] = useState({
+  const [scimConfig, _setScimConfig] = useState({
     enabled: true,
     endpoint: 'https://eduflow.ai/api/scim/v2',
     bearerToken: 'scim_bearer_sec_89f0293da82b41',

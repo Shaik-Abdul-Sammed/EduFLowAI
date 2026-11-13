@@ -194,7 +194,7 @@ export function getExecutiveCalendarSummary(yearStart, stateCode = 'AP') {
   ]
 }
 
-function buildWeeksGrid(startDate, vacationWeekIdx, vacationName, isEven = false, yearStart = 2026, stateCode = 'AP') {
+function buildWeeksGrid(startDate, vacationWeekIdx, vacationName, isEven = false, _yearStart = 2026, _stateCode = 'AP') {
   const weeks = []
   let curr = new Date(startDate.getTime())
 
@@ -299,7 +299,7 @@ export function getEvenSemesterGrid(yearStart = 2026, stateCode = 'AP') {
 /**
  * Returns filtered Gazetted Holidays for Odd Semester.
  */
-export function getOddHolidaysList(yearStart = 2026, stateCode = 'AP', allHolidays = []) {
+export function getOddHolidaysList(yearStart = 2026, _stateCode = 'AP', allHolidays = []) {
   const y1 = parseInt(yearStart, 10) || 2026
   const cutoff = `${y1}-12-01`
   return allHolidays
@@ -314,7 +314,7 @@ export function getOddHolidaysList(yearStart = 2026, stateCode = 'AP', allHolida
 /**
  * Returns filtered Gazetted Holidays for Even Semester.
  */
-export function getEvenHolidaysList(yearStart = 2026, stateCode = 'AP', allHolidays = []) {
+export function getEvenHolidaysList(yearStart = 2026, _stateCode = 'AP', allHolidays = []) {
   const y1 = parseInt(yearStart, 10) || 2026
   const cutoff = `${y1}-12-01`
   return allHolidays

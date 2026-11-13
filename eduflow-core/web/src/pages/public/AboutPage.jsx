@@ -9,7 +9,6 @@ import {
   BookOpen,
   Sparkles,
   Zap,
-  Clock,
   CheckCircle2,
   Lock,
   ArrowRight,
@@ -18,7 +17,6 @@ import {
   BellRing,
   HeartHandshake,
   Layers,
-  ChevronRight,
   Cpu,
 } from 'lucide-react'
 import { LazyMotionDiv } from '../../components/LazyMotion'

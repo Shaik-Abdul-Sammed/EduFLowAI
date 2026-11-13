@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   Eye,
@@ -6,21 +6,14 @@ import {
   RefreshCw,
   Search,
   X,
-  Filter,
-  Shield,
   FileSpreadsheet,
   FileCode,
   CheckCircle2,
   AlertTriangle,
-  Clock,
   Printer,
   ChevronLeft,
   ChevronRight,
-  Database,
-  Terminal,
-  Activity,
-  Layers,
-  Sparkles
+  Terminal
 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getApiBaseURL } from '../../config/apiConfig'
@@ -28,7 +21,6 @@ import { safeJson } from '../../utils/wakeUpHandler'
 import { useAuth } from '../../hooks/useAuth'
 
 const PURPLE = '#7C3AED'
-const AMBER = '#F59E0B'
 const GREEN = '#10B981'
 const RED = '#EF4444'
 const BLUE = '#3B82F6'
@@ -171,9 +163,9 @@ export default function Page() {
     if (cat !== filter) {
       setFilter(cat)
     }
-  }, [searchParams])
+  }, [searchParams, filter])
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsRefreshing(true)
     try {
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
@@ -213,11 +205,11 @@ export default function Page() {
       setLoading(false)
       setIsRefreshing(false)
     }
-  }
+  }, [filter])
 
   useEffect(() => {
     fetchLogs()
-  }, [filter, user])
+  }, [fetchLogs, user])
 
   const handleFilterClick = (c) => {
     setFilter(c)

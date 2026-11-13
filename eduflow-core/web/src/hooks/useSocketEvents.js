@@ -74,7 +74,9 @@ export function useSocketEvents() {
               socketRef.current.connect()
             }
           }, 1500)
-        } catch (_) {}
+        } catch (_err) {
+          void _err
+        }
       }
       if (failedAttempts >= 5) {
         setIsFailed(true)

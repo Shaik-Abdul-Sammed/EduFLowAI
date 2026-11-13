@@ -11,8 +11,7 @@ import {
   Sparkles,
   FileText,
   ShieldCheck,
-  AlertTriangle,
-  X
+  AlertTriangle
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'

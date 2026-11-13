@@ -56,7 +56,7 @@ function addDays(d, n) {
   return res
 }
 
-function computeMilestones(y1, stateCode) {
+function computeMilestones(y1, _stateCode) {
   const y2 = y1 + 1
   const oStart = new Date(y1, 6, 6) // July 6th
   const eStart = new Date(y2, 0, 4) // Jan 4th
@@ -137,7 +137,6 @@ export function generateAcademicCalendarClientPdfBlob({
   const rowH = 26
   const colW1 = 150
   const colW2 = 212
-  const colW3 = 150
   const startX = 50
 
   tableRows.forEach((r, idx) => {

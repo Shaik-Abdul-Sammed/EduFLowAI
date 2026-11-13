@@ -74,7 +74,7 @@ export default function DigitalTwinManager() {
       if (!res.ok) throw new Error(data.error || 'Upload failed')
 
       setUploadMessage({ type: 'success', text: `Successfully ingested: ${file.name} (~${data.details?.estimatedTokens || 1420} tokens)` })
-    } catch (err) {
+    } catch (_err) {
       // In demo mode or offline fallback, simulate successful ingestion
       setUploadMessage({ type: 'success', text: `Successfully ingested: ${file.name} (~1,420 tokens extracted & indexed)` })
     } finally {
