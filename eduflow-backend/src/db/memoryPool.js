@@ -55,12 +55,23 @@ export function createMemoryPool() {
       created_at: new Date().toISOString()
     },
     {
+      id: 'user-hod-001',
+      institution_id: defaultInstId,
+      role: 'hod',
+      username: 'hod',
+      email: 'hod@eduflow.edu',
+      password_hash: bcrypt.hashSync('Demo@2026', 10),
+      name: 'Dr. K. S. Rao',
+      metadata: { department: 'Computer Science' },
+      created_at: new Date().toISOString()
+    },
+    {
       id: 'user-faculty-001',
       institution_id: defaultInstId,
       role: 'faculty',
       username: 'faculty',
       email: 'faculty@eduflow.edu',
-      password_hash: bcrypt.hashSync('faculty123', 8),
+      password_hash: bcrypt.hashSync('Demo@2026', 10),
       name: 'Dr. Ramesh Kumar',
       metadata: { department: 'Computer Science' },
       created_at: new Date().toISOString()
@@ -71,7 +82,7 @@ export function createMemoryPool() {
       role: 'student',
       username: 'ss26',
       email: 'student@eduflow.edu',
-      password_hash: bcrypt.hashSync('student123', 8),
+      password_hash: bcrypt.hashSync('Demo@2026', 10),
       name: 'Ananya Sharma',
       metadata: { rollNumber: 'SS26', branch: 'MPC' },
       created_at: new Date().toISOString()
@@ -82,7 +93,7 @@ export function createMemoryPool() {
       role: 'parent',
       username: 'parent',
       email: 'parent@eduflow.edu',
-      password_hash: bcrypt.hashSync('parent123', 8),
+      password_hash: bcrypt.hashSync('Demo@2026', 10),
       name: 'Suresh Sharma',
       metadata: { childId: 'SS26' },
       created_at: new Date().toISOString()

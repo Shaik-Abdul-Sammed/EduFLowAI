@@ -19,6 +19,9 @@ describe('Unit: /api/v1/admin/reset-demo-data', () => {
 
   after(async () => {
     if (server) {
+      if (typeof server.closeAllConnections === 'function') {
+        server.closeAllConnections()
+      }
       await new Promise((resolve) => server.close(resolve))
     }
   })

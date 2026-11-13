@@ -58,6 +58,13 @@ function AnimatedNumber({ value }) {
 
 export default function EntryPage() {
   const [visible, setVisible] = useState(false)
+  const [calcStudents, setCalcStudents] = useState(2500)
+  const [calcFaculty, setCalcFaculty] = useState(120)
+
+  const hoursSavedAnnual = Math.round(calcStudents * 1.8 + calcFaculty * 32)
+  const annualSavingsLakhs = ((calcStudents * 140 + calcFaculty * 4200) / 100000).toFixed(1)
+  const netRoiPercentage = Math.min(650, Math.round(350 + (calcStudents / 2000) * 45))
+
   useEffect(() => { const t = setTimeout(() => setVisible(true), 100); return () => clearTimeout(t) }, [])
 
   return (
@@ -214,6 +221,164 @@ export default function EntryPage() {
                 <div style={{ fontSize: '0.75rem', color: 'var(--app-text-muted)' }}>See all officers in action →</div>
               </div>
             </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Interactive Institutional ROI & Savings Calculator (Sector 1 & 2) ── */}
+      <div
+        className="mb-5 card border-0 p-4 p-lg-5 rounded-4 shadow-sm"
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e293b 100%)',
+          border: '1px solid rgba(139, 92, 246, 0.3)',
+          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.3)',
+          color: '#ffffff',
+          animation: 'fadeInUp 0.7s ease 0.18s both',
+        }}
+      >
+        <div className="row g-4 align-items-center">
+          <div className="col-12 col-lg-6">
+            <span
+              className="badge rounded-pill px-3 py-1 mb-2 fw-bold"
+              style={{
+                fontSize: '0.8rem',
+                background: 'rgba(139, 92, 246, 0.25)',
+                color: '#c4b5fd',
+                border: '1px solid rgba(139, 92, 246, 0.4)',
+              }}
+            >
+              📈 Enterprise Impact Modeling
+            </span>
+            <h2 className="fw-bold fs-2 text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
+              Calculate Your Institutional ROI
+            </h2>
+            <p style={{ color: 'rgba(226, 232, 240, 0.85)', fontSize: '0.95rem', lineHeight: 1.6 }}>
+              Quantify your operational savings, faculty hours recovered, and accreditation readiness before rolling out EduFlow AI OS.
+            </p>
+
+            <div className="mt-4">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <label className="fw-bold text-white-50" style={{ fontSize: '0.85rem' }}>
+                  Student Enrollment: <span className="text-white fw-bold">{calcStudents.toLocaleString()} Students</span>
+                </label>
+              </div>
+              <input
+                type="range"
+                className="form-range"
+                min="500"
+                max="20000"
+                step="500"
+                value={calcStudents}
+                onChange={(e) => setCalcStudents(Number(e.target.value))}
+                style={{ accentColor: '#8B5CF6' }}
+              />
+              <div className="d-flex justify-content-between text-white-50" style={{ fontSize: '0.75rem' }}>
+                <span>500</span>
+                <span>10,000</span>
+                <span>20,000+</span>
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <label className="fw-bold text-white-50" style={{ fontSize: '0.85rem' }}>
+                  Faculty & Staff Size: <span className="text-white fw-bold">{calcFaculty} Teaching Staff</span>
+                </label>
+              </div>
+              <input
+                type="range"
+                className="form-range"
+                min="30"
+                max="1000"
+                step="10"
+                value={calcFaculty}
+                onChange={(e) => setCalcFaculty(Number(e.target.value))}
+                style={{ accentColor: '#3B82F6' }}
+              />
+              <div className="d-flex justify-content-between text-white-50" style={{ fontSize: '0.75rem' }}>
+                <span>30</span>
+                <span>500</span>
+                <span>1,000+</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-12 col-lg-6">
+            <div
+              className="p-4 rounded-4"
+              style={{
+                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              <div className="row g-3 text-center mb-4">
+                <div className="col-6">
+                  <div className="p-3 rounded-3" style={{ background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#60A5FA' }}>
+                      ₹{annualSavingsLakhs}L
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Annual Cost Saved
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-6">
+                  <div className="p-3 rounded-3" style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#34D399' }}>
+                      {hoursSavedAnnual.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Admin Hours Saved / Yr
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-6">
+                  <div className="p-3 rounded-3" style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#FBBF24' }}>
+                      {netRoiPercentage}%
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Projected Net ROI
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-6">
+                  <div className="p-3 rounded-3" style={{ background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#A78BFA' }}>
+                      A++
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Target NAAC Trajectory
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="d-grid gap-2">
+                <Link
+                  to="/login?persona=dean"
+                  className="btn btn-primary fw-bold py-2 rounded-pill shadow-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+                    border: 'none',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  🚀 Test-Drive 1-Click Evaluation Sandbox
+                </Link>
+                <Link
+                  to="/for-colleges"
+                  className="btn btn-outline-light fw-bold py-2 rounded-pill"
+                  style={{ fontSize: '0.85rem', borderColor: 'rgba(255,255,255,0.2)' }}
+                >
+                  Schedule Comprehensive Institutional Audit →
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

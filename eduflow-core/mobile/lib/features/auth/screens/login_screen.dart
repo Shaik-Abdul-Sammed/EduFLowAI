@@ -328,6 +328,49 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // Quick Demo Persona Switcher (Sector 1 & 6)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      ActionChip(
+                        avatar: const Text('⚙️', style: TextStyle(fontSize: 12)),
+                        label: const Text('Admin Demo', style: TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          _emailController.text = 'admin@demo.edu';
+                          _passwordController.text = 'Demo@2026';
+                        },
+                      ),
+                      ActionChip(
+                        avatar: const Text('🏛️', style: TextStyle(fontSize: 12)),
+                        label: const Text('Dean Demo', style: TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          _emailController.text = 's9010150809@gmail.com';
+                          _passwordController.text = 'Demo@2026';
+                        },
+                      ),
+                      ActionChip(
+                        avatar: const Text('👨‍🏫', style: TextStyle(fontSize: 12)),
+                        label: const Text('Faculty Demo', style: TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          _emailController.text = 'faculty@eduflow.edu';
+                          _passwordController.text = 'Demo@2026';
+                        },
+                      ),
+                      ActionChip(
+                        avatar: const Text('👨‍🎓', style: TextStyle(fontSize: 12)),
+                        label: const Text('Student Demo', style: TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          _emailController.text = 'student@eduflow.edu';
+                          _passwordController.text = 'Demo@2026';
+                        },
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 20),
 
                   // Create account navigation

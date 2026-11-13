@@ -128,31 +128,17 @@ export default function LoginPage() {
     }
   }
 
-  const handleFillAdmin = () => {
-    const adminAccount = DEMO_ACCOUNTS.find(a => a.id === 'admin') || {
-      email: 'admin@demo.edu',
-      password: 'Demo@2026',
-      institutionId: 'demo',
-    }
-    setEmail(adminAccount.email)
-    setPassword(adminAccount.password)
-    setInstitutionId(adminAccount.institutionId || 'demo')
-    setPhone('')
+  const handleFillAccount = (accountId) => {
+    const acc = DEMO_ACCOUNTS.find(a => a.id === accountId) || DEMO_ACCOUNTS[0]
+    setEmail(acc.email)
+    setPassword(acc.password)
+    setInstitutionId(acc.institutionId || 'demo')
+    setPhone(acc.phone || '')
     setError('')
   }
 
-  const handleFillDean = () => {
-    const deanAccount = DEMO_ACCOUNTS.find(a => a.id === 'dean') || {
-      email: 's9010150809@gmail.com',
-      password: 'Demo@2026',
-      institutionId: 'demo',
-    }
-    setEmail(deanAccount.email)
-    setPassword(deanAccount.password)
-    setInstitutionId(deanAccount.institutionId || 'demo')
-    setPhone('9010150809')
-    setError('')
-  }
+  const handleFillAdmin = () => handleFillAccount('admin')
+  const handleFillDean = () => handleFillAccount('dean')
 
   const handleRememberMeChange = (e) => {
     const checked = e.target.checked
@@ -470,6 +456,40 @@ export default function LoginPage() {
                 <span>Fill Dean Credentials</span>
                 <ArrowRight size={13} />
               </button>
+            </div>
+            {/* Multi-Persona Fast Switcher */}
+            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--demo-inner-border, #BFDBFE)' }}>
+              <div style={{ fontSize: '0.775rem', fontWeight: 700, color: 'var(--demo-text, #1E3A8A)', marginBottom: '0.4rem' }}>
+                🚀 Switch Evaluation Sandbox Persona:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem' }}>
+                {DEMO_ACCOUNTS.map((acc) => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    onClick={() => handleFillAccount(acc.id)}
+                    style={{
+                      background: email === acc.email ? '#2563EB' : 'var(--demo-inner-bg, #FFFFFF)',
+                      color: email === acc.email ? '#FFFFFF' : 'var(--app-text, #1E293B)',
+                      border: '1px solid',
+                      borderColor: email === acc.email ? '#2563EB' : 'var(--demo-inner-border, #CBD5E1)',
+                      borderRadius: '0.375rem',
+                      padding: '0.35rem 0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title={acc.description}
+                  >
+                    {acc.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
