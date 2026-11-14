@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme_manager.dart';
 import '../../../core/api_client.dart';
 import '../../../screens/forgot_password_screen.dart';
-import '../../dashboard/screens/dashboard_screen.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -176,8 +176,28 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         String msg = 'Invalid Roll Number or Date of Birth';
-        if (e is DioException && e.response?.data != null && e.response?.data['error'] != null) {
-          msg = e.response?.data['error'].toString() ?? msg;
+        bool isOffline = false;
+        if (e is DioException) {
+          if (e.type == DioExceptionType.connectionError ||
+              e.type == DioExceptionType.connectionTimeout ||
+              e.type == DioExceptionType.sendTimeout ||
+              e.type == DioExceptionType.receiveTimeout ||
+              (e.message != null && e.message!.toLowerCase().contains('socketexception')) ||
+              (e.error != null && e.error.toString().toLowerCase().contains('socketexception'))) {
+            isOffline = true;
+          } else if (e.response?.data != null && e.response?.data['error'] != null) {
+            msg = e.response?.data['error'].toString() ?? msg;
+          }
+        }
+        if (isOffline) {
+          msg = 'You are offline. Please check your connection.';
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You are offline. Please check your connection.'),
+              backgroundColor: Colors.redAccent,
+              duration: Duration(seconds: 4),
+            ),
+          );
         }
         setState(() {
           _errorMessage = msg;
@@ -193,6 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
     const primaryBlue = Color(0xFF0A2540);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

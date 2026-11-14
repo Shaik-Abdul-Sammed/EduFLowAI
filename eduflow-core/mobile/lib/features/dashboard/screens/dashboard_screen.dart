@@ -26,6 +26,7 @@ class DashboardScreen extends StatelessWidget {
     final theme = themeManager.currentTheme;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(theme.name),
         actions: [
@@ -37,6 +38,7 @@ class DashboardScreen extends StatelessWidget {
       ),
       body: Center(
         child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

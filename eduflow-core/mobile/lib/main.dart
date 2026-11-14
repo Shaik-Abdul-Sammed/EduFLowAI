@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'screens/app_config.dart';
 import 'core/theme_manager.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/signup_screen.dart';
@@ -18,25 +21,70 @@ import 'screens/placement_radar.dart';
 import 'screens/auto_resume.dart';
 import 'screens/mock_simulator.dart';
 
-void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeManager()),
-      ],
-      child: const EduFlowApp(),
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = AppConfig.sentryDsn;
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeManager()),
+        ],
+        child: const EduFlowApp(),
+      ),
     ),
   );
 }
 
-class EduFlowApp extends StatelessWidget {
-  const EduFlowApp({super.key});
+class EduFlowApp extends StatefulWidget {
+  final GlobalKey<NavigatorState>? navigatorKey;
+
+  const EduFlowApp({super.key, this.navigatorKey});
+
+  @override
+  State<EduFlowApp> createState() => _EduFlowAppState();
+}
+
+class _EduFlowAppState extends State<EduFlowApp> {
+  late final GlobalKey<NavigatorState> _navigatorKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _navigatorKey = widget.navigatorKey ?? GlobalKey<NavigatorState>();
+    _initOneSignal();
+  }
+
+  void _initOneSignal() {
+    try {
+      OneSignal.Debug.setLogLevel(OSLogLevel.none);
+      OneSignal.initialize(AppConfig.oneSignalAppId);
+      OneSignal.Notifications.requestPermission(true);
+
+      OneSignal.Notifications.addClickListener((event) {
+        final additionalData = event.notification.additionalData;
+        if (additionalData != null && additionalData['type'] == 'attendance_alert') {
+          _navigatorKey.currentState?.pushNamed('/dashboard');
+        }
+      });
+    } catch (e) {
+      debugPrint('[OneSignal] Initialization safely handled: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeManager = Provider.of<ThemeManager>(context);
 
     return MaterialApp(
+      navigatorKey: _navigatorKey,
+      navigatorObservers: [
+        SentryNavigatorObserver(),
+      ],
       title: 'EduFlow AI OS',
       theme: themeManager.themeData,
       debugShowCheckedModeBanner: false,
@@ -47,6 +95,7 @@ class EduFlowApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/dashboard': (context) => const DashboardScreen(),
+        '/attendance': (context) => const DashboardScreen(),
         '/officers': (context) => const OfficerStreamScreen(),
         '/lor': (context) => const LORScreen(),
         '/passport': (context) => QRPassportScreen(),

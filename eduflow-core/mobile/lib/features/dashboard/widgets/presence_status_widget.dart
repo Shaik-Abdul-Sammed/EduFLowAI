@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
 import '../../../../core/api_client.dart';
 
 enum PresenceLocation { classroom, dorm, outside, offline }
@@ -23,7 +22,6 @@ class _PresenceStatusWidgetState extends State<PresenceStatusWidget> {
   String _statusText = 'Checking presence...';
   Color _statusColor = Colors.grey;
   String _emoji = '⚪';
-  bool _isOffline = false;
 
   @override
   void initState() {
@@ -42,7 +40,6 @@ class _PresenceStatusWidgetState extends State<PresenceStatusWidget> {
     if (widget.isOfflineMock) {
       if (mounted) {
         setState(() {
-          _isOffline = true;
           _statusText = 'Offline: Last seen in $cachedStatus';
           _statusColor = Colors.amber.shade700;
           _emoji = '🟡';
@@ -71,7 +68,6 @@ class _PresenceStatusWidgetState extends State<PresenceStatusWidget> {
   void _fallbackToCache(SharedPreferences prefs, String cachedStatus) {
     if (mounted) {
       setState(() {
-        _isOffline = true;
         _statusText = 'Offline: Last seen in $cachedStatus';
         _statusColor = Colors.amber.shade700;
         _emoji = '🟡';
@@ -112,12 +108,15 @@ class _PresenceStatusWidgetState extends State<PresenceStatusWidget> {
         children: [
           Text(_emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 8),
-          Text(
-            _statusText,
-            style: TextStyle(
-              color: _statusColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
+          Flexible(
+            child: Text(
+              _statusText,
+              style: TextStyle(
+                color: _statusColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
