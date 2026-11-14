@@ -49,6 +49,7 @@ import { createCampusOperationsRouter } from './routes/campusOperationsRoutes.js
 import { createCampusRouter } from './routes/campusRoutes.js'
 import { createNetworkRouter } from './routes/networkRoutes.js'
 import { createAdvancedTechRouter } from './routes/advancedTechRoutes.js'
+import { createLTIRouter } from './routes/ltiRoutes.js'
 import { authMiddleware } from './middleware/auth.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
@@ -228,6 +229,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/institution-operations', createInstitutionalNeedsRouter())
   app.use('/api/v1', createCampusOperationsRouter())
   app.use('/api', createCampusOperationsRouter())
+  app.use('/api/v1/lti', createLTIRouter())
   
   // Observability & Telemetry Metrics Endpoint (Feature 81)
   app.get('/api/v1/metrics', (_req, res) => {

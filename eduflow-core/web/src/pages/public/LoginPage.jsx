@@ -46,6 +46,10 @@ export default function LoginPage() {
   const [dob, setDob] = useState('') // DDMMYYYY
   const [studentLoading, setStudentLoading] = useState(false)
   const [studentError, setStudentError] = useState('')
+  const [requirePasswordReset, setRequirePasswordReset] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [resetError, setResetError] = useState('')
 
   async function handleStudentLogin(e) {
     e.preventDefault()
@@ -63,18 +67,35 @@ export default function LoginPage() {
       })
       const data = await safeJson(res)
       if (!res.ok) {
-        setStudentError(data?.error || 'Invalid Roll Number or Date of Birth.')
+        setStudentError(data?.message || data?.error || 'Invalid Roll Number or Date of Birth.')
         return
       }
       localStorage.setItem('token', data.token)
       localStorage.setItem('role', 'student')
       localStorage.setItem('studentName', data.name || rollNumber)
+      if (data.mustChangePassword) {
+        setRequirePasswordReset(true)
+        return
+      }
       navigate('/student-dashboard')
     } catch (err) {
       setStudentError('Connection error. Please try again.')
     } finally {
       setStudentLoading(false)
     }
+  }
+
+  function handlePasswordResetSubmit(e) {
+    e.preventDefault()
+    if (!newPassword || newPassword.length < 6) {
+      setResetError('Password must be at least 6 characters long.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setResetError('Passwords do not match.')
+      return
+    }
+    navigate('/student-dashboard')
   }
 
   const handleCopy = (text, field) => {
@@ -685,7 +706,7 @@ export default function LoginPage() {
         </div>
 
         {/* Student Login Form */}
-        {loginMode === 'student' && (
+        {loginMode === 'student' && !requirePasswordReset && (
           <form onSubmit={handleStudentLogin} style={{ width: '100%', margin: 0, padding: 0 }} data-testid="student-login-form">
             {studentError && (
               <div role="alert" style={{
@@ -717,7 +738,7 @@ export default function LoginPage() {
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <label htmlFor="dob" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--app-text, #1E293B)', marginBottom: '0.35rem' }}>
-                Date of Birth <span style={{ fontWeight: 400, color: '#94A3B8' }}>(DDMMYYYY)</span>
+                Date of Birth <span style={{ fontWeight: 500, color: '#475569' }}>(DDMMYYYY)</span>
               </label>
               <input
                 id="dob"
@@ -733,7 +754,7 @@ export default function LoginPage() {
                 data-testid="dob-input"
                 style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.925rem', background: 'var(--input-bg, #FFFFFF)', color: 'var(--app-text, #1E293B)', border: '1px solid var(--border-color, #CBD5E1)', borderRadius: '0.625rem', outline: 'none', boxSizing: 'border-box', letterSpacing: '0.08em' }}
               />
-              <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: '0.3rem 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: '#475569', margin: '0.3rem 0 0' }}>
                 Demo: Roll <strong>2024-CSE-042</strong>, DOB <strong>15082004</strong>
               </p>
             </div>
@@ -752,6 +773,79 @@ export default function LoginPage() {
             >
               <ShieldCheck size={18} />
               <span>{studentLoading ? 'Verifying...' : 'Login as Student'}</span>
+            </button>
+          </form>
+        )}
+
+        {/* First-Time Login: Mandatory Password Reset Screen */}
+        {loginMode === 'student' && requirePasswordReset && (
+          <form onSubmit={handlePasswordResetSubmit} style={{ width: '100%', margin: 0, padding: 0 }} data-testid="password-reset-form">
+            <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '0.625rem', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginBottom: '0.25rem' }}>
+                🔐 First-Time Login: Security Setup
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#047857' }}>
+                You are accessing your institutional portal for the first time. Please establish a secure permanent password to continue.
+              </div>
+            </div>
+
+            {resetError && (
+              <div role="alert" style={{
+                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                color: '#DC2626', padding: '0.75rem 1rem', borderRadius: '0.625rem',
+                fontSize: '0.85rem', marginBottom: '1rem',
+              }}>
+                {resetError}
+              </div>
+            )}
+
+            <div style={{ marginBottom: '1.15rem' }}>
+              <label htmlFor="newPassword" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--app-text, #1E293B)', marginBottom: '0.35rem' }}>
+                Create Permanent Password
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                required
+                minLength={6}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                aria-label="New Permanent Password"
+                style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.925rem', background: 'var(--input-bg, #FFFFFF)', color: 'var(--app-text, #1E293B)', border: '1px solid var(--border-color, #CBD5E1)', borderRadius: '0.625rem', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label htmlFor="confirmPassword" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--app-text, #1E293B)', marginBottom: '0.35rem' }}>
+                Confirm Permanent Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                aria-label="Confirm Permanent Password"
+                style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.925rem', background: 'var(--input-bg, #FFFFFF)', color: 'var(--app-text, #1E293B)', border: '1px solid var(--border-color, #CBD5E1)', borderRadius: '0.625rem', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                width: '100%', background: 'linear-gradient(135deg, #059669, #047857)',
+                color: '#FFFFFF', border: 'none', borderRadius: '0.625rem',
+                padding: '0.75rem 1.25rem', fontSize: '0.95rem', fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(5,150,105,0.25)',
+              }}
+            >
+              <ShieldCheck size={18} />
+              <span>Save Password & Open Dashboard</span>
             </button>
           </form>
         )}

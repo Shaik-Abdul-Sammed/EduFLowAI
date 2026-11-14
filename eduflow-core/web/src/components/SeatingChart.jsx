@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 /**
  * SeatingChart Component
@@ -10,16 +10,36 @@ import { useState, useEffect } from 'react'
  */
 export default function SeatingChart({ students = [], onStatusChange }) {
   const [selected, setSelected] = useState(null) // { student, seatIndex }
+  const modalRef = useRef(null)
 
   const COLS = 6
   const ROWS = 8
   const TOTAL = COLS * ROWS
 
-  // WCAG 2.1 keyboard dismiss on Escape
+  // WCAG 2.2 keyboard dismiss on Escape & Focus Trap
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && selected) {
         setSelected(null)
+        return
+      }
+      if (e.key === 'Tab' && selected && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        if (focusable.length > 0) {
+          const first = focusable[0]
+          const last = focusable[focusable.length - 1]
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault()
+              last.focus()
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault()
+              first.focus()
+            }
+          }
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -152,7 +172,9 @@ export default function SeatingChart({ students = [], onStatusChange }) {
           }}
           onClick={e => { if (e.target === e.currentTarget) closeModal() }}
         >
-          <div style={{
+          <div
+            ref={modalRef}
+            style={{
             background: '#fff', borderRadius: 14, padding: 28,
             maxWidth: 380, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
           }}>

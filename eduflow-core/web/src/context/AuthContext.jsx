@@ -104,15 +104,20 @@ export function AuthProvider({ children }) {
     }
     setUser(null)
     setToken(null)
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem(LEGACY_AUTH_KEY)
-    localStorage.removeItem(LEGACY_USER_KEY)
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('role')
-    localStorage.removeItem('institutionId')
+    try {
+      localStorage.clear()
+      sessionStorage.clear()
+    } catch (_e) {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(LEGACY_AUTH_KEY)
+      localStorage.removeItem(LEGACY_USER_KEY)
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('role')
+      localStorage.removeItem('institutionId')
+    }
   }
 
   function updateLanguage(value) {

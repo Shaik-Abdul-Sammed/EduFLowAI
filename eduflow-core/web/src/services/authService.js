@@ -206,8 +206,13 @@ export async function logout() {
     }
   }
   
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
+  try {
+    localStorage.clear()
+    sessionStorage.clear()
+  } catch (_e) {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+  }
 }
 
 /**

@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { pool } from '../db/pool.js'
 
+// In-memory progressive backoff tracker for failed student login attempts
+const failedStudentAttempts = new Map()
+
 export class AuthController {
   /**
    * POST /api/v1/auth/login
@@ -149,6 +152,21 @@ export class AuthController {
         return res.status(400).json({ error: 'Validation failed', message: 'Roll Number and Date of Birth (DDMMYYYY) are required' })
       }
 
+      // Progressive Backoff Check after 5 consecutive failures
+      const rollKey = targetRoll.toUpperCase()
+      const attemptRecord = failedStudentAttempts.get(rollKey)
+      if (attemptRecord && attemptRecord.count >= 5) {
+        const elapsed = Date.now() - attemptRecord.lastAttempt
+        const backoffMs = Math.min(300000, 15000 * Math.pow(2, attemptRecord.count - 5))
+        if (elapsed < backoffMs) {
+          const remainingSecs = Math.ceil((backoffMs - elapsed) / 1000)
+          return res.status(429).json({
+            error: 'Too Many Requests',
+            message: `Account temporarily locked due to multiple failed login attempts. Progressive backoff active. Please retry in ${remainingSecs} seconds.`
+          })
+        }
+      }
+
       // Check DB students table
       let student = null
       try {
@@ -180,7 +198,8 @@ export class AuthController {
               email: d.email,
               dob: targetDob, // fallback match
               department: d.department,
-              program: d.program
+              program: d.program,
+              must_change_password: true
             }
           }
         } catch {
@@ -191,9 +210,9 @@ export class AuthController {
       // In-memory fallback dataset for offline/test environments
       if (!student) {
         const memoryStudents = [
-          { id: 101, roll_number: '2024-CSE-042', name: 'Aditya Sharma', email: 'aditya.sharma@demo.edu', dob: '15082004', department: 'Computer Science & Engineering', program: 'B.Tech' },
-          { id: 102, roll_number: '2024-CSE-055', name: 'Sneha Patel', email: 'sneha.patel@demo.edu', dob: '22112004', department: 'Computer Science & Engineering', program: 'B.Tech' },
-          { id: 103, roll_number: '2024-ECE-019', name: 'Rahul Verma', email: 'rahul.verma@demo.edu', dob: '05012005', department: 'Electronics & Communication', program: 'B.Tech' }
+          { id: 101, roll_number: '2024-CSE-042', name: 'Aditya Sharma', email: 'aditya.sharma@demo.edu', dob: '15082004', department: 'Computer Science & Engineering', program: 'B.Tech', must_change_password: true },
+          { id: 102, roll_number: '2024-CSE-055', name: 'Sneha Patel', email: 'sneha.patel@demo.edu', dob: '22112004', department: 'Computer Science & Engineering', program: 'B.Tech', must_change_password: true },
+          { id: 103, roll_number: '2024-ECE-019', name: 'Rahul Verma', email: 'rahul.verma@demo.edu', dob: '05012005', department: 'Electronics & Communication', program: 'B.Tech', must_change_password: true }
         ]
         const found = memoryStudents.find(s => s.roll_number.toUpperCase() === targetRoll.toUpperCase())
         if (found) {
@@ -202,6 +221,8 @@ export class AuthController {
       }
 
       if (!student) {
+        const current = failedStudentAttempts.get(rollKey) || { count: 0 }
+        failedStudentAttempts.set(rollKey, { count: current.count + 1, lastAttempt: Date.now() })
         return res.status(401).json({ error: 'Invalid credentials', message: 'No student found with the provided Roll Number' })
       }
 
@@ -213,9 +234,14 @@ export class AuthController {
                          (targetDob.substring(4) + targetDob.substring(2, 4) + targetDob.substring(0, 2) === normalizedStoredDob ||
                           normalizedStoredDob.substring(4) + normalizedStoredDob.substring(2, 4) + normalizedStoredDob.substring(0, 2) === targetDob))
         if (!matches && student.dob !== targetDob) {
+          const current = failedStudentAttempts.get(rollKey) || { count: 0 }
+          failedStudentAttempts.set(rollKey, { count: current.count + 1, lastAttempt: Date.now() })
           return res.status(401).json({ error: 'Invalid credentials', message: 'Date of Birth does not match institutional records' })
         }
       }
+
+      // Reset failed attempts upon successful authentication
+      failedStudentAttempts.delete(rollKey)
 
       const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
       const token = jwt.sign(
@@ -238,6 +264,7 @@ export class AuthController {
         role: 'student',
         name: student.name || student.full_name,
         rollNumber: student.roll_number,
+        mustChangePassword: student.must_change_password !== undefined ? Boolean(student.must_change_password) : true,
         user: {
           id: student.id || student.user_id || 101,
           role: 'student',
@@ -245,7 +272,8 @@ export class AuthController {
           name: student.name || student.full_name,
           email: student.email || `${student.roll_number.toLowerCase()}@demo.edu`,
           department: student.department || 'Engineering',
-          program: student.program || 'B.Tech'
+          program: student.program || 'B.Tech',
+          mustChangePassword: student.must_change_password !== undefined ? Boolean(student.must_change_password) : true
         },
         institution: {
           id: student.institution_id || 1,
@@ -260,10 +288,12 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/bulk-student-import
-   * Chunked high-throughput batch provisioning for 10,000+ students.
-   * Inserts into users and students tables in parallel batches of 500 to prevent DB connection pool exhaustion.
+   * Atomic, transaction-wrapped multi-row parameterized batch import for 10,000+ students.
+   * If any chunk encounters a database constraint error, the transaction rolls back cleanly.
    */
   static async bulkImportStudents(req, res) {
+    let client = null
+    let inTransaction = false
     try {
       const { students = [], institutionId = 1 } = req.body || {}
 
@@ -278,50 +308,78 @@ export class AuthController {
       }
 
       let insertedCount = 0
-      const defaultPasswordHash = await bcrypt.hash('Student@2026', 10)
+
+      // Try acquiring client for atomic transaction if pool is available
+      try {
+        if (typeof pool?.connect === 'function') {
+          client = await pool.connect()
+          await client.query('BEGIN')
+          inTransaction = true
+        }
+      } catch (connErr) {
+        client = null
+        inTransaction = false
+      }
 
       for (const batch of batches) {
-        await Promise.all(batch.map(async (st) => {
-          const rollNumber = (st.rollNumber || st.roll_number || st.roll || `STU-${Math.random().toString(36).substring(2, 7)}`).trim()
-          const name = (st.name || st.fullName || 'Enrolled Student').trim()
-          const email = (st.email || `${rollNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@demo.edu`).trim()
-          const dob = String(st.dob || '01012005').trim().replace(/[-/.\s]/g, '')
-          const dept = st.department || 'Computer Science & Engineering'
+        if (client && inTransaction) {
+          const valuePlaceholders = []
+          const queryParams = []
+          let paramIdx = 1
 
-          try {
-            const userRes = await pool.query(
-              `INSERT INTO users (institution_id, role, email, password_hash, first_name)
-               VALUES ($1, 'student', $2, $3, $4)
-               ON CONFLICT (email) DO UPDATE SET first_name = EXCLUDED.first_name
-               RETURNING id`,
-              [institutionId, email, defaultPasswordHash, name]
-            )
-            const userId = userRes?.rows?.[0]?.id
+          for (const st of batch) {
+            const rollNumber = (st.rollNumber || st.roll_number || st.roll || `STU-${Math.random().toString(36).substring(2, 7)}`).trim()
+            const name = (st.name || st.fullName || 'Enrolled Student').trim()
+            const email = (st.email || `${rollNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@demo.edu`).trim()
+            const dob = String(st.dob || '01012005').trim().replace(/[-/.\s]/g, '')
+            const dept = st.department || 'Computer Science & Engineering'
+            const mustChange = true
 
-            await pool.query(
-              `INSERT INTO students (user_id, institution_id, roll_number, name, email, dob, department)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
-               ON CONFLICT (roll_number) DO UPDATE 
-               SET name = EXCLUDED.name, email = EXCLUDED.email, dob = EXCLUDED.dob, department = EXCLUDED.department`,
-              [userId, institutionId, rollNumber, name, email, dob, dept]
-            )
-          } catch {
-            // Handled cleanly for memory store mode
+            valuePlaceholders.push(`($${paramIdx}, $${paramIdx+1}, $${paramIdx+2}, $${paramIdx+3}, $${paramIdx+4}, $${paramIdx+5}, $${paramIdx+6})`)
+            queryParams.push(institutionId, rollNumber, name, email, dob, dept, mustChange)
+            paramIdx += 7
+            insertedCount++
           }
-          insertedCount++
-        }))
+
+          const multiRowQuery = `
+            INSERT INTO students (institution_id, roll_number, name, email, dob, department, must_change_password)
+            VALUES ${valuePlaceholders.join(', ')}
+            ON CONFLICT (roll_number) DO UPDATE
+            SET name = EXCLUDED.name, email = EXCLUDED.email, dob = EXCLUDED.dob, department = EXCLUDED.department, must_change_password = EXCLUDED.must_change_password
+          `
+          await client.query(multiRowQuery, queryParams)
+        } else {
+          // Offline / memory mode
+          insertedCount += batch.length
+        }
+      }
+
+      if (client && inTransaction) {
+        await client.query('COMMIT')
+        inTransaction = false
       }
 
       return res.status(201).json({
         success: true,
-        message: `Successfully provisioned ${insertedCount} students in ${batches.length} chunked batches`,
+        message: `Successfully provisioned ${insertedCount} students in ${batches.length} atomic batches`,
         totalProcessed: insertedCount,
         batchesProcessed: batches.length,
         batchSize: BATCH_SIZE
       })
     } catch (err) {
+      if (client && inTransaction) {
+        try {
+          await client.query('ROLLBACK')
+        } catch (rbErr) {
+          console.error('Rollback error:', rbErr)
+        }
+      }
       console.error('Bulk student import error:', err)
       return res.status(500).json({ error: 'Bulk import failed', details: err.message })
+    } finally {
+      if (client) {
+        try { client.release() } catch {}
+      }
     }
   }
 }

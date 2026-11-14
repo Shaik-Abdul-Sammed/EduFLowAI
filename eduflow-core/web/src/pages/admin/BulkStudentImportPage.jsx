@@ -178,7 +178,7 @@ export default function BulkStudentImportPage() {
           role="button"
           tabIndex={0}
           aria-label="Click to select a CSV file"
-          onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
+          onKeyDown={e => e.key === 'Enter' && (file ? handleUpload() : fileRef.current?.click())}
         >
           <Upload size={36} color="#64748b" style={{ marginBottom: 10 }} />
           {file
@@ -267,7 +267,7 @@ export default function BulkStudentImportPage() {
 
         {/* Batch Results Table */}
         {results.length > 0 && (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-responsive" style={{ overflowX: 'auto', width: '100%' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f1f5f9' }}>

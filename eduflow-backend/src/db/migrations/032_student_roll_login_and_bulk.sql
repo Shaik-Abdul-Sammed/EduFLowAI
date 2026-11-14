@@ -14,9 +14,12 @@ CREATE TABLE IF NOT EXISTS students (
   program VARCHAR(100) DEFAULT 'B.Tech',
   semester INTEGER DEFAULT 1,
   batch VARCHAR(50) DEFAULT '2024-2028',
+  must_change_password BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE students ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_students_roll_number ON students(roll_number);
 CREATE INDEX IF NOT EXISTS idx_students_institution_id ON students(institution_id);

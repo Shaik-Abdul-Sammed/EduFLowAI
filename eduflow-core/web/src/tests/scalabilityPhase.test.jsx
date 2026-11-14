@@ -2,6 +2,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import SeatingChart from '../components/SeatingChart'
 import BulkStudentImportPage from '../pages/admin/BulkStudentImportPage'
+import DegreeAuditPage from '../pages/admin/DegreeAuditPage'
+import SpeedGraderPage from '../pages/faculty/SpeedGraderPage'
 
 // Mock context used by RolePageTemplate
 jest.mock('../context/ToastContext', () => ({
@@ -128,5 +130,58 @@ describe('BulkStudentImportPage Component', () => {
     Object.defineProperty(badFile, 'name', { value: 'students.xlsx' })
     fireEvent.change(input, { target: { files: [badFile] } })
     expect(screen.getByText(/Only .csv files are supported/i)).toBeInTheDocument()
+  })
+})
+
+// ─── DegreeAuditPage Tests ─────────────────────────────────────────────────
+
+describe('DegreeAuditPage Component', () => {
+  test('renders student profile and degree requirements checklist', () => {
+    render(
+      <MemoryRouter>
+        <DegreeAuditPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByText(/Degree Audit & Academic Progress/i)).toBeInTheDocument()
+    expect(screen.getByText(/Aditya Sharma/i)).toBeInTheDocument()
+    expect(screen.getByText(/General Education Core/i)).toBeInTheDocument()
+    expect(screen.getByText(/Departmental Major Core/i)).toBeInTheDocument()
+  })
+
+  test('runs audit on roll number submit', () => {
+    render(
+      <MemoryRouter>
+        <DegreeAuditPage />
+      </MemoryRouter>
+    )
+    const btn = screen.getByText(/Run Degree Audit/i)
+    expect(btn).toBeInTheDocument()
+    fireEvent.click(btn)
+  })
+})
+
+// ─── SpeedGraderPage Tests ─────────────────────────────────────────────────
+
+describe('SpeedGraderPage Component', () => {
+  test('renders split-screen submission and rubric scoring', () => {
+    render(
+      <MemoryRouter>
+        <SpeedGraderPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByText(/SpeedGrader™ Rubric Evaluation/i)).toBeInTheDocument()
+    expect(screen.getByText(/Algorithm Correctness & Complexity/i)).toBeInTheDocument()
+    expect(screen.getByText(/Finalize & Submit Grade/i)).toBeInTheDocument()
+  })
+
+  test('clicking rubric level updates the total score', () => {
+    render(
+      <MemoryRouter>
+        <SpeedGraderPage />
+      </MemoryRouter>
+    )
+    const ptsBtn = screen.getByText(/Developing \(O\(N\) regression\)/i)
+    fireEvent.click(ptsBtn)
+    expect(screen.getByText(/Saving score|Auto-saved to Gradebook/i)).toBeInTheDocument()
   })
 })

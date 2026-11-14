@@ -96,4 +96,19 @@ describe('Unit: Scalability Phase – Student Login & Bulk Import', () => {
     })
     assert.ok([400, 503].includes(res.status), `Expected 400 or 503, got ${res.status}`)
   })
+
+  // ─── POST /api/v1/lti/launch ──────────────────────────────────────────────
+
+  it('POST /api/v1/lti/launch validates simulated LTI 1.3 Advantage launch', async () => {
+    const res = await fetch(`${baseUrl}/api/v1/lti/launch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: 'canvas-student-42', role: 'Learner', course_id: 'CS-401' }),
+    })
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.success, true)
+    assert.ok(data.sessionToken, 'Must generate LTI session token')
+    assert.ok(data.redirectUrl.includes('/student-dashboard'))
+  })
 })

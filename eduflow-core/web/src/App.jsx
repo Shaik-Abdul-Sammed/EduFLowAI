@@ -77,6 +77,8 @@ const ScholarshipManagementPage = lazy(() => import('./pages/admin/ScholarshipMa
 const PlacementDrivesPage = lazy(() => import('./pages/admin/PlacementDrivesPage'))
 const StudentMockTestPage = lazy(() => import('./pages/student/StudentMockTestPage'))
 const BulkStudentImportPage = lazy(() => import('./pages/admin/BulkStudentImportPage'))
+const DegreeAuditPage = lazy(() => import('./pages/admin/DegreeAuditPage'))
+const SpeedGraderPage = lazy(() => import('./pages/faculty/SpeedGraderPage'))
 const FacultyAppraisalPage = lazy(() => import('./pages/hod/FacultyAppraisalPage'))
 const PayrollGenerationPage = lazy(() => import('./pages/finance/PayrollGenerationPage'))
 const OnlineExamPage = lazy(() => import('./pages/student/OnlineExamPage'))
@@ -542,6 +544,18 @@ function App() {
           <Route
             path="/admin-dashboard/bulk-import"
             element={<BulkStudentImportPage />}
+          />
+          <Route
+            path="/admin-dashboard/degree-audit"
+            element={<DegreeAuditPage />}
+          />
+          <Route
+            path="/staff-dashboard/speed-grader"
+            element={<SpeedGraderPage />}
+          />
+          <Route
+            path="/faculty-dashboard/speed-grader"
+            element={<SpeedGraderPage />}
           />
           <Route
             path="/admin-dashboard/scholarships"

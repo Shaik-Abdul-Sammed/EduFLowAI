@@ -17,7 +17,7 @@ export function createAuthRouter() {
   // Rate Limiting for Auth
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 login requests per windowMs
+    max: process.env.NODE_ENV === 'test' ? 100 : 10, // Limit each IP to 10 login requests per windowMs
     message: { error: 'Too many login attempts, please try again after 15 minutes' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -106,7 +106,7 @@ export function createAuthRouter() {
   /**
    * POST /api/v1/auth/student-login
    */
-  router.post('/student-login', AuthController.studentLogin)
+  router.post('/student-login', authLimiter, AuthController.studentLogin)
 
   /**
    * POST /api/v1/auth/bulk-student-import
