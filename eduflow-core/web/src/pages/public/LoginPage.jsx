@@ -40,6 +40,43 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [copiedField, setCopiedField] = useState(null)
 
+  // Student login state
+  const [loginMode, setLoginMode] = useState('staff') // 'staff' | 'student'
+  const [rollNumber, setRollNumber] = useState('')
+  const [dob, setDob] = useState('') // DDMMYYYY
+  const [studentLoading, setStudentLoading] = useState(false)
+  const [studentError, setStudentError] = useState('')
+
+  async function handleStudentLogin(e) {
+    e.preventDefault()
+    if (!rollNumber || !dob) {
+      setStudentError('Please enter both Roll Number and Date of Birth.')
+      return
+    }
+    setStudentLoading(true)
+    setStudentError('')
+    try {
+      const res = await fetch(getFullApiUrl('/v1/auth/student-login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rollNumber, dob }),
+      })
+      const data = await safeJson(res)
+      if (!res.ok) {
+        setStudentError(data?.error || 'Invalid Roll Number or Date of Birth.')
+        return
+      }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('role', 'student')
+      localStorage.setItem('studentName', data.name || rollNumber)
+      navigate('/student-dashboard')
+    } catch (err) {
+      setStudentError('Connection error. Please try again.')
+    } finally {
+      setStudentLoading(false)
+    }
+  }
+
   const handleCopy = (text, field) => {
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(text)
@@ -616,6 +653,110 @@ export default function LoginPage() {
         )}
 
         {/* Section 3 - Login Form */}
+        {/* Login Mode Tab Switcher */}
+        <div style={{ display: 'flex', gap: 0, marginBottom: '1.25rem', borderRadius: '0.625rem', overflow: 'hidden', border: '1px solid var(--border-color, #CBD5E1)' }}>
+          <button
+            type="button"
+            onClick={() => { setLoginMode('staff'); setStudentError('') }}
+            aria-pressed={loginMode === 'staff'}
+            style={{
+              flex: 1, padding: '0.6rem', fontSize: '0.875rem', fontWeight: 600,
+              background: loginMode === 'staff' ? 'linear-gradient(135deg, #0A2540, #1E3A8A)' : 'transparent',
+              color: loginMode === 'staff' ? '#fff' : 'var(--app-text-muted, #64748B)',
+              border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            🏫 Staff / Faculty
+          </button>
+          <button
+            type="button"
+            onClick={() => { setLoginMode('student'); setError('') }}
+            aria-pressed={loginMode === 'student'}
+            data-testid="student-tab-btn"
+            style={{
+              flex: 1, padding: '0.6rem', fontSize: '0.875rem', fontWeight: 600,
+              background: loginMode === 'student' ? 'linear-gradient(135deg, #16a34a, #15803d)' : 'transparent',
+              color: loginMode === 'student' ? '#fff' : 'var(--app-text-muted, #64748B)',
+              border: 'none', borderLeft: '1px solid var(--border-color, #CBD5E1)', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            🎓 Student
+          </button>
+        </div>
+
+        {/* Student Login Form */}
+        {loginMode === 'student' && (
+          <form onSubmit={handleStudentLogin} style={{ width: '100%', margin: 0, padding: 0 }} data-testid="student-login-form">
+            {studentError && (
+              <div role="alert" style={{
+                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                color: '#DC2626', padding: '0.75rem 1rem', borderRadius: '0.625rem',
+                fontSize: '0.85rem', marginBottom: '1rem',
+              }}>
+                {studentError}
+              </div>
+            )}
+            <div style={{ marginBottom: '1.15rem' }}>
+              <label htmlFor="rollNumber" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--app-text, #1E293B)', marginBottom: '0.35rem' }}>
+                Roll Number
+              </label>
+              <input
+                id="rollNumber"
+                name="rollNumber"
+                type="text"
+                autoComplete="username"
+                className="form-control"
+                required
+                value={rollNumber}
+                onChange={e => setRollNumber(e.target.value)}
+                placeholder="e.g. 2024-CSE-042"
+                aria-label="Roll Number"
+                data-testid="roll-number-input"
+                style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.925rem', background: 'var(--input-bg, #FFFFFF)', color: 'var(--app-text, #1E293B)', border: '1px solid var(--border-color, #CBD5E1)', borderRadius: '0.625rem', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label htmlFor="dob" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--app-text, #1E293B)', marginBottom: '0.35rem' }}>
+                Date of Birth <span style={{ fontWeight: 400, color: '#94A3B8' }}>(DDMMYYYY)</span>
+              </label>
+              <input
+                id="dob"
+                name="dob"
+                type="text"
+                className="form-control"
+                required
+                maxLength={8}
+                value={dob}
+                onChange={e => setDob(e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 15082004"
+                aria-label="Date of Birth in DDMMYYYY format"
+                data-testid="dob-input"
+                style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.925rem', background: 'var(--input-bg, #FFFFFF)', color: 'var(--app-text, #1E293B)', border: '1px solid var(--border-color, #CBD5E1)', borderRadius: '0.625rem', outline: 'none', boxSizing: 'border-box', letterSpacing: '0.08em' }}
+              />
+              <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: '0.3rem 0 0' }}>
+                Demo: Roll <strong>2024-CSE-042</strong>, DOB <strong>15082004</strong>
+              </p>
+            </div>
+            <button
+              type="submit"
+              disabled={studentLoading}
+              data-testid="student-login-btn"
+              style={{
+                width: '100%', background: studentLoading ? '#94a3b8' : 'linear-gradient(135deg, #16a34a, #15803d)',
+                color: '#FFFFFF', border: 'none', borderRadius: '0.625rem',
+                padding: '0.75rem 1.25rem', fontSize: '0.95rem', fontWeight: 700,
+                cursor: studentLoading ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
+              }}
+            >
+              <ShieldCheck size={18} />
+              <span>{studentLoading ? 'Verifying...' : 'Login as Student'}</span>
+            </button>
+          </form>
+        )}
+
+        {loginMode === 'staff' && (
         <form onSubmit={handleSubmit} style={{ width: '100%', margin: 0, padding: 0 }}>
           {/* Email Address Field */}
           <div style={{ marginBottom: '1.15rem', width: '100%' }}>
@@ -814,6 +955,7 @@ export default function LoginPage() {
             <span>{loading ? 'Authenticating...' : 'Login Securely'}</span>
           </button>
         </form>
+        )}
 
         {/* Section 4 - Footer */}
         <div style={{

@@ -104,6 +104,16 @@ export function createAuthRouter() {
   router.post('/login', validateRequest(loginSchema), AuthController.login)
 
   /**
+   * POST /api/v1/auth/student-login
+   */
+  router.post('/student-login', AuthController.studentLogin)
+
+  /**
+   * POST /api/v1/auth/bulk-student-import
+   */
+  router.post('/bulk-student-import', AuthController.bulkImportStudents)
+
+  /**
    * POST /api/v1/auth/refresh
    */
   router.post('/refresh', async (req, res) => {

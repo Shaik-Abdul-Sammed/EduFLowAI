@@ -76,6 +76,7 @@ const BudgetTrackingPage = lazy(() => import('./pages/admin/BudgetTrackingPage')
 const ScholarshipManagementPage = lazy(() => import('./pages/admin/ScholarshipManagementPage'))
 const PlacementDrivesPage = lazy(() => import('./pages/admin/PlacementDrivesPage'))
 const StudentMockTestPage = lazy(() => import('./pages/student/StudentMockTestPage'))
+const BulkStudentImportPage = lazy(() => import('./pages/admin/BulkStudentImportPage'))
 const FacultyAppraisalPage = lazy(() => import('./pages/hod/FacultyAppraisalPage'))
 const PayrollGenerationPage = lazy(() => import('./pages/finance/PayrollGenerationPage'))
 const OnlineExamPage = lazy(() => import('./pages/student/OnlineExamPage'))
@@ -537,6 +538,10 @@ function App() {
           <Route
             path="/admin-dashboard/budget"
             element={<BudgetTrackingPage />}
+          />
+          <Route
+            path="/admin-dashboard/bulk-import"
+            element={<BulkStudentImportPage />}
           />
           <Route
             path="/admin-dashboard/scholarships"

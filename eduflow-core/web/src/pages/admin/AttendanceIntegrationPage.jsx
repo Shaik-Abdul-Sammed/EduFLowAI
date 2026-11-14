@@ -14,11 +14,14 @@ import {
   AlertTriangle,
   Wifi,
   Check,
-  X
+  X,
+  LayoutGrid,
+  List
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
+import SeatingChart from '../../components/SeatingChart'
 
 export default function AttendanceIntegrationPage() {
   const { addToast } = useToast()
@@ -369,6 +372,15 @@ export default function AttendanceIntegrationPage() {
     ? atRiskStudents
     : atRiskStudents.filter((s) => s.department === selectedDept)
 
+  // Seating chart view mode
+  const [viewMode, setViewMode] = useState('list') // 'list' | 'grid'
+  const seatingStudents = filteredStudents.map(s => ({
+    id: s.id || s.student_id,
+    name: s.student_name || s.name,
+    rollNo: s.roll_number || s.student_roll,
+    status: (s.attendance_percentage >= 75) ? 'PRESENT' : 'ABSENT',
+  }))
+
   return (
     <div className="container-fluid py-4 px-4 bg-light min-vh-100">
       {/* Header */}
@@ -507,10 +519,45 @@ export default function AttendanceIntegrationPage() {
               <option value="Mechanical">Mechanical</option>
               <option value="IT">IT</option>
             </select>
+            {/* View Toggle */}
+            <div className="btn-group btn-group-sm" role="group" aria-label="View mode toggle">
+              <button
+                type="button"
+                className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => setViewMode('list')}
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+              >
+                <List size={14} />
+              </button>
+              <button
+                type="button"
+                className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => setViewMode('grid')}
+                aria-label="Seating chart view"
+                aria-pressed={viewMode === 'grid'}
+              >
+                <LayoutGrid size={14} />
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="card-body p-0">
+          {viewMode === 'grid' ? (
+            <div className="p-3">
+              <SeatingChart
+                students={seatingStudents}
+                onStatusChange={(studentId, newStatus) => {
+                  setAtRiskStudents(prev => prev.map(s =>
+                    (s.id === studentId || s.student_id === studentId)
+                      ? { ...s, _overrideStatus: newStatus }
+                      : s
+                  ))
+                }}
+              />
+            </div>
+          ) : (
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light small text-uppercase">
@@ -592,6 +639,7 @@ export default function AttendanceIntegrationPage() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       </div>
 
@@ -617,6 +665,20 @@ export default function AttendanceIntegrationPage() {
         </div>
 
         <div className="card-body p-0">
+          {viewMode === 'grid' ? (
+            <div className="p-3">
+              <SeatingChart
+                students={seatingStudents}
+                onStatusChange={(studentId, newStatus) => {
+                  setAtRiskStudents(prev => prev.map(s =>
+                    (s.id === studentId || s.student_id === studentId)
+                      ? { ...s, _overrideStatus: newStatus }
+                      : s
+                  ))
+                }}
+              />
+            </div>
+          ) : (
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
@@ -669,6 +731,7 @@ export default function AttendanceIntegrationPage() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       </div>
 
@@ -690,6 +753,20 @@ export default function AttendanceIntegrationPage() {
         </div>
 
         <div className="card-body p-0">
+          {viewMode === 'grid' ? (
+            <div className="p-3">
+              <SeatingChart
+                students={seatingStudents}
+                onStatusChange={(studentId, newStatus) => {
+                  setAtRiskStudents(prev => prev.map(s =>
+                    (s.id === studentId || s.student_id === studentId)
+                      ? { ...s, _overrideStatus: newStatus }
+                      : s
+                  ))
+                }}
+              />
+            </div>
+          ) : (
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
@@ -754,6 +831,7 @@ export default function AttendanceIntegrationPage() {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       </div>
 

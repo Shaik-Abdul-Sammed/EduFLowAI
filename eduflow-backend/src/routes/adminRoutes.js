@@ -334,8 +334,31 @@ export function createAdminRouter() {
   ]
 
   // --- Students CRUD ---
-  router.get('/students', (_req, res) => {
-    res.json({ success: true, count: adminStudents.length, data: adminStudents })
+  router.get('/students', (req, res) => {
+    const page = parseInt(req.query.page) || 1
+    const limit = Math.min(parseInt(req.query.limit) || 50, 500)
+    const offset = (page - 1) * limit
+    const search = (req.query.search || '').toLowerCase()
+
+    const filtered = search
+      ? adminStudents.filter(s =>
+          s.name?.toLowerCase().includes(search) ||
+          s.roll?.toLowerCase().includes(search) ||
+          s.stream?.toLowerCase().includes(search)
+        )
+      : adminStudents
+
+    const total = filtered.length
+    const data = filtered.slice(offset, offset + limit)
+    res.json({
+      success: true,
+      count: total,
+      total,
+      data,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    })
   })
 
   router.post('/students', (req, res) => {
