@@ -62,6 +62,24 @@ const DomainInsightPage = lazy(() => import('./pages/admin/insights/DomainInsigh
 const InvoiceGeneratorPage = lazy(() => import('./pages/admin/InvoiceGeneratorPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'))
 
+// Institutional Needs Portals & Modules
+const OnlineAdmissionPage = lazy(() => import('./pages/public/OnlineAdmissionPage'))
+const ParentDashboardPage = lazy(() => import('./pages/parent/ParentDashboardPage'))
+const GrievancePage = lazy(() => import('./pages/student/GrievancePage'))
+const GrievanceManagementPage = lazy(() => import('./pages/admin/GrievanceManagementPage'))
+const DigitalIdCard = lazy(() => import('./pages/student/DigitalIdCard'))
+const LibraryManagementPage = lazy(() => import('./pages/admin/LibraryManagementPage'))
+const HostelWardenPage = lazy(() => import('./pages/admin/HostelWardenPage'))
+const LeaveApplicationPage = lazy(() => import('./pages/student/LeaveApplicationPage'))
+const LeaveApprovalsPage = lazy(() => import('./pages/hod/LeaveApprovalsPage'))
+const BudgetTrackingPage = lazy(() => import('./pages/admin/BudgetTrackingPage'))
+const ScholarshipManagementPage = lazy(() => import('./pages/admin/ScholarshipManagementPage'))
+const PlacementDrivesPage = lazy(() => import('./pages/admin/PlacementDrivesPage'))
+const StudentMockTestPage = lazy(() => import('./pages/student/StudentMockTestPage'))
+const FacultyAppraisalPage = lazy(() => import('./pages/hod/FacultyAppraisalPage'))
+const PayrollGenerationPage = lazy(() => import('./pages/finance/PayrollGenerationPage'))
+const OnlineExamPage = lazy(() => import('./pages/student/OnlineExamPage'))
+
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
 const instituteName = 'EduFlow'
@@ -359,12 +377,14 @@ function App() {
             <Route path="/docs" element={<DocsPage />} />
             <Route path="/why-eduflow" element={<WhyEduFlowPage />} />
             <Route path="/how-attendance-works" element={<AttendanceExplainerPage />} />
+            <Route path="/apply" element={<OnlineAdmissionPage />} />
             <Route path="/r/:token" element={<PublicReportViewer />} />
             <Route path="/profile" element={<ProfilePage />} />
 
         {/* Staff Routes */}
         <Route element={<ProtectedRoute role="staff" />}>
           <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
+          <Route path="/staff-dashboard/library" element={<LibraryManagementPage />} />
         </Route>
 
         {/* HOD Routes */}
@@ -372,6 +392,9 @@ function App() {
           <Route path="/hod-dashboard" element={<HodDashboardPage />} />
           <Route path="/hod-dashboard/staff" element={<HodStaffManagementPage />} />
           <Route path="/hod-dashboard/calendar" element={<HodCalendarPage />} />
+          <Route path="/hod-dashboard/grievances" element={<GrievanceManagementPage />} />
+          <Route path="/hod-dashboard/leave-approvals" element={<LeaveApprovalsPage />} />
+          <Route path="/hod-dashboard/faculty-appraisal" element={<FacultyAppraisalPage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="student" />}>
@@ -379,6 +402,11 @@ function App() {
             path="/student-dashboard"
             element={<DashboardHome role="student" routes={groupedRoutes.student || []} />}
           />
+          <Route path="/student-dashboard/grievances" element={<GrievancePage />} />
+          <Route path="/student-dashboard/digital-id" element={<DigitalIdCard />} />
+          <Route path="/student-dashboard/leave-application" element={<LeaveApplicationPage />} />
+          <Route path="/student-dashboard/mock-tests" element={<StudentMockTestPage />} />
+          <Route path="/student-dashboard/online-exam" element={<OnlineExamPage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="faculty" />}>
@@ -391,7 +419,7 @@ function App() {
         <Route element={<ProtectedRoute role="parent" />}>
           <Route
             path="/parent-dashboard"
-            element={<DashboardHome role="parent" routes={groupedRoutes.parent || []} />}
+            element={<ParentDashboardPage />}
           />
         </Route>
 
@@ -460,6 +488,42 @@ function App() {
             path="/admin-dashboard/staff"
             element={<AdminStaffManagementPage />}
           />
+          <Route
+            path="/admin-dashboard/grievances"
+            element={<GrievanceManagementPage />}
+          />
+          <Route
+            path="/admin-dashboard/library"
+            element={<LibraryManagementPage />}
+          />
+          <Route
+            path="/admin-dashboard/hostel-management"
+            element={<HostelWardenPage />}
+          />
+          <Route
+            path="/admin-dashboard/leave-approvals"
+            element={<LeaveApprovalsPage />}
+          />
+          <Route
+            path="/admin-dashboard/budget"
+            element={<BudgetTrackingPage />}
+          />
+          <Route
+            path="/admin-dashboard/scholarships"
+            element={<ScholarshipManagementPage />}
+          />
+          <Route
+            path="/admin-dashboard/placement-drives"
+            element={<PlacementDrivesPage />}
+          />
+          <Route
+            path="/admin-dashboard/faculty-appraisal"
+            element={<FacultyAppraisalPage />}
+          />
+          <Route
+            path="/admin-dashboard/payroll"
+            element={<PayrollGenerationPage />}
+          />
         </Route>
         
         {/* Finance Governance Routes */}
@@ -468,6 +532,9 @@ function App() {
           <Route path="/finance-dashboard/fee-reminders" element={<FeeReminderPage />} />
           <Route path="/finance-dashboard/upi-collection" element={<UPICollectionPage />} />
           <Route path="/finance-dashboard/invoices" element={<InvoiceGeneratorPage />} />
+          <Route path="/finance-dashboard/budget" element={<BudgetTrackingPage />} />
+          <Route path="/finance-dashboard/scholarships" element={<ScholarshipManagementPage />} />
+          <Route path="/finance-dashboard/payroll" element={<PayrollGenerationPage />} />
         </Route>
 
           <Route path="/visitor-dashboard" element={<VisitorDashboard />} />

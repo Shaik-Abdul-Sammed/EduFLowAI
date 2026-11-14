@@ -45,6 +45,7 @@ import { createComplianceRouter } from './routes/complianceRoutes.js'
 import { createLiveDataRouter } from './routes/liveDataRoutes.js'
 import { createPaymentRouter } from './routes/paymentRoutes.js'
 import { createInstitutionalNeedsRouter } from './routes/institutionalNeedsRoutes.js'
+import { createCampusOperationsRouter } from './routes/campusOperationsRoutes.js'
 import { createCampusRouter } from './routes/campusRoutes.js'
 import { authMiddleware } from './middleware/auth.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
@@ -217,6 +218,8 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/payment', createPaymentRouter())
   app.use('/api/v1/campus', createCampusRouter())
   app.use('/api/v1/institution-operations', createInstitutionalNeedsRouter())
+  app.use('/api/v1', createCampusOperationsRouter())
+  app.use('/api', createCampusOperationsRouter())
   app.get('/api/v1/activity', authMiddleware, InsightsController.activity)
 
   // Manual Backup Verification trigger

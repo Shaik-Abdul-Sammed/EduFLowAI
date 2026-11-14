@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import QRCodeSvg from '../../components/QRCodeSvg'
 import { useAuth } from '../../hooks/useAuth'
 
 const INDIGO = '#6366f1'
@@ -9,6 +11,18 @@ export default function ProfilePage() {
   const userName = user?.name || user?.username || 'User'
   const userRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'User'
   const userInitial = userName.charAt(0).toUpperCase()
+
+  const studentRoll = user?.rollNumber || user?.studentId || '2024-CSE-042'
+  const studentBloodGroup = user?.bloodGroup || 'O+'
+  const studentDept = user?.department || 'Computer Science & Engineering'
+  const qrPayload = JSON.stringify({
+    rollNumber: studentRoll,
+    name: userName,
+    bloodGroup: studentBloodGroup,
+    role: user?.role,
+    campusPass: 'VERIFIED_ACTIVE',
+    issuedAt: new Date().toISOString().split('T')[0]
+  })
 
   const [formData, setFormData] = useState({
     name: userName,
@@ -35,6 +49,56 @@ export default function ProfilePage() {
         {saved && (
           <div style={{ padding: '0.875rem', background: '#10B98110', border: '1px solid #10B98130', borderRadius: '0.875rem', color: '#065f46', fontWeight: 600, fontSize: '0.875rem' }}>
             ✅ Profile updated successfully.
+          </div>
+        )}
+
+        {/* Student Dynamic Digital ID & QR Gate Pass */}
+        {user.role === 'student' && (
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%)', color: 'white' }}>
+            <div className="card-body p-4">
+              <div className="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
+                <div style={{ flex: 1 }}>
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <span className="badge bg-success text-white px-2 py-1" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>● ACTIVE CAMPUS PASS</span>
+                    <span className="text-white-50 small">Academic Year 2026-27</span>
+                  </div>
+                  <h3 className="h4 fw-bold mb-1 text-white">{userName}</h3>
+                  <p className="text-white-50 mb-3 small">{studentDept}</p>
+
+                  <div className="row g-2 mb-3" style={{ maxWidth: 440 }}>
+                    <div className="col-6">
+                      <div className="p-2 rounded" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>ROLL NUMBER</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, fontFamily: 'monospace' }}>{studentRoll}</div>
+                      </div>
+                    </div>
+                    <div className="col-6">
+                      <div className="p-2 rounded" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 700 }}>BLOOD GROUP</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f87171' }}>{studentBloodGroup}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="d-flex align-items-center gap-2">
+                    <Link to="/student-dashboard/digital-id" className="btn btn-sm btn-light fw-bold" style={{ borderRadius: '0.75rem' }}>
+                      🪪 Open Full Smart ID Badge
+                    </Link>
+                    <span className="text-white-50 small">Scan QR at library & campus turnstile gates</span>
+                  </div>
+                </div>
+
+                <div className="text-center p-3 rounded-4 shadow-sm" style={{ background: '#ffffff', minWidth: 160 }}>
+                  <QRCodeSvg value={qrPayload} size={140} fgColor="#1e1b4b" bgColor="#ffffff" />
+                  <div className="mt-2 fw-bold text-dark" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>
+                    {studentRoll}
+                  </div>
+                  <div className="text-muted" style={{ fontSize: '0.65rem' }}>
+                    Blood Group: <strong className="text-danger">{studentBloodGroup}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
