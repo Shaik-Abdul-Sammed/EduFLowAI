@@ -147,6 +147,27 @@ export function createBackupRouter(db = pool) {
     }
   })
 
+  // DRaaS Off-site Backup Upload
+  router.post('/upload-offsite', async (req, res) => {
+    try {
+      const { uploadBackupToS3 } = await import('../services/backupService.js')
+      const result = await uploadBackupToS3(req.body?.backupPath)
+      res.json(result)
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to upload backup off-site', details: err.message })
+    }
+  })
+
+  router.post('/draas', async (req, res) => {
+    try {
+      const { uploadBackupToS3 } = await import('../services/backupService.js')
+      const result = await uploadBackupToS3(req.body?.backupPath)
+      res.json(result)
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to trigger DRaaS backup', details: err.message })
+    }
+  })
+
   return router
 }
 

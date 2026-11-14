@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { QrCode, Scan, Box, Sparkles, RefreshCw, CheckCircle2, RotateCw } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import ARModelViewer from '../../components/ARModelViewer'
 
 export default function ARScannerPage() {
   const [scanning, setScanning] = useState(false)
@@ -48,6 +49,9 @@ export default function ARScannerPage() {
             </p>
           </div>
         </div>
+
+        {/* Interactive WebGL 3D Model Viewer Component */}
+        <ARModelViewer defaultModel="heart" />
 
         {/* Viewfinder Workspace Split */}
         <div style={{

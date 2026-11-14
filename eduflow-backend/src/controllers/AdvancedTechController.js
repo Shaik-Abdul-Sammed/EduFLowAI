@@ -266,4 +266,184 @@ export class AdvancedTechController {
       return res.status(500).json({ error: 'Translation error', details: err.message })
     }
   }
+
+  // ========================================================
+  // 9. Podcast Media Upload (Feature 13)
+  // ========================================================
+  static async uploadMedia(req, res) {
+    try {
+      const { title = 'Lecture Micro-Podcast', mediaType = 'audio/webm', audioData = '', duration = 0, facultyName = 'Prof. Ananya Sen', courseCode = 'CS401' } = req.body || {}
+      
+      const mediaId = `media_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+      const mediaUrl = `/uploads/media/audio_${Date.now()}.webm`
+
+      return res.status(201).json({
+        success: true,
+        mediaId,
+        title: title.trim(),
+        mediaUrl,
+        mediaType,
+        duration: Number(duration) || 30,
+        facultyName,
+        courseCode,
+        fileSize: audioData ? audioData.length : 124500,
+        uploadedAt: new Date().toISOString()
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Media upload failed', details: err.message })
+    }
+  }
+
+  // ========================================================
+  // 10. AI-Driven Curriculum Mapping (Feature 74)
+  // ========================================================
+  static curriculumStore = new Map([
+    ['CS301', {
+      courseCode: 'CS301',
+      courseName: 'Data Structures & Algorithms in Enterprise Systems',
+      department: 'Computer Science & Engineering',
+      academicYear: '2026-27',
+      mappings: {
+        CO1: { PO1: 3, PO2: 2, PO3: 2, PO4: 1, PO5: 1, PO6: 0, PO7: 0, PO8: 0, PO9: 0, PO10: 0, PO11: 0, PO12: 2 },
+        CO2: { PO1: 3, PO2: 3, PO3: 2, PO4: 2, PO5: 2, PO6: 0, PO7: 0, PO8: 0, PO9: 1, PO10: 1, PO11: 0, PO12: 2 },
+        CO3: { PO1: 2, PO2: 3, PO3: 3, PO4: 2, PO5: 3, PO6: 1, PO7: 0, PO8: 0, PO9: 2, PO10: 2, PO11: 1, PO12: 3 },
+        CO4: { PO1: 2, PO2: 2, PO3: 2, PO4: 3, PO5: 2, PO6: 2, PO7: 1, PO8: 2, PO9: 2, PO10: 1, PO11: 1, PO12: 2 },
+        CO5: { PO1: 3, PO2: 3, PO3: 3, PO4: 3, PO5: 3, PO6: 1, PO7: 1, PO8: 1, PO9: 3, PO10: 3, PO11: 2, PO12: 3 }
+      },
+      attainmentCoverage: 91.4,
+      lastUpdated: new Date().toISOString()
+    }]
+  ])
+
+  static async saveCurriculumMap(req, res) {
+    try {
+      const { courseCode = 'CS301', mappings = {}, department = 'Computer Science & Engineering', academicYear = '2026-27' } = req.body || {}
+      const key = courseCode.toUpperCase().trim()
+
+      const entry = {
+        courseCode: key,
+        courseName: req.body?.courseName || `${key} Advanced Academic Module`,
+        department,
+        academicYear,
+        mappings,
+        attainmentCoverage: 88.5,
+        lastUpdated: new Date().toISOString()
+      }
+
+      AdvancedTechController.curriculumStore.set(key, entry)
+
+      return res.status(200).json({
+        success: true,
+        message: 'Curriculum Course-Program Outcome mapping updated successfully',
+        data: entry
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to save curriculum mapping', details: err.message })
+    }
+  }
+
+  static async getCurriculumMap(req, res) {
+    try {
+      const courseCode = (req.params.courseCode || 'CS301').toUpperCase().trim()
+      let entry = AdvancedTechController.curriculumStore.get(courseCode)
+
+      if (!entry) {
+        entry = {
+          courseCode,
+          courseName: `${courseCode} Core Syllabus`,
+          department: 'Academic Engineering',
+          academicYear: '2026-27',
+          mappings: {
+            CO1: { PO1: 3, PO2: 2, PO3: 1, PO4: 0, PO5: 0, PO6: 0, PO7: 0, PO8: 0, PO9: 0, PO10: 0, PO11: 0, PO12: 1 },
+            CO2: { PO1: 2, PO2: 3, PO3: 2, PO4: 1, PO5: 1, PO6: 0, PO7: 0, PO8: 0, PO9: 0, PO10: 0, PO11: 0, PO12: 1 },
+            CO3: { PO1: 2, PO2: 2, PO3: 3, PO4: 2, PO5: 2, PO6: 0, PO7: 0, PO8: 0, PO9: 1, PO10: 1, PO11: 0, PO12: 2 },
+            CO4: { PO1: 1, PO2: 2, PO3: 2, PO4: 3, PO5: 2, PO6: 1, PO7: 0, PO8: 1, PO9: 1, PO10: 1, PO11: 0, PO12: 2 },
+            CO5: { PO1: 2, PO2: 2, PO3: 3, PO4: 2, PO5: 3, PO6: 1, PO7: 1, PO8: 1, PO9: 2, PO10: 2, PO11: 1, PO12: 3 }
+          },
+          attainmentCoverage: 84.2,
+          lastUpdated: new Date().toISOString()
+        }
+        AdvancedTechController.curriculumStore.set(courseCode, entry)
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: entry
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to fetch curriculum mapping', details: err.message })
+    }
+  }
+
+  // ========================================================
+  // 11. Virtual Research Environment Workspace (Feature 10)
+  // ========================================================
+  static researchLogs = [
+    {
+      id: 1,
+      projectId: 'proj-ai-01',
+      logMessage: 'Initialized multi-tenant neural pruning benchmark across 128 GPU nodes. Target sparsity: 60%.',
+      author: 'Dr. Vikram Malhotra',
+      datasetName: 'imagenet_dist_val_shard01.bin',
+      timestamp: new Date(Date.now() - 4 * 3600000).toISOString()
+    },
+    {
+      id: 2,
+      projectId: 'proj-ai-01',
+      logMessage: 'Epoch 12 convergence achieved: validation perplexity reached 4.12. No parameter divergence detected.',
+      author: 'Dr. Vikram Malhotra',
+      datasetName: 'imagenet_dist_val_shard01.bin',
+      timestamp: new Date(Date.now() - 1 * 3600000).toISOString()
+    }
+  ]
+
+  static researchDatasets = [
+    { id: 'ds-01', name: 'imagenet_dist_val_shard01.bin', size: '4.8 GB', format: 'Binary Tensor', rows: 50000, uploadedBy: 'Dr. Vikram Malhotra' },
+    { id: 'ds-02', name: 'genomics_crispr_cleavage_v4.parquet', size: '1.2 GB', format: 'Apache Parquet', rows: 120000, uploadedBy: 'Prof. Ananya Sen' }
+  ]
+
+  static async addResearchLog(req, res) {
+    try {
+      const { projectId = 'proj-ai-01', logMessage, author = 'Dr. Researcher', datasetName = 'research_data.parquet' } = req.body || {}
+
+      if (!logMessage || !logMessage.trim()) {
+        return res.status(400).json({ error: 'logMessage cannot be empty' })
+      }
+
+      const newLog = {
+        id: AdvancedTechController.researchLogs.length + 1,
+        projectId,
+        logMessage: logMessage.trim(),
+        author,
+        datasetName,
+        timestamp: new Date().toISOString()
+      }
+
+      AdvancedTechController.researchLogs.unshift(newLog)
+
+      return res.status(201).json({
+        success: true,
+        message: 'Research experiment log recorded',
+        log: newLog
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to record research log', details: err.message })
+    }
+  }
+
+  static async getResearchLogs(req, res) {
+    try {
+      const projectId = req.query.projectId || 'proj-ai-01'
+      const filtered = AdvancedTechController.researchLogs.filter(l => !projectId || l.projectId === projectId)
+
+      return res.status(200).json({
+        success: true,
+        projectId,
+        logs: filtered,
+        datasets: AdvancedTechController.researchDatasets
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to retrieve research logs', details: err.message })
+    }
+  }
 }

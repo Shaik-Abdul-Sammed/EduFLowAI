@@ -36,7 +36,7 @@ import { createNotificationRouter } from './routes/notificationRoutes.js'
 import { createOnboardingRouter } from './routes/onboardingRoutes.js'
 import { createLegalRouter } from './routes/legalRoutes.js'
 import { createSupportRouter } from './routes/supportRoutes.js'
-import { createMonitoringRouter } from './routes/monitoringRoutes.js'
+import { createMonitoringRouter, buildMetricsPayload, trackMetricsRequest } from './routes/monitoringRoutes.js'
 import { createWhatsAppRouter } from './routes/whatsappRoutes.js'
 import { createFeeReminderRouter } from './routes/feeReminderRoutes.js'
 import academicEscalationRouter from './routes/academicEscalationRoutes.js'
@@ -126,6 +126,10 @@ export function createApp({ db } = {}) {
   app.use(express.json())
   app.use(securityHeadersMiddleware)
   app.use(httpLogger)
+  app.use((req, res, next) => {
+    trackMetricsRequest(false)
+    next()
+  })
   app.use(attachInstitutionContext)
 
   app.get('/api/health', (_req, res) => {
@@ -224,6 +228,12 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/institution-operations', createInstitutionalNeedsRouter())
   app.use('/api/v1', createCampusOperationsRouter())
   app.use('/api', createCampusOperationsRouter())
+  
+  // Observability & Telemetry Metrics Endpoint (Feature 81)
+  app.get('/api/v1/metrics', (_req, res) => {
+    res.json(buildMetricsPayload())
+  })
+
   app.get('/api/v1/activity', authMiddleware, InsightsController.activity)
 
   // Manual Backup Verification trigger

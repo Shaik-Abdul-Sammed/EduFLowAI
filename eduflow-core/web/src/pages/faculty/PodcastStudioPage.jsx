@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Mic, Play, Pause, UploadCloud, Radio, Volume2, FileAudio, CheckCircle2 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import AudioRecorder from '../../components/AudioRecorder'
 
 export default function PodcastStudioPage() {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -85,6 +86,23 @@ export default function PodcastStudioPage() {
             </p>
           </div>
         </div>
+
+        {/* Live Audio Recorder Component */}
+        <AudioRecorder
+          courseCode={newCourse}
+          onUploadComplete={(media) => {
+            if (media?.title) {
+              setUploadedEpisodes(prev => [{
+                id: prev.length + 1,
+                title: media.title,
+                course: newCourse,
+                duration: `${Math.floor((media.duration || 30) / 60)}:${((media.duration || 30) % 60).toString().padStart(2, '0')}`,
+                date: 'Just now',
+                listens: 1
+              }, ...prev])
+            }
+          }}
+        />
 
         {/* Studio Content Split */}
         <div style={{

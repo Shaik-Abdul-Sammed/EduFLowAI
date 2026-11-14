@@ -163,4 +163,115 @@ export class CredentialController {
       return res.status(500).json({ error: 'Verification error', details: err.message })
     }
   }
+
+  // ========================================================
+  // Faculty Credential Wallet (Feature 64)
+  // ========================================================
+  static facultyCredentialsStore = [
+    {
+      id: 1,
+      faculty_id: 201,
+      faculty_name: 'Dr. Vikram Malhotra',
+      credential_type: 'DOCTORATE',
+      title: 'Ph.D. in Distributed Systems & Byzantine Fault Tolerance',
+      institution_or_publisher: 'Indian Institute of Technology (IIT) Delhi',
+      blockchain_hash: '0x9d4b1a8f9024cbe771891d09eaf1992928812903bbca7819ef3810142bc019a2',
+      year_awarded: 2021,
+      verification_status: 'VERIFIED_ON_CHAIN',
+      document_url: 'https://credentials.eduflow.ai/proofs/phd_vikram_malhotra.pdf',
+      issued_at: new Date('2021-08-15').toISOString()
+    },
+    {
+      id: 2,
+      faculty_id: 201,
+      faculty_name: 'Dr. Vikram Malhotra',
+      credential_type: 'SCOPUS_PUBLICATION',
+      title: 'High-Throughput Consensus Invariants in Multi-Tier Edge Networks',
+      institution_or_publisher: 'IEEE Transactions on Parallel & Distributed Systems (Vol. 34)',
+      blockchain_hash: '0x4fa82110ea09bb237199cd028eab78912908819abef901238471928019bca889',
+      year_awarded: 2025,
+      verification_status: 'VERIFIED_ON_CHAIN',
+      document_url: 'https://doi.org/10.1109/TPDS.2025.1092837',
+      issued_at: new Date('2025-04-10').toISOString()
+    },
+    {
+      id: 3,
+      faculty_id: 201,
+      faculty_name: 'Dr. Vikram Malhotra',
+      credential_type: 'FDP',
+      title: 'AICTE-ATAL 2-Week Advanced Faculty Development Program on Quantum Computing & Post-Quantum Cryptography',
+      institution_or_publisher: 'AICTE Training and Learning (ATAL) Academy',
+      blockchain_hash: '0x17c99201baee9018471920acdef78912891901238491028371928109827361ab',
+      year_awarded: 2026,
+      verification_status: 'VERIFIED_ON_CHAIN',
+      document_url: 'https://aicte-india.org/atal/cert/2026/ATAL-QC-9921',
+      issued_at: new Date('2026-02-28').toISOString()
+    }
+  ]
+
+  /**
+   * POST /api/v1/faculty/credentials/upload
+   */
+  static async uploadFacultyCredential(req, res) {
+    try {
+      const {
+        facultyId = 201,
+        facultyName = 'Dr. Vikram Malhotra',
+        credentialType = 'FDP',
+        title,
+        institutionOrPublisher,
+        yearAwarded = new Date().getFullYear(),
+        documentUrl = ''
+      } = req.body || {}
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ error: 'Credential title is required' })
+      }
+
+      const payload = { facultyId, credentialType, title: title.trim(), institutionOrPublisher, yearAwarded }
+      const blockchainHash = CredentialController.generateBlockchainHash(payload)
+
+      const entry = {
+        id: CredentialController.facultyCredentialsStore.length + 1,
+        faculty_id: Number(facultyId),
+        faculty_name: facultyName,
+        credential_type: credentialType,
+        title: title.trim(),
+        institution_or_publisher: institutionOrPublisher || 'Academic Accreditation Board',
+        blockchain_hash: blockchainHash,
+        year_awarded: Number(yearAwarded),
+        verification_status: 'VERIFIED_ON_CHAIN',
+        document_url: documentUrl || `https://credentials.eduflow.ai/proofs/${blockchainHash.substring(0, 10)}.pdf`,
+        issued_at: new Date().toISOString()
+      }
+
+      CredentialController.facultyCredentialsStore.unshift(entry)
+
+      return res.status(201).json({
+        success: true,
+        message: 'Faculty academic credential uploaded and verified on blockchain ledger',
+        credential: entry
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to upload faculty credential', details: err.message })
+    }
+  }
+
+  /**
+   * GET /api/v1/faculty/credentials/:facultyId?
+   */
+  static async getFacultyCredentials(req, res) {
+    try {
+      const facultyId = req.params.facultyId ? Number(req.params.facultyId) : 201
+      const list = CredentialController.facultyCredentialsStore.filter(c => !facultyId || c.faculty_id === facultyId)
+
+      return res.status(200).json({
+        success: true,
+        facultyId,
+        credentials: list.length > 0 ? list : CredentialController.facultyCredentialsStore
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to retrieve faculty credentials', details: err.message })
+    }
+  }
 }

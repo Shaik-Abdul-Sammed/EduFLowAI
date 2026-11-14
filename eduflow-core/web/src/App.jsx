@@ -89,6 +89,11 @@ const ARScannerPage = lazy(() => import('./pages/student/ARScannerPage'))
 const PlagiarismCheckerPage = lazy(() => import('./pages/faculty/PlagiarismCheckerPage'))
 const PodcastStudioPage = lazy(() => import('./pages/faculty/PodcastStudioPage'))
 const WhiteboardPage = lazy(() => import('./pages/common/WhiteboardPage'))
+const VirtualClassroomPage = lazy(() => import('./pages/common/VirtualClassroomPage'))
+const LibraryScannerPage = lazy(() => import('./pages/admin/LibraryScannerPage'))
+const FacultyWalletPage = lazy(() => import('./pages/faculty/FacultyWalletPage'))
+const CurriculumMappingPage = lazy(() => import('./pages/admin/CurriculumMappingPage'))
+const ResearchWorkspacePage = lazy(() => import('./pages/common/ResearchWorkspacePage'))
 
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -391,6 +396,11 @@ function App() {
             <Route path="/r/:token" element={<PublicReportViewer />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/whiteboard" element={<WhiteboardPage />} />
+            <Route path="/virtual-classroom" element={<VirtualClassroomPage />} />
+            <Route path="/research-workspace" element={<ResearchWorkspacePage />} />
+            <Route path="/library-scanner" element={<LibraryScannerPage />} />
+            <Route path="/curriculum-mapping" element={<CurriculumMappingPage />} />
+            <Route path="/faculty-wallet" element={<FacultyWalletPage />} />
 
         {/* Staff Routes */}
         <Route element={<ProtectedRoute role="staff" />}>
@@ -432,6 +442,8 @@ function App() {
           />
           <Route path="/faculty-dashboard/plagiarism-checker" element={<PlagiarismCheckerPage />} />
           <Route path="/faculty-dashboard/podcast-studio" element={<PodcastStudioPage />} />
+          <Route path="/faculty-dashboard/wallet" element={<FacultyWalletPage />} />
+          <Route path="/faculty/wallet" element={<FacultyWalletPage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="parent" />}>
@@ -541,6 +553,14 @@ function App() {
           <Route
             path="/admin-dashboard/payroll"
             element={<PayrollGenerationPage />}
+          />
+          <Route
+            path="/admin-dashboard/library-scanner"
+            element={<LibraryScannerPage />}
+          />
+          <Route
+            path="/admin-dashboard/curriculum-mapping"
+            element={<CurriculumMappingPage />}
           />
         </Route>
         

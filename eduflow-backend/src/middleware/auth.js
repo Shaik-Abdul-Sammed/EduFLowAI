@@ -2,6 +2,37 @@ import jwt from 'jsonwebtoken'
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
 
+/**
+ * Continuous Zero-Trust Authentication Evaluator.
+ * Inspects continuous session state, IP bounding, and fingerprint consistency.
+ */
+export function verifyZeroTrustContext(req, decoded) {
+  const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1'
+  const clientFingerprint = req.headers['x-client-fingerprint']
+  const isSuspicious = req.headers['x-suspicious-client'] === 'true' || 
+                       req.headers['x-zero-trust-anomaly'] === 'true' ||
+                       req.headers['x-session-tampered'] === 'true'
+
+  if (isSuspicious) {
+    console.warn(`[ZERO_TRUST_VIOLATION] Suspicious client header detected for user ID ${decoded.id || decoded.username}`)
+    return false
+  }
+
+  const boundIp = decoded.boundIp || decoded.ip
+  if (boundIp && boundIp !== clientIp && boundIp !== '127.0.0.1' && clientIp !== '127.0.0.1') {
+    console.warn(`[ZERO_TRUST_VIOLATION] Drastic IP shift detected: Token bound to ${boundIp}, request from ${clientIp}`)
+    return false
+  }
+
+  const boundFingerprint = decoded.clientFingerprint || decoded.fingerprint
+  if (boundFingerprint && clientFingerprint && boundFingerprint !== clientFingerprint) {
+    console.warn(`[ZERO_TRUST_VIOLATION] Client device fingerprint mismatch: expected ${boundFingerprint}, got ${clientFingerprint}`)
+    return false
+  }
+
+  return true
+}
+
 export function authMiddleware(req, res, next) {
   // Demo lockdown emergency secret bypass: allows admin tools & reset with ?secret=eduflow2026
   if (req.query?.secret === 'eduflow2026' || req.body?.secret === 'eduflow2026' || req.headers['x-admin-secret'] === 'eduflow2026') {
@@ -18,6 +49,15 @@ export function authMiddleware(req, res, next) {
   
   try {
     const decoded = jwt.verify(token, JWT_SECRET)
+
+    // Continuous Zero-Trust Security Check
+    if (!verifyZeroTrustContext(req, decoded)) {
+      return res.status(401).json({
+        error: 'Continuous authentication failed: zero-trust anomaly or session hijacking detected',
+        code: 'ZERO_TRUST_VIOLATION'
+      })
+    }
+
     req.user = decoded
     next()
   } catch (error) {

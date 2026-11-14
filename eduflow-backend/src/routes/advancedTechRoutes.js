@@ -41,6 +41,21 @@ export function createAdvancedTechRouter() {
   // 8. Instant Translation
   router.post('/translate/instant', AdvancedTechController.instantTranslate)
 
+  // 9. Podcast & Media Upload (Feature 13)
+  router.post('/media/upload', AdvancedTechController.uploadMedia)
+
+  // 10. AI-Driven Curriculum Mapping (Feature 74)
+  router.post('/curriculum/map', AdvancedTechController.saveCurriculumMap)
+  router.get('/curriculum/map/:courseCode?', AdvancedTechController.getCurriculumMap)
+
+  // 11. Virtual Research Environments (Feature 10)
+  router.post('/research/workspace/log', AdvancedTechController.addResearchLog)
+  router.get('/research/workspace/logs', AdvancedTechController.getResearchLogs)
+
+  // 12. Faculty Credential Wallets (Feature 64)
+  router.post('/faculty/credentials/upload', CredentialController.uploadFacultyCredential)
+  router.get('/faculty/credentials/:facultyId?', CredentialController.getFacultyCredentials)
+
   return router
 }
 
