@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 /**
  * SeatingChart Component
@@ -14,6 +14,17 @@ export default function SeatingChart({ students = [], onStatusChange }) {
   const COLS = 6
   const ROWS = 8
   const TOTAL = COLS * ROWS
+
+  // WCAG 2.1 keyboard dismiss on Escape
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && selected) {
+        setSelected(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selected])
 
   const statusColors = {
     PRESENT:  { bg: '#22c55e', text: '#fff', label: 'Present' },
@@ -59,17 +70,18 @@ export default function SeatingChart({ students = [], onStatusChange }) {
       </div>
 
       {/* Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-          gap: 8,
-          width: '100%',
-          overflowX: 'auto',
-        }}
-        role="grid"
-        aria-label="Classroom seating chart"
-      >
+      <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${COLS}, minmax(75px, 1fr))`,
+            gap: 8,
+            minWidth: 480,
+            width: '100%',
+          }}
+          role="grid"
+          aria-label="Classroom seating chart"
+        >
         {Array.from({ length: TOTAL }).map((_, idx) => {
           const student = getStudentAtSeat(idx)
           const colorKey = student ? (student.status || 'EMPTY') : 'EMPTY'
@@ -114,6 +126,7 @@ export default function SeatingChart({ students = [], onStatusChange }) {
             </div>
           )
         })}
+        </div>
       </div>
 
       {/* Stats bar */}

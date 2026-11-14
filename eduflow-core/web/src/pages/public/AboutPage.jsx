@@ -446,7 +446,7 @@ export default function AboutPage() {
             <Link to="/officers-dashboard" className="btn btn-primary px-4 py-2.5 shadow" style={{ borderRadius: '0.75rem', fontWeight: 600 }}>
               Launch AI Officers Dashboard
             </Link>
-            <Link to="/attendance-intelligence" className="btn btn-outline-secondary px-4 py-2.5" style={{ borderRadius: '0.75rem', fontWeight: 600, color: 'var(--app-text)' }}>
+            <Link to="/how-attendance-works" className="btn btn-outline-secondary px-4 py-2.5" style={{ borderRadius: '0.75rem', fontWeight: 600, color: 'var(--app-text)' }}>
               Explore Attendance Intelligence
             </Link>
           </div>
