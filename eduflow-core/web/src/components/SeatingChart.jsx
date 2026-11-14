@@ -93,8 +93,8 @@ export default function SeatingChart({ students = [], onStatusChange }) {
       <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${COLS}, minmax(75px, 1fr))`,
+            display: 'flex',
+            flexDirection: 'column',
             gap: 8,
             minWidth: 480,
             width: '100%',
@@ -102,50 +102,64 @@ export default function SeatingChart({ students = [], onStatusChange }) {
           role="grid"
           aria-label="Classroom seating chart"
         >
-        {Array.from({ length: TOTAL }).map((_, idx) => {
-          const student = getStudentAtSeat(idx)
-          const colorKey = student ? (student.status || 'EMPTY') : 'EMPTY'
-          const color = statusColors[colorKey] || statusColors.EMPTY
-          return (
+          {Array.from({ length: ROWS }).map((_, rowIdx) => (
             <div
-              key={idx}
-              role="gridcell"
-              aria-label={student ? `Seat ${idx + 1}: ${student.name}, ${color.label}` : `Seat ${idx + 1}: Empty`}
-              tabIndex={student ? 0 : -1}
-              onClick={() => handleDeskClick(idx)}
-              onKeyDown={e => e.key === 'Enter' && handleDeskClick(idx)}
+              key={rowIdx}
+              role="row"
               style={{
-                background: color.bg,
-                color: color.text,
-                borderRadius: 8,
-                padding: '10px 6px',
-                textAlign: 'center',
-                cursor: student ? 'pointer' : 'default',
-                fontSize: 11,
-                fontWeight: 600,
-                minHeight: 60,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'transform 0.1s, box-shadow 0.1s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-                wordBreak: 'break-word',
-                position: 'relative',
+                display: 'grid',
+                gridTemplateColumns: `repeat(${COLS}, minmax(75px, 1fr))`,
+                gap: 8,
+                width: '100%',
               }}
             >
-              <span style={{ fontSize: 9, opacity: 0.75, marginBottom: 2 }}>#{idx + 1}</span>
-              {student ? (
-                <>
-                  <span style={{ lineHeight: 1.2 }}>{student.name?.split(' ')[0] || '—'}</span>
-                  <span style={{ fontSize: 9, opacity: 0.85, marginTop: 2 }}>{student.rollNo || ''}</span>
-                </>
-              ) : (
-                <span style={{ opacity: 0.4, fontSize: 10 }}>Empty</span>
-              )}
+              {Array.from({ length: COLS }).map((_, colIdx) => {
+                const idx = rowIdx * COLS + colIdx
+                const student = getStudentAtSeat(idx)
+                const colorKey = student ? (student.status || 'EMPTY') : 'EMPTY'
+                const color = statusColors[colorKey] || statusColors.EMPTY
+                return (
+                  <div
+                    key={idx}
+                    role="gridcell"
+                    aria-label={student ? `Seat ${idx + 1}: ${student.name}, ${color.label}` : `Seat ${idx + 1}: Empty`}
+                    tabIndex={student ? 0 : -1}
+                    onClick={() => handleDeskClick(idx)}
+                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleDeskClick(idx)}
+                    style={{
+                      background: color.bg,
+                      color: color.text,
+                      borderRadius: 8,
+                      padding: '10px 6px',
+                      textAlign: 'center',
+                      cursor: student ? 'pointer' : 'default',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      minHeight: 60,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.1s, box-shadow 0.1s',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                      wordBreak: 'break-word',
+                      position: 'relative',
+                    }}
+                  >
+                    <span style={{ fontSize: 9, opacity: 0.75, marginBottom: 2 }}>#{idx + 1}</span>
+                    {student ? (
+                      <>
+                        <span style={{ lineHeight: 1.2 }}>{student.name?.split(' ')[0] || '—'}</span>
+                        <span style={{ fontSize: 9, opacity: 0.85, marginTop: 2 }}>{student.rollNo || ''}</span>
+                      </>
+                    ) : (
+                      <span style={{ opacity: 0.4, fontSize: 10 }}>Empty</span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          )
-        })}
+          ))}
         </div>
       </div>
 

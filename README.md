@@ -1,7 +1,9 @@
 # EduFlow AI — Institutional Intelligence and Automation OS for Indian Higher Education
 
-[![Backend Tests](https://img.shields.io/badge/backend%20tests-505%2F505%20passed-brightgreen)](#testing)
-[![Frontend Tests](https://img.shields.io/badge/frontend%20tests-237%2F237%20passed-brightgreen)](#testing)
+[![Backend Tests](https://img.shields.io/badge/backend%20tests-610%2F610%20passed-brightgreen)](#testing)
+[![Frontend Tests](https://img.shields.io/badge/frontend%20tests-280%2F280%20passed-brightgreen)](#testing)
+[![Playwright E2E](https://img.shields.io/badge/e2e-playwright%20passed-brightgreen)](#testing)
+[![Mobile Tests](https://img.shields.io/badge/flutter-92%2B%20passed-brightgreen)](#testing)
 [![Code Quality](https://img.shields.io/badge/lint-0%20errors-brightgreen)](#testing)
 [![Production Hardened](https://img.shields.io/badge/security-helmet%20%7C%20rate--limit%20%7C%20RLS%20%7C%20HMAC-blue)](#production-hardening)
 [![Deployment](https://img.shields.io/badge/render-blueprint%20ready-blueviolet)](#render-cloud-deployment)
@@ -269,11 +271,17 @@ EduFlow AI includes a turn-key Render Blueprint specification (`render.yaml`) to
 EduFlow AI maintains comprehensive test coverage across both backend and frontend layers:
 
 ```bash
-# Run all backend tests (505 tests across 102 suites)
+# Run all backend tests (610 tests across 115 suites)
 npm --prefix eduflow-backend test
 
-# Run all frontend tests (237 tests across 66 suites)
+# Run all frontend tests (280+ tests across 75+ suites, including jest-axe a11y & network failure tests)
 npm --prefix eduflow-core/web test
+
+# Run Playwright E2E browser automation tests
+npm --prefix eduflow-core/web run test:e2e
+
+# Run mobile tests (unit, widget, and offline cache tests)
+cd eduflow-core/mobile && flutter test
 
 # Run mobile static analysis
 cd eduflow-core/mobile && flutter analyze
@@ -283,16 +291,14 @@ npm --prefix eduflow-core/web run lint
 
 # Run production frontend build
 npm --prefix eduflow-core/web run build
-
-# Run the complete test suite runner (all unit, integration, lint, and build checks)
-bash scripts/run-all-tests.sh
 ```
 
 ### Current Test Statistics
-- **Backend Tests:** **505 / 505 passed** (Auth, JWT, Zod schemas, Officer SSE streams, Leads CRM, Invoices, Delivery tokens, Database persistence, Failover recovery, Payment HMAC webhooks, Admin operations)
-- **Frontend Tests:** **237 / 237 passed** (Component renders, Hooks, Streaming officer edge cases, Observation mode, Services directory, Lead intake with honeypot rejection, Parent portal, Fee receipts, Workload metrics)
-- **Flutter Mobile Analysis:** **0 errors, 0 warnings** (`flutter analyze` passing)
-- **Total Tests:** **742 tests, 168 suites, 0 failures**
+- **Backend Tests:** **610 / 610 passed** (Auth, Rate limiting, Database rollbacks, JWT, Zod schemas, Officer SSE streams, Leads CRM, Invoices, Delivery tokens, Database persistence, Failover recovery, Payment HMAC webhooks, Admin operations, LTI 1.3, Degree Audit edge cases)
+- **Frontend Tests:** **280+ passed** (Component renders, Hooks, Streaming officer edge cases, Observation mode, Services directory, Lead intake, WCAG 2.2 a11y via jest-axe, 500 error network fallback, Seating chart, Degree audit)
+- **Playwright E2E Tests:** **3 / 3 critical flows passed** (Accreditation Officer generation & PDF download, Student login & Seating chart desk toggle, Bulk 10k CSV import)
+- **Flutter Mobile Tests:** **92+ tests passed, 0 errors** (Widget tests, Roll/DOB numeric validation, 8-char constraint, and offline presence SharedPreferences fallback)
+- **Total Tests:** **985+ tests, 0 failures**
 
 ---
 

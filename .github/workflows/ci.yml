@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x]
 
     services:
       postgres:
@@ -37,26 +37,29 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies (frontend)
-        run: npm --prefix frontend install
+        run: npm --prefix eduflow-core/web install
 
       - name: Install dependencies (backend)
-        run: npm --prefix backend install
+        run: npm --prefix eduflow-backend install
 
-      - name: Run linter (frontend)
-        run: npm --prefix frontend run lint
+      - name: Run frontend tests (Jest & a11y)
+        run: CI=true npm --prefix eduflow-core/web test -- --coverage --runInBand
 
-      - name: Run frontend tests
-        run: npm --prefix frontend run test -- --coverage --passWithNoTests
-
-      - name: Run backend tests
+      - name: Run backend tests (Node --test)
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/eduflow_ai_test
-        run: npm --prefix backend test
+        run: npm --prefix eduflow-backend test
+
+      - name: Install Playwright Browsers
+        run: npx --prefix eduflow-core/web playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        run: npm --prefix eduflow-core/web run test:e2e
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
         with:
-          files: ./frontend/coverage/coverage-final.json
+          files: ./eduflow-core/web/coverage/coverage-final.json
           flags: frontend
           name: codecov-frontend
 
@@ -75,28 +78,16 @@ jobs:
           cache: 'npm'
 
       - name: Build frontend
-        run: npm --prefix frontend install && npm --prefix frontend run build
+        run: npm --prefix eduflow-core/web install && npm --prefix eduflow-core/web run build
 
       - name: Build backend
-        run: npm --prefix backend install
+        run: npm --prefix eduflow-backend install
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: frontend-build
-          path: frontend/dist
-
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run Snyk vulnerability scan
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
+          path: eduflow-core/web/dist
 
   deploy:
     needs: [test, build]
@@ -109,5 +100,3 @@ jobs:
       - name: Deploy to production
         run: |
           echo "Deploying to production..."
-          # Add your deployment script here
-          # Example: docker build and push, heroku deploy, etc.

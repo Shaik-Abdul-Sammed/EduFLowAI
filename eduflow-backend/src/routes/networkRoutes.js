@@ -23,6 +23,8 @@ export function createNetworkRouter() {
   // DPDP-compliant Sanitized Presence for Students
   router.get('/presence/student', NetworkWebhookController.getStudentSanitizedPresence)
   router.get('/presence/student/:roll', NetworkWebhookController.getStudentSanitizedPresence)
+  router.get('/student-presence', NetworkWebhookController.getStudentSanitizedPresence)
+  router.get('/student-presence/:roll', NetworkWebhookController.getStudentSanitizedPresence)
 
   // Student Dispute Workflows
   router.post('/presence/dispute', NetworkWebhookController.submitDispute)

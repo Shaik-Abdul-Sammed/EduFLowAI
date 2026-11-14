@@ -52,6 +52,8 @@ export function showWakeUpBanner(message = 'Server is waking up... Please wait a
     styleTag.textContent = '@keyframes spin { to { transform: rotate(360deg); } }'
     document.head.appendChild(styleTag)
     document.body.appendChild(wakeUpBannerElement)
+  } else if (!document.body.contains(wakeUpBannerElement)) {
+    document.body.appendChild(wakeUpBannerElement)
   }
 
   const textNode = document.getElementById('eduflow-wake-up-text')

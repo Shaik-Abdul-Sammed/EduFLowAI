@@ -163,25 +163,31 @@ describe('DegreeAuditPage Component', () => {
 // ─── SpeedGraderPage Tests ─────────────────────────────────────────────────
 
 describe('SpeedGraderPage Component', () => {
-  test('renders split-screen submission and rubric scoring', () => {
+  test('renders split-screen submission and rubric scoring with Grammar, Logic, Formatting', () => {
     render(
       <MemoryRouter>
         <SpeedGraderPage />
       </MemoryRouter>
     )
     expect(screen.getByText(/SpeedGrader™ Rubric Evaluation/i)).toBeInTheDocument()
-    expect(screen.getByText(/Algorithm Correctness & Complexity/i)).toBeInTheDocument()
-    expect(screen.getByText(/Finalize & Submit Grade/i)).toBeInTheDocument()
+    expect(screen.getByText(/^Grammar$/i)).toBeInTheDocument()
+    expect(screen.getByText(/^Logic$/i)).toBeInTheDocument()
+    expect(screen.getByText(/^Formatting$/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Save Grade/i })).toBeInTheDocument()
   })
 
-  test('clicking rubric level updates the total score', () => {
+  test('adjusting rubric slider updates total score and saving grade triggers submit', async () => {
     render(
       <MemoryRouter>
         <SpeedGraderPage />
       </MemoryRouter>
     )
-    const ptsBtn = screen.getByText(/Developing \(O\(N\) regression\)/i)
-    fireEvent.click(ptsBtn)
-    expect(screen.getByText(/Saving score|Auto-saved to Gradebook/i)).toBeInTheDocument()
+    const grammarSlider = screen.getByLabelText(/Grammar Rubric Slider/i)
+    fireEvent.change(grammarSlider, { target: { value: '5' } })
+    expect(screen.getByText(/Adjust criteria sliders/i)).toBeInTheDocument()
+
+    const saveBtn = screen.getByRole('button', { name: /Save Grade/i })
+    fireEvent.click(saveBtn)
+    expect(await screen.findByText(/Grade Saved Successfully/i)).toBeInTheDocument()
   })
 })

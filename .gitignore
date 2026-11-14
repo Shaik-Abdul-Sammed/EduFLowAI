@@ -136,6 +136,10 @@ temp/
 .pid.lock
 
 # E2E & Browser Automation
+playwright-report/
+test-results/
+**/playwright-report/
+**/test-results/
 cypress/videos/
 cypress/screenshots/
 cypress/results/

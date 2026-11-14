@@ -5,6 +5,11 @@ export function createLTIRouter() {
   const router = Router()
 
   /**
+   * POST /api/v1/lti/login
+   */
+  router.post('/login', LTIController.loginLTI)
+
+  /**
    * POST /api/v1/lti/launch
    */
   router.post('/launch', LTIController.launchLTI)
