@@ -80,6 +80,16 @@ const FacultyAppraisalPage = lazy(() => import('./pages/hod/FacultyAppraisalPage
 const PayrollGenerationPage = lazy(() => import('./pages/finance/PayrollGenerationPage'))
 const OnlineExamPage = lazy(() => import('./pages/student/OnlineExamPage'))
 
+// International Missing Tech Roadmap (031)
+const AdaptiveLearningPage = lazy(() => import('./pages/student/AdaptiveLearningPage'))
+const CredentialWalletPage = lazy(() => import('./pages/student/CredentialWalletPage'))
+const LeaderboardPage = lazy(() => import('./pages/student/LeaderboardPage'))
+const VirtualLabsPage = lazy(() => import('./pages/student/VirtualLabsPage'))
+const ARScannerPage = lazy(() => import('./pages/student/ARScannerPage'))
+const PlagiarismCheckerPage = lazy(() => import('./pages/faculty/PlagiarismCheckerPage'))
+const PodcastStudioPage = lazy(() => import('./pages/faculty/PodcastStudioPage'))
+const WhiteboardPage = lazy(() => import('./pages/common/WhiteboardPage'))
+
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
 const instituteName = 'EduFlow'
@@ -380,6 +390,7 @@ function App() {
             <Route path="/apply" element={<OnlineAdmissionPage />} />
             <Route path="/r/:token" element={<PublicReportViewer />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/whiteboard" element={<WhiteboardPage />} />
 
         {/* Staff Routes */}
         <Route element={<ProtectedRoute role="staff" />}>
@@ -407,6 +418,11 @@ function App() {
           <Route path="/student-dashboard/leave-application" element={<LeaveApplicationPage />} />
           <Route path="/student-dashboard/mock-tests" element={<StudentMockTestPage />} />
           <Route path="/student-dashboard/online-exam" element={<OnlineExamPage />} />
+          <Route path="/student-dashboard/adaptive-learning" element={<AdaptiveLearningPage />} />
+          <Route path="/student-dashboard/credentials" element={<CredentialWalletPage />} />
+          <Route path="/student-dashboard/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/student-dashboard/virtual-labs" element={<VirtualLabsPage />} />
+          <Route path="/student-dashboard/ar-scanner" element={<ARScannerPage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="faculty" />}>
@@ -414,6 +430,8 @@ function App() {
             path="/faculty-dashboard"
             element={<DashboardHome role="faculty" routes={groupedRoutes.faculty || []} />}
           />
+          <Route path="/faculty-dashboard/plagiarism-checker" element={<PlagiarismCheckerPage />} />
+          <Route path="/faculty-dashboard/podcast-studio" element={<PodcastStudioPage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="parent" />}>

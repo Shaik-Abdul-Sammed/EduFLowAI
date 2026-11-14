@@ -6,6 +6,7 @@ import Sidebar from './Sidebar'
 import TourGuide from './TourGuide'
 import SkeletonLoader from './SkeletonLoader'
 import ExpertSystemsModal from './ExpertSystemsModal'
+import AITutorWidget from './AITutorWidget'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
@@ -162,6 +163,7 @@ export default function Layout({ routes }) {
           </div>
         </footer>
       </div>
+      {user?.role === 'student' && <AITutorWidget defaultCourse="CS301" />}
       <TourGuide />
     </div>
   )

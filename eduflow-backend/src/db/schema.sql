@@ -412,3 +412,81 @@ CREATE TABLE presence_disputes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Advanced Learning Technologies (031)
+CREATE TABLE adaptive_learning_paths (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    current_level VARCHAR(64) DEFAULT 'Intermediate',
+    recommended_courses JSONB NOT NULL DEFAULT '[]'::jsonb,
+    learning_style VARCHAR(64) DEFAULT 'Visual-Kinesthetic',
+    mastery_score REAL DEFAULT 78.5,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE micro_credentials (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    student_roll VARCHAR(64),
+    skill_name VARCHAR(128) NOT NULL,
+    blockchain_hash VARCHAR(128) NOT NULL UNIQUE,
+    issuer_name VARCHAR(128) DEFAULT 'EduFlow Global Academic Consortium',
+    badge_icon VARCHAR(64) DEFAULT 'award',
+    verification_url TEXT,
+    metadata_json JSONB DEFAULT '{}'::jsonb,
+    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE plagiarism_reports (
+    id SERIAL PRIMARY KEY,
+    submission_id VARCHAR(128) NOT NULL,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    assignment_title VARCHAR(255) DEFAULT 'Research Term Paper',
+    content_snippet TEXT,
+    ai_score REAL DEFAULT 0.0,
+    similarity_percentage REAL DEFAULT 0.0,
+    matched_sources JSONB DEFAULT '[]'::jsonb,
+    status VARCHAR(32) DEFAULT 'CLEAN',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE gamification_profiles (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    student_roll VARCHAR(64),
+    student_name VARCHAR(128),
+    xp_points INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    badges_json JSONB DEFAULT '[]'::jsonb,
+    rank INTEGER DEFAULT 1,
+    streak_days INTEGER DEFAULT 3,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE digital_whiteboards (
+    id SERIAL PRIMARY KEY,
+    room_id VARCHAR(128) NOT NULL UNIQUE,
+    board_data_json JSONB NOT NULL DEFAULT '{"elements": []}'::jsonb,
+    created_by VARCHAR(128) DEFAULT 'Faculty Lead',
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE simulation_results (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    simulation_type VARCHAR(128) NOT NULL,
+    score REAL DEFAULT 0.0,
+    duration_seconds INTEGER DEFAULT 0,
+    parameters_json JSONB DEFAULT '{}'::jsonb,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE translation_logs (
+    id SERIAL PRIMARY KEY,
+    source_text TEXT NOT NULL,
+    translated_text TEXT NOT NULL,
+    language_code VARCHAR(16) NOT NULL,
+    module VARCHAR(64) DEFAULT 'General',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
