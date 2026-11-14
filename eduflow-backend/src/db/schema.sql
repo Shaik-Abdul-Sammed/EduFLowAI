@@ -360,3 +360,55 @@ CREATE TABLE exam_violations (
     details TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Hardware-Free Wi-Fi Invisible Presence Tracking & Dwell-Time Engine
+CREATE TABLE network_zones (
+    id SERIAL PRIMARY KEY,
+    institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
+    ap_bssid VARCHAR(64) NOT NULL UNIQUE,
+    ip_subnet VARCHAR(64),
+    zone_type VARCHAR(32) NOT NULL CHECK (zone_type IN ('CLASSROOM', 'DORM', 'LIBRARY', 'CAFETERIA')),
+    room_name VARCHAR(128) NOT NULL,
+    building_name VARCHAR(128) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE student_devices (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    student_roll VARCHAR(64),
+    mac_address_hash VARCHAR(128) NOT NULL UNIQUE,
+    college_email VARCHAR(255),
+    device_name VARCHAR(128) DEFAULT 'Student Smartphone',
+    is_active BOOLEAN DEFAULT TRUE,
+    last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE presence_sessions (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    student_roll VARCHAR(64) NOT NULL,
+    student_name VARCHAR(128),
+    zone_id INTEGER REFERENCES network_zones(id) ON DELETE SET NULL,
+    course_id VARCHAR(64),
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_minutes INTEGER DEFAULT 0,
+    dwell_time_percentage REAL DEFAULT 0.0,
+    status VARCHAR(32) DEFAULT 'PRESENT' CHECK (status IN ('PRESENT', 'ABSENT', 'DISPUTED')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE presence_disputes (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    student_roll VARCHAR(64) NOT NULL,
+    session_id INTEGER REFERENCES presence_sessions(id) ON DELETE CASCADE,
+    reason TEXT NOT NULL,
+    status VARCHAR(32) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    resolved_by VARCHAR(128),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

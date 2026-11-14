@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import QRCodeSvg from '../../components/QRCodeSvg'
+import StudentPresenceWidget from '../../components/StudentPresenceWidget'
 import { useAuth } from '../../hooks/useAuth'
 
 const INDIGO = '#6366f1'
@@ -100,6 +101,11 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Ambient Hardware-Free Presence Tracker */}
+        {user.role === 'student' && (
+          <StudentPresenceWidget studentRoll={studentRoll} studentName={userName} />
         )}
 
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
