@@ -50,7 +50,12 @@ import { createCampusRouter } from './routes/campusRoutes.js'
 import { createNetworkRouter } from './routes/networkRoutes.js'
 import { createAdvancedTechRouter } from './routes/advancedTechRoutes.js'
 import { createLTIRouter } from './routes/ltiRoutes.js'
+import { LTIController } from './controllers/LTIController.js'
 import { DegreeAuditController } from './controllers/DegreeAuditController.js'
+import { ProctoringController } from './controllers/ProctoringController.js'
+import { ProcurementController } from './controllers/ProcurementController.js'
+import { auditLogger } from './middleware/auditLogger.js'
+import { cacheService } from './services/CacheService.js'
 import { authMiddleware } from './middleware/auth.js'
 import { verifyLatestBackup } from './workers/backupVerifier.js'
 import { sessionTimeout } from './middleware/sessionTimeout.js'
@@ -133,6 +138,8 @@ export function createApp({ db } = {}) {
     next()
   })
   app.use(attachInstitutionContext)
+  app.use(auditLogger(db || pool))
+  app.use(cacheService.invalidateOnMutation(['admin:metrics', 'officers:roi']))
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'eduflow-backend', version: '1.0.1', build: 'demo-lockdown-v2', timestamp: new Date().toISOString() })
@@ -231,10 +238,21 @@ export function createApp({ db } = {}) {
   app.use('/api/v1', createCampusOperationsRouter())
   app.use('/api', createCampusOperationsRouter())
   app.use('/api/v1/lti', createLTIRouter())
+  app.get('/.well-known/jwks.json', LTIController.getJWKS)
   
   // Degree Audit Engine Endpoint (International Benchmark)
   app.get('/api/v1/students/:rollNumber/degree-audit', DegreeAuditController.getDegreeAudit)
   app.get('/api/students/:rollNumber/degree-audit', DegreeAuditController.getDegreeAudit)
+
+  // Proctoring Violation Endpoints (Phase 1)
+  app.post('/api/v1/exams/:id/violation', ProctoringController.recordViolation)
+  app.post('/api/exams/:id/violation', ProctoringController.recordViolation)
+  app.get('/api/v1/exams/:id/violations', ProctoringController.getViolations)
+  app.get('/api/exams/:id/violations', ProctoringController.getViolations)
+
+  // AI Procurement & Vendor Negotiator Endpoints (Phase 3)
+  app.post('/api/v1/procurement/analyze-quote', ProcurementController.analyzeQuote)
+  app.get('/api/v1/procurement/history', ProcurementController.getHistory)
 
   // SpeedGrader Rubric Submission Endpoint
   app.post('/api/v1/grades/submit', (req, res) => {

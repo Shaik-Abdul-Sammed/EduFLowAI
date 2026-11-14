@@ -78,6 +78,7 @@ const PlacementDrivesPage = lazy(() => import('./pages/admin/PlacementDrivesPage
 const StudentMockTestPage = lazy(() => import('./pages/student/StudentMockTestPage'))
 const BulkStudentImportPage = lazy(() => import('./pages/admin/BulkStudentImportPage'))
 const DegreeAuditPage = lazy(() => import('./pages/admin/DegreeAuditPage'))
+const ProcurementPage = lazy(() => import('./pages/admin/ProcurementPage'))
 const SpeedGraderPage = lazy(() => import('./pages/faculty/SpeedGraderPage'))
 const FacultyAppraisalPage = lazy(() => import('./pages/hod/FacultyAppraisalPage'))
 const PayrollGenerationPage = lazy(() => import('./pages/finance/PayrollGenerationPage'))
@@ -548,6 +549,10 @@ function App() {
           <Route
             path="/admin-dashboard/degree-audit"
             element={<DegreeAuditPage />}
+          />
+          <Route
+            path="/admin-dashboard/procurement"
+            element={<ProcurementPage />}
           />
           <Route
             path="/staff-dashboard/speed-grader"

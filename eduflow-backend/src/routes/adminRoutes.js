@@ -6,6 +6,7 @@ import { authMiddleware, requireRole } from '../middleware/auth.js'
 import { pool } from '../db/pool.js'
 import { logger } from '../utils/logger.js'
 import { resetDemoData } from '../../scripts/reset-demo-data.js'
+import { cacheService } from '../services/CacheService.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
 
@@ -63,8 +64,9 @@ export function createAdminRouter() {
   /**
    * GET /api/v1/admin/dashboard-metrics
    * Real-time metrics aggregated across demo tables, leads, invoices, and attendance.
+   * Cached for 5 minutes via CacheService with Redis / In-memory fallback.
    */
-  router.get('/dashboard-metrics', async (req, res) => {
+  router.get('/dashboard-metrics', cacheService.middleware('admin:metrics', 300), async (req, res) => {
     try {
       let totalStudents = 500
       let totalFaculty = 85

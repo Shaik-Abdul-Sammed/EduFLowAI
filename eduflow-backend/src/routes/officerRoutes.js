@@ -12,6 +12,7 @@ import { OfficerExportController } from '../controllers/OfficerExportController.
 import { UserRepository } from '../repositories/UserRepository.js'
 import { validateRequest, officerPromptSchema } from '../middleware/validateRequest.js'
 import { checkOfficerPermission } from '../middleware/staffPermissions.js'
+import { cacheService } from '../services/CacheService.js'
 
 const VALID_OFFICERS = ['accreditation', 'timetable', 'admissions', 'finance', 'student-success']
 
@@ -148,9 +149,9 @@ export function createOfficerRouter() {
 
   /**
    * GET /api/v1/officers/roi/summary
-   * Return real ROI summary from DB
+   * Return real ROI summary from DB with 5-minute Redis / Memory cache.
    */
-  router.get('/roi/summary', OfficerController.getROISummary)
+  router.get('/roi/summary', cacheService.middleware('officers:roi', 300), OfficerController.getROISummary)
 
   return router
 }

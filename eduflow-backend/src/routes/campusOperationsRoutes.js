@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { CampusOperationsController } from '../controllers/CampusOperationsController.js'
+import { ProctoringController } from '../controllers/ProctoringController.js'
 
 export function createCampusOperationsRouter() {
   const router = Router()
@@ -66,8 +67,10 @@ export function createCampusOperationsRouter() {
   // Phase 6: Automated Online Exam & Proctoring
   router.get('/exams/online', CampusOperationsController.getOnlineExams)
   router.post('/exams/online/:id/submit', CampusOperationsController.submitOnlineExam)
-  router.post('/exams/online/:id/violation', CampusOperationsController.logExamViolation)
-  router.get('/exams/online/:id/violations', CampusOperationsController.getExamViolations)
+  router.post('/exams/online/:id/violation', ProctoringController.recordViolation)
+  router.get('/exams/online/:id/violations', ProctoringController.getViolations)
+  router.post('/exams/:id/violation', ProctoringController.recordViolation)
+  router.get('/exams/:id/violations', ProctoringController.getViolations)
 
   return router
 }
