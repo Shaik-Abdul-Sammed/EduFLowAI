@@ -8,6 +8,8 @@ export function createCampusOperationsRouter() {
   // Phase 1: Grievance Redressal
   router.post('/grievances', CampusOperationsController.submitGrievance)
   router.get('/grievances', CampusOperationsController.getGrievances)
+  router.get('/grievances/:id', CampusOperationsController.getGrievanceById)
+  router.patch('/grievances/:id/status', CampusOperationsController.updateGrievanceStatus)
   router.patch('/grievances/:id/resolve', CampusOperationsController.resolveGrievance)
 
   // Phase 1: Parent Portal & Mentor Chat

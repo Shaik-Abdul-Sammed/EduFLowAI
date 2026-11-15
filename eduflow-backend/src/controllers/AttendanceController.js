@@ -231,6 +231,15 @@ export class AttendanceController {
       const { studentId } = req.params
       const instId = req.user?.institutionId || 1
 
+      // Student role check: student cannot view another student's attendance ledger
+      if (req.user?.role === 'student') {
+        const myId = String(req.user.id || req.user.studentId || '')
+        const myRoll = String(req.user.rollNo || req.user.rollNumber || '')
+        if (myId !== String(studentId) && myRoll !== String(studentId)) {
+          return res.status(403).json({ error: 'Forbidden: Students cannot access another student attendance ledger' })
+        }
+      }
+
       try {
         const { pool } = await import('../db/pool.js')
         const result = await pool.query(
@@ -337,6 +346,25 @@ export class AttendanceController {
       } = req.body || {}
 
       const instId = req.user?.institutionId || 1
+
+      // Role enforcement: Faculty cannot mark attendance for unassigned courses
+      if (req.user?.role === 'faculty' || req.user?.role === 'teacher') {
+        const assigned = req.user.assignedCourses || req.user.assigned_courses || []
+        if (assigned.length > 0 && !assigned.includes(course_id)) {
+          return res.status(403).json({ error: 'Forbidden: Faculty not assigned to this course' })
+        }
+      }
+
+      // Statutory validation: modifying attendance past 7-day window is rejected
+      if (date) {
+        const recordDate = new Date(date)
+        const now = new Date()
+        const diffDays = (now.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24)
+        if (diffDays > 7) {
+          return res.status(400).json({ error: 'Modifying attendance past the 7-day statutory window is rejected' })
+        }
+      }
+
       const roster = await AttendanceController._getCourseRoster(course_id, instId)
 
       // Normalize input hashes (lowercase)

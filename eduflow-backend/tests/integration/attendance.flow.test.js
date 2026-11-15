@@ -78,4 +78,54 @@ describe('Integration Flow: Attendance Linkage (Teacher ↔ Student ↔ Admin)',
     const data = await res.json()
     assert.ok(Array.isArray(data), 'Student attendance ledger must return array')
   })
+
+  it('student cannot view another students attendance ledger (returns 403 Forbidden)', async () => {
+    const studentToken = makeToken({ id: 80, role: 'student', rollNo: '2023CSE080', email: 'ananya@demo.edu' })
+
+    const res = await fetch(`${baseUrl}/api/v1/attendance/student/99`, {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    })
+    assert.strictEqual(res.status, 403, 'Attempt to view another student attendance ledger must return 403')
+  })
+
+  it('faculty cannot mark attendance for a course they are not assigned to (returns 403 Forbidden)', async () => {
+    const facultyToken = makeToken({
+      id: 15,
+      role: 'faculty',
+      email: 'prof.sharma@demo.edu',
+      assignedCourses: ['CS301', 'CS302']
+    })
+
+    const res = await fetch(`${baseUrl}/api/v1/attendance/ble-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${facultyToken}`
+      },
+      body: JSON.stringify({
+        course_id: 'EE999',
+        ble_hashes: []
+      })
+    })
+    assert.strictEqual(res.status, 403, 'Faculty marking unassigned course must return 403 Forbidden')
+  })
+
+  it('modifying attendance past the 7-day statutory window is rejected with 400', async () => {
+    const adminToken = makeToken({ id: 1, role: 'admin', email: 'admin@demo.edu' })
+    const oldDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+    const res = await fetch(`${baseUrl}/api/v1/attendance/ble-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        course_id: 'CS301',
+        date: oldDate,
+        manual_overrides: { '2023CSE001': 'PRESENT' }
+      })
+    })
+    assert.strictEqual(res.status, 400, 'Modification beyond 7 days must be rejected with 400')
+  })
 })

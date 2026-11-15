@@ -85,9 +85,34 @@ export class CalendarController {
         stateCode,
         req.query
       )
+      let events = calendar.events || []
+
+      if (CalendarController._customEvents?.length) {
+        events = [...events, ...CalendarController._customEvents]
+      }
+
+      // Role scoping: determine caller role
+      let userRole = req.user?.role
+      if (!userRole && req.headers?.authorization?.startsWith('Bearer ')) {
+        try {
+          const jwtMod = await import('jsonwebtoken')
+          const decoded = jwtMod.default.verify(req.headers.authorization.slice(7), process.env.JWT_SECRET || 'eduflow-secure-secret-key-123')
+          userRole = decoded?.role
+        } catch {}
+      }
+      userRole = userRole || req.query.role
+
+      if (userRole && userRole.toLowerCase() !== 'admin') {
+        const r = userRole.toUpperCase()
+        events = events.filter((evt) => {
+          const aud = (evt.audience || evt.target_role || 'ALL').toUpperCase()
+          return aud === 'ALL' || aud === r
+        })
+      }
+
       return res.status(200).json({
         success: true,
-        events: calendar.events,
+        events,
       })
     } catch (err) {
       return res.status(500).json({ error: 'Failed to fetch calendar events' })
@@ -287,11 +312,28 @@ export class CalendarController {
 
   static async createEvent(req, res) {
     try {
-      const { title, startDate, endDate, eventType = 'ACADEMIC', description = '', institutionId } = req.body || {}
+      const { title, startDate, endDate, eventType = 'ACADEMIC', description = '', institutionId, audience = 'ALL' } = req.body || {}
       if (!title || !startDate) {
         return res.status(400).json({ error: 'Title and startDate are required' })
       }
       const instId = institutionId || req.user?.institutionId || 1
+
+      const mockEvent = {
+        id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        institution_id: instId,
+        title,
+        start_date: startDate,
+        end_date: endDate || startDate,
+        event_type: eventType,
+        description,
+        audience,
+        created_at: new Date().toISOString()
+      }
+
+      if (!CalendarController._customEvents) {
+        CalendarController._customEvents = []
+      }
+      CalendarController._customEvents.push(mockEvent)
 
       try {
         const { pool } = await import('../db/pool.js')
@@ -302,22 +344,12 @@ export class CalendarController {
           [instId, title, startDate, endDate || startDate, eventType, description]
         )
         if (result.rows && result.rows.length > 0) {
-          return res.status(201).json({ success: true, event: result.rows[0] })
+          return res.status(201).json({ success: true, event: { ...result.rows[0], audience } })
         }
       } catch {
         // memory fallback
       }
 
-      const mockEvent = {
-        id: `evt_${Date.now()}`,
-        institution_id: instId,
-        title,
-        start_date: startDate,
-        end_date: endDate || startDate,
-        event_type: eventType,
-        description,
-        created_at: new Date().toISOString()
-      }
       return res.status(201).json({ success: true, event: mockEvent })
     } catch {
       return res.status(500).json({ error: 'Failed to create calendar event' })
@@ -327,6 +359,9 @@ export class CalendarController {
   static async deleteEvent(req, res) {
     try {
       const { id } = req.params
+      if (CalendarController._customEvents) {
+        CalendarController._customEvents = CalendarController._customEvents.filter(e => String(e.id) !== String(id))
+      }
       try {
         const { pool } = await import('../db/pool.js')
         await pool.query(`DELETE FROM calendar_events WHERE id = $1`, [id])

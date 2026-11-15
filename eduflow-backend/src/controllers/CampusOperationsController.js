@@ -395,11 +395,66 @@ export class CampusOperationsController {
     }
   }
 
+  static async getGrievanceById(req, res) {
+    try {
+      const { id } = req.params
+      let grievance = null
+
+      try {
+        const dbRes = await pool.query('SELECT * FROM grievances WHERE id = $1', [id])
+        if (dbRes?.rows?.[0]) grievance = dbRes.rows[0]
+      } catch (_err) {}
+
+      if (!grievance) {
+        grievance = memoryGrievances.find((g) => String(g.id) === String(id))
+      }
+
+      if (!grievance) {
+        return res.status(404).json({ error: 'Grievance not found' })
+      }
+
+      // If user not yet decoded, inspect Bearer token
+      if (!req.user && req.headers?.authorization?.startsWith('Bearer ')) {
+        try {
+          const jwtMod = await import('jsonwebtoken')
+          req.user = jwtMod.default.verify(req.headers.authorization.slice(7), process.env.JWT_SECRET || 'eduflow-secure-secret-key-123')
+        } catch {}
+      }
+
+      // Role check: If user is a student, they cannot view another student's grievance
+      if (req.user?.role === 'student') {
+        const studentRoll = req.user.rollNumber || req.user.student_roll || ''
+        const studentId = String(req.user.id || req.user.studentId || '')
+        const itemRoll = grievance.student_roll || grievance.roll_number || ''
+        const itemId = String(grievance.student_id || '')
+        
+        if ((itemRoll && studentRoll !== itemRoll) || (itemId && studentId !== itemId)) {
+          return res.status(403).json({ error: 'Forbidden: Students cannot view another student grievance details' })
+        }
+      }
+
+      return res.status(200).json({ success: true, grievance })
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Failed to fetch grievance' })
+    }
+  }
+
   static async resolveGrievance(req, res) {
     try {
       const { id } = req.params
-      const { resolution_notes = 'Grievance inspected and resolved.', status = 'RESOLVED' } = req.body || {}
+      const { resolution_notes, status = 'RESOLVED' } = req.body || {}
       const resolvedBy = req.user?.name || 'Dr. Ramesh Kumar (HOD)'
+
+      // Resolving a grievance without a resolution note returns 400
+      if (status === 'RESOLVED' && (!resolution_notes || !resolution_notes.trim())) {
+        return res.status(400).json({ error: 'Resolution note is required when resolving a grievance' })
+      }
+
+      const item = memoryGrievances.find((g) => String(g.id) === String(id))
+      // Illegal status transition check: OPEN directly to RESOLVED without IN_PROGRESS
+      if (item && item.status === 'OPEN' && status === 'RESOLVED') {
+        return res.status(400).json({ error: 'Illegal status transition: cannot transition directly from OPEN to RESOLVED without IN_PROGRESS' })
+      }
 
       try {
         const query = `
@@ -413,7 +468,6 @@ export class CampusOperationsController {
         // Fallback
       }
 
-      const item = memoryGrievances.find((g) => String(g.id) === String(id))
       if (item) {
         item.status = status
         item.resolution_notes = resolution_notes
@@ -424,6 +478,34 @@ export class CampusOperationsController {
       res.status(404).json({ error: 'Grievance not found' })
     } catch (err) {
       res.status(500).json({ error: err.message || 'Failed to update grievance' })
+    }
+  }
+
+  static async updateGrievanceStatus(req, res) {
+    try {
+      const { id } = req.params
+      const { status, resolution_notes, from_status, current_status } = req.body || {}
+      
+      let item = memoryGrievances.find((g) => String(g.id) === String(id))
+      const current = current_status || from_status || item?.status || 'OPEN'
+
+      // Illegal status transition: OPEN directly to RESOLVED without IN_PROGRESS
+      if ((current === 'OPEN' || from_status === 'OPEN') && status === 'RESOLVED') {
+        return res.status(400).json({ error: 'Illegal status transition: cannot transition directly from OPEN to RESOLVED without IN_PROGRESS' })
+      }
+
+      if (status === 'RESOLVED' && (!resolution_notes || !resolution_notes.trim())) {
+        return res.status(400).json({ error: 'Resolution note is required when resolving a grievance' })
+      }
+
+      if (item) {
+        item.status = status
+        if (resolution_notes) item.resolution_notes = resolution_notes
+        return res.status(200).json({ success: true, grievance: item })
+      }
+      return res.status(404).json({ error: 'Grievance not found' })
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Failed to update grievance status' })
     }
   }
 

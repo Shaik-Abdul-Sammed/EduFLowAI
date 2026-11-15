@@ -93,4 +93,113 @@ describe('Integration Flow: Grievance Lifecycle (Student ↔ Admin)', () => {
     assert.strictEqual(resolveData.grievance.status, 'RESOLVED')
     assert.ok(resolveData.grievance.resolution_notes.includes('BNC probe replaced'))
   })
+
+  it('student cannot view another students grievance details by direct ID (403 Forbidden)', async () => {
+    const student1Token = makeToken({ id: 80, role: 'student', rollNumber: '22BCE1044', email: 'ananya@demo.edu' })
+    const student2Token = makeToken({ id: 95, role: 'student', rollNumber: '22BCE1095', email: 'other@demo.edu' })
+
+    // Student 1 submits grievance
+    const submitRes = await fetch(`${baseUrl}/api/v1/grievances`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${student1Token}`
+      },
+      body: JSON.stringify({
+        category: 'Hostel',
+        subject: 'Room 302 Ceiling Fan Buzz',
+        description: 'Capacitor whine prevents studying.',
+        priority: 'LOW',
+        student_roll: '22BCE1044'
+      })
+    })
+    const submitData = await submitRes.json()
+    const grievanceId = submitData.grievance.id
+
+    // Student 2 attempts to read Student 1's grievance
+    const accessRes = await fetch(`${baseUrl}/api/v1/grievances/${grievanceId}`, {
+      headers: { Authorization: `Bearer ${student2Token}` }
+    })
+    assert.strictEqual(accessRes.status, 403, 'Cross-student grievance detail lookup must return 403 Forbidden')
+  })
+
+  it('resolving a grievance without resolution notes returns 400 Bad Request', async () => {
+    const adminToken = makeToken({ id: 1, role: 'admin', email: 'admin@demo.edu' })
+    const studentToken = makeToken({ id: 80, role: 'student', rollNumber: '22BCE1044', email: 'ananya@demo.edu' })
+
+    const submitRes = await fetch(`${baseUrl}/api/v1/grievances`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${studentToken}`
+      },
+      body: JSON.stringify({
+        category: 'Academic',
+        subject: 'Missing tutorial answer key',
+        description: 'Week 4 tutorial solution key not uploaded.',
+        priority: 'LOW'
+      })
+    })
+    const submitData = await submitRes.json()
+    const grievanceId = submitData.grievance.id
+
+    // Try resolving with empty notes
+    const resolveRes = await fetch(`${baseUrl}/api/v1/grievances/${grievanceId}/resolve`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        status: 'RESOLVED',
+        resolution_notes: '   '
+      })
+    })
+    assert.strictEqual(resolveRes.status, 400, 'Resolving without notes must return 400')
+  })
+
+  it('illegal status transition from OPEN directly to RESOLVED without IN_PROGRESS returns 400', async () => {
+    const adminToken = makeToken({ id: 1, role: 'admin', email: 'admin@demo.edu' })
+    const studentToken = makeToken({ id: 80, role: 'student', rollNumber: '22BCE1044', email: 'ananya@demo.edu' })
+
+    const submitRes = await fetch(`${baseUrl}/api/v1/grievances`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${studentToken}`
+      },
+      body: JSON.stringify({
+        category: 'Mess',
+        subject: 'Cold water dispenser',
+        description: 'Mess block water cooler is not chilling.',
+        priority: 'LOW'
+      })
+    })
+    const submitData = await submitRes.json()
+    const grievanceId = submitData.grievance.id
+
+    // Set grievance status to OPEN
+    await fetch(`${baseUrl}/api/v1/grievances/${grievanceId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({ status: 'OPEN' })
+    })
+
+    // Attempt illegal jump OPEN -> RESOLVED
+    const transitionRes = await fetch(`${baseUrl}/api/v1/grievances/${grievanceId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({
+        status: 'RESOLVED',
+        resolution_notes: 'Repaired compressor'
+      })
+    })
+    assert.strictEqual(transitionRes.status, 400, 'Direct jump from OPEN to RESOLVED must be rejected with 400')
+  })
 })
