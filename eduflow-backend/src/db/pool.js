@@ -47,6 +47,10 @@ const isTest = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'test
   process.argv.some(a => String(a).includes('test') || String(a).includes('tests/')) ||
   process.execArgv.some(a => String(a).includes('test'))
 const isProduction = String(process.env.NODE_ENV || '').trim().toLowerCase() === 'production'
+if (process.env.NODE_ENV === 'test' && /render\.com|amazonaws|azure/.test(process.env.DB_HOST || '')) {
+  throw new Error('FATAL: tests attempted to connect to a remote database')
+}
+
 const forcePostgres = dbMode === 'postgres'
 const allowMemoryFallback = isTest || dbMode === 'memory' || process.env.ALLOW_MEMORY_FALLBACK !== 'false'
 

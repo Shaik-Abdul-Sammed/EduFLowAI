@@ -11,15 +11,20 @@ dotenv.config({ path: path.join(__dirname, '../.env') })
 const { Pool } = pg
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/eduflow'
 
-console.log('🌱 Starting EduFlow Demo Institution Seeder...')
-console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
+const isTestOrMemory = process.env.NODE_ENV === 'test' || process.env.DB_MODE === 'memory'
 
-const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
-const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
-if (isRemote) {
-  poolConfig.ssl = { rejectUnauthorized: false };
+let pool = null
+if (!isTestOrMemory) {
+  console.log('🌱 Starting EduFlow Demo Institution Seeder...')
+  console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
+
+  const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
+  const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
+  if (isRemote) {
+    poolConfig.ssl = { rejectUnauthorized: false };
+  }
+  pool = new Pool(poolConfig);
 }
-const pool = new Pool(poolConfig);
 
 const INDIAN_FIRST_NAMES = [
   'Aarav', 'Ananya', 'Rohan', 'Sneha', 'Aditya', 'Meera', 'Karthik', 'Pooja', 'Sai', 'Divya',
@@ -38,6 +43,10 @@ const INDIAN_LAST_NAMES = [
 ]
 
 async function seed(sharedPool = pool) {
+  if (process.env.NODE_ENV === 'test' || process.env.DB_MODE === 'memory') {
+    console.log('[test-mode] seeder skipped');
+    return;
+  }
   const client = await (sharedPool || pool).connect()
   try {
     // 1. Ensure Schema Exists

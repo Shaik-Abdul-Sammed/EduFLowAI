@@ -2,8 +2,8 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { getPoolConfig } from '../../src/config/dbConfig.js'
 
-describe('Unit: PostgreSQL SSL Configuration for Render', () => {
-  it('1. SSL is enabled when DATABASE_URL contains render.com', () => {
+describe('Unit: PostgreSQL SSL Configuration for Cloud Hosting', () => {
+  it('1. SSL is enabled when DATABASE_URL matches cloud host pattern', () => {
     const url = 'postgres://eduflow_user:secret@oregon-postgres.render.com:5432/eduflow_db'
     const config = getPoolConfig(url)
 

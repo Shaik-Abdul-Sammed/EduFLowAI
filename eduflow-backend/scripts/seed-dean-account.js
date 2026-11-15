@@ -10,17 +10,26 @@ dotenv.config({ path: path.join(__dirname, '../.env') })
 const { Pool } = pg
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/eduflow'
 
-console.log('🌱 Starting Dean Account Seeder...')
-console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
+const isTestOrMemory = process.env.NODE_ENV === 'test' || process.env.DB_MODE === 'memory'
 
-const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
-const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
-if (isRemote) {
-  poolConfig.ssl = { rejectUnauthorized: false };
+let pool = null
+if (!isTestOrMemory) {
+  console.log('🌱 Starting Dean Account Seeder...')
+  console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
+
+  const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
+  const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
+  if (isRemote) {
+    poolConfig.ssl = { rejectUnauthorized: false };
+  }
+  pool = new Pool(poolConfig);
 }
-const pool = new Pool(poolConfig);
 
 export async function seedDeanAccount(clientOrPool = pool) {
+  if (!clientOrPool || ((process.env.NODE_ENV === 'test' || process.env.DB_MODE === 'memory') && clientOrPool === pool)) {
+    console.log('[test-mode] seeder skipped');
+    return;
+  }
   // 1. Query institution_id from admin@demo.edu or fallback to first institution
   let institutionId = 1
   try {

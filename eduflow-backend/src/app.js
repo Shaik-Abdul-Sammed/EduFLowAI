@@ -91,6 +91,10 @@ function errorHandler(err, req, res, next) {
 }
 
 export function createApp({ db } = {}) {
+  if (process.env.NODE_ENV === 'test' && /render\.com|amazonaws|azure/.test(process.env.DB_HOST || '')) {
+    throw new Error('FATAL: tests attempted to connect to a remote database')
+  }
+
   const app = express()
   app.set('trust proxy', 1)
   app.use(

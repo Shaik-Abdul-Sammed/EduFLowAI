@@ -11,16 +11,13 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const { Pool } = pg;
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/eduflow';
 
-console.log('🌱 Starting EduFlow NAAC Operational Data Seeder...');
+const isTestOrMemory = process.env.NODE_ENV === 'test' || process.env.DB_MODE === 'memory';
+
+if (!isTestOrMemory) {
+  console.log('🌱 Starting EduFlow NAAC Operational Data Seeder...');
+}
 
 export async function seedNaacData() {
-  // Always initialize in-memory store so memory mode is 100% seeded
-  initInMemoryDemoData(1);
-
-  let pool;
-  let client;
-  let isDbAvailable = false;
-
   const summaryCounts = {
     faculty: 85,
     students: 1250,
@@ -29,6 +26,18 @@ export async function seedNaacData() {
     research: 450,
     infrastructure: 25,
   };
+
+  // Always initialize in-memory store so memory mode is 100% seeded
+  initInMemoryDemoData(1);
+
+  if (process.env.NODE_ENV === 'test' || process.env.DB_MODE === 'memory') {
+    console.log('[test-mode] seeder skipped');
+    return summaryCounts;
+  }
+
+  let pool;
+  let client;
+  let isDbAvailable = false;
 
   try {
     const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
