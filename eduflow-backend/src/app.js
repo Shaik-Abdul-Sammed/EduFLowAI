@@ -240,6 +240,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/portal', portalRouter)
   app.use('/api/v1/notifications', createNotificationRouter(db))
   app.use('/api/v1/onboarding', createOnboardingRouter())
+  app.use('/api/onboarding', createOnboardingRouter())
   app.use('/api/v1/legal', createLegalRouter())
   app.use('/api/v1/support', createSupportRouter())
   app.use('/api/v1/monitoring', createMonitoringRouter())
