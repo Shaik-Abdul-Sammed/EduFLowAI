@@ -152,9 +152,9 @@ export default function ResearchWorkspacePage() {
           
           {/* Left Column: Shared Scientific Datasets */}
           <div style={{ flex: '1 1 420px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                <h3 className="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <h3 className="h6 fw-bold mb-0 d-flex align-items-center gap-2">
                   <Database size={18} className="text-primary" />
                   Shared Research Datasets
                 </h3>
@@ -195,9 +195,9 @@ export default function ResearchWorkspacePage() {
 
           {/* Right Column: Live Collaborative Experiment Log */}
           <div style={{ flex: '1 1 480px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                <h3 className="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <h3 className="h6 fw-bold mb-0 d-flex align-items-center gap-2">
                   <Terminal size={18} className="text-success" />
                   Live Experiment Log
                 </h3>

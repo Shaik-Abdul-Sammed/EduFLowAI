@@ -173,7 +173,7 @@ export default function FacultyWalletPage() {
           width: '100%'
         }}>
           {credentials.map(c => (
-            <div key={c.id} className="card border-0 shadow-sm p-4" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div key={c.id} className="card border-0 shadow-sm p-4" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center justify-content-between mb-2">
                 <span className={`badge ${
                   c.credential_type === 'DOCTORATE' ? 'bg-primary' :

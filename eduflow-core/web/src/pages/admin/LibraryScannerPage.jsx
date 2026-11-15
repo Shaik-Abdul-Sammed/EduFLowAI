@@ -110,9 +110,9 @@ export default function LibraryScannerPage() {
           
           {/* Left: Scanned Student Card & Issue Form */}
           <div style={{ flex: '1 1 420px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                <h3 className="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <h3 className="h6 fw-bold mb-0 d-flex align-items-center gap-2">
                   <UserCheck size={18} className="text-success" />
                   Auto-Populated Student Details
                 </h3>
@@ -195,9 +195,9 @@ export default function LibraryScannerPage() {
 
           {/* Right: Real-time Circulation Audit Table */}
           <div style={{ flex: '1 1 500px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                <h3 className="h6 fw-bold mb-0 text-dark">Live Circulation Log</h3>
+                <h3 className="h6 fw-bold mb-0">Live Circulation Log</h3>
                 <span className="badge bg-light text-secondary border small">Real-Time Ingestion</span>
               </div>
 

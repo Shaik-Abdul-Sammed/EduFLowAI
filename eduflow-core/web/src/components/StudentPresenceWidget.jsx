@@ -88,7 +88,7 @@ export default function StudentPresenceWidget({ studentRoll = '2024-CSE-042', st
   }
 
   return (
-    <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden', background: '#ffffff' }}>
+    <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden', background: 'var(--card-bg)' }}>
       <div className="card-body p-4">
         <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
           <div className="d-flex align-items-center gap-3">

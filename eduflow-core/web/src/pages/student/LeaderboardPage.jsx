@@ -166,9 +166,9 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Leaderboard Table with STRICT <div style={{ overflowX: 'auto', width: '100%' }}> */}
-        <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', background: '#ffffff', overflow: 'hidden' }}>
-          <div className="card-header bg-white border-bottom p-3 px-4 d-flex justify-content-between align-items-center">
-            <h4 className="h6 fw-bold mb-0 text-dark">Full Cohort Leaderboard</h4>
+        <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)', overflow: 'hidden' }}>
+          <div className="card-header border-bottom p-3 px-4 d-flex justify-content-between align-items-center" style={{ background: 'var(--card-bg)' }}>
+            <h4 className="h6 fw-bold mb-0">Full Cohort Leaderboard</h4>
             <span className="badge bg-light text-secondary border small">{leaderboard.length} Scholars Listed</span>
           </div>
 

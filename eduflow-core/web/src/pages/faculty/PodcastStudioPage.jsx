@@ -114,10 +114,10 @@ export default function PodcastStudioPage() {
           
           {/* Upload New Lecture Pod */}
           <div style={{ flex: '1 1 380px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center gap-2 mb-3">
                 <Mic size={20} className="text-primary" />
-                <h3 className="h6 fw-bold text-dark mb-0">Publish New Audio Lecture</h3>
+                <h3 className="h6 fw-bold mb-0">Publish New Audio Lecture</h3>
               </div>
 
               {uploadSuccess && (
@@ -180,7 +180,7 @@ export default function PodcastStudioPage() {
 
           {/* Player & Library */}
           <div style={{ flex: '1 1 480px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               
               {/* Active Player Card */}
               <div className="p-4 rounded-4 mb-4 text-white" style={{ background: 'linear-gradient(135deg, #1e1b4b, #312e81)' }}>

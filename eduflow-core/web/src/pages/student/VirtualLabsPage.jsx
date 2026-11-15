@@ -107,10 +107,10 @@ export default function VirtualLabsPage() {
           
           {/* Controls Panel */}
           <div style={{ flex: '1 1 360px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center gap-2 mb-3">
                 <Sliders size={20} className="text-primary" />
-                <h3 className="h6 fw-bold text-dark mb-0">Experimental Controls</h3>
+                <h3 className="h6 fw-bold mb-0">Experimental Controls</h3>
               </div>
 
               {selectedLab === 'physics' ? (
@@ -216,8 +216,8 @@ export default function VirtualLabsPage() {
 
           {/* Interactive Simulation Display Canvas / SVG */}
           <div style={{ flex: '1 1 450px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
-              <h3 className="h6 fw-bold text-dark mb-3">Live Simulation Visualizer</h3>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
+              <h3 className="h6 fw-bold mb-3">Live Simulation Visualizer</h3>
 
               <div
                 style={{

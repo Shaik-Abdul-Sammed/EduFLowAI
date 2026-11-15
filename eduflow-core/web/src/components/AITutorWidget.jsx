@@ -114,9 +114,9 @@ export default function AITutorWidget({ defaultCourse = 'CS301' }) {
             flexDirection: 'column',
             zIndex: 9998,
             borderRadius: '1.25rem',
-            background: '#ffffff',
+            background: 'var(--card-bg)',
             boxShadow: '0 12px 36px rgba(15, 23, 42, 0.25)',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-color)',
             overflow: 'hidden'
           }}
         >
@@ -188,8 +188,8 @@ export default function AITutorWidget({ defaultCourse = 'CS301' }) {
                   alignSelf: 'flex-start',
                   padding: '0.5rem 0.85rem',
                   borderRadius: '1rem',
-                  background: '#ffffff',
-                  color: '#64748b',
+                  background: 'var(--card-bg)',
+                  color: 'var(--app-text)',
                   fontSize: '0.78rem'
                 }}
               >

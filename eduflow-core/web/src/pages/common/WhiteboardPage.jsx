@@ -121,7 +121,7 @@ export default function WhiteboardPage() {
       <div style={{ display: 'grid', gap: '1.25rem', width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
         
         {/* Toolbar */}
-        <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: '#ffffff' }}>
+        <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: 'var(--card-bg)' }}>
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             
             {/* Drawing Tools */}
@@ -206,7 +206,7 @@ export default function WhiteboardPage() {
           className="card border-0 shadow-sm p-2"
           style={{
             borderRadius: '1.25rem',
-            background: '#ffffff',
+            background: 'var(--card-bg)',
             overflow: 'hidden',
             width: '100%',
             position: 'relative'

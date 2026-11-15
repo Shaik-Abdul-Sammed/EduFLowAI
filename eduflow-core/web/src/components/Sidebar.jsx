@@ -350,6 +350,7 @@ export default function Sidebar({ isOpen, setOpen }) {
                 { to: '/student-dashboard/digital-id', icon: '🪪', label: 'Digital ID Card' },
                 { to: '/student-dashboard/certificates', icon: '📜', label: 'Certificate Vault' },
                 { to: '/student-dashboard/fee-status', icon: '💳', label: 'Fee Clearance' },
+                { to: '/student-dashboard/dean-escalation', icon: '📢', label: 'Dean Escalation Desk' },
                 { to: '/student-dashboard/grievances', icon: '⚖️', label: 'Grievance Cell' },
               ].map(item => (
                 <NavLink
@@ -387,6 +388,7 @@ export default function Sidebar({ isOpen, setOpen }) {
               {[
                 { to: '/faculty-dashboard/attendance-entry', icon: '📝', label: 'Take Attendance' },
                 { to: '/faculty-dashboard/attendance-analytics', icon: '📊', label: 'Attendance Analytics' },
+                { to: '/faculty-dashboard/student-escalations', icon: '📢', label: 'Student Escalations & AI' },
                 { to: '/faculty-dashboard/speed-grader', icon: '⚡', label: 'SpeedGrader AI' },
                 { to: '/faculty-dashboard/exam-question-generator', icon: '📝', label: 'Exam Question Generator' },
                 { to: '/faculty-dashboard/marks-entry', icon: '📈', label: 'Marks & Gradebook' },

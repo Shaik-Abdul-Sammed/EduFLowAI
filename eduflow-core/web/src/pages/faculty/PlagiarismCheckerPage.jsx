@@ -102,8 +102,8 @@ export default function PlagiarismCheckerPage() {
           
           {/* Left Column: Text Input */}
           <div style={{ flex: '1 1 450px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
-              <h3 className="h6 fw-bold text-dark mb-3">Submission Content</h3>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
+              <h3 className="h6 fw-bold mb-3">Submission Content</h3>
               <form onSubmit={handleCheck}>
                 <div className="mb-3">
                   <label htmlFor="submissionTitleInput" className="form-label small fw-bold text-muted">
@@ -149,9 +149,9 @@ export default function PlagiarismCheckerPage() {
 
           {/* Right Column: AI Analysis & Similarity Breakdown */}
           <div style={{ flex: '1 1 450px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h3 className="h6 fw-bold text-dark mb-0">Analysis &amp; Attribution</h3>
+                <h3 className="h6 fw-bold mb-0">Analysis &amp; Attribution</h3>
                 {getStatusBadge(report.status)}
               </div>
 

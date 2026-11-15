@@ -141,12 +141,12 @@ class AVLTree:
         {/* Navigation Bar */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: '#fff', borderRadius: 12, padding: '12px 18px', border: '1px solid #e2e8f0',
+          background: 'var(--card-bg)', borderRadius: 12, padding: '12px 18px', border: '1px solid var(--border-color)',
           marginBottom: 16, flexWrap: 'wrap', gap: 10
         }}>
           <div>
             <span style={{ fontSize: 13, color: '#64748b' }}>Student Submission {currentIdx + 1} of {submissions.length}</span>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: '#1e293b' }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: 'var(--app-text)' }}>
               {currentStudent.studentName} <span style={{ fontSize: 13, fontWeight: 500, color: '#64748b' }}>({currentStudent.rollNumber})</span>
             </h2>
           </div>
@@ -174,24 +174,24 @@ class AVLTree:
         {/* Split-Screen Workspace */}
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           {/* Left Column: Mock PDF / Document Viewer */}
-          <div style={{ flex: '1 1 500px', minWidth: 320, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: 20, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f1f5f9', paddingBottom: 14, marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ flex: '1 1 500px', minWidth: 320, background: 'var(--card-bg)', borderRadius: 12, border: '1px solid var(--border-color)', padding: 20, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: 14, marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <FileText size={16} color="#4f46e5" />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{currentStudent.documentTitle}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--app-text)' }}>{currentStudent.documentTitle}</span>
                 </div>
                 <p style={{ margin: '4px 0 0', fontSize: 12, color: '#64748b' }}>{currentStudent.assignment} • Submitted {currentStudent.submittedAt}</p>
               </div>
-              <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid #bbf7d0' }}>
+              <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(16,185,129,0.25)' }}>
                 Similarity: {currentStudent.similarityScore} (Verified)
               </span>
             </div>
 
             {/* Document Viewer Container */}
             <div style={{
-              background: '#f8fafc',
-              border: '1px solid #cbd5e1',
+              background: 'var(--surface-bg)',
+              border: '1px solid var(--border-color)',
               borderRadius: 8,
               padding: 18,
               minHeight: 380,
@@ -199,16 +199,16 @@ class AVLTree:
               overflowY: 'auto'
             }}>
               <div style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--border-color)',
                 borderRadius: 4,
                 padding: '24px 20px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                 fontFamily: 'serif',
                 lineHeight: 1.6,
-                color: '#1e293b'
+                color: 'var(--app-text)'
               }}>
-                <div style={{ textAlign: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                <div style={{ textAlign: 'center', marginBottom: 16, borderBottom: '1px solid var(--border-color)', paddingBottom: 12 }}>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, fontFamily: 'sans-serif' }}>
                     Comparative Analysis of AVL and Red-Black Binary Search Trees
                   </h3>
@@ -223,7 +223,7 @@ class AVLTree:
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '12px 0 6px 0', fontFamily: 'sans-serif' }}>
                   <FileCode size={14} color="#64748b" />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Submitted Source Code Implementation:</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--app-text)' }}>Submitted Source Code Implementation:</span>
                 </div>
                 <div style={{ overflowX: 'auto', background: '#0f172a', borderRadius: 6, padding: 12, marginBottom: 14 }}>
                   <pre style={{ margin: 0, color: '#38bdf8', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.4 }}>
@@ -231,7 +231,7 @@ class AVLTree:
                   </pre>
                 </div>
 
-                <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', borderTop: '1px solid #f1f5f9', paddingTop: 8 }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
                   — Page 1 of 4 • Digital Watermark Verified (EduFlow Canvas LTI 1.3) —
                 </div>
               </div>
@@ -239,7 +239,7 @@ class AVLTree:
           </div>
 
           {/* Right Column: SpeedGrader Rubric Panel */}
-          <div style={{ flex: '1 1 450px', minWidth: 320, background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: 20 }}>
+          <div style={{ flex: '1 1 450px', minWidth: 320, background: 'var(--card-bg)', borderRadius: 12, border: '1px solid var(--border-color)', padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid #f1f5f9', paddingBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#1e293b' }}>Rubric Evaluation</h3>

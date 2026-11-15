@@ -122,7 +122,7 @@ export default function AdaptiveLearningPage() {
         </div>
 
         {/* Specialization Goal Selector */}
-        <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '1rem', background: '#ffffff' }}>
+        <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '1rem', background: 'var(--card-bg)' }}>
           <form onSubmit={handleRegenerate} className="row g-3 align-items-end">
             <div className="col-12 col-md-8">
               <label htmlFor="specializationSelect" className="form-label small fw-bold text-muted">
@@ -170,7 +170,7 @@ export default function AdaptiveLearningPage() {
                 borderRadius: '1.25rem',
                 borderTop: `4px solid ${idx === 0 ? '#4f46e5' : idx === 1 ? '#06b6d4' : '#10b981'}`,
                 overflow: 'hidden',
-                background: '#ffffff'
+                background: 'var(--card-bg)'
               }}
             >
               <div className="card-body p-4 d-flex flex-column justify-content-between">

@@ -134,8 +134,8 @@ export default function CredentialWalletPage() {
               style={{
                 flex: '1 1 320px',
                 borderRadius: '1.25rem',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--border-color)',
                 overflow: 'hidden'
               }}
             >

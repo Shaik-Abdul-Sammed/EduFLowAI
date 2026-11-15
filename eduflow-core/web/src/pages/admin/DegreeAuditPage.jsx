@@ -54,7 +54,7 @@ export default function DegreeAuditPage() {
     <RolePageTemplate role="Admin" title="Degree Audit & Academic Progress" icon={<GraduationCap size={22} />}>
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 8px' }}>
         {/* Search Bar */}
-        <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div style={{ background: 'var(--card-bg)', borderRadius: 12, padding: 18, border: '1px solid var(--border-color)', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ flex: 1, minWidth: 240, position: 'relative' }}>
               <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
@@ -112,36 +112,36 @@ export default function DegreeAuditPage() {
         {/* 3 Dedicated Progress Bars for GenEd, Major, and Total Credits */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
           {/* GenEd Card */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ background: 'var(--card-bg)', borderRadius: 12, padding: 18, border: '1px solid var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>GenEd Progress</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--app-text)' }}>GenEd Progress</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#4f46e5' }}>{auditSummary.genEd.completed} / {auditSummary.genEd.required} cr</span>
             </div>
-            <div style={{ background: '#f1f5f9', height: 10, borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--surface-bg)', height: 10, borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${genEdPct}%`, height: '100%', background: '#4f46e5', borderRadius: 999, transition: 'width 0.4s' }} />
             </div>
             <span style={{ fontSize: 12, color: '#64748b', marginTop: 6, display: 'block' }}>{genEdPct}% completed</span>
           </div>
 
           {/* Major Card */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ background: 'var(--card-bg)', borderRadius: 12, padding: 18, border: '1px solid var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Major Progress</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--app-text)' }}>Major Progress</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#059669' }}>{auditSummary.major.completed} / {auditSummary.major.required} cr</span>
             </div>
-            <div style={{ background: '#f1f5f9', height: 10, borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--surface-bg)', height: 10, borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${majorPct}%`, height: '100%', background: '#059669', borderRadius: 999, transition: 'width 0.4s' }} />
             </div>
             <span style={{ fontSize: 12, color: '#64748b', marginTop: 6, display: 'block' }}>{majorPct}% completed</span>
           </div>
 
           {/* Total Credits Card */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ background: 'var(--card-bg)', borderRadius: 12, padding: 18, border: '1px solid var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Total Degree Credits</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--app-text)' }}>Total Degree Credits</span>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>{auditSummary.totalCredits.completed} / {auditSummary.totalCredits.required} cr</span>
             </div>
-            <div style={{ background: '#f1f5f9', height: 10, borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--surface-bg)', height: 10, borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${totalPct}%`, height: '100%', background: '#d97706', borderRadius: 999, transition: 'width 0.4s' }} />
             </div>
             <span style={{ fontSize: 12, color: '#64748b', marginTop: 6, display: 'block' }}>{totalPct}% completed</span>
@@ -149,11 +149,11 @@ export default function DegreeAuditPage() {
         </div>
 
         {/* Requirements Details Checklist */}
-        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: 'var(--card-bg)', borderRadius: 12, border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', background: 'var(--surface-bg)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <BookOpen size={18} color="#4f46e5" />
-              <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: '#1e293b' }}>Curriculum Requirement Audit Breakdown</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--app-text)' }}>Curriculum Requirement Audit Breakdown</h3>
             </div>
             <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>
               {auditSummary.status === 'ON_TRACK' ? 'On Track' : auditSummary.status}

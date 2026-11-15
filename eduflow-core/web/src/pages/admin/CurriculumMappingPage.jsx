@@ -153,17 +153,17 @@ export default function CurriculumMappingPage() {
           gap: '1rem',
           width: '100%'
         }}>
-          <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: '#ffffff' }}>
+          <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: 'var(--card-bg)' }}>
             <span className="text-secondary small fw-bold">Outcome Coverage</span>
             <div className="h4 fw-bold text-primary mb-0">{coveragePercent}%</div>
             <span className="text-muted small">{totalMapped} of {totalCells} correlations active</span>
           </div>
-          <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: '#ffffff' }}>
+          <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: 'var(--card-bg)' }}>
             <span className="text-secondary small fw-bold">Avg Correlation Weight</span>
             <div className="h4 fw-bold text-success mb-0">{averageWeight} / 3.0</div>
             <span className="text-muted small">Moderate-to-High pedagogical alignment</span>
           </div>
-          <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: '#ffffff' }}>
+          <div className="card border-0 shadow-sm p-3" style={{ borderRadius: '1rem', background: 'var(--card-bg)' }}>
             <span className="text-secondary small fw-bold">Accreditation Readiness</span>
             <div className="h4 fw-bold text-indigo mb-0">NBA Tier-1 / ABET</div>
             <span className="text-muted small">Compliant with Washington Accord</span>
@@ -171,9 +171,9 @@ export default function CurriculumMappingPage() {
         </div>
 
         {/* Matrix Card Wrapped for Zero Horizontal Scrolling */}
-        <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+        <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
           <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-            <h3 className="h6 fw-bold mb-0 text-dark">Course Outcome (CO) to Program Outcome (PO) Matrix</h3>
+            <h3 className="h6 fw-bold mb-0">Course Outcome (CO) to Program Outcome (PO) Matrix</h3>
             <span className="badge bg-light text-secondary border small">Matrix 5 x 12</span>
           </div>
 

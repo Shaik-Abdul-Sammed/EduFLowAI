@@ -248,14 +248,14 @@ export default function VirtualClassroomPage() {
 
           {/* Right Sidebar: Breakout & Polling Status */}
           <div style={{ flex: '1 1 340px', minWidth: 0 }}>
-            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: '#ffffff' }}>
+            <div className="card border-0 shadow-sm p-4 h-100" style={{ borderRadius: '1.25rem', background: 'var(--card-bg)' }}>
               <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                <h3 className="h6 fw-bold mb-0 text-dark">Classroom Status</h3>
+                <h3 className="h6 fw-bold mb-0">Classroom Status</h3>
                 <span className="badge bg-primary text-white">{participants.length} Active</span>
               </div>
 
               {/* Poll View */}
-              <div className="p-3 mb-3" style={{ background: '#f8fafc', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
+              <div className="p-3 mb-3" style={{ background: 'var(--surface-bg)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="badge bg-indigo text-primary border small">Live Lecture Poll</span>
                   <span className="text-muted small">{poll.totalVotes} Votes</span>

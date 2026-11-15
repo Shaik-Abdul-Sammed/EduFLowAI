@@ -52,8 +52,9 @@ export default function TranslationWidget({ onLanguageSelect, currentLanguage = 
           borderRadius: '0.75rem',
           padding: '8px 14px',
           fontWeight: 600,
-          background: '#ffffff',
-          color: '#334155'
+          background: 'var(--card-bg)',
+          color: 'var(--app-text)',
+          borderColor: 'var(--border-color)'
         }}
         aria-haspopup="true"
         aria-expanded={isOpen}
@@ -73,10 +74,10 @@ export default function TranslationWidget({ onLanguageSelect, currentLanguage = 
             right: 0,
             zIndex: 9999,
             minWidth: '180px',
-            background: '#ffffff',
+            background: 'var(--card-bg)',
             borderRadius: '0.85rem',
             boxShadow: '0 10px 30px rgba(15, 23, 42, 0.18)',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-color)',
             overflow: 'hidden',
             padding: '4px 0'
           }}
