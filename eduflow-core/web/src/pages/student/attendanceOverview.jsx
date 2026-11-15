@@ -1,3 +1,4 @@
+import React from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { attendanceData } from '../../utils/studentMockData'
 
@@ -136,5 +137,4 @@ export default function Page() {
   )
 }
 
-// Need React for Fragment
-import React from 'react'
+
