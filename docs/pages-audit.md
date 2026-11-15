@@ -2,9 +2,9 @@
 
 ## Ground-Truth Status Summary
 - **Total Audited Pages:** 196
-- **REAL:** 17 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
-- **PARTIAL:** 61 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
-- **MOCK:** 109 (uses local state, hardcoded arrays, or mock fixtures)
+- **REAL:** 23 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
+- **PARTIAL:** 59 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
+- **MOCK:** 105 (uses local state, hardcoded arrays, or mock fixtures)
 - **STUB:** 7 (placeholder or under construction component)
 - **ORPHAN:** 2 (unrouted legacy or internal subcomponent)
 
@@ -66,7 +66,7 @@
 | `admin/payrollPreview.jsx` | `/admin-dashboard/payroll-preview` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `admin/resultPublishing.jsx` | `/admin-dashboard/result-publishing` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `admin/rolePermissions.jsx` | `/admin-dashboard/role-permissions` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `admin/studentManagement.jsx` | `/admin-dashboard/student-management` | `MOCK` | No | No | Yes | Yes | Tier A | Target for Tier A: currently uses mock data |
+| `admin/studentManagement.jsx` | `/admin-dashboard/student-management` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/timetableGeneration.jsx` | `/admin-dashboard/timetable-generation` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `admin/userTracking.jsx` | `/admin-dashboard/user-tracking` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `ai/AITerminal.jsx` | `/ai-terminal` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
@@ -80,7 +80,7 @@
 | `ai/officers/StudentSuccessOfficer.jsx` | `/officer/student-success` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `ai/officers/TimetableOfficer.jsx` | `/officer/timetable` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `ai/officers/TimetableUploadPage.jsx` | `/officer/timetable-upload` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `common/ProfilePage.jsx` | `/profile` | `MOCK` | No | No | No | Yes | Tier A | Target for Tier A: static component |
+| `common/ProfilePage.jsx` | `/profile` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `common/ResearchWorkspacePage.jsx` | `/research-workspace` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `common/VirtualClassroomPage.jsx` | `/virtual-classroom` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
 | `common/WhiteboardPage.jsx` | `/whiteboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
@@ -145,12 +145,12 @@
 | `public/DataProcessingAgreementPage.jsx` | `/dpa` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
 | `public/DocsPage.jsx` | `/docs` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `public/EntryPage.jsx` | `/entry` | `MOCK` | No | No | Yes | Public | Tier C | Hardcoded mock data / local state only |
-| `public/ForgotPasswordPage.jsx` | `/forgot-password` | `MOCK` | No | No | No | Public | Tier A | Target for Tier A: static component |
+| `public/ForgotPasswordPage.jsx` | `/forgot-password` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `public/HelpCenterPage.jsx` | `/help` | `PARTIAL` | Yes | Yes | Yes | Public | Tier B | Write action exists but lacks integration tests / audit |
-| `public/InstitutionRegister.jsx` | `/register-institution` | `PARTIAL` | Yes | No | Yes | Public | Tier A | Target for Tier A: needs end-to-end verified API + passing tests |
+| `public/InstitutionRegister.jsx` | `/register-institution` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `public/LeadIntakePage.jsx` | `/for-colleges` | `PARTIAL` | Yes | Yes | Yes | Public | Tier B | Write action exists but lacks integration tests / audit |
-| `public/LoginPage.jsx` | `/login` | `PARTIAL` | Yes | Yes | Yes | Public | Tier A | Target for Tier A: needs end-to-end verified API + passing tests |
-| `public/OnboardingPage.jsx` | `/onboarding` | `MOCK` | No | No | No | Public | Tier A | Target for Tier A: static component |
+| `public/LoginPage.jsx` | `/login` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
+| `public/OnboardingPage.jsx` | `/onboarding` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `public/OnlineAdmissionPage.jsx` | `/apply` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `public/PrivacyPolicyPage.jsx` | `/privacy` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
 | `public/PublicReportViewer.jsx` | `/r/:token` | `PARTIAL` | Yes | No | No | Yes | Tier C | Read-only fetch without mutation or missing endpoint |

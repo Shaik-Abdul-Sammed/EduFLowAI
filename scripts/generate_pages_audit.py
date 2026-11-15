@@ -67,7 +67,8 @@ verified_real = {
     'AcademicCalendarPage.jsx', 'HodCalendarPage.jsx', 'attendanceEntry.jsx',
     'attendanceOverview.jsx', 'AttendanceIntegrationPage.jsx', 'attendanceAudit.jsx',
     'WhatsAppAttendancePage.jsx', 'GrievancePage.jsx', 'GrievanceManagementPage.jsx',
-    'DeanEscalationPage.jsx'
+    'DeanEscalationPage.jsx', 'ProfilePage.jsx', 'LoginPage.jsx', 'InstitutionRegister.jsx',
+    'ForgotPasswordPage.jsx', 'OnboardingPage.jsx', 'studentManagement.jsx'
 }
 
 calendar_subcomps = {
