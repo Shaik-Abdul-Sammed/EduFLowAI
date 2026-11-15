@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, Suspense } from 'react'
 import {
   Calendar,
   Sparkles,
@@ -32,12 +32,27 @@ import {
 import {
   STATE_NAMES,
   getExecutiveCalendarSummary,
-  getOddSemesterGrid,
-  getEvenSemesterGrid,
-  getOddHolidaysList,
-  getEvenHolidaysList,
 } from '../../utils/calendarMatrixGenerator'
-import { generateAcademicCalendarClientPdfBlob } from '../../services/calendar/AcademicCalendarClientPdfBuilder'
+
+const CalendarAnalytics = React.lazy(() => import('./CalendarAnalyticsChart.jsx'))
+const CalendarGridTab = React.lazy(() => import('./CalendarGridTab.jsx'))
+const CalendarDiagnosisTab = React.lazy(() => import('./CalendarDiagnosisTab.jsx'))
+import CalendarPreviewExportModals from './CalendarPreviewExportModals.jsx'
+import CalendarActionModals from './CalendarActionModals.jsx'
+import CalendarTablesTab from './CalendarTablesTab.jsx'
+import CalendarVacationBlocks from './CalendarVacationBlocks.jsx'
+import { runHolidayDiagnosis } from './CalendarDiagnosisTab.jsx'
+
+function CalendarAnalyticsSkeleton() {
+  return (
+    <div className="card border-0 shadow-sm p-4 mb-4" style={{ minHeight: '120px', background: 'var(--card-bg, #ffffff)' }}>
+      <div className="placeholder-glow">
+        <span className="placeholder col-6 mb-2"></span>
+        <span className="placeholder col-12" style={{ height: '24px' }}></span>
+      </div>
+    </div>
+  )
+}
 
 const ACADEMIC_MONTHS = [
   { name: 'July', month: 6, isEven: false },
@@ -53,49 +68,6 @@ const ACADEMIC_MONTHS = [
   { name: 'May', month: 4, isEven: true },
   { name: 'June', month: 5, isEven: true },
 ]
-
-function runHolidayDiagnosis(yearStr, stateCode) {
-  const yStart = parseInt(String(yearStr).split('-')[0], 10) || 2026
-  const yEnd = yStart + 1
-  const f1 = getFestivalDates(yStart)
-  const f2 = getFestivalDates(yEnd)
-
-  return {
-    year: yearStr,
-    stateCode: stateCode || 'KA',
-    predictedFestivals: [
-      { name: 'Ganesh Chaturthi', predictedDate: f1.ganesh, status: 'CONFIRMED', confidence: '98%', source: 'National Lunar Almanac' },
-      { name: 'Dussehra (Vijayadashami)', predictedDate: f1.dussehra, status: 'CONFIRMED', confidence: '99%', source: 'Central/State Gazetted Notification' },
-      { name: 'Deepavali (Diwali)', predictedDate: f1.diwali, status: 'CONFIRMED', confidence: '99%', source: 'Central/State Gazetted Notification' },
-      { name: 'Maha Shivratri', predictedDate: f2.shivratri, status: 'CONFIRMED', confidence: '96%', source: 'State Gazetted Calendar' },
-      { name: 'Holi', predictedDate: f2.holi, status: 'CONFIRMED', confidence: '97%', source: 'Central Gazetted Notification' },
-      { name: 'Ugadi / Gudi Padwa', predictedDate: f2.ugadi, status: 'CONFIRMED', confidence: '98%', source: 'State Astronomical Gazette' },
-      { name: 'Eid-ul-Fitr (Ramzan)', predictedDate: f2.eidFitr, status: 'CONFIRMED', confidence: '95%', source: 'Islamic Lunar Sighting Committee' },
-      { name: 'Bakrid / Eid-ul-Adha', predictedDate: f1.eidAdha, status: 'CONFIRMED', confidence: '96%', source: 'Central Gazetted Notification' },
-    ],
-    diagnosedClashes: [
-      {
-        severity: 'HIGH',
-        title: 'Mid-Term Assessment & Regional Festival Proximity',
-        detail: `Mid-Term Assessment 1 (${yStart}-09-14 to ${yStart}-09-19) coincides with regional festival window for ${stateCode || 'KA'}.`,
-        recommendation: 'Buffer day added automatically; consider shifting starting paper by 24 hours.'
-      },
-      {
-        severity: 'MEDIUM',
-        title: 'Long Weekend Absenteeism Risk',
-        detail: `Gandhi Jayanti (${yStart}-10-02) falls on a weekday, creating expected 35-40% student attendance drop before long weekends.`,
-        recommendation: 'Schedule biometric proctoring alerts and avoid major continuous evaluation quizzes around festival stretches.'
-      },
-      {
-        severity: 'HIGH',
-        title: 'UGC Minimum 90-Day Instructional Threshold Check',
-        detail: `Due to gazetted weekday holidays in Odd Semester ${yStart}, net teaching days are calculated at 84 days (6 days below mandatory 90-day threshold).`,
-        recommendation: 'Designate non-instructional Saturdays as compensatory working days to achieve full UGC compliance.'
-      }
-    ],
-    complianceScore: '96.2% — Highly Compliant with Statutory Buffer'
-  }
-}
 
 export default function AcademicCalendarPage() {
   const { user } = useAuth()
@@ -115,6 +87,7 @@ export default function AcademicCalendarPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [showAdjustModal, setShowAdjustModal] = useState(false)
+  const [isAdjusting, setIsAdjusting] = useState(false)
   const [showPreviewCalendarModal, setShowPreviewCalendarModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportState, setExportState] = useState('AP')
@@ -128,28 +101,11 @@ export default function AcademicCalendarPage() {
   const yEndNum = yStartNum + 1
   const currentStateName = STATE_NAMES[selectedState] || selectedState
   const dynamicSummary = useMemo(() => getExecutiveCalendarSummary(yStartNum, selectedState), [yStartNum, selectedState])
-  const dynamicOddGrid = useMemo(() => getOddSemesterGrid(yStartNum, selectedState), [yStartNum, selectedState])
-  const dynamicEvenGrid = useMemo(() => getEvenSemesterGrid(yStartNum, selectedState), [yStartNum, selectedState])
-  const dynamicOddHolidays = useMemo(() => getOddHolidaysList(yStartNum, selectedState, holidays), [yStartNum, selectedState, holidays])
-  const dynamicEvenHolidays = useMemo(() => getEvenHolidaysList(yStartNum, selectedState, holidays), [yStartNum, selectedState, holidays])
-  const previewPdfUrl = useMemo(() => {
-    try {
-      const cleanYr = String(selectedYear).replace(/[^0-9-]/g, '') || '2026-2027'
-      const blob = generateAcademicCalendarClientPdfBlob({
-        academicYear: cleanYr,
-        stateCode: selectedState,
-        program: 'B.Tech (E1 to E4)',
-      })
-      return URL.createObjectURL(blob)
-    } catch {
-      return '/Academic_Calendar_2026_27_E1_to_E4.pdf'
-    }
-  }, [selectedYear, selectedState])
 
   // Interactive Month Calendar and Diagnosis State
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0) // July = 0
   const [selectedDayInfo, setSelectedDayInfo] = useState(null)
-  const [diagnosisReport, setDiagnosisReport] = useState(() => runHolidayDiagnosis('2026-2027', 'KA'))
+  const [diagnosisReport, setDiagnosisReport] = useState(null)
 
   // Optional Holidays declaration & filtering state
   const [customOptionalHolidays, setCustomOptionalHolidays] = useState(() => {
@@ -534,6 +490,7 @@ export default function AcademicCalendarPage() {
     } catch (err) {
       console.warn('Backend PDF download encountered issue, generating authentic client-side vector PDF:', err)
       try {
+        const { generateAcademicCalendarClientPdfBlob } = await import('../../services/calendar/AcademicCalendarClientPdfBuilder')
         const clientPdfBlob = generateAcademicCalendarClientPdfBlob({
           academicYear: yr,
           stateCode: st,
@@ -1139,6 +1096,16 @@ export default function AcademicCalendarPage() {
         <div className="card-body p-4">
           {activeTab === 'overview' && (
             <div className="row g-4">
+              <div className="col-12">
+                <Suspense fallback={<CalendarAnalyticsSkeleton />}>
+                  <CalendarAnalytics 
+                    oddDays={parseInt(dynamicSummary?.[0]?.odd, 10) || 90} 
+                    evenDays={parseInt(dynamicSummary?.[0]?.even, 10) || 90} 
+                    totalHolidays={holidays?.length || 24} 
+                    stateName={currentStateName} 
+                  />
+                </Suspense>
+              </div>
               {/* Official RGUKT Executive Schedule Table */}
               <div className="col-12 mb-2">
                 <div className="card border-0 shadow-sm p-4" style={{ background: 'var(--card-bg, #ffffff)', color: 'var(--app-text, #1e293b)', borderRadius: '1rem', border: '1px solid var(--border-color, #e2e8f0)' }}>
@@ -1308,1649 +1275,111 @@ export default function AcademicCalendarPage() {
                   </div>
                 </div>
 
-              {/* Vacation Blocks & Dynamic Recalculation Engine */}
-              <div className="col-12 mt-4">
-                <div className="card border shadow-sm p-3" style={{ background: 'var(--surface-bg, #ffffff)' }}>
-                  <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
-                    <div>
-                      <h5 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        <Sparkles size={18} className="text-primary" />
-                        Statutory Vacation Windows &amp; Dynamic Exam Recalculation
-                      </h5>
-                      <p className="text-muted small mb-0">
-                        Extend or shorten gazetted vacation windows. Extending automatically shifts examination milestones to preserve UGC mandatory 90 teaching days; shortening schedules compensatory Saturday classes.
-                      </p>
-                    </div>
-                  </div>
-
-                  {compensatoryClasses.length > 0 && (
-                    <div className="alert alert-success border-success-subtle p-3 mb-3">
-                      <div className="fw-semibold text-success d-flex align-items-center gap-1 mb-1">
-                        <CheckCircle2 size={16} /> Compensatory Academic Days Scheduled
-                      </div>
-                      <div className="small text-dark">
-                        {compensatoryClasses.map((c) => (
-                          <div key={c.vacationId}>
-                            <strong>{c.vacName}:</strong> Shortened by {c.recoveredDays} days &rarr; Compensatory full-day classes scheduled on <span className="badge bg-success text-white">{c.dates.join(', ')}</span>.
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="row g-3">
-                    {vacations.map((v) => {
-                      const totalDays = v.baseDays + v.deltaDays
-                      return (
-                        <div key={v.id} className="col-12 col-md-6 col-lg-4">
-                          <div className={`p-3 rounded border h-100 ${v.deltaDays > 0 ? 'border-warning bg-warning-subtle' : v.deltaDays < 0 ? 'border-info bg-info-subtle' : 'bg-light'}`}>
-                            <div className="d-flex justify-content-between align-items-start mb-2">
-                              <div>
-                                <span className="fw-bold text-dark d-block">{v.name}</span>
-                                <span className="small text-muted">{v.startDate} to {v.endDate}</span>
-                              </div>
-                              <span className={`badge ${v.deltaDays > 0 ? 'bg-warning text-dark' : v.deltaDays < 0 ? 'bg-info text-dark' : 'bg-secondary'}`}>
-                                {totalDays} Days {v.deltaDays !== 0 && `(${v.deltaDays > 0 ? `+${v.deltaDays}` : v.deltaDays}d)`}
-                              </span>
-                            </div>
-
-                            <div className="d-flex flex-wrap gap-1 mt-2">
-                              <span className="small text-muted w-100 mb-1 fw-semibold">Extend (+1 to +5 days):</span>
-                              {[1, 2, 3, 5].map((d) => (
-                                <button
-                                  key={`ext-${d}`}
-                                  type="button"
-                                  className={`btn btn-xs py-0 px-2 btn-outline-warning small ${v.deltaDays === d ? 'active fw-bold' : ''}`}
-                                  onClick={() => handleModifyVacation(v.id, d)}
-                                >
-                                  +{d}d
-                                </button>
-                              ))}
-                            </div>
-
-                            <div className="d-flex flex-wrap gap-1 mt-2">
-                              <span className="small text-muted w-100 mb-1 fw-semibold">Shorten (-1 to -5 days):</span>
-                              {[-1, -2, -3].map((d) => (
-                                <button
-                                  key={`sh-${d}`}
-                                  type="button"
-                                  className={`btn btn-xs py-0 px-2 btn-outline-info small ${v.deltaDays === d ? 'active fw-bold' : ''}`}
-                                  onClick={() => handleModifyVacation(v.id, d)}
-                                >
-                                  {d}d
-                                </button>
-                              ))}
-                              {v.deltaDays !== 0 && (
-                                <button
-                                  type="button"
-                                  className="btn btn-xs py-0 px-2 btn-outline-secondary small ms-auto"
-                                  onClick={() => handleModifyVacation(v.id, 0)}
-                                >
-                                  Reset
-                                </button>
-                              )}
-                            </div>
-
-                            {v.deltaDays > 0 && (
-                              <div className="small text-danger mt-2 pt-2 border-top">
-                                ⚠ Downstream exams postponed by +{v.deltaDays} days to guarantee 90 teaching days.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                <div className="col-12 mt-4">
+                  <Suspense fallback={<div className="p-3 text-center text-muted">Loading vacation blocks...</div>}>
+                    <CalendarVacationBlocks
+                      vacations={vacations}
+                      compensatoryClasses={compensatoryClasses}
+                      handleModifyVacation={handleModifyVacation}
+                    />
+                  </Suspense>
                 </div>
-              </div>
             </div>
           )}
 
-          {activeTab === 'calendar-grid' && (() => {
-            const curMonthInfo = ACADEMIC_MONTHS[currentMonthIndex] || ACADEMIC_MONTHS[0]
-            const curMonthYear = curMonthInfo.isEven ? yEnd : yStart
-            const daysInCurMonth = new Date(curMonthYear, curMonthInfo.month + 1, 0).getDate()
-            const firstDayOfWeek = new Date(curMonthYear, curMonthInfo.month, 1).getDay()
-
-            let monthlyTeachingCount = 0
-            let monthlyHolidayCount = 0
-            let monthlyExamCount = 0
-            let monthlyVacationCount = 0
-
-            for (let d = 1; d <= daysInCurMonth; d++) {
-              const dateStr = `${curMonthYear}-${String(curMonthInfo.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-              const dow = (firstDayOfWeek + d - 1) % 7
-              const isHoli = holidays.some((h) => h.date === dateStr)
-              const isExam = events.some((e) => e.event_type === 'EXAM' && e.start_date <= dateStr && (e.end_date || e.start_date) >= dateStr)
-              const isVac = vacations.some((v) => v.startDate <= dateStr && v.endDate >= dateStr)
-              const isComp = compensatoryClasses.some((c) => c.date === dateStr)
-
-              if (isHoli) monthlyHolidayCount++
-              else if (isExam) monthlyExamCount++
-              else if (isVac) monthlyVacationCount++
-              else if (dow !== 0 || isComp) monthlyTeachingCount++
-            }
-
-            return (
-              <div>
-                {/* Month Navigator & Legend Bar */}
-                <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 p-3 bg-light rounded-3 border gap-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-white border shadow-sm px-2.5 py-1"
-                      disabled={currentMonthIndex <= 0}
-                      onClick={() => setCurrentMonthIndex((prev) => Math.max(0, prev - 1))}
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                    <span className="fw-bold fs-5 text-dark px-1">
-                      {curMonthInfo.name} {curMonthYear}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-white border shadow-sm px-2.5 py-1"
-                      disabled={currentMonthIndex >= ACADEMIC_MONTHS.length - 1}
-                      onClick={() => setCurrentMonthIndex((prev) => Math.min(ACADEMIC_MONTHS.length - 1, prev + 1))}
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                    <span className="badge bg-secondary-subtle text-secondary ms-2">
-                      {curMonthInfo.isEven ? 'Even Semester' : 'Odd Semester'}
-                    </span>
-                  </div>
-
-                  <div className="d-flex flex-wrap gap-2 small">
-                    <span className="badge bg-danger text-white d-flex align-items-center gap-1">
-                      Public Holiday
-                    </span>
-                    <span className="badge bg-warning text-dark d-flex align-items-center gap-1">
-                      Exam Window
-                    </span>
-                    <span className="badge bg-success text-white d-flex align-items-center gap-1">
-                      Vacation
-                    </span>
-                    <span className="badge bg-info text-dark d-flex align-items-center gap-1">
-                      Compensatory Saturday
-                    </span>
-                    <span className="badge bg-light text-dark border d-flex align-items-center gap-1">
-                      Teaching Day
-                    </span>
-                  </div>
-                </div>
-
-                {/* Monthly Summary Statistics Strip */}
-                <div className="row g-2 mb-3 text-center">
-                  <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
-                      <span className="text-muted small d-block">Teaching Days</span>
-                      <strong className="text-primary fs-6">{monthlyTeachingCount} Days</strong>
-                    </div>
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
-                      <span className="text-muted small d-block">Public Holidays</span>
-                      <strong className="text-danger fs-6">{monthlyHolidayCount} Holidays</strong>
-                    </div>
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
-                      <span className="text-muted small d-block">Examination Days</span>
-                      <strong className="text-warning-emphasis fs-6">{monthlyExamCount} Days</strong>
-                    </div>
-                  </div>
-                  <div className="col-6 col-md-3">
-                    <div className="p-2 border rounded" style={{ background: 'var(--surface-bg, rgba(255,255,255,0.05))' }}>
-                      <span className="text-muted small d-block">Vacation Days</span>
-                      <strong className="text-success fs-6">{monthlyVacationCount} Days</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Day Inspector Alert if clicked */}
-                {selectedDayInfo && (
-                  <div className="alert alert-info d-flex justify-content-between align-items-center mb-3 py-2 px-3">
-                    <div className="small">
-                      <strong>Selected: {selectedDayInfo.dateStr}</strong> — {selectedDayInfo.label}
-                    </div>
-                    <button type="button" className="btn-close btn-sm" onClick={() => setSelectedDayInfo(null)}></button>
-                  </div>
-                )}
-
-                {/* Calendar 7-Column Grid Table */}
-                <div className="table-responsive border rounded-3" style={{ background: 'var(--surface-bg, transparent)' }}>
-                  <table className="table table-bordered mb-0" style={{ tableLayout: 'fixed' }}>
-                    <thead className="table-light text-center small text-uppercase">
-                      <tr>
-                        <th style={{ color: '#ef4444' }}>Sun</th>
-                        <th>Mon</th>
-                        <th>Tue</th>
-                        <th>Wed</th>
-                        <th>Thu</th>
-                        <th>Fri</th>
-                        <th style={{ color: '#0284c7' }}>Sat</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        const rows = []
-                        let cells = []
-                        const totalSlots = Math.ceil((firstDayOfWeek + daysInCurMonth) / 7) * 7
-
-                        for (let slot = 0; slot < totalSlots; slot++) {
-                          if (slot < firstDayOfWeek || slot >= firstDayOfWeek + daysInCurMonth) {
-                            cells.push(
-                              <td key={`empty-${slot}`} style={{ height: '90px', background: '#f8fafc' }} />
-                            )
-                          } else {
-                            const d = slot - firstDayOfWeek + 1
-                            const dateStr = `${curMonthYear}-${String(curMonthInfo.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-                            const dow = slot % 7
-                            const isSunday = dow === 0
-                            const isSaturday = dow === 6
-
-                            const holidayMatch = holidays.find((h) => h.date === dateStr)
-                            const eventMatch = events.find((e) => e.start_date <= dateStr && (e.end_date || e.start_date) >= dateStr)
-                            const vacationMatch = vacations.find((v) => v.startDate <= dateStr && v.endDate >= dateStr)
-                            const compMatch = compensatoryClasses.find((c) => c.date === dateStr)
-
-                            let cellBg = '#ffffff'
-                            let borderStyle = 'none'
-                            let badgeContent = null
-                            let tag = 'WORKING_DAY'
-                            let label = 'Instructional Class Day'
-
-                            if (holidayMatch) {
-                              cellBg = 'rgba(239, 68, 68, 0.08)'
-                              borderStyle = '1px solid #ef4444'
-                              badgeContent = <span className="badge bg-danger text-white text-truncate d-block mt-1" style={{ fontSize: '0.68rem' }}>{holidayMatch.name}</span>
-                              tag = 'PUBLIC_HOLIDAY'
-                              label = `Gazetted Holiday: ${holidayMatch.name}`
-                            } else if (eventMatch && eventMatch.event_type === 'EXAM') {
-                              cellBg = 'rgba(245, 158, 11, 0.1)'
-                              borderStyle = '1px solid #f59e0b'
-                              badgeContent = <span className="badge bg-warning text-dark text-truncate d-block mt-1" style={{ fontSize: '0.68rem' }}>{eventMatch.name}</span>
-                              tag = 'EXAM_WINDOW'
-                              label = `Exam: ${eventMatch.name}`
-                            } else if (vacationMatch) {
-                              cellBg = 'rgba(16, 185, 129, 0.08)'
-                              borderStyle = '1px solid #10b981'
-                              badgeContent = <span className="badge bg-success text-white text-truncate d-block mt-1" style={{ fontSize: '0.68rem' }}>{vacationMatch.name}</span>
-                              tag = 'VACATION'
-                              label = `Vacation: ${vacationMatch.name}`
-                            } else if (compMatch) {
-                              cellBg = 'rgba(6, 182, 212, 0.1)'
-                              borderStyle = '1px solid #06b6d4'
-                              badgeContent = <span className="badge bg-info text-dark text-truncate d-block mt-1" style={{ fontSize: '0.68rem' }}>Compensatory Saturday</span>
-                              tag = 'COMPENSATORY_DAY'
-                              label = 'Compensatory Saturday Class'
-                            } else if (isSunday) {
-                              cellBg = 'rgba(148, 163, 184, 0.06)'
-                              label = 'Sunday (Weekly Off)'
-                              tag = 'SUNDAY'
-                            }
-
-                            cells.push(
-                              <td
-                                key={`day-${dateStr}`}
-                                onClick={() => setSelectedDayInfo({ d, dateStr, dow, tag, label })}
-                                style={{
-                                  height: '90px',
-                                  backgroundColor: cellBg,
-                                  cursor: 'pointer',
-                                  verticalAlign: 'top',
-                                  padding: '6px 8px',
-                                  position: 'relative',
-                                  outline: borderStyle,
-                                }}
-                              >
-                                <div className="d-flex justify-content-between align-items-center">
-                                  <span className={`fw-bold small ${isSunday ? 'text-danger' : isSaturday ? 'text-primary' : 'text-dark'}`}>
-                                    {d}
-                                  </span>
-                                  {isSunday && <span className="badge bg-light text-muted border" style={{ fontSize: '0.6rem' }}>OFF</span>}
-                                </div>
-                                {badgeContent}
-                              </td>
-                            )
-                          }
-
-                          if ((slot + 1) % 7 === 0) {
-                            rows.push(<tr key={`row-${slot}`}>{cells}</tr>)
-                            cells = []
-                          }
-                        }
-                        return rows
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )
-          })()}
+          {activeTab === 'calendar-grid' && (
+            <Suspense fallback={<div className="p-4 text-center text-muted">Loading calendar grid...</div>}>
+              <CalendarGridTab
+                currentMonthIndex={currentMonthIndex}
+                setCurrentMonthIndex={setCurrentMonthIndex}
+                ACADEMIC_MONTHS={ACADEMIC_MONTHS}
+                yStart={yStart}
+                yEnd={yEnd}
+                holidays={holidays}
+                events={events}
+                vacations={vacations}
+                compensatoryClasses={compensatoryClasses}
+                setShowAdjustModal={setShowAdjustModal}
+                setAdjustForm={setAdjustForm}
+                setShowOptionalModal={setShowOptionalModal}
+                setOptionalForm={setOptionalForm}
+              />
+            </Suspense>
+          )}
 
           {activeTab === 'diagnosis' && (
-            <div>
-              <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 p-3 bg-light rounded-3 border gap-3">
-                <div>
-                  <h5 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                    <Sparkles className="text-primary" size={20} />
-                    AI Public Holiday Prediction &amp; Academic Impact Diagnosis Engine
-                  </h5>
-                  <p className="text-muted small mb-0">
-                    Calculates lunar festival calendar drifts, predicts state gazetted holiday conflicts, assesses exam bottleneck risks, and prescribes compensatory scheduling to maintain 100% UGC 90-day compliance.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleApplyCompensatoryDays}
-                  className="btn btn-success btn-sm d-flex align-items-center gap-1.5 shadow-sm px-3 py-2"
-                >
-                  <CheckCircle2 size={16} /> Apply AI Recommended Compensatory Fix
-                </button>
-              </div>
-
-              {/* Status Metric Strip */}
-              <div className="row g-3 mb-4">
-                <div className="col-12 col-md-4">
-                  <div className="card border-0 shadow-sm p-3 border-start border-4 border-primary">
-                    <span className="text-muted small">Diagnostic Model Accuracy</span>
-                    <div className="h4 fw-bold text-primary mb-0 mt-1">98.4% Confidence</div>
-                    <span className="badge bg-primary-subtle text-primary mt-1">Astronomical &amp; Gazette Sync</span>
-                  </div>
-                </div>
-                <div className="col-12 col-md-4">
-                  <div className="card border-0 shadow-sm p-3 border-start border-4 border-danger">
-                    <span className="text-muted small">Identified Schedule Clashes</span>
-                    <div className="h4 fw-bold text-danger mb-0 mt-1">{diagnosisReport.diagnosedClashes.length} Detected</div>
-                    <span className="badge bg-danger-subtle text-danger mt-1">Exam &amp; Absenteeism Warnings</span>
-                  </div>
-                </div>
-                <div className="col-12 col-md-4">
-                  <div className="card border-0 shadow-sm p-3 border-start border-4 border-success">
-                    <span className="text-muted small">Statutory 90-Day UGC Compliance</span>
-                    <div className="h4 fw-bold text-success mb-0 mt-1">Compliant with Buffer</div>
-                    <span className="badge bg-success-subtle text-success mt-1">Compensatory Saturdays Ready</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 1: Predicted Festivals Table */}
-              <div className="card border shadow-sm mb-4">
-                <div className="card-header bg-transparent py-3">
-                  <h6 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                    <CalendarCheck size={18} className="text-primary" />
-                    Predicted Astronomical &amp; Regional Festival Holidays ({selectedYear})
-                  </h6>
-                </div>
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0 small">
-                    <thead className="table-light text-uppercase">
-                      <tr>
-                        <th>Festival / Observance</th>
-                        <th>Predicted Date</th>
-                        <th>Status</th>
-                        <th>Statistical Confidence</th>
-                        <th>Evidence Source</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {diagnosisReport.predictedFestivals.map((pf, idx) => (
-                        <tr key={idx}>
-                          <td className="fw-bold text-dark">{pf.name}</td>
-                          <td><code>{pf.predictedDate}</code></td>
-                          <td><span className="badge bg-success-subtle text-success">{pf.status}</span></td>
-                          <td><span className="badge bg-primary-subtle text-primary">{pf.confidence}</span></td>
-                          <td className="text-muted">{pf.source}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Section 2: Diagnosed Clashes & Prescriptions */}
-              <div className="card border shadow-sm mb-4">
-                <div className="card-header bg-transparent py-3">
-                  <h6 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                    <ShieldAlert size={18} className="text-warning" />
-                    Diagnosed Schedule Conflicts &amp; Prescriptive AI Actions
-                  </h6>
-                </div>
-                <div className="card-body p-3">
-                  <div className="row g-3">
-                    {diagnosisReport.diagnosedClashes.map((clash, idx) => (
-                      <div key={idx} className="col-12 col-lg-4">
-                        <div className={`p-3 rounded border h-100 ${clash.severity === 'HIGH' ? 'bg-danger-subtle border-danger-subtle' : 'bg-warning-subtle border-warning-subtle'}`}>
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <span className="fw-bold text-dark">{clash.title}</span>
-                            <span className={`badge ${clash.severity === 'HIGH' ? 'bg-danger text-white' : 'bg-warning text-dark'}`}>
-                              {clash.severity}
-                            </span>
-                          </div>
-                          <p className="small text-muted mb-2">{clash.detail}</p>
-                          <div className="p-2 rounded border small" style={{ background: 'var(--surface-bg, #ffffff)', color: 'var(--app-text)' }}>
-                            <strong>AI Recommendation:</strong> {clash.recommendation}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Suspense fallback={<div className="p-4 text-center text-muted">Running AI diagnosis...</div>}>
+              <CalendarDiagnosisTab
+                diagnosisReport={diagnosisReport}
+                selectedState={selectedState}
+                selectedYear={selectedYear}
+                handleRunDiagnosis={handleRunDiagnosis}
+                isDiagnosing={isDiagnosing}
+              />
+            </Suspense>
           )}
 
-          {activeTab === 'events' && (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0">
-                <thead className="table-light small text-uppercase">
-                  <tr>
-                    <th>Milestone Name</th>
-                    <th>Type</th>
-                    <th>Date Window</th>
-                    <th>Mandatory</th>
-                    <th>Affected</th>
-                  </tr>
-                </thead>
-                <tbody className="small">
-                  {events.map((e) => (
-                    <tr key={e.id}>
-                      <td className="fw-semibold text-dark">{e.name}</td>
-                      <td>
-                        <span className={`badge ${e.event_type === 'EXAM' ? 'bg-danger-subtle text-danger' : e.event_type === 'VACATION' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'}`}>
-                          {e.event_type}
-                        </span>
-                      </td>
-                      <td>{e.start_date} {e.end_date ? `to ${e.end_date}` : ''}</td>
-                      <td>{e.is_mandatory ? <CheckCircle2 size={16} className="text-success" /> : 'Optional'}</td>
-                      <td className="text-muted">All Departments</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {activeTab === 'holidays' && (
-            <div>
-              {/* Toolbar */}
-              <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3 pb-3 border-bottom">
-                <div className="d-flex flex-wrap gap-2 align-items-center">
-                  <button
-                    type="button"
-                    className={`btn btn-sm ${holidayFilter === 'ALL' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                    onClick={() => setHolidayFilter('ALL')}
-                  >
-                    All Holidays ({holidays.length})
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn btn-sm ${holidayFilter === 'PUBLIC' ? 'btn-success' : 'btn-outline-secondary'}`}
-                    onClick={() => setHolidayFilter('PUBLIC')}
-                  >
-                    🏛️ Public &amp; Gazetted ({holidays.filter(h => h.category !== 'OPTIONAL' && h.type !== 'OPTIONAL_RESTRICTED' && h.type !== 'OPTIONAL' && h.type !== 'DECLARED_OPTIONAL').length})
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn btn-sm ${holidayFilter === 'OPTIONAL' ? 'btn-warning' : 'btn-outline-secondary'}`}
-                    onClick={() => setHolidayFilter('OPTIONAL')}
-                  >
-                    ⭐ Optional &amp; Restricted ({holidays.filter(h => h.category === 'OPTIONAL' || h.type === 'OPTIONAL_RESTRICTED' || h.type === 'OPTIONAL' || h.type === 'DECLARED_OPTIONAL').length})
-                  </button>
-                </div>
-
-                <div className="d-flex gap-2 align-items-center">
-                  <div className="position-relative" style={{ minWidth: '220px' }}>
-                    <Search size={14} className="position-absolute text-muted" style={{ left: '10px', top: '10px' }} />
-                    <input
-                      type="text"
-                      className="form-control form-control-sm ps-4"
-                      placeholder="Search holiday or date..."
-                      value={holidaySearchQuery}
-                      onChange={(e) => setHolidaySearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 text-nowrap shadow-sm"
-                    onClick={() => {
-                      setOptionalForm({
-                        name: '',
-                        date: `${yStart}-08-25`,
-                        reason: '',
-                        stateCode: selectedState || 'ALL',
-                        applicableTo: 'ALL',
-                      })
-                      setShowOptionalModal(true)
-                    }}
-                  >
-                    <Plus size={14} /> Declare Optional Holiday
-                  </button>
-                </div>
-              </div>
-
-              {/* Holidays Table */}
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light small text-uppercase">
-                    <tr>
-                      <th>Holiday / Festival</th>
-                      <th>Date</th>
-                      <th>Category</th>
-                      <th>Scope / State</th>
-                      <th>Compliance Authority</th>
-                      <th className="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="small">
-                    {holidays
-                      .filter((h) => {
-                        const isOpt = h.category === 'OPTIONAL' || h.type === 'OPTIONAL_RESTRICTED' || h.type === 'OPTIONAL' || h.type === 'DECLARED_OPTIONAL'
-                        if (holidayFilter === 'PUBLIC' && isOpt) return false
-                        if (holidayFilter === 'OPTIONAL' && !isOpt) return false
-                        if (holidaySearchQuery.trim()) {
-                          const q = holidaySearchQuery.toLowerCase()
-                          const matchName = String(h.name || '').toLowerCase().includes(q)
-                          const matchDate = String(h.date || '').toLowerCase().includes(q)
-                          const matchState = String(h.state_code || '').toLowerCase().includes(q)
-                          return matchName || matchDate || matchState
-                        }
-                        return true
-                      })
-                      .map((h, i) => {
-                        const isOpt = h.category === 'OPTIONAL' || h.type === 'OPTIONAL_RESTRICTED' || h.type === 'OPTIONAL' || h.type === 'DECLARED_OPTIONAL'
-                        return (
-                          <tr key={h.id || `${h.name}-${h.date}-${i}`}>
-                            <td>
-                              <div className="fw-semibold text-dark d-flex align-items-center gap-2">
-                                <span>{isOpt ? '⭐' : '🏛️'}</span>
-                                <span>{h.name}</span>
-                                {h.isCustom && (
-                                  <span className="badge bg-info-subtle text-info border border-info-subtle" style={{ fontSize: '0.65rem' }}>
-                                    Custom Declared
-                                  </span>
-                                )}
-                              </div>
-                              {h.reason && <div className="text-muted" style={{ fontSize: '0.72rem' }}>{h.reason}</div>}
-                            </td>
-                            <td>
-                              <span className="fw-medium text-dark">{h.date}</span>
-                              {h.end_date && <span className="text-muted small"> to {h.end_date}</span>}
-                            </td>
-                            <td>
-                              <span className={`badge ${
-                                isOpt
-                                  ? 'bg-warning-subtle text-warning border border-warning-subtle'
-                                  : h.type === 'NATIONAL_HOLIDAY'
-                                  ? 'bg-danger-subtle text-danger border border-danger-subtle'
-                                  : h.type === 'CENTRAL_GAZETTED' || h.type === 'GAZETTED'
-                                  ? 'bg-primary-subtle text-primary border border-primary-subtle'
-                                  : 'bg-success-subtle text-success border border-success-subtle'
-                              }`}>
-                                {isOpt ? 'OPTIONAL / RESTRICTED' : h.type || 'PUBLIC GAZETTED'}
-                              </span>
-                            </td>
-                            <td>
-                              <span className="badge bg-secondary-subtle text-secondary">
-                                {h.state_code === 'ALL' ? 'All India (Central)' : `State: ${h.state_code}`}
-                              </span>
-                            </td>
-                            <td className="text-muted small">
-                              {h.isCustom ? 'Institution Statutory Declaration' : 'Official Government Gazette / Almanac'}
-                            </td>
-                            <td className="text-end">
-                              {h.isCustom && (
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-danger p-1"
-                                  onClick={() => handleDeleteCustomHoliday(h.id)}
-                                  title="Remove declared optional holiday"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'adjustments' && (
-            <div>
-              {adjustments.length === 0 ? (
-                <div className="text-center py-4 text-muted small">
-                  No adjustments made yet. Use &ldquo;Adjust Schedule&rdquo; to postpone exams or modify vacation periods.
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light small text-uppercase">
-                      <tr>
-                        <th>Adjustment Type</th>
-                        <th>Reason</th>
-                        <th>New Effective Date</th>
-                        <th>Recorded At</th>
-                      </tr>
-                    </thead>
-                    <tbody className="small">
-                      {adjustments.map((adj) => (
-                        <tr key={adj.id}>
-                          <td className="fw-semibold text-primary">{adj.adjustment_type}</td>
-                          <td>{adj.reason}</td>
-                          <td>{adj.new_start_date || 'N/A'}</td>
-                          <td className="text-muted">{adj.adjusted_at ? new Date(adj.adjusted_at).toLocaleDateString() : 'Recent'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+          {(activeTab === 'events' || activeTab === 'holidays' || activeTab === 'adjustments') && (
+            <CalendarTablesTab
+              activeTab={activeTab}
+              events={events}
+              holidays={holidays}
+              adjustments={adjustments}
+              customOptionalHolidays={customOptionalHolidays}
+              setCustomOptionalHolidays={setCustomOptionalHolidays}
+              addToast={addToast}
+              setShowAdjustModal={setShowAdjustModal}
+              setAdjustForm={setAdjustForm}
+              setShowOptionalModal={setShowOptionalModal}
+              setOptionalForm={setOptionalForm}
+              yStart={yStartNum}
+              selectedState={selectedState}
+            />
           )}
         </div>
       </div>
 
-      {/* Adjust Modal */}
-      {showAdjustModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content shadow">
-              <div className="modal-header">
-                <h5 className="modal-title fw-bold">Adjust Academic Schedule</h5>
-                <button type="button" className="btn-close" onClick={() => setShowAdjustModal(false)}></button>
-              </div>
-              <form onSubmit={handleAdjustSubmit}>
-                <div className="modal-body">
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold">Adjustment Type</label>
-                    <select
-                      className="form-select form-select-sm"
-                      value={adjustForm.adjustmentType}
-                      onChange={(e) => setAdjustForm({ ...adjustForm, adjustmentType: e.target.value })}
-                    >
-                      <option value="POSTPONE_EXAM">Postpone Examination Window</option>
-                      <option value="EXTEND_VACATION">Extend Vacation / Unscheduled Closure</option>
-                      <option value="REDUCE_VACATION">Add Remedial Teaching Days</option>
-                    </select>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold">New Proposed Date</label>
-                    <input
-                      type="date"
-                      className="form-control form-control-sm"
-                      required
-                      value={adjustForm.newStartDate}
-                      onChange={(e) => setAdjustForm({ ...adjustForm, newStartDate: e.target.value })}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold">Official Justification</label>
-                    <textarea
-                      className="form-control form-control-sm"
-                      rows="3"
-                      placeholder="e.g. State government declaration of local festival / severe weather alert"
-                      required
-                      value={adjustForm.reason}
-                      onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                    />
-                  </div>
-                  <div className="alert alert-info py-2 small mb-0">
-                    <AlertCircle size={14} className="me-1" /> Downstream exam milestones and teaching day minimums will auto-recalculate.
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowAdjustModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary btn-sm">Apply Adjustment</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+      {/* Action Modals */}
+      {(showAdjustModal || showOptionalModal) && (
+        <CalendarActionModals
+          showAdjustModal={showAdjustModal}
+          setShowAdjustModal={setShowAdjustModal}
+          adjustForm={adjustForm}
+          setAdjustForm={setAdjustForm}
+          handleAdjustSubmit={handleAdjustSubmit}
+          isAdjusting={isAdjusting}
+          showOptionalModal={showOptionalModal}
+          setShowOptionalModal={setShowOptionalModal}
+          optionalForm={optionalForm}
+          setOptionalForm={setOptionalForm}
+          handleDeclareOptionalHoliday={handleDeclareOptionalHoliday}
+        />
       )}
 
-      {/* Declare Optional Holiday Modal */}
-      {showOptionalModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content shadow border-0" style={{ background: 'var(--app-card-bg, #ffffff)', color: 'var(--app-text, #1e293b)' }}>
-              <div className="modal-header border-bottom">
-                <div>
-                  <h5 className="modal-title fw-bold mb-0">Declare Optional / Restricted Holiday</h5>
-                  <div className="small text-muted">Declare state-specific or institutional cultural observances (RH).</div>
-                </div>
-                <button type="button" className="btn-close" onClick={() => setShowOptionalModal(false)}></button>
-              </div>
-              <form onSubmit={handleDeclareOptionalHoliday}>
-                <div className="modal-body p-4">
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold">Holiday Name *</label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      placeholder="e.g. Varalakshmi Vratam, Local Temple Jathra, Founder Day"
-                      value={optionalForm.name}
-                      onChange={(e) => setOptionalForm((p) => ({ ...p, name: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="row g-3 mb-3">
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-bold">Date *</label>
-                      <input
-                        type="date"
-                        className="form-control form-control-sm"
-                        value={optionalForm.date}
-                        onChange={(e) => setOptionalForm((p) => ({ ...p, date: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-bold">Applicable State / Scope</label>
-                      <select
-                        className="form-select form-select-sm"
-                        value={optionalForm.stateCode}
-                        onChange={(e) => setOptionalForm((p) => ({ ...p, stateCode: e.target.value }))}
-                      >
-                        <option value="ALL">All Campuses</option>
-                        <option value="KA">Karnataka (Bengaluru/Mysuru)</option>
-                        <option value="TS">Telangana (Hyderabad)</option>
-                        <option value="AP">Andhra Pradesh</option>
-                        <option value="MH">Maharashtra</option>
-                        <option value="TN">Tamil Nadu</option>
-                        <option value="DL">Delhi NCR</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold">Applicability</label>
-                    <select
-                      className="form-select form-select-sm"
-                      value={optionalForm.applicableTo}
-                      onChange={(e) => setOptionalForm((p) => ({ ...p, applicableTo: e.target.value }))}
-                    >
-                      <option value="ALL">All Staff &amp; Students</option>
-                      <option value="FACULTY">Faculty &amp; Non-Teaching Staff Only</option>
-                      <option value="STUDENTS">Students Only (Classes Suspended)</option>
-                    </select>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label small fw-bold">Reason / Official Reference</label>
-                    <textarea
-                      rows={2}
-                      className="form-control form-control-sm"
-                      placeholder="e.g. State Government N.I. Act Optional Holiday Gazette Notification"
-                      value={optionalForm.reason}
-                      onChange={(e) => setOptionalForm((p) => ({ ...p, reason: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer border-top bg-light">
-                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowOptionalModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-sm btn-primary px-3">
-                    Declare Holiday
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Calendar Modal */}
-      {showPreviewCalendarModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            backdropFilter: 'blur(5px)',
-            padding: '1rem',
-          }}
-        >
-          <div
-            className="card border-0 shadow-lg"
-            style={{
-              width: '100%',
-              maxWidth: '960px',
-              maxHeight: '92vh',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: '1.25rem',
-              background: 'var(--card-bg, #0f172a)',
-              border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
-              color: 'var(--app-text, #f8fafc)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: '1.25rem 1.5rem',
-                borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'rgba(0, 0, 0, 0.25)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <Eye size={20} className="text-primary" />
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                    Academic Calendar of A.Y:{selectedYear} from E1 to E4
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
-                    RGUKT Institutional Matrix Format • {currentStateName} • UGC &amp; AICTE Statutory Regulatory Standards
-                  </p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  onClick={() => handleExportPdf()}
-                  className="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm"
-                  style={{ fontWeight: 600, fontSize: '0.8rem' }}
-                >
-                  <Download size={14} /> Download PDF
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPreviewCalendarModal(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--app-text-muted, #94a3b8)',
-                    cursor: 'pointer',
-                  }}
-                  aria-label="Close"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Document Navigation Tabs */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.08))',
-                background: 'rgba(0, 0, 0, 0.15)',
-                overflowX: 'auto',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setPreviewModalTab('summary')}
-                className={`btn btn-sm ${previewModalTab === 'summary' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                style={{ fontSize: '0.8rem', fontWeight: 600 }}
-              >
-                Page 1: Executive Summary
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewModalTab('odd')}
-                className={`btn btn-sm ${previewModalTab === 'odd' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                style={{ fontSize: '0.8rem', fontWeight: 600 }}
-              >
-                Page 2: Odd Semester Grid
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewModalTab('even')}
-                className={`btn btn-sm ${previewModalTab === 'even' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                style={{ fontSize: '0.8rem', fontWeight: 600 }}
-              >
-                Page 3: Even Semester Grid
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewModalTab('pdf')}
-                className={`btn btn-sm ${previewModalTab === 'pdf' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                style={{ fontSize: '0.8rem', fontWeight: 600 }}
-              >
-                Direct PDF Viewer
-              </button>
-            </div>
-
-            {/* Document Body */}
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
-              {previewModalTab === 'summary' && (
-                <div className="paper-sheet shadow-lg" style={{ background: '#ffffff', color: '#111827', padding: '2rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                  <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                    <h4 style={{ textDecoration: 'underline', fontWeight: 800, fontSize: '1.25rem', color: '#0f172a', marginBottom: '0.25rem' }}>
-                      Academic Calendar of A.Y:{selectedYear} from E1 to E4
-                    </h4>
-                    <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>
-                      Rajiv Gandhi University of Knowledge Technologies • {currentStateName}
-                    </span>
-                  </div>
-
-                  <div className="table-responsive">
-                    <table
-                      className="table table-bordered mb-0"
-                      style={{
-                        borderColor: '#000000',
-                        fontSize: '0.9rem',
-                        textAlign: 'center',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      <thead style={{ background: '#f8fafc', fontWeight: 800 }}>
-                        <tr style={{ borderBottom: '2px solid #000000' }}>
-                          <th style={{ width: '28%', padding: '0.75rem', borderColor: '#000000' }}>Odd Semester</th>
-                          <th style={{ width: '44%', padding: '0.75rem', borderColor: '#000000' }}>Activities</th>
-                          <th style={{ width: '28%', padding: '0.75rem', borderColor: '#000000' }}>Even Semester</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dynamicSummary.map((row, idx) => (
-                          <tr key={idx} style={{ fontWeight: row.isBold ? 700 : 500 }}>
-                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.odd}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.activity}</td>
-                            <td style={{ padding: '0.65rem 0.75rem', borderColor: '#000000' }}>{row.even}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748b' }}>
-                    <div>* Odd Semester Instruction Days: <strong>{dynamicSummary[0].odd} Days</strong></div>
-                    <div>* Even Semester Instruction Days: <strong>{dynamicSummary[0].even} Days</strong></div>
-                    <div>* Continuous Mid Tests: <strong>3 Mandatory Assessments</strong></div>
-                  </div>
-                </div>
-              )}
-
-              {previewModalTab === 'odd' && (
-                <div className="paper-sheet shadow-lg" style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                  {/* Khaki Banner */}
-                  <div
-                    style={{
-                      background: '#C4BA94',
-                      color: '#000000',
-                      fontWeight: 800,
-                      fontSize: '1.1rem',
-                      textAlign: 'center',
-                      padding: '0.5rem',
-                      border: '1px solid #000000',
-                      borderBottom: 'none',
-                    }}
-                  >
-                    Odd Semester (A.Y: {selectedYear} E1 to E4)
-                  </div>
-
-                  <div className="table-responsive">
-                    <table
-                      className="table table-bordered mb-0 text-center"
-                      style={{
-                        borderColor: '#000000',
-                        fontSize: '0.8rem',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      <thead>
-                        <tr style={{ background: '#f1f5f9', fontWeight: 700 }}>
-                          <th style={{ width: '15%', borderColor: '#000000', padding: '0.4rem' }}>Month, Year</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Mon</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Tue</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Wed</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Thu</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Fri</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Sat</th>
-                          <th style={{ width: '17%', borderColor: '#000000', padding: '0.4rem' }}>Week</th>
-                          <th style={{ width: '20%', borderColor: '#000000', padding: '0.4rem' }}>Remarks</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dynamicOddGrid.map((row, rIdx) => (
-                          <tr key={rIdx}>
-                            <td style={{ borderColor: '#000000', padding: '0.3rem', fontStyle: 'italic', fontWeight: 600 }}>{row.month}</td>
-                            {row.days.map((d, dIdx) => {
-                              const color = row.colors[dIdx]
-                              let bg = 'transparent'
-                              let textClr = '#111827'
-                              let fw = 500
-
-                              if (color === 'red') {
-                                bg = '#FF0000'
-                                textClr = '#ffffff'
-                                fw = 700
-                              } else if (color === 'blue') {
-                                bg = '#8DB3E1'
-                                textClr = '#000000'
-                                fw = 700
-                              } else if (color === 'green') {
-                                bg = '#92D050'
-                                textClr = '#000000'
-                                fw = 700
-                              }
-
-                              return (
-                                <td
-                                  key={dIdx}
-                                  style={{
-                                    borderColor: '#000000',
-                                    padding: '0.3rem',
-                                    backgroundColor: bg,
-                                    color: textClr,
-                                    fontWeight: fw,
-                                  }}
-                                >
-                                  {d}
-                                </td>
-                              )
-                            })}
-                            <td
-                              style={{
-                                borderColor: '#000000',
-                                padding: '0.3rem',
-                                fontWeight: row.week.includes('Dussehra') ? 800 : 600,
-                                color: row.week.includes('Dussehra') ? '#dc2626' : '#111827',
-                              }}
-                            >
-                              {row.week}
-                            </td>
-                            <td
-                              style={{
-                                borderColor: '#000000',
-                                padding: '0.3rem',
-                                fontWeight: 700,
-                                color: row.remarks.includes('MID') ? '#2563eb' : (row.remarks === 'EST' ? '#16a34a' : '#111827'),
-                              }}
-                            >
-                              {row.remarks}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Gazetted Holidays Table */}
-                  <div style={{ marginTop: '1.25rem' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.4rem', color: '#0f172a' }}>
-                      Gazetted Holidays &amp; Statutory Observances (Odd Semester {yStartNum}):
-                    </div>
-                    <div className="table-responsive">
-                      <table className="table table-bordered table-sm mb-0" style={{ borderColor: '#cbd5e1', fontSize: '0.75rem' }}>
-                        <thead style={{ background: '#e2e8f0', color: '#0f172a' }}>
-                          <tr>
-                            <th style={{ width: '22%' }}>Date &amp; Day</th>
-                            <th style={{ width: '58%' }}>Holiday Name &amp; Reason</th>
-                            <th style={{ width: '20%' }}>Classification</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dynamicOddHolidays.map((h, i) => (
-                            <tr key={i}>
-                              <td style={{ fontWeight: 600, color: 'inherit' }}>{h.date}</td>
-                              <td>{h.name}</td>
-                              <td><span className="badge bg-secondary-subtle text-secondary">{h.type}</span></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {previewModalTab === 'even' && (
-                <div className="paper-sheet shadow-lg" style={{ background: '#ffffff', color: '#111827', padding: '1.5rem', borderRadius: '0.75rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                  {/* Khaki Banner */}
-                  <div
-                    style={{
-                      background: '#C4BA94',
-                      color: '#000000',
-                      fontWeight: 800,
-                      fontSize: '1.1rem',
-                      textAlign: 'center',
-                      padding: '0.5rem',
-                      border: '1px solid #000000',
-                      borderBottom: 'none',
-                    }}
-                  >
-                    Even Semester (A.Y: {selectedYear} E1 to E4)
-                  </div>
-
-                  <div className="table-responsive">
-                    <table
-                      className="table table-bordered mb-0 text-center"
-                      style={{
-                        borderColor: '#000000',
-                        fontSize: '0.8rem',
-                        verticalAlign: 'middle',
-                      }}
-                    >
-                      <thead>
-                        <tr style={{ background: '#f1f5f9', fontWeight: 700 }}>
-                          <th style={{ width: '15%', borderColor: '#000000', padding: '0.4rem' }}>Month, Year</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Mon</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Tue</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Wed</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Thu</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Fri</th>
-                          <th style={{ width: '8%', borderColor: '#000000', padding: '0.4rem' }}>Sat</th>
-                          <th style={{ width: '17%', borderColor: '#000000', padding: '0.4rem' }}>Week</th>
-                          <th style={{ width: '20%', borderColor: '#000000', padding: '0.4rem' }}>Remarks</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dynamicEvenGrid.map((row, rIdx) => (
-                          <tr key={rIdx}>
-                            <td style={{ borderColor: '#000000', padding: '0.3rem', fontStyle: 'italic', fontWeight: 600 }}>{row.month}</td>
-                            {row.days.map((d, dIdx) => {
-                              const color = row.colors[dIdx]
-                              let bg = 'transparent'
-                              let textClr = '#111827'
-                              let fw = 500
-
-                              if (color === 'red') {
-                                bg = '#FF0000'
-                                textClr = '#ffffff'
-                                fw = 700
-                              } else if (color === 'blue') {
-                                bg = '#8DB3E1'
-                                textClr = '#000000'
-                                fw = 700
-                              } else if (color === 'green') {
-                                bg = '#92D050'
-                                textClr = '#000000'
-                                fw = 700
-                              }
-
-                              return (
-                                <td
-                                  key={dIdx}
-                                  style={{
-                                    borderColor: '#000000',
-                                    padding: '0.3rem',
-                                    backgroundColor: bg,
-                                    color: textClr,
-                                    fontWeight: fw,
-                                  }}
-                                >
-                                  {d}
-                                </td>
-                              )
-                            })}
-                            <td
-                              style={{
-                                borderColor: '#000000',
-                                padding: '0.3rem',
-                                fontWeight: row.week.includes('Vacation') ? 800 : 600,
-                                color: row.week.includes('Vacation') ? '#dc2626' : '#111827',
-                              }}
-                            >
-                              {row.week}
-                            </td>
-                            <td
-                              style={{
-                                borderColor: '#000000',
-                                padding: '0.3rem',
-                                fontWeight: 700,
-                                color: row.remarks.includes('MID') ? '#2563eb' : (row.remarks === 'EST' ? '#16a34a' : '#111827'),
-                              }}
-                            >
-                              {row.remarks}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Gazetted Holidays Table */}
-                  <div style={{ marginTop: '1.25rem' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.4rem', color: '#0f172a' }}>
-                      Gazetted Holidays &amp; Statutory Observances (Even Semester {yEndNum}):
-                    </div>
-                    <div className="table-responsive">
-                      <table className="table table-bordered table-sm mb-0" style={{ borderColor: '#cbd5e1', fontSize: '0.75rem' }}>
-                        <thead style={{ background: '#e2e8f0', color: '#0f172a' }}>
-                          <tr>
-                            <th style={{ width: '22%' }}>Date &amp; Day</th>
-                            <th style={{ width: '58%' }}>Holiday Name &amp; Reason</th>
-                            <th style={{ width: '20%' }}>Classification</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dynamicEvenHolidays.map((h, i) => (
-                            <tr key={i}>
-                              <td style={{ fontWeight: 600, color: 'inherit' }}>{h.date}</td>
-                              <td>{h.name}</td>
-                              <td><span className="badge bg-secondary-subtle text-secondary">{h.type}</span></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {previewModalTab === 'pdf' && (
-                <div style={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.15)', background: '#000' }}>
-                  <iframe
-                    src={previewPdfUrl}
-                    style={{ width: '100%', height: '580px', border: 'none' }}
-                    title="Official Academic Calendar PDF"
-                  />
-                  <div style={{ padding: '0.75rem 1rem', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                      Showing compiled vector PDF matching RGUKT statutory guidelines for A.Y:{selectedYear} ({currentStateName}).
-                    </span>
-                    <a
-                      href={previewPdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-outline-info"
-                      style={{ fontSize: '0.78rem' }}
-                    >
-                      Open in New Window
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div
-              style={{
-                padding: '1rem 1.5rem',
-                borderTop: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'rgba(0, 0, 0, 0.25)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="btn btn-sm d-inline-flex align-items-center gap-1.5"
-                style={{
-                  borderRadius: '0.5rem',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  padding: '0.45rem 0.85rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  color: 'var(--app-text, #f8fafc)',
-                  border: '1px solid var(--border-color, rgba(255, 255, 255, 0.15))',
-                }}
-              >
-                <Printer size={15} />
-                <span>Print Calendar</span>
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <a
-                  href="/Academic_Calendar_2026_27_E1_to_E4.pdf"
-                  download="Academic_Calendar_2026_27_E1_to_E4.pdf"
-                  className="btn btn-sm d-inline-flex align-items-center gap-1.5"
-                  style={{
-                    borderRadius: '0.5rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    padding: '0.45rem 0.85rem',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    color: '#93c5fd',
-                    border: '1px solid rgba(59, 130, 246, 0.35)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <Download size={14} />
-                  <span>Direct Download Link</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleExportPdf();
-                  }}
-                  disabled={isExporting}
-                  className="btn btn-sm btn-success d-inline-flex align-items-center gap-1.5 shadow-sm"
-                  style={{
-                    borderRadius: '0.5rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    padding: '0.45rem 1rem',
-                  }}
-                >
-                  <Download size={15} />
-                  <span>{isExporting ? 'Generating PDF...' : 'Download Official PDF'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowPreviewCalendarModal(false)}
-                  className="btn btn-sm"
-                  style={{
-                    borderRadius: '0.5rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    padding: '0.45rem 0.85rem',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    color: 'var(--app-text, #f8fafc)',
-                    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.12))',
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Official Academic Calendar Multi-State / Multi-Year / 2-Format Export Modal */}
-      {showExportModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="export-calendar-title"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 1050,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--card-bg, #1e293b)',
-              color: 'var(--app-text, #f8fafc)',
-              borderRadius: '1rem',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              maxWidth: '820px',
-              width: '100%',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1.25rem 1.5rem',
-                borderBottom: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div
-                  style={{
-                    width: '2.5rem',
-                    height: '2.5rem',
-                    borderRadius: '0.75rem',
-                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#60a5fa',
-                  }}
-                >
-                  <Download size={20} />
-                </div>
-                <div>
-                  <h5 id="export-calendar-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                    Export Official Academic Calendar PDF
-                  </h5>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>
-                    Multi-State Statutory Gazettes &bull; Multi-Year Calculations &bull; 2 Official Formats
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowExportModal(false)}
-                className="btn btn-sm btn-link text-muted p-1"
-                aria-label="Close"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* Configuration Selectors */}
-              <div className="row g-3">
-                <div className="col-md-4">
-                  <label className="form-label text-muted small fw-semibold">State / Jurisdiction</label>
-                  <select
-                    className="form-select form-select-sm"
-                    value={exportState}
-                    onChange={(e) => setExportState(e.target.value)}
-                    style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', borderColor: 'rgba(255,255,255,0.15)' }}
-                  >
-                    <option value="AP">Andhra Pradesh (AP)</option>
-                    <option value="TS">Telangana (TS)</option>
-                    <option value="KA">Karnataka (KA)</option>
-                    <option value="TN">Tamil Nadu (TN)</option>
-                    <option value="MH">Maharashtra (MH)</option>
-                    <option value="DL">Delhi NCT (DL)</option>
-                    <option value="UP">Uttar Pradesh (UP)</option>
-                    <option value="ALL">Central / Pan-India (ALL)</option>
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label text-muted small fw-semibold">Academic Year</label>
-                  <select
-                    className="form-select form-select-sm"
-                    value={exportYear}
-                    onChange={(e) => setExportYear(e.target.value)}
-                    style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', borderColor: 'rgba(255,255,255,0.15)' }}
-                  >
-                    <option value="2024-2025">2024–2025</option>
-                    <option value="2025-2026">2025–2026</option>
-                    <option value="2026-2027">2026–2027</option>
-                    <option value="2027-2028">2027–2028</option>
-                    <option value="2028-2029">2028–2029</option>
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label text-muted small fw-semibold">Academic Program</label>
-                  <select
-                    className="form-select form-select-sm"
-                    value={exportProgram}
-                    onChange={(e) => setExportProgram(e.target.value)}
-                    style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit', borderColor: 'rgba(255,255,255,0.15)' }}
-                  >
-                    <option value="B.Tech (E1 to E4)">B.Tech (E1 to E4)</option>
-                    <option value="Pre-University Course (PUC)">Pre-University Course (PUC)</option>
-                    <option value="M.Tech (Integrated / PG)">M.Tech (Integrated / PG)</option>
-                    <option value="Ph.D. / Research Cohort">Ph.D. / Research Cohort</option>
-                    <option value="General Degree (UG/PG)">General Degree (UG/PG)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Format Selection Cards */}
-              <div>
-                <label className="form-label text-muted small fw-semibold mb-2">Select Publication PDF Format</label>
-                <div className="row g-3">
-                  {/* Format 1: Weekly Grid Matrix */}
-                  <div className="col-md-6">
-                    <div
-                      onClick={() => setExportFormat('grid')}
-                      style={{
-                        cursor: 'pointer',
-                        padding: '1.15rem',
-                        borderRadius: '0.75rem',
-                        border: exportFormat === 'grid' ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.12)',
-                        backgroundColor: exportFormat === 'grid' ? 'rgba(59, 130, 246, 0.08)' : 'rgba(255,255,255,0.03)',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <div className="d-flex align-items-center justify-content-between mb-2">
-                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">
-                          Format 1 &bull; 4 Pages
-                        </span>
-                        <input
-                          type="radio"
-                          name="calendarFormat"
-                          checked={exportFormat === 'grid'}
-                          onChange={() => setExportFormat('grid')}
-                          className="form-check-input mt-0"
-                        />
-                      </div>
-                      <h6 className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>
-                        Institutional Weekly Grid Matrix
-                      </h6>
-                      <p className="text-muted small mb-2" style={{ fontSize: '0.78rem', lineHeight: '1.3' }}>
-                        RGUKT Reference Layout &bull; Mixed Portrait &amp; Landscape Orientation
-                      </p>
-                      <ul className="text-secondary small ps-3 mb-0" style={{ fontSize: '0.75rem' }}>
-                        <li><b>Page 1 (Portrait):</b> Milestones comparison table (Odd vs Even).</li>
-                        <li><b>Pages 2 &amp; 3 (Landscape):</b> 21-Week master color-coded grid (Red: Holidays, Blue: Mid Exams, Green: EST) + Holiday reasons tables.</li>
-                        <li><b>Page 4 (Portrait):</b> Complete Statutory Directory &amp; UGC Compliance audit.</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Format 2: Administrative Gazette Dossier */}
-                  <div className="col-md-6">
-                    <div
-                      onClick={() => setExportFormat('gazette')}
-                      style={{
-                        cursor: 'pointer',
-                        padding: '1.15rem',
-                        borderRadius: '0.75rem',
-                        border: exportFormat === 'gazette' ? '2px solid #10b981' : '1px solid rgba(255,255,255,0.12)',
-                        backgroundColor: exportFormat === 'gazette' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.03)',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <div className="d-flex align-items-center justify-content-between mb-2">
-                        <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
-                          Format 2 &bull; 3 Pages
-                        </span>
-                        <input
-                          type="radio"
-                          name="calendarFormat"
-                          checked={exportFormat === 'gazette'}
-                          onChange={() => setExportFormat('gazette')}
-                          className="form-check-input mt-0"
-                        />
-                      </div>
-                      <h6 className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>
-                        Official Administrative Gazette Dossier
-                      </h6>
-                      <p className="text-muted small mb-2" style={{ fontSize: '0.78rem', lineHeight: '1.3' }}>
-                        UGC/AICTE Statutory Format &bull; Executive Government/University Layout
-                      </p>
-                      <ul className="text-secondary small ps-3 mb-0" style={{ fontSize: '0.75rem' }}>
-                        <li><b>Page 1 (Portrait):</b> Gazette order, Preamble, Milestones &amp; 75% attendance ordinances.</li>
-                        <li><b>Page 2 (Portrait):</b> Master Gazetted Holiday Schedule with statutory &amp; cultural rationale.</li>
-                        <li><b>Page 3 (Portrait):</b> State Recess Regulations, UGC Compliance Verification &amp; Official Executive Sign-off with Seals.</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Regulatory Audit Summary Box */}
-              <div
-                style={{
-                  padding: '0.85rem 1rem',
-                  borderRadius: '0.65rem',
-                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                }}
-              >
-                <CheckCircle2 size={20} className="text-success flex-shrink-0" />
-                <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
-                  <b className="text-white">UGC &amp; AICTE Statutory Verification:</b> Every generated calendar dynamically ensures minimum 90 instruction days per semester, accurate second Saturday mappings, and state gazetted holiday reasons.
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem 1.5rem',
-                borderTop: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
-                backgroundColor: 'rgba(0, 0, 0, 0.15)',
-              }}
-            >
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                onClick={() => {
-                  const link = document.createElement('a')
-                  link.href = '/Academic_Calendar_2026_27_E1_to_E4.pdf'
-                  link.download = 'Academic_Calendar_2026_27_E1_to_E4.pdf'
-                  document.body.appendChild(link)
-                  link.click()
-                  document.body.removeChild(link)
-                  addToast('Default 2026-27 AP RGUKT Reference PDF downloaded', 'info')
-                }}
-              >
-                Default 2026-27 AP Master PDF
-              </button>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setShowExportModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm d-flex align-items-center gap-1.5"
-                  disabled={isExporting}
-                  onClick={() => handleExportPdf()}
-                >
-                  {isExporting ? (
-                    <>
-                      <RefreshCw className="spinner-border spinner-border-sm" size={14} />
-                      <span>Generating {exportState} PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download size={14} />
-                      <span>Download {exportFormat === 'grid' ? 'Weekly Grid' : 'Gazette Dossier'} PDF</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Preview and Export Modals */}
+      {(showPreviewCalendarModal || showExportModal) && (
+        <CalendarPreviewExportModals
+          showPreviewCalendarModal={showPreviewCalendarModal}
+          setShowPreviewCalendarModal={setShowPreviewCalendarModal}
+          showExportModal={showExportModal}
+          setShowExportModal={setShowExportModal}
+          previewModalTab={previewModalTab}
+          setPreviewModalTab={setPreviewModalTab}
+          selectedYear={selectedYear}
+          selectedState={selectedState}
+          currentStateName={currentStateName}
+          dynamicSummary={dynamicSummary}
+          exportState={exportState}
+          setExportState={setExportState}
+          exportYear={exportYear}
+          setExportYear={setExportYear}
+          exportProgram={exportProgram}
+          setExportProgram={setExportProgram}
+          exportFormat={exportFormat}
+          setExportFormat={setExportFormat}
+          isExporting={isExporting}
+          handleExportPdf={handleExportPdf}
+        />
       )}
     </div>
   )
