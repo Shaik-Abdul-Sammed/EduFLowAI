@@ -10,23 +10,13 @@ const roleColors = {
   staff:   { bg: '#0EA5E9', light: 'rgba(14,165,233,0.1)', text: '#0284C7', icon: '📋' },
 }
 
-const formatSlug = (slug) => {
-  return slug
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase())
-}
-
-
-export default function Sidebar({ routes, isOpen, setOpen }) {
+export default function Sidebar({ isOpen, setOpen }) {
   const { user, logout } = useAuth()
   
   if (!user) return null
 
   const role = user.role
   const themeData = roleColors[role] || roleColors.student
-  
-  // Filter routes for the current user's role
-  const roleRoutes = (routes || []).filter(r => r.role === role)
 
   return (
     <>
@@ -301,24 +291,32 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
             </div>
           )}
 
-          {/* FACULTY / STUDENT / PARENT LINKS */}
-          {['faculty', 'student', 'parent'].includes(role) && (
+          {/* STUDENT ROLE LINKS */}
+          {role === 'student' && (
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ 
                 fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
                 textTransform: 'uppercase', letterSpacing: '0.05em',
                 marginBottom: '0.5rem', paddingLeft: '0.875rem'
               }}>
-                Modules
+                Academic Core
               </div>
-              {roleRoutes.slice(0, 10).map(route => (
+              {[
+                { to: '/student-dashboard/attendance-overview', icon: '📋', label: 'Subject Attendance' },
+                { to: '/student-dashboard/online-exam', icon: '📝', label: 'Online Proctored Exam' },
+                { to: '/student-dashboard/mock-tests', icon: '🎯', label: 'Mock Tests & GATE' },
+                { to: '/student-dashboard/assignments', icon: '📚', label: 'Assignments' },
+                { to: '/student-dashboard/timetable', icon: '📅', label: 'Class & Lab Timetable' },
+                { to: '/student-dashboard/subject-marks', icon: '📈', label: 'Grades & Transcript' },
+                { to: '/student-dashboard/capstone-project', icon: '🚀', label: 'Capstone Projects' },
+              ].map(item => (
                 <NavLink
-                  key={route.routePath}
-                  to={route.routePath}
+                  key={item.to}
+                  to={item.to}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                   style={({ isActive }) => ({
-                    display: 'block',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
                     padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
                     marginBottom: '0.2rem', textDecoration: 'none',
                     fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
@@ -327,7 +325,169 @@ export default function Sidebar({ routes, isOpen, setOpen }) {
                     transition: 'all 0.2s',
                   })}
                 >
-                  {formatSlug(route.slug)}
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginTop: '1rem', marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Career & Campus Life
+              </div>
+              {[
+                { to: '/student-dashboard/career-roadmap', icon: '🛣️', label: 'Career Roadmap' },
+                { to: '/student-dashboard/resume-builder', icon: '📄', label: 'Resume Builder' },
+                { to: '/student-dashboard/doubt-solving', icon: '❓', label: 'AI Tutor & Doubts' },
+                { to: '/student-dashboard/study-planner', icon: '🗓️', label: 'AI Study Planner' },
+                { to: '/student-dashboard/alumni-directory', icon: '🤝', label: 'Alumni Directory' },
+                { to: '/student-dashboard/mess-menu', icon: '🍲', label: 'Mess & Cafeteria Menu' },
+                { to: '/student-dashboard/elective-bidding', icon: '🗳️', label: 'Elective Bidding' },
+                { to: '/student-dashboard/lost-found', icon: '🔍', label: 'Lost & Found' },
+                { to: '/student-dashboard/wellness-companion', icon: '🧘', label: 'Wellness Companion' },
+                { to: '/student-dashboard/digital-id', icon: '🪪', label: 'Digital ID Card' },
+                { to: '/student-dashboard/certificates', icon: '📜', label: 'Certificate Vault' },
+                { to: '/student-dashboard/fee-status', icon: '💳', label: 'Fee Clearance' },
+                { to: '/student-dashboard/grievances', icon: '⚖️', label: 'Grievance Cell' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {/* FACULTY ROLE LINKS */}
+          {role === 'faculty' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Teaching & Evaluation
+              </div>
+              {[
+                { to: '/faculty-dashboard/attendance-entry', icon: '📝', label: 'Take Attendance' },
+                { to: '/faculty-dashboard/attendance-analytics', icon: '📊', label: 'Attendance Analytics' },
+                { to: '/faculty-dashboard/speed-grader', icon: '⚡', label: 'SpeedGrader AI' },
+                { to: '/faculty-dashboard/exam-question-generator', icon: '📝', label: 'Exam Question Generator' },
+                { to: '/faculty-dashboard/marks-entry', icon: '📈', label: 'Marks & Gradebook' },
+                { to: '/faculty-dashboard/rubric-builder', icon: '📐', label: 'Rubric Builder' },
+                { to: '/faculty-dashboard/class-discussion-board', icon: '💬', label: 'Discussion Board' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginTop: '1rem', marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Department & Research
+              </div>
+              {[
+                { to: '/faculty-dashboard/lab-inventory', icon: '🔬', label: 'Lab Inventory & Apparatus' },
+                { to: '/faculty-dashboard/curriculum-revision', icon: '📚', label: 'Curriculum Revision' },
+                { to: '/faculty-dashboard/research-grant-tracker', icon: '🧪', label: 'Research Grants' },
+                { to: '/faculty-dashboard/student-intervention', icon: '🚨', label: 'Student Interventions' },
+                { to: '/faculty-dashboard/peer-evaluation', icon: '👥', label: 'Peer Evaluation' },
+                { to: '/faculty-dashboard/teaching-portfolio', icon: '💼', label: 'Teaching Portfolio & NAAC' },
+                { to: '/faculty-dashboard/virtual-office-hours', icon: '🕒', label: 'Virtual Office Hours' },
+                { to: '/faculty-dashboard/plagiarism-checker', icon: '🔍', label: 'Plagiarism Checker' },
+                { to: '/faculty-dashboard/podcast-studio', icon: '🎙️', label: 'Podcast Studio' },
+                { to: '/faculty-dashboard/wallet', icon: '💳', label: 'Faculty Wallet' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {/* PARENT ROLE LINKS */}
+          {role === 'parent' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ 
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--app-text-muted, #94a3b8)',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                marginBottom: '0.5rem', paddingLeft: '0.875rem'
+              }}>
+                Ward Tracking
+              </div>
+              {[
+                { to: '/parent-dashboard', icon: '📊', label: 'Parent Portal' },
+                { to: '/parent-dashboard/child-attendance', icon: '📋', label: 'Child Attendance' },
+                { to: '/parent-dashboard/child-marks', icon: '📈', label: 'Academic Performance' },
+                { to: '/parent-dashboard/fee-status', icon: '💳', label: 'Fee Clearance' },
+                { to: '/parent-dashboard/leave-status', icon: '📝', label: 'Leave & Permissions' },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.55rem 0.875rem', borderRadius: '0.5rem',
+                    marginBottom: '0.2rem', textDecoration: 'none',
+                    fontSize: '0.82rem', fontWeight: isActive ? 700 : 500,
+                    color: isActive ? themeData.text : 'var(--sidebar-text, #334155)',
+                    background: isActive ? themeData.light : 'transparent',
+                    transition: 'all 0.2s',
+                  })}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
                 </NavLink>
               ))}
             </div>

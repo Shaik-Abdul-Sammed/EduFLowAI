@@ -4,39 +4,42 @@
 
 export const STUDENT = {
   id: 'S001',
-  name: 'Arjun Reddy',
-  roll: '2024MPC001',
-  section: 'MPC-A',
-  year: 2,
-  mentor: { name: 'Dr. Kavitha Sharma', subject: 'Mathematics', phone: '9876543210', email: 'kavitha@eduflow.ac.in', available: 'Mon, Wed, Fri — 2 PM to 4 PM' },
-  hostel: { block: 'Block B', room: '204', roommates: ['Rahul Varma', 'Sai Charan'] },
-  bus: { route: 'Route 7', stop: 'Ramanthapur', busNo: 'AP-09-AB-1234', driver: 'K. Nagaraju', phone: '9000012345' },
-  section_students: ['Arjun Reddy','Priya Singh','Amit Kumar','Sneha Patel','Rahul Varma','Kavya Naidu','Sai Charan','Deepika Rao','Vijay Krishna','Meera Iyer','Suresh Babu','Ananya Joshi','Ravi Teja','Pooja Sharma','Kiran Reddy','Lakshmi Devi','Satish Kumar','Nandini Rao','Anil Verma','Chitra Devi','Harish Reddy','Swathi Nair','Balaji Rao','Divya Menon','Ravi Shankar','Usha Rani','Pavan Kumar','Rekha Kumari','Gopal Reddy','Sunita Sharma','Rajesh Babu','Manjula Devi'],
+  name: 'Ananya Sharma',
+  roll: '22BCE1044',
+  section: 'CSE-6A',
+  degree: 'Bachelor of Technology (B.Tech)',
+  department: 'Computer Science & Engineering',
+  year: 3,
+  semester: 6,
+  mentor: { name: 'Dr. Ramesh Sundaram', subject: 'Operating Systems & Cloud Architecture', phone: '9876543210', email: 'ramesh.sundaram@eduflow.ac.in', available: 'Mon, Wed, Fri — 2 PM to 4 PM' },
+  hostel: { block: 'Aryabhata Block C', room: '312', roommates: ['Sanjana Rao', 'Meera Krishnan'] },
+  bus: { route: 'Campus Shuttle 4', stop: 'Tech Park Gate 2', busNo: 'KA-04-TR-5678', driver: 'M. Chennappa', phone: '9000012345' },
+  section_students: ['Aarav Sharma','Ananya Sen','Devendra Patel','Ishaan Varma','Meera Krishnan','Nikhil Deshmukh','Priya Nambiar','Rohan Gupta','Sanjana Rao','Vikramaditya Singh','Aditya Kashyap','Karthik Rao','Sneha Nambiar','Varun Desai','Nisha Reddy','Tanvi Joshi','Deepak Nair'],
 }
 
 // ── Faculty-Published Assignments (shared between faculty creator & student viewer)
 export const sharedAssignments = [
-  { id: 1, title: 'Wave Optics Problem Set', subject: 'Physics', section: 'MPC-A', due: '2026-06-10', maxMarks: 10, faculty: 'Dr. Ravi Kumar', description: 'Solve problems 1-15 from Chapter 10. Show all derivations clearly. Submit as PDF.', status: 'active', publishedOn: '2026-05-28' },
-  { id: 2, title: 'Integration Techniques Practice', subject: 'Mathematics', section: 'MPC-A', due: '2026-06-12', maxMarks: 10, faculty: 'Dr. Kavitha Sharma', description: 'Practice integration by parts, substitution, and partial fractions. Complete exercise set 7.3 and 7.4.', status: 'active', publishedOn: '2026-05-29' },
-  { id: 3, title: 'Organic Chemistry Lab Report', subject: 'Chemistry', section: 'MPC-A', due: '2026-05-30', maxMarks: 15, faculty: 'Dr. Sujata Rao', description: 'Write a detailed lab report on the esterification experiment. Include observations, results, and conclusion.', status: 'active', publishedOn: '2026-05-22' },
-  { id: 4, title: 'Electrochemistry Notes Summary', subject: 'Chemistry', section: 'MPC-A', due: '2026-06-18', maxMarks: 5, faculty: 'Dr. Sujata Rao', description: 'Summarize chapters on electrochemical cells, EMF, and Nernst equation in your own words.', status: 'active', publishedOn: '2026-06-01' },
-  { id: 5, title: 'Mechanics Problem Sheet', subject: 'Physics', section: 'MPC-A', due: '2026-05-20', maxMarks: 10, faculty: 'Dr. Ravi Kumar', description: 'Newton\'s laws application problems — 20 questions.', status: 'closed', publishedOn: '2026-05-10' },
+  { id: 1, title: 'eBPF Kernel Trace & Process Accounting Lab', subject: 'Operating Systems', section: 'CSE-6A', due: '2026-06-10', maxMarks: 25, faculty: 'Prof. Ramesh Sundaram', description: 'Write an eBPF kprobe program attached to sys_enter_execve to measure scheduler queue delays. Submit Git PR and analysis PDF.', status: 'active', publishedOn: '2026-05-28' },
+  { id: 2, title: 'B+ Tree Page Split & Query Cost Planner', subject: 'Database Management Systems', section: 'CSE-6A', due: '2026-06-12', maxMarks: 20, faculty: 'Dr. Anupama Verma', description: 'Implement concurrency-safe slotted page allocation and leaf node splits with latch coupling in C++.', status: 'active', publishedOn: '2026-05-29' },
+  { id: 3, title: 'TCP Cubic vs BBR Congestion Window Benchmark', subject: 'Computer Networks', section: 'CSE-6A', due: '2026-05-30', maxMarks: 20, faculty: 'Dr. S. K. Narayanan', description: 'Simulate high RTT packet drop topologies on Minikube and record throughput comparisons.', status: 'active', publishedOn: '2026-05-22' },
+  { id: 4, title: 'Raft Consensus Heartbeat & Log Compaction', subject: 'Distributed Systems', section: 'CSE-6A', due: '2026-06-18', maxMarks: 25, faculty: 'Prof. K. Venkatesh', description: 'Implement leader lease renewal, snapshot installation RPCs, and cluster membership reconfiguration.', status: 'active', publishedOn: '2026-06-01' },
+  { id: 5, title: 'LR(1) Parser Table Construction & Conflict Elimination', subject: 'Compiler Design', section: 'CSE-6A', due: '2026-05-20', maxMarks: 20, faculty: 'Dr. Priya Shenoy', description: 'Construct canonical collection of LR(1) items and resolve shift/reduce ambiguities.', status: 'closed', publishedOn: '2026-05-10' },
 ]
 
 // Student's submission records keyed by assignment ID
 export const studentSubmissions = {
-  5: { submittedOn: '2026-05-19', score: 8, feedback: 'Good work, but Q14 needs revisiting.' },
+  5: { submittedOn: '2026-05-19', score: 19, feedback: 'Clean grammar item set construction; correct precedence tables.' },
 }
 
 // ── Attendance Data
 export const attendanceData = {
-  overall: 82,
+  overall: 84,
   subjects: [
-    { name: 'Mathematics',  classes: 48, attended: 44, pct: 92, faculty: 'Dr. Kavitha Sharma' },
-    { name: 'Physics',      classes: 46, attended: 40, pct: 87, faculty: 'Dr. Ravi Kumar' },
-    { name: 'Chemistry',    classes: 46, attended: 36, pct: 78, faculty: 'Dr. Sujata Rao' },
-    { name: 'English',      classes: 24, attended: 18, pct: 75, faculty: 'Mrs. Anitha Reddy' },
-    { name: 'Telugu',       classes: 20, attended: 14, pct: 70, faculty: 'Sri. Raju Sharma' },
+    { name: 'Operating Systems & Concurrency',        classes: 48, attended: 44, pct: 92, faculty: 'Prof. Ramesh Sundaram' },
+    { name: 'Database Management Systems',            classes: 46, attended: 41, pct: 89, faculty: 'Dr. Anupama Verma' },
+    { name: 'Computer Networks & Protocols',          classes: 44, attended: 38, pct: 86, faculty: 'Dr. S. K. Narayanan' },
+    { name: 'Distributed Systems & Microservices',    classes: 42, attended: 33, pct: 78, faculty: 'Prof. K. Venkatesh' },
+    { name: 'Compiler Design & Automata',             classes: 40, attended: 26, pct: 65, faculty: 'Dr. Priya Shenoy' },
   ],
   // Weekly attendance: 1=present, 0=absent, null=holiday
   heatmap: [
@@ -55,48 +58,52 @@ export const attendanceData = {
 
 // ── Marks Data
 export const marksData = [
-  { subject: 'Mathematics',  internal: 18, midterm: 42, final: 85, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 15, midterm: 38, final: 76 }, rank: 3 },
-  { subject: 'Physics',      internal: 17, midterm: 39, final: 78, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 15, midterm: 37, final: 72 }, rank: 5 },
-  { subject: 'Chemistry',    internal: 16, midterm: 35, final: 71, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 14, midterm: 34, final: 68 }, rank: 8 },
-  { subject: 'English',      internal: 19, midterm: 44, final: 88, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 16, midterm: 40, final: 80 }, rank: 2 },
-  { subject: 'Telugu',       internal: 18, midterm: 41, final: 80, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 15, midterm: 38, final: 74 }, rank: 4 },
+  { subject: 'Operating Systems & Concurrency',        internal: 19, midterm: 46, final: 91, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 16, midterm: 38, final: 76 }, rank: 2 },
+  { subject: 'Database Management Systems',            internal: 18, midterm: 44, final: 87, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 15, midterm: 37, final: 74 }, rank: 4 },
+  { subject: 'Computer Networks & Protocols',          internal: 17, midterm: 42, final: 84, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 14, midterm: 35, final: 71 }, rank: 5 },
+  { subject: 'Distributed Systems & Microservices',    internal: 18, midterm: 40, final: 81, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 15, midterm: 36, final: 73 }, rank: 6 },
+  { subject: 'Compiler Design & Automata',             internal: 16, midterm: 36, final: 74, max: { internal: 20, midterm: 50, final: 100 }, classAvg: { internal: 14, midterm: 33, final: 68 }, rank: 9 },
 ]
 
 // ── Timetable
 export const timetable = {
-  periods: ['8:30–9:20', '9:20–10:10', '10:10–11:00', '11:15–12:05', '12:05–12:55', '1:40–2:30', '2:30–3:20', '3:20–4:10'],
+  periods: ['9:00–10:00', '10:00–11:00', '11:15–12:15', '12:15–1:15', '1:15–2:00', '2:00–3:00', '3:00–4:00', '4:00–5:00'],
   days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
   schedule: [
     // Monday
-    ['Mathematics','Physics','Chemistry','English','Telugu','Mathematics','Physics',null],
+    ['Operating Systems','DBMS','Computer Networks','Compiler Design',null,'Operating Systems Lab','Operating Systems Lab','Operating Systems Lab'],
     // Tuesday
-    ['Physics','Mathematics','English','Chemistry',null,'Telugu','Mathematics','Chemistry'],
+    ['Distributed Systems','Operating Systems','DBMS','Computer Networks',null,'DBMS Practical','DBMS Practical',null],
     // Wednesday
-    ['Chemistry','Telugu','Mathematics','Physics','English',null,'Mathematics','Physics'],
+    ['Compiler Design','Computer Networks','Distributed Systems','Operating Systems',null,'Cloud Computing','Cloud Computing',null],
     // Thursday
-    ['English','Mathematics','Physics','Telugu','Chemistry','Mathematics',null,'Chemistry'],
+    ['DBMS','Distributed Systems','Computer Networks','Compiler Design',null,'Network Systems Lab','Network Systems Lab','Network Systems Lab'],
     // Friday
-    ['Mathematics','Chemistry','Physics','English','Mathematics','Telugu',null,'Physics'],
+    ['Operating Systems','DBMS','Distributed Systems','Computer Networks',null,'Compiler Design','Project Lab',null],
     // Saturday
-    ['Physics','Mathematics','Chemistry',null,null,null,null,null],
+    ['Distributed Systems','Operating Systems','Technical Seminar',null,null,null,null,null],
   ],
   subjectColors: {
-    'Mathematics': '#2563EB',
-    'Physics':     '#10B981',
-    'Chemistry':   '#F59E0B',
-    'English':     '#8B5CF6',
-    'Telugu':      '#EF4444',
+    'Operating Systems': '#2563EB',
+    'DBMS':              '#10B981',
+    'Computer Networks': '#F59E0B',
+    'Distributed Systems': '#8B5CF6',
+    'Compiler Design':   '#06B6D4',
+    'Cloud Computing':   '#EC4899',
+    'Operating Systems Lab': '#3B82F6',
+    'DBMS Practical':    '#059669',
+    'Network Systems Lab': '#D97706',
+    'Project Lab':       '#7C3AED',
+    'Technical Seminar': '#64748B'
   }
 }
 
 // ── Exam Schedule
 export const examSchedule = [
-  { id: 1, name: 'Unit Test – I',      subject: 'All Subjects', date: '2026-06-14', time: '9:00 AM', hall: 'Hall A', duration: '3 hrs', type: 'unit', upcoming: true },
-  { id: 2, name: 'Physics Unit Test',  subject: 'Physics',      date: '2026-06-20', time: '9:00 AM', hall: 'Lab 2',  duration: '2 hrs', type: 'unit', upcoming: true },
-  { id: 3, name: 'Chemistry Practical',subject: 'Chemistry',     date: '2026-06-25', time: '10:00 AM',hall: 'Chem Lab', duration: '3 hrs', type: 'practical', upcoming: true },
-  { id: 4, name: 'Mid-Term Exams',     subject: 'All Subjects', date: '2026-07-05', time: '9:00 AM', hall: 'Main Block', duration: '3 hrs', type: 'midterm', upcoming: true },
-  { id: 5, name: 'Maths Unit Test',    subject: 'Mathematics',  date: '2026-05-10', time: '9:00 AM', hall: 'Hall B', duration: '2 hrs', type: 'unit', upcoming: false, scored: 38, max: 50 },
-  { id: 6, name: 'English Assessment', subject: 'English',      date: '2026-05-18', time: '11:00 AM',hall: 'Hall A', duration: '1.5 hrs', type: 'unit', upcoming: false, scored: 44, max: 50 },
+  { id: 1, name: 'Mid-Term Assessment 1', subject: 'All Engineering Subjects', date: '2026-08-24', time: '9:30 AM', hall: 'Exam Block Hall 4', duration: '3 hrs', type: 'midterm', upcoming: true },
+  { id: 2, name: 'Operating Systems Lab Viva', subject: 'Operating Systems', date: '2026-08-30', time: '1:30 PM', hall: 'CS Lab 304', duration: '3 hrs', type: 'practical', upcoming: true },
+  { id: 3, name: 'DBMS Indexing & SQL Practical', subject: 'DBMS', date: '2026-09-04', time: '10:00 AM', hall: 'Database Lab 2', duration: '3 hrs', type: 'practical', upcoming: true },
+  { id: 4, name: 'End-Semester Theory Examination', subject: 'All Engineering Subjects', date: '2026-11-16', time: '9:30 AM', hall: 'Main Examination Hall', duration: '3 hrs', type: 'final', upcoming: true },
 ]
 
 // ── Weekly Exams / Tests

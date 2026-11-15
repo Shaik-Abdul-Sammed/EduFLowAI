@@ -85,6 +85,10 @@ const SpeedGraderPage = lazy(() => import('./pages/faculty/SpeedGraderPage'))
 const FacultyAppraisalPage = lazy(() => import('./pages/hod/FacultyAppraisalPage'))
 const PayrollGenerationPage = lazy(() => import('./pages/finance/PayrollGenerationPage'))
 const OnlineExamPage = lazy(() => import('./pages/student/OnlineExamPage'))
+const AttendanceOverviewPage = lazy(() => import('./pages/student/attendanceOverview'))
+const AttendanceEntryPage = lazy(() => import('./pages/faculty/attendanceEntry'))
+const AttendanceAnalyticsPage = lazy(() => import('./pages/faculty/AttendanceAnalyticsPage'))
+const ExamQuestionGeneratorPage = lazy(() => import('./pages/faculty/ExamQuestionGeneratorPage'))
 
 // International Missing Tech Roadmap (031)
 const AdaptiveLearningPage = lazy(() => import('./pages/student/AdaptiveLearningPage'))
@@ -179,6 +183,7 @@ const slugOverrides = {
   FacultyAppraisalPage: 'faculty-appraisal',
 
   // Student
+  attendanceOverview: 'attendance',
   GrievancePage: 'grievances',
   DigitalIdCard: 'digital-id',
   LeaveApplicationPage: 'leave-application',
@@ -192,6 +197,9 @@ const slugOverrides = {
   CertificatePage: 'certificates',
 
   // Faculty
+  attendanceEntry: 'attendance-entry',
+  AttendanceAnalyticsPage: 'attendance-analytics',
+  ExamQuestionGeneratorPage: 'exam-question-generator',
   PlagiarismCheckerPage: 'plagiarism-checker',
   PodcastStudioPage: 'podcast-studio',
   FacultyWalletPage: 'wallet',
@@ -244,6 +252,8 @@ const explicitRoutePaths = new Set([
   '/hod-dashboard/leave-approvals',
   '/hod-dashboard/faculty-appraisal',
   '/student-dashboard',
+  '/student-dashboard/attendance',
+  '/student-dashboard/attendance-overview',
   '/student-dashboard/grievances',
   '/student-dashboard/digital-id',
   '/student-dashboard/leave-application',
@@ -257,6 +267,9 @@ const explicitRoutePaths = new Set([
   '/student-dashboard/certificates',
   '/student/certificates',
   '/faculty-dashboard',
+  '/faculty-dashboard/attendance-entry',
+  '/faculty-dashboard/attendance-analytics',
+  '/faculty-dashboard/exam-question-generator',
   '/faculty-dashboard/plagiarism-checker',
   '/faculty-dashboard/podcast-studio',
   '/faculty-dashboard/wallet',
@@ -564,6 +577,8 @@ function App() {
             path="/student-dashboard"
             element={<DashboardHome role="student" routes={groupedRoutes.student || []} />}
           />
+          <Route path="/student-dashboard/attendance" element={<AttendanceOverviewPage />} />
+          <Route path="/student-dashboard/attendance-overview" element={<AttendanceOverviewPage />} />
           <Route path="/student-dashboard/grievances" element={<GrievancePage />} />
           <Route path="/student-dashboard/digital-id" element={<DigitalIdCard />} />
           <Route path="/student-dashboard/leave-application" element={<LeaveApplicationPage />} />
@@ -583,6 +598,9 @@ function App() {
             path="/faculty-dashboard"
             element={<DashboardHome role="faculty" routes={groupedRoutes.faculty || []} />}
           />
+          <Route path="/faculty-dashboard/attendance-entry" element={<AttendanceEntryPage />} />
+          <Route path="/faculty-dashboard/attendance-analytics" element={<AttendanceAnalyticsPage />} />
+          <Route path="/faculty-dashboard/exam-question-generator" element={<ExamQuestionGeneratorPage />} />
           <Route path="/faculty-dashboard/plagiarism-checker" element={<PlagiarismCheckerPage />} />
           <Route path="/faculty-dashboard/podcast-studio" element={<PodcastStudioPage />} />
           <Route path="/faculty-dashboard/wallet" element={<FacultyWalletPage />} />

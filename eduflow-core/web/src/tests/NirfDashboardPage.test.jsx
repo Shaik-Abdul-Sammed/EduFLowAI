@@ -105,8 +105,8 @@ describe('NirfDashboardPage Component', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('NIRF Institutional Intelligence')).toBeInTheDocument()
-      expect(screen.getByText('Total NIRF Composite Score')).toBeInTheDocument()
+      expect(screen.getByText(/NIRF Institutional Intelligence/i)).toBeInTheDocument()
+      expect(screen.getByText(/Total NIRF Composite Score/i)).toBeInTheDocument()
       expect(screen.getAllByText(/#51/).length).toBeGreaterThan(0)
     })
   })

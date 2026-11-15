@@ -141,6 +141,272 @@ export default function NavBar({ routes, onMenuClick }) {
             </Link>
           )}
 
+          {/* Role Indicator & Role-Specific Quick Action Buttons */}
+          {user && (
+            <div className="d-none d-md-flex align-items-center gap-2">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: '0.5rem',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  whiteSpace: 'nowrap',
+                  background:
+                    user.role === 'student' ? 'rgba(37,99,235,0.12)' :
+                    user.role === 'faculty' ? 'rgba(16,185,129,0.12)' :
+                    user.role === 'admin' ? 'rgba(239,68,68,0.12)' :
+                    user.role === 'hod' ? 'rgba(139,92,246,0.12)' :
+                    user.role === 'finance_officer' || user.role === 'accounts_staff' ? 'rgba(245,158,11,0.12)' :
+                    'rgba(14,165,233,0.12)',
+                  color:
+                    user.role === 'student' ? '#2563EB' :
+                    user.role === 'faculty' ? '#059669' :
+                    user.role === 'admin' ? '#DC2626' :
+                    user.role === 'hod' ? '#7C3AED' :
+                    user.role === 'finance_officer' || user.role === 'accounts_staff' ? '#D97706' :
+                    '#0284C7',
+                  border: `1px solid ${
+                    user.role === 'student' ? 'rgba(37,99,235,0.25)' :
+                    user.role === 'faculty' ? 'rgba(16,185,129,0.25)' :
+                    user.role === 'admin' ? 'rgba(239,68,68,0.25)' :
+                    user.role === 'hod' ? 'rgba(139,92,246,0.25)' :
+                    user.role === 'finance_officer' || user.role === 'accounts_staff' ? 'rgba(245,158,11,0.25)' :
+                    'rgba(14,165,233,0.25)'
+                  }`
+                }}
+              >
+                <span>
+                  {user.role === 'student' ? '🎓' :
+                   user.role === 'faculty' ? '👨‍🏫' :
+                   user.role === 'admin' ? '🛡️' :
+                   user.role === 'hod' ? '🏛️' :
+                   user.role === 'finance_officer' || user.role === 'accounts_staff' ? '💼' : '📋'}
+                </span>
+                <span>
+                  {user.role === 'student' ? 'Student Portal • B.Tech CSE' :
+                   user.role === 'faculty' ? 'Faculty Portal • Dept of CSE' :
+                   user.role === 'admin' ? 'Admin Directorate' :
+                   user.role === 'hod' ? `HoD Console • ${user.department || 'CSE'}` :
+                   user.role === 'finance_officer' || user.role === 'accounts_staff' ? 'Financial Governance' :
+                   'Staff Operations'}
+                </span>
+              </div>
+
+              {/* Role-Specific Quick Actions */}
+              <div className="d-none d-xl-flex align-items-center gap-1 ms-2">
+                {user.role === 'student' && (
+                  <>
+                    <Link
+                      to="/student-dashboard/attendance-overview"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#93c5fd' : '#1d4ed8',
+                        background: isDark ? 'rgba(37,99,235,0.18)' : 'rgba(37,99,235,0.08)',
+                      }}
+                    >
+                      📋 My Attendance
+                    </Link>
+                    <Link
+                      to="/student-dashboard/online-exam"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#93c5fd' : '#1d4ed8',
+                        background: isDark ? 'rgba(37,99,235,0.18)' : 'rgba(37,99,235,0.08)',
+                      }}
+                    >
+                      📝 Online Exam
+                    </Link>
+                    <Link
+                      to="/student-dashboard/mock-tests"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#93c5fd' : '#1d4ed8',
+                        background: isDark ? 'rgba(37,99,235,0.18)' : 'rgba(37,99,235,0.08)',
+                      }}
+                    >
+                      🎯 Mock Tests
+                    </Link>
+                  </>
+                )}
+
+                {user.role === 'faculty' && (
+                  <>
+                    <Link
+                      to="/faculty-dashboard/attendance-entry"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#6ee7b7' : '#047857',
+                        background: isDark ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.08)',
+                      }}
+                    >
+                      📝 Take Attendance
+                    </Link>
+                    <Link
+                      to="/faculty-dashboard/speed-grader"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#6ee7b7' : '#047857',
+                        background: isDark ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.08)',
+                      }}
+                    >
+                      ⚡ SpeedGrader
+                    </Link>
+                    <Link
+                      to="/faculty-dashboard/attendance-analytics"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#6ee7b7' : '#047857',
+                        background: isDark ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.08)',
+                      }}
+                    >
+                      📊 Analytics
+                    </Link>
+                  </>
+                )}
+
+                {user.role === 'admin' && (
+                  <>
+                    <Link
+                      to="/admin-dashboard/attendance"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#fca5a5' : '#b91c1c',
+                        background: isDark ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.08)',
+                      }}
+                    >
+                      👥 Attendance Intel
+                    </Link>
+                    <Link
+                      to="/admin-dashboard/nirf"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#fca5a5' : '#b91c1c',
+                        background: isDark ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.08)',
+                      }}
+                    >
+                      🏆 NIRF
+                    </Link>
+                    <Link
+                      to="/officers-dashboard"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#fca5a5' : '#b91c1c',
+                        background: isDark ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.08)',
+                      }}
+                    >
+                      ⚡ AI Officers
+                    </Link>
+                  </>
+                )}
+
+                {user.role === 'hod' && (
+                  <>
+                    <Link
+                      to="/hod-dashboard/staff"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#c4b5fd' : '#6d28d9',
+                        background: isDark ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.08)',
+                      }}
+                    >
+                      👥 Staff & Approvals
+                    </Link>
+                    <Link
+                      to="/officer/timetable"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#c4b5fd' : '#6d28d9',
+                        background: isDark ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.08)',
+                      }}
+                    >
+                      🕒 Timetable
+                    </Link>
+                  </>
+                )}
+
+                {(user.role === 'finance_officer' || user.role === 'accounts_staff') && (
+                  <>
+                    <Link
+                      to="/finance-dashboard/fee-reminders"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#fcd34d' : '#b45309',
+                        background: isDark ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.08)',
+                      }}
+                    >
+                      🔔 Fee Reminders
+                    </Link>
+                    <Link
+                      to="/finance-dashboard/invoices"
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '0.4rem',
+                        textDecoration: 'none',
+                        color: isDark ? '#fcd34d' : '#b45309',
+                        background: isDark ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.08)',
+                      }}
+                    >
+                      💳 Invoices
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 

@@ -247,7 +247,8 @@ export default function NirfDashboardPage() {
                 gap: '0.35rem',
               }}
             >
-              <Trophy size={14} className="d-inline" /> {loading ? 'Updating NIRF Intelligence...' : 'NIRF Institutional Intelligence'}
+              <Trophy size={14} className="d-inline" />
+              <span>{loading ? 'Updating NIRF Intelligence...' : 'NIRF Institutional Intelligence'}</span>
             </span>
             <span
               className="badge px-2.5 py-1 fs-8 rounded-pill"
