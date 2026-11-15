@@ -136,6 +136,142 @@ const toTitleCase = (value) =>
 
 const pageModules = import.meta.glob('./pages/*/*.jsx')
 
+const DASHBOARD_ROLES = new Set(['admin', 'faculty', 'student', 'parent', 'hod', 'staff', 'finance'])
+
+const slugOverrides = {
+  // Admin
+  LeadManagementPage: 'leads',
+  ReportDeliveryPage: 'report-delivery',
+  InvoiceGeneratorPage: 'invoices',
+  NaacDashboardPage: 'naac-dashboard',
+  NaacAiAnalysisPage: 'naac-ai-analysis',
+  InsightsDashboardPage: 'insights',
+  NirfDashboardPage: 'nirf',
+  StaffManagementPage: 'staff',
+  AcademicCalendarPage: 'calendar',
+  PortalConnectionPage: 'portal',
+  AttendanceIntegrationPage: 'attendance',
+  InstitutionSettingsPage: 'settings',
+  BulkStudentImportPage: 'bulk-import',
+  HostelWardenPage: 'hostel-management',
+  BudgetTrackingPage: 'budget',
+  ScholarshipManagementPage: 'scholarships',
+  PlacementDrivesPage: 'placement-drives',
+  SupportTicketsPage: 'support-tickets',
+  SystemHealthPage: 'system-health',
+  UPICollectionPage: 'upi-collection',
+  WhatsAppAttendancePage: 'whatsapp-attendance',
+  FeeReminderPage: 'fee-reminders',
+  SSOConfigPage: 'sso-config',
+  CompliancePage: 'compliance',
+  LiveDataPage: 'live-data',
+  GrievanceManagementPage: 'grievances',
+  LibraryManagementPage: 'library',
+  BulkDataImportPage: 'bulk-data-import',
+  DegreeAuditPage: 'degree-audit',
+  ProcurementPage: 'procurement',
+  LibraryScannerPage: 'library-scanner',
+  CurriculumMappingPage: 'curriculum-mapping',
+
+  // HOD
+  HodCalendarPage: 'calendar',
+  LeaveApprovalsPage: 'leave-approvals',
+  FacultyAppraisalPage: 'faculty-appraisal',
+
+  // Student
+  GrievancePage: 'grievances',
+  DigitalIdCard: 'digital-id',
+  LeaveApplicationPage: 'leave-application',
+  StudentMockTestPage: 'mock-tests',
+  OnlineExamPage: 'online-exam',
+  AdaptiveLearningPage: 'adaptive-learning',
+  CredentialWalletPage: 'credentials',
+  LeaderboardPage: 'leaderboard',
+  VirtualLabsPage: 'virtual-labs',
+  ARScannerPage: 'ar-scanner',
+  CertificatePage: 'certificates',
+
+  // Faculty
+  PlagiarismCheckerPage: 'plagiarism-checker',
+  PodcastStudioPage: 'podcast-studio',
+  FacultyWalletPage: 'wallet',
+  SpeedGraderPage: 'speed-grader',
+
+  // Finance
+  PayrollGenerationPage: 'payroll',
+}
+
+const explicitRoutePaths = new Set([
+  '/admin-dashboard',
+  '/admin-dashboard/onboarding',
+  '/admin-dashboard/settings',
+  '/admin-dashboard/system-health',
+  '/admin-dashboard/support-tickets',
+  '/admin-dashboard/upi-collection',
+  '/admin-dashboard/whatsapp-attendance',
+  '/admin-dashboard/fee-reminders',
+  '/admin-dashboard/insights/:domain',
+  '/admin-dashboard/calendar',
+  '/admin-dashboard/portal',
+  '/admin-dashboard/attendance',
+  '/admin-dashboard/sso-config',
+  '/admin-dashboard/compliance',
+  '/admin-dashboard/live-data',
+  '/admin-dashboard/staff',
+  '/admin-dashboard/grievances',
+  '/admin-dashboard/library',
+  '/admin-dashboard/hostel-management',
+  '/admin-dashboard/leave-approvals',
+  '/admin-dashboard/budget',
+  '/admin-dashboard/bulk-import',
+  '/admin-dashboard/bulk-data-import',
+  '/admin/bulk-data-import',
+  '/admin-dashboard/degree-audit',
+  '/admin-dashboard/procurement',
+  '/admin-dashboard/scholarships',
+  '/admin-dashboard/placement-drives',
+  '/admin-dashboard/faculty-appraisal',
+  '/admin-dashboard/payroll',
+  '/admin-dashboard/library-scanner',
+  '/admin-dashboard/curriculum-mapping',
+  '/staff-dashboard',
+  '/staff-dashboard/library',
+  '/staff-dashboard/speed-grader',
+  '/hod-dashboard',
+  '/hod-dashboard/staff',
+  '/hod-dashboard/calendar',
+  '/hod-dashboard/grievances',
+  '/hod-dashboard/leave-approvals',
+  '/hod-dashboard/faculty-appraisal',
+  '/student-dashboard',
+  '/student-dashboard/grievances',
+  '/student-dashboard/digital-id',
+  '/student-dashboard/leave-application',
+  '/student-dashboard/mock-tests',
+  '/student-dashboard/online-exam',
+  '/student-dashboard/adaptive-learning',
+  '/student-dashboard/credentials',
+  '/student-dashboard/leaderboard',
+  '/student-dashboard/virtual-labs',
+  '/student-dashboard/ar-scanner',
+  '/student-dashboard/certificates',
+  '/student/certificates',
+  '/faculty-dashboard',
+  '/faculty-dashboard/plagiarism-checker',
+  '/faculty-dashboard/podcast-studio',
+  '/faculty-dashboard/wallet',
+  '/faculty/wallet',
+  '/faculty-dashboard/speed-grader',
+  '/parent-dashboard',
+  '/finance-dashboard',
+  '/finance-dashboard/fee-reminders',
+  '/finance-dashboard/upi-collection',
+  '/finance-dashboard/invoices',
+  '/finance-dashboard/budget',
+  '/finance-dashboard/scholarships',
+  '/finance-dashboard/payroll',
+])
+
 const generatedRoutes = Object.entries(pageModules)
   .map(([filePath, importFn]) => {
     const match = filePath.match(/\.\/pages\/([^/]+)\/([^/]+)\.jsx$/)
@@ -144,19 +280,18 @@ const generatedRoutes = Object.entries(pageModules)
     }
 
     const [, role, fileName] = match
-    let slug = toKebabCase(fileName)
-    if (fileName === 'LeadManagementPage') slug = 'leads'
-    if (fileName === 'ReportDeliveryPage') slug = 'report-delivery'
-    if (fileName === 'InvoiceGeneratorPage') slug = 'invoices'
-    if (fileName === 'NaacDashboardPage') slug = 'naac-dashboard'
-    if (fileName === 'NaacAiAnalysisPage') slug = 'naac-ai-analysis'
-    if (fileName === 'InsightsDashboardPage') slug = 'insights'
-    if (fileName === 'NirfDashboardPage') slug = 'nirf'
-    if (fileName === 'StaffManagementPage') slug = 'staff'
-    if (fileName === 'AcademicCalendarPage') slug = 'calendar'
-    if (fileName === 'HodCalendarPage') slug = 'calendar'
-    if (fileName === 'PortalConnectionPage') slug = 'portal'
-    if (fileName === 'AttendanceIntegrationPage') slug = 'attendance'
+    if (!DASHBOARD_ROLES.has(role)) {
+      return null
+    }
+
+    let slug
+    if (slugOverrides[fileName]) {
+      slug = slugOverrides[fileName]
+    } else {
+      const baseName = fileName.replace(/Page$/, '')
+      slug = toKebabCase(baseName || fileName)
+    }
+
     const routePath = `/${role}-dashboard/${slug}`
 
     return {
@@ -628,6 +763,9 @@ function App() {
         <Route path="/student" element={<DirectPathRedirect to="/student-dashboard" />} />
         <Route path="/student/*" element={<RolePathRedirect role="student" />} />
 
+        <Route path="/parent" element={<DirectPathRedirect to="/parent-dashboard" />} />
+        <Route path="/parent/*" element={<RolePathRedirect role="parent" />} />
+
         <Route path="/hod" element={<DirectPathRedirect to="/hod-dashboard" />} />
         <Route path="/hod/*" element={<RolePathRedirect role="hod" />} />
 
@@ -650,13 +788,21 @@ function App() {
         <Route path="/officers-dashboard/admissions" element={<Navigate to="/officer/admissions" replace />} />
         <Route path="/officers-dashboard/finance" element={<Navigate to="/officer/finance" replace />} />
 
-        {generatedRoutes.map((route) => (
-          <Route key={route.routePath} element={<ProtectedRoute role={route.role} />}>
-            <Route
-              path={route.routePath}
-              element={<route.Component />}
-            />
-          </Route>
+        {generatedRoutes
+          .filter((route) => !explicitRoutePaths.has(route.routePath))
+          .map((route) => (
+            <Route key={route.role + route.routePath} element={<ProtectedRoute role={route.role} />}>
+              <Route
+                path={route.routePath}
+                element={
+                  <ErrorBoundary>
+                    <Suspense fallback={<div className="container py-4"><SkeletonLoader variant="card" /></div>}>
+                      <route.Component />
+                    </Suspense>
+                  </ErrorBoundary>
+                }
+              />
+            </Route>
         ))}
 
             <Route path="*" element={<NotFoundPage />} />

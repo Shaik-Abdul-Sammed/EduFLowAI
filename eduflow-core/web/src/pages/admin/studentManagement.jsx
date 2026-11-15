@@ -90,10 +90,6 @@ export default function Page() {
     }))
     exportToCSV(exportData, `Students_Directory_${new Date().toISOString().split('T')[0]}.csv`)
   }
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
 
   const filtered = students.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 

@@ -187,7 +187,9 @@ export default function OnlineExamPage() {
       if (mediaStreamRef.current) {
         try {
           mediaStreamRef.current.getTracks().forEach((track) => track.stop())
-        } catch (_) {}
+        } catch (_) {
+          // ignore stream release failure
+        }
       }
     }
   }, [activeExam, examResult, isLocked, logViolation])

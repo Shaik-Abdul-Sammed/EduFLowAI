@@ -1,3 +1,4 @@
+// TODO: OfficerPlaceholder is intentionally unmounted from active routes. It is reserved as a fallback/template for unfinished future AI officers.
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Bell } from 'lucide-react';
 
