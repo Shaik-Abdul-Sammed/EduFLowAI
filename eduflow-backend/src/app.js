@@ -213,6 +213,7 @@ export function createApp({ db } = {}) {
 
   app.use('/api/v1/officers', createOfficerRouter())
   app.use('/api/v1/admin', createAdminRouter())
+  app.use('/api/admin', createAdminRouter())
   app.use('/api/v1/student', createStudentRouter())
   app.use('/api/v1/career', createCareerRouter())
   app.use('/api/v1/guardianwatch', createGuardianWatchRouter())
