@@ -109,4 +109,95 @@ export const aiChatSchema = z.object({
   path: ['message'],
 })
 
+// Feature 67 & 68: Strict Zod validation schemas for POST/PUT endpoints
+export const studentLoginSchema = z.object({
+  rollNumber: z.string().min(1, 'Roll number is required').optional(),
+  roll_number: z.string().min(1).optional(),
+  dob: z.string().min(6, 'Date of birth is required'),
+  institutionId: z.union([z.string(), z.number()]).optional()
+}).passthrough().refine((data) => Boolean(data.rollNumber || data.roll_number), {
+  message: 'Roll number is required',
+  path: ['rollNumber']
+})
+
+export const bulkImportStudentsSchema = z.object({
+  students: z.array(
+    z.object({
+      rollNumber: z.string().min(1).optional(),
+      roll_number: z.string().min(1).optional(),
+      name: z.string().optional(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      dob: z.string().optional(),
+      email: z.string().email().optional().or(z.literal('')),
+      phone: z.string().optional(),
+      department: z.string().optional(),
+      program: z.string().optional(),
+      semester: z.union([z.string(), z.number()]).optional(),
+      batch: z.string().optional()
+    }).passthrough().refine((data) => Boolean(data.rollNumber || data.roll_number), {
+      message: 'Roll number is required for each student',
+      path: ['rollNumber']
+    })
+  ).min(1, 'Students array must contain at least one record')
+}).passthrough()
+
+export const grievanceSchema = z.object({
+  studentId: z.union([z.string(), z.number()]).optional(),
+  rollNumber: z.string().optional(),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  category: z.string().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional()
+}).passthrough()
+
+export const admissionApplicationSchema = z.object({
+  name: z.string().min(1, 'Applicant name is required'),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional(),
+  gpa: z.number().min(0).max(10).optional(),
+  annualIncome: z.number().min(0).optional(),
+  testScore: z.number().min(0).optional(),
+  category: z.string().optional(),
+  department: z.string().optional()
+}).passthrough()
+
+export const facultyImportSchema = z.object({
+  faculty: z.array(
+    z.object({
+      name: z.string().min(1, 'Faculty name is required'),
+      email: z.string().email('Valid email is required'),
+      department: z.string().min(1, 'Department is required'),
+      designation: z.string().optional(),
+      phone: z.string().optional()
+    }).passthrough()
+  ).min(1, 'Faculty array must contain at least one record')
+}).passthrough()
+
+export const courseImportSchema = z.object({
+  courses: z.array(
+    z.object({
+      code: z.string().min(1, 'Course code is required'),
+      title: z.string().optional(),
+      name: z.string().optional(),
+      credits: z.union([z.string(), z.number()]).optional(),
+      department: z.string().optional()
+    }).passthrough().refine((c) => Boolean(c.title || c.name), {
+      message: 'Course title or name is required'
+    })
+  ).min(1, 'Courses array must contain at least one record')
+}).passthrough()
+
+export const certificateGenerationSchema = z.object({
+  studentRoll: z.string().min(1, 'Student roll is required').optional(),
+  rollNumber: z.string().min(1).optional(),
+  studentName: z.string().min(1, 'Student name is required'),
+  purpose: z.string().optional(),
+  academicYear: z.string().optional(),
+  department: z.string().optional()
+}).passthrough().refine((data) => Boolean(data.studentRoll || data.rollNumber), {
+  message: 'Student roll number is required',
+  path: ['studentRoll']
+})
+
 export default validateRequest

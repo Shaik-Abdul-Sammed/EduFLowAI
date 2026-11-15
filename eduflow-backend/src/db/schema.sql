@@ -490,3 +490,12 @@ CREATE TABLE translation_logs (
     module VARCHAR(64) DEFAULT 'General',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ==========================================
+-- High-Performance Indexes (Feature 62)
+-- ==========================================
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_institution_id ON users(institution_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_institution ON audit_logs(institution_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
+

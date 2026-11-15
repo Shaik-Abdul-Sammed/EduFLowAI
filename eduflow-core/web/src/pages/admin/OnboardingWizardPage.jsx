@@ -18,6 +18,7 @@ import {
   Check,
   CreditCard
 } from 'lucide-react'
+import { useAutoSave } from '../../hooks/useAutoSave'
 
 export default function OnboardingWizardPage() {
   const navigate = useNavigate()
@@ -51,6 +52,9 @@ export default function OnboardingWizardPage() {
     accreditationStatus: 'NAAC A+ Accredited',
     logoUrl: '/logo.png'
   })
+
+  // Feature 27: Auto-save onboarding profile draft in localStorage
+  useAutoSave('onboarding_profile', profile, setProfile)
 
   // Step 2: Departments
   const [departments, setDepartments] = useState([

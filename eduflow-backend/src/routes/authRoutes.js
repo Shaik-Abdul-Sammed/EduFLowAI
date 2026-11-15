@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import { UserRepository } from '../repositories/UserRepository.js'
 import { pool } from '../db/pool.js'
 import { rateLimit } from 'express-rate-limit'
-import { validateRequest, loginSchema, registerUserSchema } from '../middleware/validateRequest.js'
+import { validateRequest, loginSchema, registerUserSchema, studentLoginSchema, bulkImportStudentsSchema } from '../middleware/validateRequest.js'
 import { seedDemoData } from '../../scripts/seed-demo.js'
 import { seedDeanAccount } from '../../scripts/seed-dean-account.js'
 import { resetDemoData } from '../../scripts/reset-demo-data.js'
@@ -106,12 +106,12 @@ export function createAuthRouter() {
   /**
    * POST /api/v1/auth/student-login
    */
-  router.post('/student-login', authLimiter, AuthController.studentLogin)
+  router.post('/student-login', authLimiter, validateRequest(studentLoginSchema), AuthController.studentLogin)
 
   /**
    * POST /api/v1/auth/bulk-student-import
    */
-  router.post('/bulk-student-import', AuthController.bulkImportStudents)
+  router.post('/bulk-student-import', validateRequest(bulkImportStudentsSchema), AuthController.bulkImportStudents)
 
   /**
    * POST /api/v1/auth/refresh

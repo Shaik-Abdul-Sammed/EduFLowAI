@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import ConfirmationModal from '../../components/ConfirmationModal'
+import { exportToCSV } from '../../utils/exportToCSV'
+import { useAutoSave } from '../../hooks/useAutoSave'
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { STUDENT } from '../../utils/studentMockData'
 
 const PURPLE = '#7C3AED'
@@ -21,21 +25,24 @@ export default function Page() {
   const [streamFilter, setStreamFilter] = useState('ALL')
   const [showForm, setShowForm] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
   const [formError, setFormError] = useState('')
   const [form, setForm] = useState({ name: '', roll: '', section: 'MPC-A', stream: 'MPC', year: 1, contact: '' })
 
+  const { clearDraft } = useAutoSave('admin_student_form', form, setForm)
+
   function handleCreate(e) {
-    e.preventDefault()
+    if (e?.preventDefault) e.preventDefault()
     setFormError('')
 
-    // Broken Rule Fix 1: Validate 10-digit Indian phone number
     const cleanPhone = form.contact.replace(/\D/g, '')
     if (cleanPhone.length !== 10 || !/^[6-9]/.test(cleanPhone)) {
       setFormError('Please enter a valid 10-digit Indian parent contact number starting with 6, 7, 8, or 9.')
       return
     }
 
-    // Broken Rule Fix 2: Check duplicate roll number
     if (students.some(s => s.roll.trim().toUpperCase() === form.roll.trim().toUpperCase())) {
       setFormError(`Roll number ${form.roll.toUpperCase()} is already assigned to an enrolled student.`)
       return
@@ -44,21 +51,45 @@ export default function Page() {
     setStudents(prev => [...prev, { ...form, contact: cleanPhone, id: `S00${prev.length + 1}` }])
     setShowForm(false)
     setForm({ name: '', roll: '', section: 'MPC-A', stream: 'MPC', year: 1, contact: '' })
+    clearDraft()
   }
+
+  useKeyboardShortcuts({
+    onNew: () => setShowForm(true),
+    onSubmit: handleCreate,
+    onEscape: () => {
+      setShowForm(false)
+      setDeleteModalOpen(false)
+    }
+  })
 
   function handleDelete(id) {
     setStudents(prev => prev.filter(s => s.id !== id))
+    setSelectedIds(prev => prev.filter(item => item !== id))
     setConfirmDeleteId(null)
+    setDeleteModalOpen(false)
+    setDeleteTarget(null)
+  }
+
+  function handleBulkDelete() {
+    setStudents(prev => prev.filter(s => !selectedIds.includes(s.id)))
+    setSelectedIds([])
+    setDeleteModalOpen(false)
+    setDeleteTarget(null)
   }
 
   function handleExportCsv() {
-    const headers = ['Student ID', 'Full Name', 'Roll Number', 'Section', 'Stream', 'Year', 'Parent Contact']
-    const rows = filtered.map(s => [s.id, `"${s.name}"`, s.roll, s.section, s.stream, s.year, s.contact])
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `Students_Directory_${new Date().toISOString().split('T')[0]}.csv`)
+    const exportData = filtered.map(s => ({
+      'Student ID': s.id,
+      'Full Name': s.name,
+      'Roll Number': s.roll,
+      'Section': s.section,
+      'Stream': s.stream,
+      'Year': `Year ${s.year}`,
+      'Parent Contact': s.contact
+    }))
+    exportToCSV(exportData, `Students_Directory_${new Date().toISOString().split('T')[0]}.csv`)
+  }
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -194,12 +225,64 @@ export default function Page() {
           </form>
         )}
 
+        {/* Bulk Action Toolbar */}
+        {selectedIds.length > 0 && (
+          <div className="alert alert-info d-flex justify-content-between align-items-center py-2 px-3 mb-0" style={{ borderRadius: '0.75rem' }}>
+            <span style={{ fontSize: '0.85rem' }}><strong>{selectedIds.length}</strong> student(s) selected</span>
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary"
+                onClick={() => {
+                  const selectedData = students.filter(s => selectedIds.includes(s.id)).map(s => ({
+                    'Student ID': s.id,
+                    'Full Name': s.name,
+                    'Roll Number': s.roll,
+                    'Section': s.section,
+                    'Stream': s.stream,
+                    'Year': `Year ${s.year}`,
+                    'Parent Contact': s.contact
+                  }))
+                  exportToCSV(selectedData, 'Selected_Students.csv')
+                }}
+              >
+                📥 Export Selected
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-danger"
+                onClick={() => {
+                  setDeleteTarget({ isBulk: true, count: selectedIds.length })
+                  setDeleteModalOpen(true)
+                }}
+              >
+                🗑️ Dismiss Selected
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Directory table */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
           <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <table className="table table-hover align-middle mb-0">
               <thead>
-                <tr style={{ background: 'var(--surface-bg)' }}>
+                <tr style={{ background: 'var(--surface-bg)', position: 'sticky', top: 0, zIndex: 10 }}>
+                  <th style={{ width: '40px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all students"
+                      className="form-check-input"
+                      checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(filtered.map(s => s.id))
+                        } else {
+                          setSelectedIds([])
+                        }
+                      }}
+                    />
+                  </th>
                   {['Student ID', 'Full Name', 'Roll Number', 'Section', 'Stream', 'Year', 'Parent Contact', 'Action'].map(h => (
                     <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
@@ -208,50 +291,85 @@ export default function Page() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-5 text-muted">
+                    <td colSpan="9" className="text-center py-5 text-muted">
                       <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
                       <div className="fw-semibold">No students found</div>
                       <div className="small">Try adjusting your search query or stream filter.</div>
                     </td>
                   </tr>
                 ) : (
-                  filtered.map(s => (
-                    <tr key={s.id}>
-                      <td style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>{s.id}</td>
-                      <td style={{ fontSize: '0.875rem', fontWeight: 700 }}>{s.name}</td>
-                      <td style={{ fontSize: '0.875rem', fontWeight: 600, color: BLUE }}>{s.roll}</td>
-                      <td><span className="badge text-bg-light" style={{ border: '1px solid var(--border-color)' }}>{s.section}</span></td>
-                      <td><span className="badge text-bg-secondary">{s.stream}</span></td>
-                      <td style={{ fontWeight: 700 }}>Year {s.year}</td>
-                      <td style={{ fontSize: '0.82rem', color: '#64748b' }}>📞 {s.contact}</td>
-                      <td>
-                        {confirmDeleteId === s.id ? (
-                          <div className="d-flex align-items-center gap-1">
-                            <button className="btn btn-sm btn-danger px-2 py-0" onClick={() => handleDelete(s.id)} style={{ fontSize: '0.7rem' }}>
-                              Confirm
-                            </button>
-                            <button className="btn btn-sm btn-secondary px-2 py-0" onClick={() => setConfirmDeleteId(null)} style={{ fontSize: '0.7rem' }}>
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
+                  filtered.map(s => {
+                    const isSelected = selectedIds.includes(s.id)
+                    return (
+                      <tr key={s.id} className={isSelected ? 'table-active' : ''}>
+                        <td style={{ textAlign: 'center', padding: '0.75rem 0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${s.name}`}
+                            className="form-check-input"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds(prev => [...prev, s.id])
+                              } else {
+                                setSelectedIds(prev => prev.filter(id => id !== s.id))
+                              }
+                            }}
+                          />
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>{s.id}</td>
+                        <td style={{ fontSize: '0.875rem', fontWeight: 700 }}>{s.name}</td>
+                        <td style={{ fontSize: '0.875rem', fontWeight: 600, color: BLUE }}>{s.roll}</td>
+                        <td><span className="badge text-bg-light" style={{ border: '1px solid var(--border-color)' }}>{s.section}</span></td>
+                        <td><span className="badge text-bg-secondary">{s.stream}</span></td>
+                        <td style={{ fontWeight: 700 }}>Year {s.year}</td>
+                        <td style={{ fontSize: '0.82rem', color: '#64748b' }}>📞 {s.contact}</td>
+                        <td>
                           <button
+                            type="button"
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => setConfirmDeleteId(s.id)}
+                            onClick={() => {
+                              setDeleteTarget({ isBulk: false, id: s.id, name: s.name })
+                              setDeleteModalOpen(true)
+                            }}
                             style={{ fontSize: '0.72rem' }}
                             title="Dismiss student profile"
                           >
                             Dismiss 🗑️
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
           </div>
         </div>
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={deleteModalOpen}
+          title={deleteTarget?.isBulk ? 'Confirm Bulk Dismissal' : 'Dismiss Student'}
+          message={
+            deleteTarget?.isBulk
+              ? `Are you sure you want to dismiss ${deleteTarget.count} selected students? This action will remove them from the active semester roster.`
+              : `Are you sure you want to dismiss student "${deleteTarget?.name}"?`
+          }
+          confirmText="Yes, Dismiss"
+          cancelText="Cancel"
+          onConfirm={() => {
+            if (deleteTarget?.isBulk) {
+              handleBulkDelete()
+            } else if (deleteTarget?.id) {
+              handleDelete(deleteTarget.id)
+            }
+          }}
+          onCancel={() => {
+            setDeleteModalOpen(false)
+            setDeleteTarget(null)
+          }}
+        />
 
       </div>
     </RolePageTemplate>

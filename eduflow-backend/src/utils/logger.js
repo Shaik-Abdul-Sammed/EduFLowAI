@@ -14,4 +14,23 @@ export function createLogger(name) {
   return pinoInstance
 }
 
+// Feature 71: Ensure Pino logger captures all unhandled rejections and uncaught exceptions
+let globalLoggingInitialized = false
+export function setupGlobalErrorLogging() {
+  if (globalLoggingInitialized) return
+  globalLoggingInitialized = true
+
+  process.on('unhandledRejection', (reason, promise) => {
+    pinoInstance.error({ reason, promise }, 'Unhandled Rejection at Promise')
+  })
+
+  process.on('uncaughtException', (err) => {
+    pinoInstance.error({ err }, 'Uncaught Exception thrown')
+  })
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  setupGlobalErrorLogging()
+}
+
 export default logger

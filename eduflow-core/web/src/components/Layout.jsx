@@ -7,6 +7,8 @@ import TourGuide from './TourGuide'
 import SkeletonLoader from './SkeletonLoader'
 import ExpertSystemsModal from './ExpertSystemsModal'
 import AITutorWidget from './AITutorWidget'
+import CommandPalette from './CommandPalette'
+import Breadcrumbs from './Breadcrumbs'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ routes }) {
@@ -89,6 +91,7 @@ export default function Layout({ routes }) {
         <NavBar routes={routes} onMenuClick={() => setSidebarOpen(true)} />
         
         <main id="main-content" style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', color: 'var(--app-text)' }}>
+          {!isDashboardRoot && <Breadcrumbs />}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
             {!isDashboardRoot ? (
               <button
@@ -165,6 +168,7 @@ export default function Layout({ routes }) {
       </div>
       {user?.role === 'student' && <AITutorWidget defaultCourse="CS301" />}
       <TourGuide />
+      <CommandPalette />
     </div>
   )
 }

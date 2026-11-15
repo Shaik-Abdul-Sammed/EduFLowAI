@@ -77,6 +77,8 @@ const ScholarshipManagementPage = lazy(() => import('./pages/admin/ScholarshipMa
 const PlacementDrivesPage = lazy(() => import('./pages/admin/PlacementDrivesPage'))
 const StudentMockTestPage = lazy(() => import('./pages/student/StudentMockTestPage'))
 const BulkStudentImportPage = lazy(() => import('./pages/admin/BulkStudentImportPage'))
+const BulkDataImportPage = lazy(() => import('./pages/admin/BulkDataImportPage'))
+const CertificatePage = lazy(() => import('./pages/student/CertificatePage'))
 const DegreeAuditPage = lazy(() => import('./pages/admin/DegreeAuditPage'))
 const ProcurementPage = lazy(() => import('./pages/admin/ProcurementPage'))
 const SpeedGraderPage = lazy(() => import('./pages/faculty/SpeedGraderPage'))
@@ -437,6 +439,8 @@ function App() {
           <Route path="/student-dashboard/leaderboard" element={<LeaderboardPage />} />
           <Route path="/student-dashboard/virtual-labs" element={<VirtualLabsPage />} />
           <Route path="/student-dashboard/ar-scanner" element={<ARScannerPage />} />
+          <Route path="/student-dashboard/certificates" element={<CertificatePage />} />
+          <Route path="/student/certificates" element={<CertificatePage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="faculty" />}>
@@ -545,6 +549,14 @@ function App() {
           <Route
             path="/admin-dashboard/bulk-import"
             element={<BulkStudentImportPage />}
+          />
+          <Route
+            path="/admin-dashboard/bulk-data-import"
+            element={<BulkDataImportPage />}
+          />
+          <Route
+            path="/admin/bulk-data-import"
+            element={<BulkDataImportPage />}
           />
           <Route
             path="/admin-dashboard/degree-audit"

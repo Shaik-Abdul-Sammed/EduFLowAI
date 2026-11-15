@@ -20,6 +20,7 @@ import 'screens/about_screen.dart';
 import 'screens/placement_radar.dart';
 import 'screens/auto_resume.dart';
 import 'screens/mock_simulator.dart';
+import 'screens/qr_fallback_attendance_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +88,8 @@ class _EduFlowAppState extends State<EduFlowApp> {
       ],
       title: 'EduFlow AI OS',
       theme: themeManager.themeData,
+      darkTheme: themeManager.darkThemeData,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       initialRoute: '/welcome',
       routes: {
@@ -96,6 +99,7 @@ class _EduFlowAppState extends State<EduFlowApp> {
         '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/attendance': (context) => const DashboardScreen(),
+        '/qr-attendance': (context) => const QrFallbackAttendanceScreen(),
         '/officers': (context) => const OfficerStreamScreen(),
         '/lor': (context) => const LORScreen(),
         '/passport': (context) => QRPassportScreen(),

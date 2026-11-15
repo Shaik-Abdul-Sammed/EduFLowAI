@@ -54,6 +54,8 @@ import { LTIController } from './controllers/LTIController.js'
 import { DegreeAuditController } from './controllers/DegreeAuditController.js'
 import { ProctoringController } from './controllers/ProctoringController.js'
 import { ProcurementController } from './controllers/ProcurementController.js'
+import { BulkImportController } from './controllers/BulkImportController.js'
+import { CertificateController } from './controllers/CertificateController.js'
 import { auditLogger } from './middleware/auditLogger.js'
 import { cacheService } from './services/CacheService.js'
 import { authMiddleware } from './middleware/auth.js'
@@ -91,7 +93,18 @@ function errorHandler(err, req, res, next) {
 export function createApp({ db } = {}) {
   const app = express()
   app.set('trust proxy', 1)
-  app.use(helmet({ contentSecurityPolicy: false }))
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      frameguard: { action: 'deny' },
+      xssFilter: true,
+      noSniff: true,
+      hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+    })
+  )
   const backupRouter = createBackupRouter(db)
 
   const explicitOrigins = [
@@ -140,6 +153,10 @@ export function createApp({ db } = {}) {
   app.use(attachInstitutionContext)
   app.use(auditLogger(db || pool))
   app.use(cacheService.invalidateOnMutation(['admin:metrics', 'officers:roi']))
+
+  app.get('/health', (_req, res) => {
+    res.json({ ok: true, status: 'ok', service: 'eduflow-backend' })
+  })
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'eduflow-backend', version: '1.0.1', build: 'demo-lockdown-v2', timestamp: new Date().toISOString() })
@@ -287,6 +304,14 @@ export function createApp({ db } = {}) {
       res.status(500).json({ error: err.message })
     }
   })
+
+  // Bulk Faculty & Course Importer (Feature 64)
+  app.post('/api/v1/faculty/bulk-import', BulkImportController.bulkImportFaculty)
+  app.post('/api/v1/courses/bulk-import', BulkImportController.bulkImportCourses)
+
+  // Bonafide Certificate Generator & Trust Gateway (Feature 45)
+  app.post('/api/v1/certificates/generate', CertificateController.generateCertificate)
+  app.get('/api/v1/certificates/verify/:certId', CertificateController.verifyCertificate)
 
   // Public Report Viewer and Download endpoints
   app.get('/r/:token/pdf', ReportDeliveryController.downloadPublicReportPdf)

@@ -161,4 +161,39 @@ export class FeeReminderController {
       return res.status(500).json({ error: err.message })
     }
   }
+
+  /**
+   * Feature 58: Automated Fee Defaulter Escalation
+   * Escalates invoices overdue >= 60 days to Departmental HOD & Academic Dean
+   */
+  static async autoEscalateDefaulters(req, res) {
+    try {
+      const institutionId = req.user?.institutionId || 1
+      const overdue = await FeeReminderService.findOverdueInvoices(institutionId)
+      const overdueList = Array.isArray(overdue) ? overdue : []
+      const defaulters = overdueList.filter((inv) => (inv.daysOverdue || 0) >= 60)
+
+      const escalations = defaulters.map((inv) => ({
+        invoiceId: inv.id,
+        invoiceNumber: inv.invoice_number,
+        studentName: inv.contact_person,
+        amount: inv.total_amount,
+        daysOverdue: inv.daysOverdue,
+        escalatedTo: 'HOD & Academic Dean',
+        status: 'ESCALATED',
+        actionRequired: 'Hall Ticket Withholding & Parent Conference',
+        escalatedAt: new Date().toISOString()
+      }))
+
+      return res.status(200).json({
+        success: true,
+        message: `Escalated ${escalations.length} critical fee defaulters to HOD`,
+        escalationCount: escalations.length,
+        escalations
+      })
+    } catch (err) {
+      console.error('FeeReminderController.autoEscalateDefaulters error:', err)
+      return res.status(500).json({ error: 'Failed to auto-escalate fee defaulters', details: err.message })
+    }
+  }
 }

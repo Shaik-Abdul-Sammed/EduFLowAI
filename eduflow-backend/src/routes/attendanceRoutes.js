@@ -15,5 +15,7 @@ router.post('/sync-now', requireRole('admin', 'hod'), AttendanceController.syncN
 router.post('/notify-parents', requireRole('admin', 'hod'), AttendanceController.notifyParents)
 router.post('/counseling-note', AttendanceController.logCounselingNote)
 router.get('/counseling-notes', AttendanceController.getCounselingNotes)
+router.post('/ble-sync', AttendanceController.bleSync)
+router.get('/ble-roster/:courseId', AttendanceController.getBleRoster)
 
 export default router

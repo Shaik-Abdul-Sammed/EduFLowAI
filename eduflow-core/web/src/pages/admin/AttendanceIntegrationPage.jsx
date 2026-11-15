@@ -22,6 +22,7 @@ import { useToast } from '../../context/ToastContext'
 import { getApiBaseURL } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 import SeatingChart from '../../components/SeatingChart'
+import SkeletonLoader from '../../components/SkeletonLoader'
 
 export default function AttendanceIntegrationPage() {
   const { addToast } = useToast()
@@ -558,9 +559,9 @@ export default function AttendanceIntegrationPage() {
               />
             </div>
           ) : (
-          <div className="table-responsive">
+          <div className="table-responsive" style={{ overflowX: 'auto', width: '100%' }}>
             <table className="table table-hover align-middle mb-0">
-              <thead className="table-light small text-uppercase">
+              <thead className="table-light small text-uppercase" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr>
                   <th>Roll Number</th>
                   <th>Student Name</th>
@@ -857,6 +858,8 @@ export default function AttendanceIntegrationPage() {
             style={{
               width: '100%',
               maxWidth: '560px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               borderRadius: '16px',
               background: 'var(--card-bg, #ffffff)',
               color: 'var(--app-text, #1e293b)',

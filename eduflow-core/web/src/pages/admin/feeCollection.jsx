@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import ConfirmationModal from '../../components/ConfirmationModal'
+import { exportToCSV } from '../../utils/exportToCSV'
+import { useAutoSave } from '../../hooks/useAutoSave'
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { STUDENT } from '../../utils/studentMockData'
 
 const GREEN = '#10B981'
@@ -21,14 +25,18 @@ export default function Page() {
   const [modeFilter, setModeFilter] = useState('ALL')
   const [showForm, setShowForm] = useState(false)
   const [selectedReceipt, setSelectedReceipt] = useState(null)
+  const [selectedTxIds, setSelectedTxIds] = useState([])
+  const [voidModalOpen, setVoidModalOpen] = useState(false)
+  const [voidTarget, setVoidTarget] = useState(null)
   const [formError, setFormError] = useState('')
   const [form, setForm] = useState({ student: '', roll: '', term: 'Term 1 Tuition', amount: 45000, method: 'Online' })
 
+  const { clearDraft } = useAutoSave('fee_collection_form', form, setForm)
+
   function handleCreate(e) {
-    e.preventDefault()
+    if (e?.preventDefault) e.preventDefault()
     setFormError('')
 
-    // Broken Rule Fix: fee amount must be strictly positive
     const parsed = Number(form.amount)
     const numAmount = Number.isNaN(parsed) ? 0 : parsed
     if (!numAmount || numAmount <= 0) {
@@ -46,7 +54,45 @@ export default function Page() {
     setPayments(prev => [newPayment, ...prev])
     setShowForm(false)
     setForm({ student: '', roll: '', term: 'Term 1 Tuition', amount: 45000, method: 'Online' })
-    setSelectedReceipt(newPayment) // Automatically open printable receipt
+    clearDraft()
+    setSelectedReceipt(newPayment)
+  }
+
+  useKeyboardShortcuts({
+    onNew: () => setShowForm(true),
+    onSubmit: handleCreate,
+    onEscape: () => {
+      setShowForm(false)
+      setSelectedReceipt(null)
+      setVoidModalOpen(false)
+    }
+  })
+
+  function handleVoid(id) {
+    setPayments(prev => prev.filter(p => p.id !== id))
+    setSelectedTxIds(prev => prev.filter(item => item !== id))
+    setVoidModalOpen(false)
+    setVoidTarget(null)
+  }
+
+  function handleBulkVoid() {
+    setPayments(prev => prev.filter(p => !selectedTxIds.includes(p.id)))
+    setSelectedTxIds([])
+    setVoidModalOpen(false)
+    setVoidTarget(null)
+  }
+
+  function handleExportCsv() {
+    const exportData = filtered.map(p => ({
+      'Receipt ID': p.id,
+      'Student Name': p.student,
+      'Roll Number': p.roll,
+      'Description': p.term,
+      'Amount': p.amount,
+      'Payment Date': p.date,
+      'Payment Mode': p.method
+    }))
+    exportToCSV(exportData, `Fee_Ledger_${new Date().toISOString().split('T')[0]}.csv`)
   }
 
   const totalCollected = payments.reduce((acc, p) => acc + p.amount, 0)
@@ -178,16 +224,73 @@ export default function Page() {
           </form>
         )}
 
+        {/* Bulk Action Toolbar */}
+        {selectedTxIds.length > 0 && (
+          <div className="alert alert-info d-flex justify-content-between align-items-center py-2 px-3 mb-0" style={{ borderRadius: '0.75rem' }}>
+            <span style={{ fontSize: '0.85rem' }}><strong>{selectedTxIds.length}</strong> transaction(s) selected</span>
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary"
+                onClick={() => {
+                  const selectedData = payments.filter(p => selectedTxIds.includes(p.id)).map(p => ({
+                    'Receipt ID': p.id,
+                    'Student Name': p.student,
+                    'Roll Number': p.roll,
+                    'Description': p.term,
+                    'Amount': p.amount,
+                    'Payment Date': p.date,
+                    'Payment Mode': p.method
+                  }))
+                  exportToCSV(selectedData, 'Selected_Fee_Transactions.csv')
+                }}
+              >
+                📥 Export Selected
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-danger"
+                onClick={() => {
+                  setVoidTarget({ isBulk: true, count: selectedTxIds.length })
+                  setVoidModalOpen(true)
+                }}
+              >
+                ⚠️ Void Selected
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Ledger table */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
           <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Recent Ledger Postings</h2>
-            <span className="badge bg-light text-dark border">{filtered.length} transactions</span>
+            <div className="d-flex gap-2 align-items-center">
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={handleExportCsv}>
+                📥 Export CSV
+              </button>
+              <span className="badge bg-light text-dark border">{filtered.length} transactions</span>
+            </div>
           </div>
           <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <table className="table table-hover align-middle mb-0">
               <thead>
-                <tr style={{ background: 'var(--surface-bg)' }}>
+                <tr style={{ background: 'var(--surface-bg)', position: 'sticky', top: 0, zIndex: 10 }}>
+                  <th style={{ width: '40px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all transactions"
+                      className="form-check-input"
+                      checked={filtered.length > 0 && selectedTxIds.length === filtered.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTxIds(filtered.map(p => p.id))
+                        } else {
+                          setSelectedTxIds([])
+                        }
+                      }}
+                    />
+                  </th>
                   {['Receipt ID', 'Student', 'Roll', 'Description', 'Amount', 'Date', 'Mode', 'Action'].map(h => (
                     <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
@@ -196,34 +299,65 @@ export default function Page() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-5 text-muted">
+                    <td colSpan="9" className="text-center py-5 text-muted">
                       <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
                       <div className="fw-semibold">No transactions match your search</div>
                       <div className="small">Try resetting your search query or mode filter.</div>
                     </td>
                   </tr>
                 ) : (
-                  filtered.map(p => (
-                    <tr key={p.id}>
-                      <td style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>{p.id}</td>
-                      <td style={{ fontSize: '0.875rem', fontWeight: 700 }}>{p.student}</td>
-                      <td style={{ fontSize: '0.82rem', color: '#475569' }}>{p.roll}</td>
-                      <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.term}</td>
-                      <td style={{ fontWeight: 800, color: GREEN }}>₹{p.amount.toLocaleString('en-IN')}</td>
-                      <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{p.date}</td>
-                      <td><span className="badge text-bg-light" style={{ border: '1px solid var(--border-color)' }}>{p.method}</span></td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-primary py-0 px-2"
-                          style={{ fontSize: '0.75rem' }}
-                          onClick={() => setSelectedReceipt(p)}
-                        >
-                          📄 Receipt
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  filtered.map(p => {
+                    const isSelected = selectedTxIds.includes(p.id)
+                    return (
+                      <tr key={p.id} className={isSelected ? 'table-active' : ''}>
+                        <td style={{ textAlign: 'center', padding: '0.75rem 0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            aria-label={`Select transaction ${p.id}`}
+                            className="form-check-input"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTxIds(prev => [...prev, p.id])
+                              } else {
+                                setSelectedTxIds(prev => prev.filter(id => id !== p.id))
+                              }
+                            }}
+                          />
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>{p.id}</td>
+                        <td style={{ fontSize: '0.875rem', fontWeight: 700 }}>{p.student}</td>
+                        <td style={{ fontSize: '0.82rem', color: '#475569' }}>{p.roll}</td>
+                        <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.term}</td>
+                        <td style={{ fontWeight: 800, color: GREEN }}>₹{p.amount.toLocaleString('en-IN')}</td>
+                        <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{p.date}</td>
+                        <td><span className="badge text-bg-light" style={{ border: '1px solid var(--border-color)' }}>{p.method}</span></td>
+                        <td>
+                          <div className="d-flex gap-1">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-primary py-0 px-2"
+                              style={{ fontSize: '0.75rem' }}
+                              onClick={() => setSelectedReceipt(p)}
+                            >
+                              📄 Receipt
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger py-0 px-2"
+                              style={{ fontSize: '0.75rem' }}
+                              onClick={() => {
+                                setVoidTarget({ isBulk: false, id: p.id, student: p.student, amount: p.amount })
+                                setVoidModalOpen(true)
+                              }}
+                            >
+                              Void
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
@@ -231,6 +365,30 @@ export default function Page() {
         </div>
 
       </div>
+
+      {/* Confirmation Modal for Voiding Transactions */}
+      <ConfirmationModal
+        isOpen={voidModalOpen}
+        title={voidTarget?.isBulk ? 'Confirm Voiding Multiple Transactions' : 'Void Fee Transaction'}
+        message={
+          voidTarget?.isBulk
+            ? `Are you sure you want to void ${voidTarget.count} selected transactions? This will reverse ledger entries.`
+            : `Are you sure you want to void receipt "${voidTarget?.id}" for ${voidTarget?.student} (₹${voidTarget?.amount})?`
+        }
+        confirmText="Yes, Void Transaction"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (voidTarget?.isBulk) {
+            handleBulkVoid()
+          } else if (voidTarget?.id) {
+            handleVoid(voidTarget.id)
+          }
+        }}
+        onCancel={() => {
+          setVoidModalOpen(false)
+          setVoidTarget(null)
+        }}
+      />
 
       {/* Printable Receipt Modal */}
       {selectedReceipt && (
@@ -255,6 +413,8 @@ export default function Page() {
               color: 'var(--app-text, #0f172a)',
               borderRadius: '1rem',
               maxWidth: '520px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               width: '100%',
               padding: '2rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',

@@ -407,6 +407,138 @@ async function* simulateTokenStream(text, delayMs = (process.env.NODE_ENV === 't
 
 export class AIService {
   /**
+   * Feature 20: Prompt Injection Firewall
+   * Detects and blocks jailbreaks, system prompt extractions, and instruction override attempts.
+   */
+  static checkPromptInjection(prompt) {
+    if (!prompt || typeof prompt !== 'string') return { isBlocked: false }
+    const blacklist = [
+      /ignore\s+(all\s+|any\s+)?(previous|prior|above)\s+(instructions|directives|prompts|rules)/i,
+      /disregard\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i,
+      /system\s*prompt/i,
+      /\b(sudo|jailbreak|DAN\s+mode|developer\s+mode)\b/i,
+      /you\s+are\s+now\s+(unrestricted|free\s+of\s+rules|an\s+unfiltered\s+ai)/i,
+      /bypass\s+(safety|content|security)\s+(filters|checks|policy)/i
+    ]
+
+    for (const regex of blacklist) {
+      if (regex.test(prompt)) {
+        return {
+          isBlocked: true,
+          pattern: regex.toString(),
+          reason: 'Blocked by EduFlow AI Prompt Injection Firewall (Security Violation)'
+        }
+      }
+    }
+    return { isBlocked: false }
+  }
+
+  /**
+   * Feature 1: Multi-Turn Memory Builder
+   * Injects the last 3 conversation turns into LLM context.
+   */
+  static buildConversationContext(context = {}) {
+    let memoryStr = ''
+    if (Array.isArray(context?.messages) && context.messages.length > 0) {
+      const recent = context.messages.slice(-3)
+      memoryStr = `\n=== RECENT CONVERSATION MEMORY (LAST 3 MESSAGES) ===\n${recent.map((m) => `${m.role || 'User'}: ${m.content || m.text || ''}`).join('\n')}\n`
+    } else if (Array.isArray(context?.history) && context.history.length > 0) {
+      const recent = context.history.slice(-3)
+      memoryStr = `\n=== RECENT CONVERSATION MEMORY (LAST 3 TURNS) ===\n${recent.map((m) => `${m.role || 'User'}: ${m.content || m.text || ''}`).join('\n')}\n`
+    }
+    return memoryStr
+  }
+
+  /**
+   * Feature 2: Strict JSON Output Extractor and Validator
+   */
+  static extractAndValidateJson(rawText, zodSchema = null) {
+    if (!rawText) return { success: false, error: 'Empty text' }
+    try {
+      const parsed = JSON.parse(rawText)
+      if (zodSchema) {
+        const validated = zodSchema.safeParse(parsed)
+        if (validated.success) return { success: true, data: validated.data }
+      } else {
+        return { success: true, data: parsed }
+      }
+    } catch {}
+
+    const fenceMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+    if (fenceMatch && fenceMatch[1]) {
+      try {
+        const parsed = JSON.parse(fenceMatch[1].trim())
+        if (zodSchema) {
+          const validated = zodSchema.safeParse(parsed)
+          if (validated.success) return { success: true, data: validated.data }
+        } else {
+          return { success: true, data: parsed }
+        }
+      } catch {}
+    }
+
+    const jsonMatch = rawText.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
+    if (jsonMatch && jsonMatch[0]) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0].trim())
+        if (zodSchema) {
+          const validated = zodSchema.safeParse(parsed)
+          if (validated.success) return { success: true, data: validated.data }
+        } else {
+          return { success: true, data: parsed }
+        }
+      } catch {}
+    }
+
+    return { success: false, error: 'Failed to extract valid JSON payload' }
+  }
+
+  /**
+   * Feature 11: Sentiment Analysis on Grievances
+   */
+  static analyzeGrievanceSentiment(text) {
+    if (!text || typeof text !== 'string') return { priority: 'LOW', score: 0.2, flags: [] }
+    const lower = text.toLowerCase()
+    const criticalKeywords = ['harassment', 'ragging', 'suicide', 'assault', 'violence', 'threat', 'emergency', 'blackmail', 'sexual']
+    const highKeywords = ['angry', 'furious', 'urgent', 'danger', 'unacceptable', 'cheating', 'corrupt', 'strike', 'discrimination', 'unsafe']
+    const mediumKeywords = ['disappointed', 'delay', 'issue', 'problem', 'broken', 'unfair', 'confused', 'mistake', 'poor']
+
+    const flags = []
+    let priority = 'LOW'
+    let score = 0.2
+
+    for (const kw of criticalKeywords) {
+      if (lower.includes(kw)) {
+        flags.push(kw)
+        priority = 'CRITICAL'
+        score = 0.95
+      }
+    }
+
+    if (priority !== 'CRITICAL') {
+      for (const kw of highKeywords) {
+        if (lower.includes(kw)) {
+          flags.push(kw)
+          priority = 'HIGH'
+          score = Math.max(score, 0.8)
+        }
+      }
+    }
+
+    if (priority === 'LOW') {
+      for (const kw of mediumKeywords) {
+        if (lower.includes(kw)) {
+          flags.push(kw)
+          priority = 'MEDIUM'
+          score = Math.max(score, 0.5)
+        }
+      }
+    }
+
+    return { priority, score, flags }
+  }
+
+  /**
    * Generates live context header based on regulatory feeds (NAAC, NIRF, AICTE, UGC, Holidays)
    */
   static async getLiveOfficerHeader(officerType) {
@@ -455,6 +587,13 @@ export class AIService {
     const liveHeader = await this.getLiveOfficerHeader(officerType)
     const liveFooter = this.getLiveOfficerFooter(officerType)
 
+    // Feature 20: Prompt Injection Firewall verification
+    const firewall = this.checkPromptInjection(prompt)
+    if (firewall.isBlocked) {
+      return sanitizeLatexMath(`${liveHeader}⚠️ **Security Alert:** Request blocked by EduFlow AI Prompt Injection Firewall. Reason: ${firewall.reason}.${liveFooter}`)
+    }
+
+    const conversationMemory = this.buildConversationContext(context)
     const intent = context?.intent || IntentClassifier.classify(prompt, { officerType, ...context }).intent
     const isDataAnalysis = intent === 'DATA_ANALYSIS'
 
@@ -466,6 +605,7 @@ export class AIService {
 === VERIFIED INSTITUTIONAL DATABASE CONTEXT (JSON) ===
 Use the exact figures below to populate all quantitative Markdown tables:
 ${JSON.stringify(context, null, 2)}
+${conversationMemory}
 
 CRITICAL FORMATTING & DATA OUTPUT DIRECTIVE:
 When the user asks for a specific table or data breakdown, you MUST generate a complete, properly formatted Markdown table. Do NOT simply summarize the request. Output the actual data provided in the context.
@@ -508,6 +648,15 @@ If the user asks for a chart or graph, output a JSON block formatted for Rechart
   static async *streamPrompt(officerType, prompt, context = {}) {
     const liveHeader = await this.getLiveOfficerHeader(officerType)
     const liveFooter = this.getLiveOfficerFooter(officerType)
+
+    // Feature 20: Prompt Injection Firewall verification
+    const firewall = this.checkPromptInjection(prompt)
+    if (firewall.isBlocked) {
+      yield liveHeader
+      yield `⚠️ **Security Alert:** Request blocked by EduFlow AI Prompt Injection Firewall. Reason: ${firewall.reason}.`
+      yield liveFooter
+      return
+    }
 
     // First yield the live regulatory context banner
     yield liveHeader

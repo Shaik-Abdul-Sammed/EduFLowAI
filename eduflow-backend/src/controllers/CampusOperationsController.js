@@ -1,4 +1,5 @@
 import { pool } from '../db/pool.js'
+import { AIService } from '../services/AIService.js'
 
 // In-memory fallbacks for resilient memory-mode execution & testing
 const memoryGrievances = [
@@ -295,6 +296,16 @@ export class CampusOperationsController {
       if (!subject || !description) {
         return res.status(400).json({ error: 'Subject and description are required.' })
       }
+
+      // Feature 11: Free Sentiment Analysis & Auto-Prioritization
+      const sentiment = AIService.analyzeGrievanceSentiment(`${subject} ${description}`)
+      let effectivePriority = priority
+      if (sentiment.priority === 'CRITICAL') {
+        effectivePriority = 'CRITICAL'
+      } else if (sentiment.priority === 'HIGH' && effectivePriority !== 'CRITICAL') {
+        effectivePriority = 'HIGH'
+      }
+
       const newGrievance = {
         id: memoryGrievances.length + 1,
         institution_id: 1,
@@ -304,7 +315,10 @@ export class CampusOperationsController {
         category,
         subject,
         description,
-        priority,
+        priority: effectivePriority,
+        sentiment_score: sentiment.score,
+        sentiment_priority: sentiment.priority,
+        sentiment_flags: sentiment.flags,
         status: 'SUBMITTED',
         resolution_notes: null,
         resolved_by: null,
@@ -316,16 +330,16 @@ export class CampusOperationsController {
           INSERT INTO grievances (institution_id, student_name, student_roll, category, subject, description, priority, status)
           VALUES ($1, $2, $3, $4, $5, $6, $7, 'SUBMITTED')
           RETURNING *`
-        const dbRes = await pool.query(query, [1, newGrievance.student_name, newGrievance.student_roll, category, subject, description, priority])
+        const dbRes = await pool.query(query, [1, newGrievance.student_name, newGrievance.student_roll, category, subject, description, effectivePriority])
         if (dbRes?.rows?.[0]) {
-          return res.status(201).json({ success: true, grievance: dbRes.rows[0] })
+          return res.status(201).json({ success: true, grievance: { ...dbRes.rows[0], sentiment } })
         }
       } catch (_err) {
         // Fallback to memory
       }
 
       memoryGrievances.unshift(newGrievance)
-      res.status(201).json({ success: true, grievance: newGrievance })
+      res.status(201).json({ success: true, grievance: newGrievance, sentiment })
     } catch (err) {
       res.status(500).json({ error: err.message || 'Failed to submit grievance' })
     }

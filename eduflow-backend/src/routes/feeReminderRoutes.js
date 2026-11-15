@@ -12,6 +12,7 @@ export function createFeeReminderRouter() {
   router.get('/settings', FeeReminderController.getSettings)
   router.post('/settings', FeeReminderController.updateSettings)
   router.post('/test-preview', FeeReminderController.sendTestPreview)
+  router.post('/auto-escalate', FeeReminderController.autoEscalateDefaulters)
 
   return router
 }

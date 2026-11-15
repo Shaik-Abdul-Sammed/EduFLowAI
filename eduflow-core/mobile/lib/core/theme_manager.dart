@@ -85,6 +85,33 @@ class ThemeManager extends ChangeNotifier {
     );
   }
 
+  /// Feature 53: Native Dark Mode Support matching platform brightness
+  ThemeData get darkThemeData {
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0F172A),
+      primaryColor: _currentTheme.primaryColor,
+      colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.dark,
+        seedColor: _currentTheme.primaryColor,
+        primary: _currentTheme.primaryColor,
+        secondary: _currentTheme.secondaryColor,
+        surface: const Color(0xFF1E293B),
+      ),
+      useMaterial3: true,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF1E293B),
+        foregroundColor: Colors.white,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _currentTheme.primaryColor,
+          foregroundColor: Colors.white,
+        ),
+      ),
+    );
+  }
+
   void updateTheme(InstitutionTheme newTheme) {
     _currentTheme = newTheme;
     notifyListeners();

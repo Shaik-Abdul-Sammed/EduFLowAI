@@ -36,11 +36,15 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.delayed(const Duration(milliseconds: 400));
+        },
+        child: Center(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const PresenceStatusWidget(),

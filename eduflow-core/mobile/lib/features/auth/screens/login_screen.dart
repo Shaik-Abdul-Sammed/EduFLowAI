@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme_manager.dart';
 import '../../../core/api_client.dart';
 import '../../../screens/forgot_password_screen.dart';
+import '../../../services/biometric_auth_service.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -203,6 +204,38 @@ class _LoginScreenState extends State<LoginScreen> {
           _errorMessage = msg;
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final bioService = BiometricAuthService();
+    final canAuth = await bioService.isBiometricsAvailable();
+    if (!canAuth) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Biometrics not available or enrolled on this device.')),
+        );
+      }
+      return;
+    }
+
+    final success = await bioService.authenticate(
+      localizedReason: 'Authenticate with fingerprint or Face ID to sign in to EduFlow',
+    );
+    if (!success) return;
+
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    if (token != null && token.isNotEmpty) {
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Biometrics verified! Enter credentials once to link your device session.')),
+        );
       }
     }
   }
@@ -548,6 +581,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 12),
+
+                  // Biometric Authentication Trigger (Feature 41)
+                  OutlinedButton.icon(
+                    key: const Key('biometricLoginButton'),
+                    icon: const Icon(Icons.fingerprint, color: primaryBlue),
+                    label: const Text(
+                      'Biometric / Face ID Sign In',
+                      style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(color: primaryBlue),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: _isLoading ? null : _handleBiometricLogin,
+                  ),
                   const SizedBox(height: 16),
 
                   // Quick Demo Persona Switcher (Sector 1 & 6)
