@@ -51,7 +51,7 @@ This report documents the verification, automated testing, and end-to-end integr
 - **Fix**: Added `import React from 'react'` at the top of the module and purged duplicate declaration at the footer.
 
 ### 3. Isolated Test Mode Execution for Node Backend
-- **Defect**: Parallel test worker threads spawned remote PostgreSQL connections to Render DB (`dpg-davtlt3bc2fs73eh1u10-a.singapore-postgres.render.com`), introducing network latency and intermittent timeouts during offline test runner runs.
+- **Defect**: Parallel test worker threads spawned remote PostgreSQL connections to Render DB (`[REDACTED-RENDER-HOST]`), introducing network latency and intermittent timeouts during offline test runner runs.
 - **Fix**: Configured in-memory fallback pool activations via `DB_MODE=memory`, allowing fast, deterministic local test runs without external network dependencies.
 
 ### 4. Harmonized Grievance Controller Contracts
