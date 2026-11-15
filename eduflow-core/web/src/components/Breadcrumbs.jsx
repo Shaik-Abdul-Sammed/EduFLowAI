@@ -11,8 +11,8 @@ export default function Breadcrumbs() {
   const trail = compact()
 
   return (
-    <nav aria-label="breadcrumb" className="mb-3">
-      <ol className="breadcrumb">
+    <nav aria-label="breadcrumb" className="breadcrumb-nav d-inline-block">
+      <ol className="breadcrumb mb-0 py-1" style={{ background: 'transparent' }}>
         <li className="breadcrumb-item"><Link to="/directory">Directory</Link></li>
         {trail.map((p, idx) => {
           const originalIndex = idx === 1 && trail[1] === '…' ? null : (idx === 0 ? 0 : parts.length - (trail.length - idx))

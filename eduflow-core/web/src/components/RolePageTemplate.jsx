@@ -1,5 +1,3 @@
-import Breadcrumbs from './Breadcrumbs'
-
 const roleBadgeStyle = {
   Student: { background: 'linear-gradient(135deg,#2563EB,#06B6D4)', color: 'white' },
   Faculty: { background: 'linear-gradient(135deg,#10B981,#0EA5E9)', color: 'white' },
@@ -20,8 +18,6 @@ export default function RolePageTemplate({ role, title, description, children })
 
   return (
     <div className="role-page" style={{ animation: 'fadeInUp 0.45s ease', width: '100%' }}>
-      <Breadcrumbs />
-
       {/* Page Header Card */}
       <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '1.25rem', overflow: 'hidden' }}>
         {/* Accent strip */}
@@ -40,7 +36,7 @@ export default function RolePageTemplate({ role, title, description, children })
               }}>
                 {role} Portal
               </span>
-              <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.3rem', color: 'var(--svc-navy)' }}>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.3rem', color: 'var(--app-heading, var(--app-text, #0f172a))' }}>
                 {title}
               </h1>
               <p style={{ color: 'var(--app-text-muted)', fontSize: '0.875rem', margin: 0 }}>{description}</p>
@@ -54,3 +50,4 @@ export default function RolePageTemplate({ role, title, description, children })
     </div>
   )
 }
+

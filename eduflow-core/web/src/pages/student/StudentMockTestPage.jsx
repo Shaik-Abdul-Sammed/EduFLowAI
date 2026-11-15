@@ -67,16 +67,16 @@ export default function StudentMockTestPage() {
     <RolePageTemplate role="student" title="Placement Aptitude Readiness & Mock Assessment">
       <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {activeTest && !result && (
-          <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid #E2E8F0', paddingBottom: 16 }}>
+          <div style={{ background: 'var(--card-bg, #FFFFFF)', borderRadius: 16, border: '1px solid var(--border-color, #E2E8F0)', padding: 28, boxShadow: '0 1px 4px rgba(0,0,0,0.05)', color: 'var(--app-text, #0F172A)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--border-color, #E2E8F0)', paddingBottom: 16 }}>
               <div>
-                <span style={{ fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: '#2563EB', padding: '3px 8px', borderRadius: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(37, 99, 235, 0.12)', color: '#3B82F6', padding: '3px 8px', borderRadius: 4 }}>
                   {activeTest.category}
                 </span>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '6px 0 2px 0', color: '#0F172A' }}>{activeTest.title}</h2>
-                <div style={{ fontSize: 12, color: '#64748B' }}>5 Questions &bull; 20 Mins &bull; Automated Scoring & Placement Feedback</div>
+                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '6px 0 2px 0', color: 'var(--app-text, #0F172A)' }}>{activeTest.title}</h2>
+                <div style={{ fontSize: 12, color: 'var(--app-text-muted, #64748B)' }}>5 Questions &bull; 20 Mins &bull; Automated Scoring & Placement Feedback</div>
               </div>
-              <div style={{ background: '#F8FAFC', padding: '8px 16px', borderRadius: 8, border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#334155' }}>
+              <div style={{ background: 'var(--surface-bg, #F8FAFC)', padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-color, #E2E8F0)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--app-text, #334155)' }}>
                 <Clock size={16} color="#2563EB" /> 18:45 Remaining
               </div>
             </div>
@@ -84,8 +84,8 @@ export default function StudentMockTestPage() {
             {/* Questions List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {activeTest.questions.map((q, qIndex) => (
-                <div key={q.id} style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, border: '1px solid #EDF2F7' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 12 }}>
+                <div key={q.id} style={{ background: 'var(--surface-bg, #F8FAFC)', padding: 18, borderRadius: 12, border: '1px solid var(--border-color, #EDF2F7)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text, #0F172A)', marginBottom: 12 }}>
                     Question {qIndex + 1}: {q.text}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
@@ -100,9 +100,9 @@ export default function StudentMockTestPage() {
                             textAlign: 'left',
                             padding: '10px 14px',
                             borderRadius: 8,
-                            border: isSelected ? '2px solid #2563EB' : '1px solid #CBD5E1',
-                            background: isSelected ? '#EFF6FF' : '#FFFFFF',
-                            color: isSelected ? '#1E40AF' : '#334155',
+                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-color, #CBD5E1)',
+                            background: isSelected ? 'rgba(37, 99, 235, 0.15)' : 'var(--card-bg, #FFFFFF)',
+                            color: isSelected ? '#3B82F6' : 'var(--app-text, #334155)',
                             fontWeight: isSelected ? 700 : 500,
                             fontSize: 13,
                             cursor: 'pointer'

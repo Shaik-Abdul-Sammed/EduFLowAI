@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
@@ -228,15 +227,9 @@ export default function FeeReminderPage() {
 
   return (
     <div className="container py-4">
-      {/* Breadcrumb Header */}
+      {/* Page Header */}
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb mb-1 small">
-              <li className="breadcrumb-item"><Link to="/admin-dashboard">Admin Dashboard</Link></li>
-              <li className="breadcrumb-item active" aria-current="page">Automated Fee Reminders</li>
-            </ol>
-          </nav>
           <h2 className="h4 fw-bold mb-1">
             Automated Fee Reminders & Progressive Escalation
           </h2>

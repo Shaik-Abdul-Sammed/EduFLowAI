@@ -34,6 +34,19 @@ export const studentFeatures = [
   'Weekly Exams',
   'References Hub',
   'Sections Planner',
+  'Study Planner & Habits',
+  'Career Roadmap & Skills',
+  'Collaborative Doubt Solver',
+  'Campus Events & Hackathons',
+  'Alumni Mentorship Network',
+  'Smart ATS Resume Builder',
+  'Mental Wellness Companion',
+  'Course & Faculty Feedback',
+  'Hostel Mess & Nutrition',
+  'CBCS Elective Bidding',
+  'Campus Lost & Found',
+  'Capstone Project Hub',
+  'GATE Examination Prep',
 ]
 
 export const facultyFeatures = [
@@ -62,6 +75,18 @@ export const facultyFeatures = [
   'Chat & Broadcast',
   'Profile Settings',
   'Grievance Forwarding',
+  'Rubric Matrix Builder',
+  'Attendance & Dropout Analytics',
+  'Bloom\'s Taxonomy Question Generator',
+  'Curriculum & BoS Revision',
+  'Research Grants & Funding',
+  'Early Academic Interventions',
+  'Class Q&A Discussion Forum',
+  'Peer Evaluation Manager',
+  'Virtual Office Hours & Scheduler',
+  'Lab Equipment & Inventory',
+  'Publications & Citation Tracker',
+  'Teaching Portfolio & Appraisal',
 ]
 
 export const parentFeatures = [

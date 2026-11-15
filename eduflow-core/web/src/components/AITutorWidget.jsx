@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bot, X, Send, Sparkles, BookOpen, MessageSquare } from 'lucide-react'
+import { Bot, X, Send, Sparkles } from 'lucide-react'
 import { getApiBaseURL } from '../config/apiConfig'
 import { safeJson } from '../utils/wakeUpHandler'
 

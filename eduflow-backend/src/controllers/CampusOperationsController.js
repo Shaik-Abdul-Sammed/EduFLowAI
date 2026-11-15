@@ -265,15 +265,51 @@ const memoryPayslips = [
 const memoryOnlineExams = [
   {
     id: 1,
-    title: 'Midterm Assessment: Data Structures & Algorithms (CS301)',
+    title: 'Midterm Assessment: Data Structures & Advanced Algorithms (CS301)',
     course_code: 'CS301',
     duration_mins: 30,
     total_marks: 25,
     status: 'PUBLISHED',
     questions: [
-      { id: 'cs1', text: 'Which sorting algorithm has guaranteed O(n log n) worst-case time complexity?', options: ['QuickSort', 'MergeSort', 'BubbleSort', 'SelectionSort'], correct: 1 },
-      { id: 'cs2', text: 'In a min-heap, where is the minimum element located?', options: ['Root node', 'Leftmost leaf', 'Rightmost leaf', 'Any internal node'], correct: 0 },
-      { id: 'cs3', text: 'Which data structure is primarily used for breadth-first search (BFS)?', options: ['Stack', 'Queue', 'Priority Queue', 'Disjoint Set'], correct: 1 }
+      {
+        id: 'cs1',
+        text: 'In Linux CFS (Completely Fair Scheduler), what balanced data structure tracks task virtual runtime (vruntime) with O(log N) scheduling?',
+        options: ['Red-Black Self-Balancing Tree (rbtree)', 'Fibonacci Priority Heap', 'Circular Doubly Linked List', 'Multi-Level Feedback Queue'],
+        correct: 0
+      },
+      {
+        id: 'cs2',
+        text: 'Under the Raft distributed consensus protocol, when can a candidate node safely commit an entry to a quorum cluster majority?',
+        options: [
+          'Candidate log is at least as up-to-date as majority and holds currentTerm',
+          'Candidate node has the lowest machine term ID',
+          'Leader was manually disconnected with SIGKILL',
+          'Any uncommitted log entry can overwrite majority clusters'
+        ],
+        correct: 0
+      },
+      {
+        id: 'cs3',
+        text: 'In the PostgreSQL MVCC storage engine, what happens when a row is updated under Read Committed transaction isolation?',
+        options: [
+          'New tuple is appended with xmin set to current XID and old tuple xmax set',
+          'Direct in-place row rewrite with exclusive table-level write lock',
+          'WAL buffer triggers synchronous disk fsync without undo logs',
+          'Shared read locks are maintained until connection termination'
+        ],
+        correct: 0
+      },
+      {
+        id: 'cs4',
+        text: 'How does Spectre V1 (Bounds Check Bypass) vulnerability leak privileged memory across kernel/user space boundaries?',
+        options: [
+          'Exploits CPU speculative branch execution to transiently read out-of-bounds cache timing',
+          'Directly overflows the hardware return address stack in ARM TrustZone',
+          'Injects corrupted TLB descriptors into the L1 CPU instruction cache',
+          'Flushes x86 ring-0 segment privilege registers during process context switch'
+        ],
+        correct: 0
+      }
     ]
   }
 ]
