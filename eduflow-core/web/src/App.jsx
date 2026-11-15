@@ -554,7 +554,9 @@ function App() {
             <Route path="/how-attendance-works" element={<AttendanceExplainerPage />} />
             <Route path="/apply" element={<OnlineAdmissionPage />} />
             <Route path="/r/:token" element={<PublicReportViewer />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
             <Route path="/whiteboard" element={<WhiteboardPage />} />
             <Route path="/virtual-classroom" element={<VirtualClassroomPage />} />
             <Route path="/research-workspace" element={<ResearchWorkspacePage />} />

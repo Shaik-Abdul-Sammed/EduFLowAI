@@ -1,14 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import QRCodeSvg from '../../components/QRCodeSvg'
 import StudentPresenceWidget from '../../components/StudentPresenceWidget'
+import SkeletonLoader from '../../components/SkeletonLoader'
 import { useAuth } from '../../hooks/useAuth'
+import apiClient from '../../services/apiClient'
 
 const INDIGO = '#6366f1'
 
 export default function ProfilePage() {
   const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [saved, setSaved] = useState(false)
+
   const userName = user?.name || user?.username || 'User'
   const userRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'User'
   const userInitial = userName.charAt(0).toUpperCase()
@@ -31,24 +38,96 @@ export default function ProfilePage() {
     phone: user?.phone || '+91 98765 43210',
     address: user?.address || '123, Academic Block, EduFlow Campus',
   })
-  const [saved, setSaved] = useState(false)
 
-  if (!user) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Please log in to view your profile.</div>
+  const fetchProfile = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await apiClient.get('/user/profile')
+      const profile = res.data?.user || res.data
+      if (profile) {
+        const fullName = profile.name || 
+          (profile.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : userName)
+        setFormData({
+          name: fullName || userName,
+          email: profile.email || user?.email || '',
+          phone: profile.phone || user?.phone || '+91 98765 43210',
+          address: profile.address || user?.address || '123, Academic Block, EduFlow Campus',
+        })
+      }
+    } catch (err) {
+      console.warn('[ProfilePage] Failed to fetch remote profile, using session defaults:', err.message)
+      // If server returned error, expose error state
+      if (err.response?.status >= 500) {
+        setError('Server error: Failed to fetch profile data. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function handleSave(e) {
+  useEffect(() => {
+    if (user) {
+      fetchProfile()
+    } else {
+      setLoading(false)
+    }
+  }, [user])
+
+  if (!user) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }} data-testid="unauthenticated-profile">
+        Please log in to view your profile.
+      </div>
+    )
+  }
+
+  async function handleSave(e) {
     e.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    setSaving(true)
+    setError(null)
+    setSaved(false)
+
+    try {
+      const nameParts = (formData.name || '').trim().split(' ')
+      const firstName = nameParts[0] || 'User'
+      const lastName = nameParts.slice(1).join(' ') || ''
+
+      const res = await apiClient.put('/user/profile', {
+        name: formData.name,
+        firstName,
+        lastName,
+        phone: formData.phone,
+        address: formData.address,
+      })
+
+      if (res.data?.success || res.status === 200) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 4000)
+      } else {
+        throw new Error(res.data?.error || 'Failed to update profile')
+      }
+    } catch (err) {
+      console.error('[ProfilePage] Save error:', err)
+      setError(err.response?.data?.error || err.message || 'Error updating profile. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <RolePageTemplate role={userRole} title="My Profile" description="Manage your personal details and account settings.">
       <div style={{ display: 'grid', gap: '1.25rem' }}>
 
+        {error && (
+          <div className="alert alert-danger d-flex align-items-center justify-content-between p-3" role="alert" style={{ borderRadius: '0.875rem' }}>
+            <div>⚠️ {error}</div>
+            <button className="btn btn-sm btn-outline-danger ms-2" onClick={fetchProfile}>Retry</button>
+          </div>
+        )}
+
         {saved && (
-          <div style={{ padding: '0.875rem', background: '#10B98110', border: '1px solid #10B98130', borderRadius: '0.875rem', color: '#065f46', fontWeight: 600, fontSize: '0.875rem' }}>
+          <div className="alert alert-success p-3" role="alert" style={{ borderRadius: '0.875rem', fontWeight: 600 }}>
             ✅ Profile updated successfully.
           </div>
         )}
@@ -91,74 +170,67 @@ export default function ProfilePage() {
 
                 <div className="text-center p-3 rounded-4 shadow-sm" style={{ background: '#ffffff', minWidth: 160 }}>
                   <QRCodeSvg value={qrPayload} size={140} fgColor="#1e1b4b" bgColor="#ffffff" />
-                  <div className="mt-2 fw-bold text-dark" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>
-                    {studentRoll}
-                  </div>
-                  <div className="text-muted" style={{ fontSize: '0.65rem' }}>
-                    Blood Group: <strong className="text-danger">{studentBloodGroup}</strong>
-                  </div>
+                  <div className="mt-2 fw-bold text-dark" style={{ fontSize: '0.72rem' }}>OFFICIAL CAMPUS QR</div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Ambient Hardware-Free Presence Tracker */}
-        {user.role === 'student' && (
-          <StudentPresenceWidget studentRoll={studentRoll} studentName={userName} />
-        )}
-
+        {/* Profile Card */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
-          <div className="card-body p-4" style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            
-            {/* Avatar Section */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', minWidth: 200 }}>
-              <div style={{ 
-                width: 120, height: 120, borderRadius: '50%', 
-                background: `linear-gradient(135deg, ${INDIGO}, #a855f7)`, 
-                color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '3.5rem', fontWeight: 800, boxShadow: `0 8px 24px ${INDIGO}40`
-              }}>
-                {userInitial}
+          <div className="card-body p-4">
+            {loading ? (
+              <div data-testid="profile-loading">
+                <SkeletonLoader variant="card" />
               </div>
-              <button className="btn btn-sm" style={{ background: `${INDIGO}15`, color: INDIGO, fontWeight: 700, borderRadius: '2rem', border: `1px solid ${INDIGO}30` }}>
-                Change Avatar
-              </button>
-            </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div style={{ textAlign: 'center', minWidth: 140 }}>
+                  <div style={{ width: 96, height: 96, borderRadius: '50%', background: `linear-gradient(135deg,${INDIGO},#a855f7)`, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 800, margin: '0 auto 1rem', boxShadow: `0 8px 24px ${INDIGO}40` }}>
+                    {userInitial}
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>{formData.name}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.2rem' }}>{userRole}</div>
+                  <div style={{ display: 'inline-block', marginTop: '0.5rem', padding: '0.25rem 0.75rem', background: '#10B98115', color: '#10B981', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: 700 }}>
+                    ● Active Status
+                  </div>
+                </div>
 
-            {/* Form Section */}
-            <div style={{ flex: 1, minWidth: 300 }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>Personal Information</h2>
-              <form onSubmit={handleSave} style={{ display: 'grid', gap: '1rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>FULL NAME</label>
-                    <input className="form-control" autoComplete="name" value={formData.name} onChange={e => setFormData(p => ({...p, name: e.target.value}))} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>ROLE / DESIGNATION</label>
-                    <input className="form-control" value={user.role.toUpperCase()} disabled style={{ background: 'var(--surface-bg, #f8fafc)', color: 'var(--app-text-muted, #94a3b8)' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>EMAIL ADDRESS</label>
-                    <input type="email" autoComplete="email" className="form-control" value={formData.email} onChange={e => setFormData(p => ({...p, email: e.target.value}))} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>PHONE NUMBER</label>
-                    <input type="tel" autoComplete="tel" className="form-control" value={formData.phone} onChange={e => setFormData(p => ({...p, phone: e.target.value}))} />
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>ADDRESS</label>
-                    <textarea className="form-control" autoComplete="street-address" rows={2} value={formData.address} onChange={e => setFormData(p => ({...p, address: e.target.value}))} />
-                  </div>
+                <div style={{ flex: 1, minWidth: 300 }}>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>Personal Information</h2>
+                  <form onSubmit={handleSave} style={{ display: 'grid', gap: '1rem' }} data-testid="profile-form">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>FULL NAME</label>
+                        <input aria-label="FULL NAME" className="form-control" autoComplete="name" value={formData.name} onChange={e => setFormData(p => ({...p, name: e.target.value}))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>ROLE / DESIGNATION</label>
+                        <input aria-label="ROLE / DESIGNATION" className="form-control" value={user.role.toUpperCase()} disabled style={{ background: 'var(--surface-bg, #f8fafc)', color: 'var(--app-text-muted, #94a3b8)' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>EMAIL ADDRESS</label>
+                        <input aria-label="EMAIL ADDRESS" type="email" autoComplete="email" className="form-control" value={formData.email} onChange={e => setFormData(p => ({...p, email: e.target.value}))} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>PHONE NUMBER</label>
+                        <input aria-label="PHONE NUMBER" type="tel" autoComplete="tel" className="form-control" value={formData.phone} onChange={e => setFormData(p => ({...p, phone: e.target.value}))} />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.35rem' }}>ADDRESS</label>
+                        <textarea aria-label="ADDRESS" className="form-control" autoComplete="street-address" rows={2} value={formData.address} onChange={e => setFormData(p => ({...p, address: e.target.value}))} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                      <button type="submit" disabled={saving} className="btn" style={{ background: `linear-gradient(135deg,${INDIGO},#a855f7)`, color: 'white', border: 'none', fontWeight: 700, borderRadius: '0.875rem', boxShadow: `0 4px 14px ${INDIGO}40` }}>
+                        {saving ? 'Saving...' : '💾 Save Changes'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                  <button type="submit" className="btn" style={{ background: `linear-gradient(135deg,${INDIGO},#a855f7)`, color: 'white', border: 'none', fontWeight: 700, borderRadius: '0.875rem', boxShadow: `0 4px 14px ${INDIGO}40` }}>
-                    💾 Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -178,11 +250,11 @@ export default function ProfilePage() {
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Recent Login Activity</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--app-text-muted, #475569)', display: 'grid', gap: '0.4rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
-                  <span>Chrome on Windows (192.168.1.5)</span>
-                  <span style={{ color: '#94a3b8' }}>Today, 09:41 AM</span>
+                  <span>Chrome on Linux (127.0.0.1)</span>
+                  <span style={{ color: '#94a3b8' }}>Today, Active Session</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
-                  <span>Safari on iPhone (Mobile App)</span>
+                  <span>EduFlow Mobile App</span>
                   <span style={{ color: '#94a3b8' }}>Yesterday, 06:22 PM</span>
                 </div>
               </div>

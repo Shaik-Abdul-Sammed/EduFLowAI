@@ -219,6 +219,8 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/digital-twin', createDigitalTwinRouter())
   app.use('/api/v1/user', createUserRouter())
   app.use('/api/v1/users', createUserRouter())
+  app.use('/api/user', createUserRouter())
+  app.use('/api/users', createUserRouter())
   app.use('/api/v1/institutions', createInstitutionRouter())
   app.use('/api/v1/institution', createInstitutionRouter()) // alias for plan-config
   app.use('/api/v1/careerforge', createCareerForgeRouter())
