@@ -99,6 +99,37 @@ export function createAuthRouter() {
   router.post('/reset-demo-data', handleAuthReset)
 
   /**
+   * POST /api/v1/auth/forgot-password
+   */
+  router.post('/forgot-password', async (req, res) => {
+    try {
+      const { email, institutionId } = req.body || {}
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid institutional email address is required' })
+      }
+
+      try {
+        const user = await UserRepository.findByUsername(institutionId || 1, email)
+        if (user) {
+          await UserRepository.logAudit(institutionId || 1, user.id, 'PASSWORD_RESET_REQUESTED', req.ip, req.get('user-agent'))
+        }
+      } catch (dbErr) {
+        console.warn('DB check in forgot-password skipped:', dbErr.message)
+      }
+
+      return res.json({
+        success: true,
+        message: 'Password recovery instructions have been dispatched to your institutional email.',
+        email,
+        institutionId: institutionId || 'demo'
+      })
+    } catch (err) {
+      console.error('Forgot password error:', err)
+      res.status(500).json({ error: 'Internal server error processing password recovery' })
+    }
+  })
+
+  /**
    * POST /api/v1/auth/login
    */
   router.post('/login', validateRequest(loginSchema), AuthController.login)

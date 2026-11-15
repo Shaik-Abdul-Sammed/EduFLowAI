@@ -1,21 +1,40 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { KeyRound, Mail, ArrowLeft, CheckCircle, ShieldCheck, HelpCircle } from 'lucide-react'
+import apiClient from '../../services/apiClient'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [institutionId, setInstitutionId] = useState('demo')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email.trim()) return
+
     setLoading(true)
-    setTimeout(() => {
+    setError(null)
+
+    try {
+      const res = await apiClient.post('/auth/forgot-password', {
+        email: email.trim(),
+        institutionId: institutionId.trim() || 'demo'
+      })
+
+      if (res.data?.success || res.status === 200) {
+        setSubmitted(true)
+      } else {
+        throw new Error(res.data?.error || 'Unable to process password reset request')
+      }
+    } catch (err) {
+      console.error('[ForgotPasswordPage] Recovery error:', err)
+      setError(err.response?.data?.error || err.message || 'Network error while requesting password reset.')
+    } finally {
       setLoading(false)
-      setSubmitted(true)
-    }, 800)
+    }
   }
 
   return (
@@ -68,8 +87,25 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
+        {error && (
+          <div
+            data-testid="forgot-password-error"
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '10px',
+              padding: '0.875rem 1rem',
+              color: '#fca5a5',
+              fontSize: '0.85rem',
+              marginBottom: '1.5rem'
+            }}
+          >
+            ⚠️ {error}
+          </div>
+        )}
+
         {submitted ? (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center' }} data-testid="forgot-password-success">
             <div
               style={{
                 background: 'rgba(16, 185, 129, 0.1)',
@@ -128,9 +164,9 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="forgot-password-form">
             <div style={{ marginBottom: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+              <label htmlFor="recovery-email" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
                 Institutional Email Address
               </label>
               <div style={{ position: 'relative' }}>
@@ -145,6 +181,7 @@ export default function ForgotPasswordPage() {
                   }}
                 />
                 <input
+                  id="recovery-email"
                   type="email"
                   autoComplete="email"
                   required
@@ -167,10 +204,11 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+              <label htmlFor="recovery-institution" style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '0.4rem' }}>
                 Institution Code / Identifier
               </label>
               <input
+                id="recovery-institution"
                 type="text"
                 autoComplete="organization"
                 value={institutionId}
