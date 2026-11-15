@@ -1,14 +1,20 @@
 # EduFlow AI — Institutional Intelligence and Automation OS for Indian Higher Education
 
-[![Backend Tests](https://img.shields.io/badge/backend%20tests-610%2F610%20passed-brightgreen)](#testing)
-[![Frontend Tests](https://img.shields.io/badge/frontend%20tests-280%2F280%20passed-brightgreen)](#testing)
-[![Playwright E2E](https://img.shields.io/badge/e2e-playwright%20passed-brightgreen)](#testing)
-[![Mobile Tests](https://img.shields.io/badge/flutter-92%2B%20passed-brightgreen)](#testing)
-[![Code Quality](https://img.shields.io/badge/lint-0%20errors-brightgreen)](#testing)
+> **AUDIT NOTE — NOVEMBER 2026:**
+> For the honest, verified status of every module in EduFlowAI, see [TRUST.md](./TRUST.md).
+>
+> - **3 verified, production-hardened flows:** Academic Calendar, Attendance (Teacher↔Student↔Admin), Student Grievance Portal.
+> - **32 critical routes:** Smoke-tested and verified crash-free.
+> - **Remaining modules:** In prototype/scaffold stage; not certified for live institutional deployment without pilot verification.
+
+[![Verified Flows](https://img.shields.io/badge/verified%20flows-3%20hardened-brightgreen)](./TRUST.md)
+[![Backend Tests](https://img.shields.io/badge/backend%20tests-539%20passed-brightgreen)](#testing)
+[![Frontend Tests](https://img.shields.io/badge/frontend%20routes-32%20verified%20crash--free-brightgreen)](#testing)
+[![Coverage](https://img.shields.io/badge/coverage-94.8%25%20lines%20%7C%2074.7%25%20branches-blue)](./TRUST.md)
 [![Production Hardened](https://img.shields.io/badge/security-helmet%20%7C%20rate--limit%20%7C%20RLS%20%7C%20HMAC-blue)](#production-hardening)
 [![Deployment](https://img.shields.io/badge/render-blueprint%20ready-blueviolet)](#render-cloud-deployment)
 
-EduFlow AI is an autonomous institutional automation operating system engineered specifically for Indian colleges and universities. Powered by a specialized multi-LLM engine, EduFlow AI eliminates administrative bottlenecks through five streaming autonomous AI Officers, turnkey accreditation analysis (NAAC/NBA), predictive student retention, conflict-free scheduling, and an automated lead-to-cash service delivery pipeline.
+EduFlow AI is an autonomous institutional automation operating system engineered specifically for Indian colleges and universities. Evaluated against 100 institutional needs (with 3 core statutory flows hardened and verified), EduFlow AI provides AI Officers, accreditation analysis (NAAC/NBA), predictive student retention, conflict-free scheduling, and service delivery workflows.
 
 ---
 
