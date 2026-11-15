@@ -499,7 +499,7 @@ export class AIService {
   static analyzeGrievanceSentiment(text) {
     if (!text || typeof text !== 'string') return { priority: 'LOW', score: 0.2, flags: [] }
     const lower = text.toLowerCase()
-    const criticalKeywords = ['harassment', 'ragging', 'suicide', 'assault', 'violence', 'threat', 'emergency', 'blackmail', 'sexual']
+    const criticalKeywords = ['harassment', 'ragging', 'suicide', 'assault', 'violence', 'threat', 'emergency', 'blackmail', 'sexual', 'fire']
     const highKeywords = ['angry', 'furious', 'urgent', 'danger', 'unacceptable', 'cheating', 'corrupt', 'strike', 'discrimination', 'unsafe']
     const mediumKeywords = ['disappointed', 'delay', 'issue', 'problem', 'broken', 'unfair', 'confused', 'mistake', 'poor']
 
