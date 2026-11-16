@@ -1238,6 +1238,155 @@ export class CampusOperationsController {
       res.status(500).json({ error: err.message })
     }
   }
+
+  static async getAssignments(req, res) {
+    try {
+      const { subject, section, status } = req.query || {}
+      let list = [...memoryAssignments]
+      if (subject && subject !== 'all') {
+        list = list.filter(a => a.subject.toLowerCase() === subject.toLowerCase())
+      }
+      if (section && section !== 'all') {
+        list = list.filter(a => a.section === section || a.section === 'All')
+      }
+      if (status && status !== 'all') {
+        list = list.filter(a => a.status.toLowerCase() === status.toLowerCase())
+      }
+      res.json({
+        success: true,
+        count: list.length,
+        assignments: list,
+        submissions: memorySubmissions
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  static async createAssignment(req, res) {
+    try {
+      const { title, subject = 'Physics', section = 'MPC-A', due, description = '', maxMarks = 10, total = 32 } = req.body || {}
+      if (!title || !due) {
+        return res.status(400).json({ error: 'Title and due date are required' })
+      }
+      const newAssignment = {
+        id: Date.now(),
+        title: title.trim(),
+        subject,
+        section,
+        due,
+        description,
+        maxMarks: Number(maxMarks) || 10,
+        submissions: 0,
+        total: Number(total) || 32,
+        status: 'active',
+        faculty: req.user?.name || 'Faculty Member',
+        createdAt: new Date().toISOString()
+      }
+      memoryAssignments.unshift(newAssignment)
+      res.status(201).json({
+        success: true,
+        message: 'Assignment created successfully',
+        assignment: newAssignment
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  static async submitAssignment(req, res) {
+    try {
+      const assignmentId = Number(req.params.id)
+      const { note = '', attachmentUrl = null } = req.body || {}
+      const assignment = memoryAssignments.find(a => a.id === assignmentId)
+      if (!assignment) {
+        return res.status(404).json({ error: 'Assignment not found' })
+      }
+      assignment.submissions = (assignment.submissions || 0) + 1
+      const submission = {
+        assignmentId,
+        submittedOn: new Date().toLocaleDateString('en-IN'),
+        note,
+        attachmentUrl,
+        score: null,
+        feedback: null
+      }
+      memorySubmissions[assignmentId] = submission
+      res.json({
+        success: true,
+        message: 'Assignment submitted successfully',
+        submission,
+        assignment
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  static async getAssignmentSubmissions(req, res) {
+    try {
+      res.json({
+        success: true,
+        submissions: memorySubmissions
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+}
+
+let memoryAssignments = [
+  {
+    id: 1,
+    title: 'Wave Optics Problem Set',
+    subject: 'Physics',
+    section: 'MPC-A',
+    due: '2026-05-15',
+    description: 'Solve problems on Young double slit experiment, diffraction grating, and polarization state vectors.',
+    maxMarks: 10,
+    submissions: 28,
+    total: 32,
+    status: 'active',
+    faculty: 'Dr. R. Raman (Physics)',
+    createdAt: '2026-05-01T10:00:00.000Z'
+  },
+  {
+    id: 2,
+    title: 'Organic Chemistry Lab Report',
+    subject: 'Chemistry',
+    section: 'MPC-B',
+    due: '2026-05-12',
+    description: 'Submit formal lab write-up for Aldol condensation synthesis and IR spectroscopy analysis.',
+    maxMarks: 20,
+    submissions: 30,
+    total: 30,
+    status: 'closed',
+    faculty: 'Dr. Sunita Rao (Chemistry)',
+    createdAt: '2026-04-28T10:00:00.000Z'
+  },
+  {
+    id: 3,
+    title: 'Integration Techniques Practice',
+    subject: 'Mathematics',
+    section: 'MPC-A',
+    due: '2026-05-20',
+    description: 'Complete problems on contour integration, residue theorem, and improper integrals.',
+    maxMarks: 15,
+    submissions: 5,
+    total: 32,
+    status: 'active',
+    faculty: 'Prof. K. Venkatesh (Maths)',
+    createdAt: '2026-05-05T10:00:00.000Z'
+  }
+]
+
+let memorySubmissions = {
+  1: {
+    assignmentId: 1,
+    submittedOn: '14/05/2026',
+    score: 9,
+    feedback: 'Excellent derivations on fringe width calculations.'
+  }
 }
 
 const defaultSubjects = [

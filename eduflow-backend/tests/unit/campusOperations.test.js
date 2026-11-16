@@ -359,4 +359,53 @@ describe('Campus Operations & Enterprise Portals Unit Tests', () => {
     assert.equal(getRes.statusCode, 200)
     assert.ok(getRes.data.violations.length > 0)
   })
+
+  // -------------------------------------------------------------
+  // Phase 8: Assignments & Student Submissions
+  // -------------------------------------------------------------
+  test('Assignments: getAssignments, createAssignment, and submitAssignment', async () => {
+    // 1. Fetch initial assignments
+    const listRes = createMockRes()
+    await CampusOperationsController.getAssignments({ query: {} }, listRes)
+    assert.equal(listRes.statusCode, 200)
+    assert.ok(listRes.data.assignments.length >= 3)
+
+    // 2. Create new assignment
+    const createReq = {
+      body: {
+        title: 'Electromagnetic Field Theory Assignment 1',
+        subject: 'Physics',
+        section: 'MPC-A',
+        due: '2026-06-01',
+        description: 'Solve Maxwell equations for spherical boundary conditions.',
+        maxMarks: 25
+      },
+      user: { name: 'Dr. R. Raman' }
+    }
+    const createRes = createMockRes()
+    await CampusOperationsController.createAssignment(createReq, createRes)
+    assert.equal(createRes.statusCode, 201)
+    assert.equal(createRes.data.assignment.title, 'Electromagnetic Field Theory Assignment 1')
+    const createdId = createRes.data.assignment.id
+
+    // 3. Submit assignment as student
+    const submitReq = {
+      params: { id: createdId },
+      body: {
+        note: 'Submitted solutions in attached notebook scan.',
+        attachmentUrl: 'https://storage.eduflow.ai/assignments/sub-101.pdf'
+      }
+    }
+    const submitRes = createMockRes()
+    await CampusOperationsController.submitAssignment(submitReq, submitRes)
+    assert.equal(submitRes.statusCode, 200)
+    assert.equal(submitRes.data.submission.assignmentId, createdId)
+    assert.equal(submitRes.data.assignment.submissions, 1)
+
+    // 4. Check submissions listing
+    const subsRes = createMockRes()
+    await CampusOperationsController.getAssignmentSubmissions({}, subsRes)
+    assert.equal(subsRes.statusCode, 200)
+    assert.ok(subsRes.data.submissions[createdId])
+  })
 })

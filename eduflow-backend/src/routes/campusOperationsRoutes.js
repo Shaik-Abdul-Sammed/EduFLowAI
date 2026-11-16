@@ -79,5 +79,15 @@ export function createCampusOperationsRouter() {
   router.post('/academics/marks', CampusOperationsController.saveMarks)
   router.post('/academics/marks/publish', CampusOperationsController.publishMarks)
 
+  // Phase 8: Assignments & Student Submissions
+  router.get('/academics/assignments', CampusOperationsController.getAssignments)
+  router.post('/academics/assignments', CampusOperationsController.createAssignment)
+  router.post('/academics/assignments/:id/submit', CampusOperationsController.submitAssignment)
+  router.get('/academics/assignments/submissions', CampusOperationsController.getAssignmentSubmissions)
+  router.get('/assignments', CampusOperationsController.getAssignments)
+  router.post('/assignments', CampusOperationsController.createAssignment)
+  router.post('/assignments/:id/submit', CampusOperationsController.submitAssignment)
+  router.get('/assignments/submissions', CampusOperationsController.getAssignmentSubmissions)
+
   return router
 }
