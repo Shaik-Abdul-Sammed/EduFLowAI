@@ -24,7 +24,7 @@ describe('InstitutionSettingsPage Component Tests', () => {
     jest.restoreAllMocks()
   })
 
-  test('renders institution settings sections including branding, security and UPI', () => {
+  test('renders institution settings sections including branding, security and UPI', async () => {
     render(
       <BrowserRouter>
         <InstitutionSettingsPage />
@@ -32,7 +32,7 @@ describe('InstitutionSettingsPage Component Tests', () => {
     )
 
     expect(screen.getByText(/Institution Configuration & Settings/i)).toBeInTheDocument()
-    expect(screen.getByText(/1. Branding & Identity/i)).toBeInTheDocument()
+    expect(await screen.findByText(/1. Branding & Identity/i)).toBeInTheDocument()
     expect(screen.getByText(/4. Security & Access Safeguards/i)).toBeInTheDocument()
     expect(screen.getByText(/5. Billing & Zero-Gateway UPI Remittance/i)).toBeInTheDocument()
     expect(screen.getByText(/Download My Data \(ZIP\)/i)).toBeInTheDocument()

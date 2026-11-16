@@ -14,19 +14,21 @@ import {
 } from 'lucide-react'
 
 export default function InstitutionSettingsPage() {
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [settings, setSettings] = useState({
     branding: {
-      name: 'Sri Siddhartha Institute of Technology',
-      logoUrl: '/logo.png',
+      name: '',
+      logoUrl: '',
       primaryColor: '#2563EB',
       secondaryColor: '#1E40AF',
       favicon: '/favicon.ico'
     },
     contact: {
-      address: 'Maralur, Tumakuru, Karnataka 572105',
-      phone: '+91 816 220 1073',
-      email: 'info@ssit.edu.in',
-      website: 'https://ssit.edu.in'
+      address: '',
+      phone: '',
+      email: '',
+      website: ''
     },
     academic: {
       academicYear: '2026-2027',
@@ -50,10 +52,10 @@ export default function InstitutionSettingsPage() {
       ipWhitelist: ''
     },
     billing: {
-      gstNumber: '29AAAAA0000A1Z5',
-      billingAddress: 'Maralur, Tumakuru, Karnataka',
-      billingEmail: 'accounts@ssit.edu.in',
-      upiId: 'ssit@icici',
+      gstNumber: '',
+      billingAddress: '',
+      billingEmail: '',
+      upiId: '',
       deanWaiverThreshold: 100000
     }
   })
@@ -64,6 +66,8 @@ export default function InstitutionSettingsPage() {
 
   const fetchSettings = async (isMounted = true) => {
     try {
+      setLoading(true)
+      setLoadError(null)
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
       const res = await fetch(getFullApiUrl('/v1/institution/settings'), {
         headers: {
@@ -71,22 +75,32 @@ export default function InstitutionSettingsPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       })
-      const text = await res.text()
-      let data = {}
-      try { data = JSON.parse(text) } catch { data = {} }
+      if (!res.ok) {
+        throw new Error(`Failed to load institution settings (${res.status})`)
+      }
+      const data = await res.json()
       if (isMounted && data.settings) {
         setSettings({
           ...data.settings,
+          branding: { ...settings.branding, ...(data.settings.branding || {}) },
+          contact: { ...settings.contact, ...(data.settings.contact || {}) },
+          academic: { ...settings.academic, ...(data.settings.academic || {}) },
           security: {
-            ...data.settings.security,
+            ...settings.security,
+            ...(data.settings.security || {}),
             ipWhitelist: Array.isArray(data.settings.security?.ipWhitelist)
               ? data.settings.security.ipWhitelist.join(', ')
               : data.settings.security?.ipWhitelist || ''
-          }
+          },
+          billing: { ...settings.billing, ...(data.settings.billing || {}) }
         })
       }
     } catch (err) {
-      console.error(err)
+      if (isMounted) {
+        setLoadError(err.message || 'Error fetching settings')
+      }
+    } finally {
+      if (isMounted) setLoading(false)
     }
   }
 
@@ -163,7 +177,29 @@ export default function InstitutionSettingsPage() {
         </div>
       )}
 
-      <form onSubmit={handleSave}>
+      {loading && (
+        <div className="card shadow-sm border-0 p-5 text-center my-4" data-testid="settings-loading">
+          <div className="spinner-border text-primary mx-auto mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="text-muted">Loading institutional configuration...</h5>
+        </div>
+      )}
+
+      {loadError && !loading && (
+        <div className="alert alert-danger d-flex align-items-center justify-content-between mb-4" role="alert">
+          <div className="d-flex align-items-center">
+            <AlertCircle size={20} className="me-2" />
+            <span>{loadError}</span>
+          </div>
+          <button className="btn btn-outline-danger btn-sm" onClick={() => fetchSettings(true)}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && (
+        <form onSubmit={handleSave}>
         {/* Section 1: Branding */}
         <div className="card shadow-sm border-0 p-4 mb-4">
           <h5 className="fw-bold mb-3 d-flex align-items-center">
@@ -388,6 +424,7 @@ export default function InstitutionSettingsPage() {
           </button>
         </div>
       </form>
+      )}
     </div>
   )
 }
