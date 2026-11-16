@@ -25,25 +25,25 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 | `admin/GrievanceManagementPage.jsx` | `/admin-dashboard/grievances` | `GET/PATCH /api/grievances` | REAL (100% verified) |
 | `student/DeanEscalationPage.jsx` | `/student-dashboard/dean-escalation` | `GET/POST /api/dean/escalations` | REAL (100% verified) |
 
-### 2. Tier A Target Execution List (15 priority pages to make 100% real)
-| # | Page | Route | Target Backend Flow | Action Planned |
+### 2. Tier A Target Execution List (All 16 Priority Pages Completed & Verified)
+| # | Page | Route | Backend Flow | Status & Verification |
 |---|---|---|---|---|
-| 1 | `common/ProfilePage.jsx` | `/profile` | `GET/PUT /api/auth/profile` | Real user read/update + test |
-| 2 | `public/LoginPage.jsx` | `/login` | `POST /api/auth/login` | Real token auth + test |
-| 3 | `public/InstitutionRegister.jsx` | `/register-institution` | `POST /api/auth/register-institution` | Real org onboard + test |
-| 4 | `public/ForgotPasswordPage.jsx` | `/forgot-password` | `POST /api/auth/forgot-password` | Real password reset request |
-| 5 | `public/OnboardingPage.jsx` | `/onboarding` | `POST /api/institution/onboarding` | Wizard state persistence |
-| 6 | `admin/studentManagement.jsx` | `/admin-dashboard/student-management` | `GET/POST/PUT /api/students` | Real student CRUD |
-| 7 | `faculty/marksEntry.jsx` | `/faculty-dashboard/marks-entry` | `GET/POST /api/marks` | Real grade submissions |
-| 8 | `student/feeStatus.jsx` | `/student-dashboard/fee-status` | `GET /api/finance/fees` | Real fee dues & status |
-| 9 | `parent/feeDashboard.jsx` | `/parent-dashboard/fee-dashboard` | `GET /api/finance/fees` | Real student fee breakdown |
-| 10 | `hod/LeaveApprovalsPage.jsx` | `/hod-dashboard/leave-approvals` | `GET/PATCH /api/leaves` | Real approve/reject workflow |
-| 11 | `finance/PayrollGenerationPage.jsx` | `/finance-dashboard/payroll` | `GET/POST /api/finance/payroll` | Real salary run processing |
-| 12 | `admin/InstitutionSettingsPage.jsx` | `/admin-dashboard/settings` | `GET/PUT /api/institution/settings` | Real institution branding & config |
-| 13 | `faculty/assignmentCreator.jsx` | `/faculty-dashboard/assignment-creator` | `POST /api/assignments` | Real homework publishing |
-| 14 | `student/assignments.jsx` | `/student-dashboard/assignments` | `GET/POST /api/assignments` | Real submission workflow |
-| 15 | `student/timetable.jsx` | `/student-dashboard/timetable` | `GET /api/timetable` | Real class schedule lookup |
-| 16 | `parent/childAttendance.jsx` | `/parent-dashboard/child-attendance` | `GET /api/attendance/student/:id` | Real ward attendance tracking |
+| 1 | `common/ProfilePage.jsx` | `/profile` | `GET/PUT /api/user/profile` | REAL (5/5 tests passing in `ProfilePage.test.jsx`) |
+| 2 | `public/LoginPage.jsx` | `/login` | `POST /api/auth/login` | REAL (Verified in `LoginPage.test.jsx`, `login.dean.test.jsx`) |
+| 3 | `public/InstitutionRegister.jsx` | `/register-institution` | `POST /api/v1/institutions/register` | REAL (Verified in `InstitutionRegister.test.jsx`) |
+| 4 | `public/ForgotPasswordPage.jsx` | `/forgot-password` | `POST /api/v1/auth/forgot-password` | REAL (3/3 tests passing in `ForgotPasswordPage.test.jsx`) |
+| 5 | `public/OnboardingPage.jsx` | `/onboarding` | `POST /api/v1/onboarding/*` | REAL (3/3 tests passing in `OnboardingPage.test.jsx`) |
+| 6 | `admin/studentManagement.jsx` | `/admin-dashboard/student-management` | `GET/POST/DELETE /api/admin/students` | REAL (5/5 tests passing in `studentManagement.test.jsx`) |
+| 7 | `faculty/marksEntry.jsx` | `/faculty-dashboard/marks-entry` | `GET/POST /api/v1/academics/marks` | REAL (5/5 tests passing in `marksEntry.test.jsx`) |
+| 8 | `student/feeStatus.jsx` | `/student-dashboard/fee-status` | `GET/POST /api/v1/payments/*` | REAL (4/4 tests passing in `feeStatus.test.jsx`) |
+| 9 | `parent/feeDashboard.jsx` | `/parent-dashboard/fee-dashboard` | `GET/POST /api/v1/payments/*` | REAL (4/4 tests passing in `feeDashboard.test.jsx`) |
+| 10 | `hod/LeaveApprovalsPage.jsx` | `/hod-dashboard/leave-approvals` | `GET/PATCH /api/v1/leave/*` | REAL (5/5 tests passing in `LeaveApprovalsPage.test.jsx`) |
+| 11 | `finance/PayrollGenerationPage.jsx` | `/finance-dashboard/payroll` | `GET/POST /api/v1/finance/payslips` | REAL (4/4 tests passing in `PayrollGenerationPage.test.jsx`) |
+| 12 | `admin/InstitutionSettingsPage.jsx` | `/admin-dashboard/settings` | `GET/PATCH /api/v1/institution/settings` | REAL (4/4 tests passing in `InstitutionSettingsPage.test.jsx`) |
+| 13 | `faculty/assignmentCreator.jsx` | `/faculty-dashboard/assignment-creator` | `GET/POST /api/v1/academics/assignments` | REAL (4/4 tests passing in `assignmentCreator.test.jsx`) |
+| 14 | `student/assignments.jsx` | `/student-dashboard/assignments` | `GET/POST /api/v1/academics/assignments/*` | REAL (4/4 tests passing in `assignments.test.jsx`) |
+| 15 | `student/timetable.jsx` | `/student-dashboard/timetable` | `GET /api/v1/academics/timetable` | REAL (3/3 tests passing in `timetable.test.jsx`) |
+| 16 | `parent/childAttendance.jsx` | `/parent-dashboard/child-attendance` | `GET /api/v1/parent/overview` & `/v1/leave/apply` | REAL (4/4 tests passing in `childAttendance.test.jsx`) |
 
 ---
 

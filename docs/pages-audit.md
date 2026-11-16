@@ -2,9 +2,9 @@
 
 ## Ground-Truth Status Summary
 - **Total Audited Pages:** 196
-- **REAL:** 23 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
-- **PARTIAL:** 59 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
-- **MOCK:** 105 (uses local state, hardcoded arrays, or mock fixtures)
+- **REAL:** 33 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
+- **PARTIAL:** 56 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
+- **MOCK:** 98 (uses local state, hardcoded arrays, or mock fixtures)
 - **STUB:** 7 (placeholder or under construction component)
 - **ORPHAN:** 2 (unrouted legacy or internal subcomponent)
 
@@ -31,7 +31,7 @@
 | `admin/GrievanceManagementPage.jsx` | `/hod-dashboard/grievances` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/HostelWardenPage.jsx` | `/admin-dashboard/hostel-management` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/InsightsDashboardPage.jsx` | `/admin-dashboard/'insights'` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
-| `admin/InstitutionSettingsPage.jsx` | `/admin-dashboard/settings` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier A | Target for Tier A: needs end-to-end verified API + passing tests |
+| `admin/InstitutionSettingsPage.jsx` | `/admin-dashboard/settings` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/InvoiceGeneratorPage.jsx` | `/finance-dashboard/invoices` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/LeadManagementPage.jsx` | `/admin-dashboard/'leads'` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/LibraryManagementPage.jsx` | `/staff-dashboard/library` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
@@ -103,14 +103,14 @@
 | `faculty/TeachingPortfolioPage.jsx` | `/faculty-dashboard/teaching-portfolio` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `faculty/VirtualOfficeHoursPage.jsx` | `/faculty-dashboard/virtual-office-hours` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `faculty/academicAnalytics.jsx` | `/faculty-dashboard/academic-analytics` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
-| `faculty/assignmentCreator.jsx` | `/faculty-dashboard/assignment-creator` | `MOCK` | No | No | No | Yes | Tier A | Target for Tier A: static component |
+| `faculty/assignmentCreator.jsx` | `/faculty-dashboard/assignment-creator` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `faculty/attendanceEntry.jsx` | `/faculty-dashboard/attendance-entry` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `faculty/classTimetable.jsx` | `/faculty-dashboard/class-timetable` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
 | `faculty/departmentNotices.jsx` | `/faculty-dashboard/department-notices` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `faculty/examInvigilation.jsx` | `/faculty-dashboard/exam-invigilation` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
 | `faculty/leaveApplication.jsx` | `/faculty-dashboard/leave-application` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `faculty/lessonPlanner.jsx` | `/faculty-dashboard/lesson-planner` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `faculty/marksEntry.jsx` | `/faculty-dashboard/marks-entry` | `MOCK` | No | No | Yes | Yes | Tier A | Target for Tier A: static component |
+| `faculty/marksEntry.jsx` | `/faculty-dashboard/marks-entry` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `faculty/mentoringLog.jsx` | `/faculty-dashboard/mentoring-log` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `faculty/parentMessaging.jsx` | `/faculty-dashboard/parent-messaging` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
 | `faculty/questionBankUpload.jsx` | `/faculty-dashboard/question-bank-upload` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
@@ -118,20 +118,20 @@
 | `faculty/resourceRepository.jsx` | `/faculty-dashboard/resource-repository` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `faculty/syllabusTracker.jsx` | `/faculty-dashboard/syllabus-tracker` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `finance/FinanceDashboardPage.jsx` | `/finance-dashboard` | `PARTIAL` | Yes | No | Yes | Yes | Tier C | Read-only fetch without mutation or missing endpoint |
-| `finance/PayrollGenerationPage.jsx` | `/admin-dashboard/payroll` | `PARTIAL` | Yes | Yes | No | Yes | Tier A | Target for Tier A: needs end-to-end verified API + passing tests |
+| `finance/PayrollGenerationPage.jsx` | `/admin-dashboard/payroll` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `hod/FacultyAppraisalPage.jsx` | `/hod-dashboard/faculty-appraisal` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `hod/HodCalendarPage.jsx` | `/hod-dashboard/calendar` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `hod/HodDashboardPage.jsx` | `/hod-dashboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `hod/LeaveApprovalsPage.jsx` | `/hod-dashboard/leave-approvals` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier A | Target for Tier A: needs end-to-end verified API + passing tests |
+| `hod/LeaveApprovalsPage.jsx` | `/hod-dashboard/leave-approvals` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `hod/StaffManagementPage.jsx` | `/hod-dashboard/staff` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `parent/ParentDashboardPage.jsx` | `/parent-dashboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `parent/childAttendance.jsx` | `/parent-dashboard/child-attendance` | `MOCK` | No | No | Yes | Yes | Tier A | Target for Tier A: currently uses mock data |
+| `parent/childAttendance.jsx` | `/parent-dashboard/child-attendance` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `parent/childTracking.jsx` | `/parent-dashboard/child-tracking` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `parent/dailyHomework.jsx` | `/parent-dashboard/daily-homework` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `parent/disciplineAlerts.jsx` | `/parent-dashboard/discipline-alerts` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `parent/dueAlerts.jsx` | `/parent-dashboard/due-alerts` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `parent/examCalendar.jsx` | `/parent-dashboard/exam-calendar` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `parent/feeDashboard.jsx` | `/parent-dashboard/fee-dashboard` | `MOCK` | No | No | Yes | Yes | Tier A | Target for Tier A: currently uses mock data |
+| `parent/feeDashboard.jsx` | `/parent-dashboard/fee-dashboard` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `parent/healthRecords.jsx` | `/parent-dashboard/health-records` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
 | `parent/leaveRequests.jsx` | `/parent-dashboard/leave-requests` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
 | `parent/marksProgress.jsx` | `/parent-dashboard/marks-progress` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
@@ -184,12 +184,12 @@
 | `student/StudyPlannerPage.jsx` | `/student-dashboard/study-planner` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `student/VirtualLabsPage.jsx` | `/student-dashboard/virtual-labs` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `student/WellnessCompanionPage.jsx` | `/student-dashboard/wellness-companion` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `student/assignments.jsx` | `/student-dashboard/assignments` | `MOCK` | No | No | No | Yes | Tier A | Target for Tier A: currently uses mock data |
+| `student/assignments.jsx` | `/student-dashboard/assignments` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `student/attendanceOverview.jsx` | `/student-dashboard/attendance` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `student/bipcCourses.jsx` | `/student-dashboard/bipc-courses` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `student/digitalMaterials.jsx` | `/student-dashboard/digital-materials` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/examSchedule.jsx` | `/student-dashboard/exam-schedule` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
-| `student/feeStatus.jsx` | `/student-dashboard/fee-status` | `MOCK` | No | No | Yes | Yes | Tier A | Target for Tier A: currently uses mock data |
+| `student/feeStatus.jsx` | `/student-dashboard/fee-status` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `student/hostelInfo.jsx` | `/student-dashboard/hostel-info` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/jeeMainsPrep.jsx` | `/student-dashboard/jee-mains-prep` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/labBookings.jsx` | `/student-dashboard/lab-bookings` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
@@ -205,6 +205,6 @@
 | `student/studentAcademy.jsx` | `/student-dashboard/student-academy` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/subjectMarks.jsx` | `/student-dashboard/subject-marks` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/submissionStatus.jsx` | `/student-dashboard/submission-status` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
-| `student/timetable.jsx` | `/student-dashboard/timetable` | `MOCK` | No | No | Yes | Yes | Tier A | Target for Tier A: currently uses mock data |
+| `student/timetable.jsx` | `/student-dashboard/timetable` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `student/transportTracking.jsx` | `/student-dashboard/transport-tracking` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/weeklyExams.jsx` | `/student-dashboard/weekly-exams` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
