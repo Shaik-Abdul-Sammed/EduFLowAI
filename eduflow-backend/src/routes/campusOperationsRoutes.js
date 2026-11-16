@@ -74,5 +74,10 @@ export function createCampusOperationsRouter() {
   router.post('/exams/:id/violation', ProctoringController.recordViolation)
   router.get('/exams/:id/violations', ProctoringController.getViolations)
 
+  // Phase 7: Academics & Continuous Assessment Marks Entry
+  router.get('/academics/marks', CampusOperationsController.getMarks)
+  router.post('/academics/marks', CampusOperationsController.saveMarks)
+  router.post('/academics/marks/publish', CampusOperationsController.publishMarks)
+
   return router
 }

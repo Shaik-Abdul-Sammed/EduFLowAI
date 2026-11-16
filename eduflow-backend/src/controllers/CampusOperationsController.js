@@ -1169,4 +1169,102 @@ export class CampusOperationsController {
     const filtered = memoryExamViolations.filter((v) => !id || Number(v.exam_id) === Number(id))
     res.json({ success: true, violations: filtered })
   }
+
+  static async getMarks(req, res) {
+    try {
+      const subjectCode = (req.query.subject || 'PHY101').toUpperCase()
+      const subject = defaultSubjects.find(s => s.code === subjectCode) || defaultSubjects[0]
+      const subjectData = memoryMarksStore[subject.code] || { published: false, marks: {} }
+
+      res.json({
+        success: true,
+        subject,
+        subjects: defaultSubjects,
+        students: defaultMarksStudents,
+        marks: subjectData.marks || {},
+        published: Boolean(subjectData.published),
+        updatedAt: subjectData.updatedAt || null
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  static async saveMarks(req, res) {
+    try {
+      const { subjectCode, marks, published = false } = req.body || {}
+      if (!subjectCode) return res.status(400).json({ error: 'Subject code is required' })
+
+      const code = subjectCode.toUpperCase()
+      memoryMarksStore[code] = {
+        published: Boolean(published),
+        marks: marks || {},
+        updatedAt: new Date().toISOString()
+      }
+
+      res.json({
+        success: true,
+        message: published ? 'Marks published successfully' : 'Marks draft saved successfully',
+        subjectCode: code,
+        published: Boolean(published),
+        marks: memoryMarksStore[code].marks
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+
+  static async publishMarks(req, res) {
+    try {
+      const { subjectCode, marks } = req.body || {}
+      if (!subjectCode) return res.status(400).json({ error: 'Subject code is required' })
+
+      const code = subjectCode.toUpperCase()
+      const existing = memoryMarksStore[code] || { marks: {} }
+      memoryMarksStore[code] = {
+        published: true,
+        marks: marks || existing.marks,
+        updatedAt: new Date().toISOString()
+      }
+
+      res.json({
+        success: true,
+        message: `Marks for ${code} published successfully to student portal`,
+        subjectCode: code,
+        published: true,
+        marks: memoryMarksStore[code].marks
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+}
+
+const defaultSubjects = [
+  { code: 'PHY101', name: 'Physics', maxInternal: 30, maxExternal: 70 },
+  { code: 'CHE101', name: 'Chemistry', maxInternal: 30, maxExternal: 70 },
+  { code: 'MAT101', name: 'Mathematics', maxInternal: 30, maxExternal: 70 },
+  { code: 'BIO101', name: 'Biology', maxInternal: 30, maxExternal: 70 },
+]
+
+const defaultMarksStudents = [
+  { id: 'STU001', name: 'Aarav Sharma', section: 'MPC-A', roll: '2024MPC001' },
+  { id: 'STU002', name: 'Priya Singh', section: 'BIPC-A', roll: '2024BIPC012' },
+  { id: 'STU003', name: 'Sneha Patel', section: 'BIPC-B', roll: '2024BIPC005' },
+  { id: 'STU004', name: 'Kavya Naidu', section: 'MBIPC-A', roll: '2024MBIPC03' },
+  { id: 'STU005', name: 'Rahul Varma', section: 'MPC-A', roll: '2024MPC009' },
+]
+
+let memoryMarksStore = {
+  PHY101: {
+    published: false,
+    updatedAt: new Date().toISOString(),
+    marks: {
+      STU001: { internal: 26, external: 62 },
+      STU002: { internal: 24, external: 58 },
+      STU003: { internal: 28, external: 65 },
+      STU004: { internal: 22, external: 50 },
+      STU005: { internal: 25, external: 60 },
+    }
+  }
 }
