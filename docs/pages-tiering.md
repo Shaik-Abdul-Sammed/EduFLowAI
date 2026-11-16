@@ -47,9 +47,9 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 
 ---
 
-## Tier B: Stretch Pages (35 Pages)
+## Tier B: Stretch Pages & Complete Subsystems (18 Verified Pages)
 
-### 1. Completed & Verified Tier B Pages (9 Priority Pages Fully Verified)
+### 1. Completed & Verified Tier B Pages
 | # | Page | Route | Backend Flow | Status & Verification |
 |---|---|---|---|---|
 | 1 | `admin/BudgetTrackingPage.jsx` | `/admin-dashboard/budget` | `GET/POST /api/v1/finance/budgets`, `GET/POST /api/v1/finance/expenses` | REAL (4/4 tests passing in `BudgetTrackingPage.test.jsx`) |
@@ -61,6 +61,15 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 | 7 | `student/OnlineExamPage.jsx` | `/student-dashboard/online-exam` | `GET /v1/exams/online`, `POST /v1/exams/online/:id/submit`, `POST /v1/exams/online/:id/violation` | REAL (4/4 tests passing in `OnlineExamPage.test.jsx`) |
 | 8 | `student/StudentMockTestPage.jsx` | `/student-dashboard/mock-tests` | `GET /v1/placement/mock-tests`, `POST /v1/placement/mock-tests/:id/submit` | REAL (3/3 tests passing in `StudentMockTestPage.test.jsx`) |
 | 9 | `admin/SupportTicketsPage.jsx` | `/admin-dashboard/support-tickets` | `GET /v1/support/tickets`, `POST /v1/support/tickets`, `PATCH /v1/support/tickets/:id` | REAL (5/5 tests passing in `SupportTicketsPage.test.jsx`) |
+| 10 | `public/ServicesPage.jsx` | `/services` | Dynamic AI automation services catalog, pilot inquiries, category filters | REAL (3/3 tests passing in `ServicesPage.test.jsx`) |
+| 11 | `public/SignupPage.jsx` | `/signup` | Multi-step institution onboarding registration flow | REAL (2/2 tests passing in `SignupPage.test.jsx`) |
+| 12 | `parent/parentNotices.jsx` | `/parent-dashboard/parent-notices` | `GET /v1/parent/overview`, `POST /v1/parents/multilingual-notice` | REAL (3/3 tests passing in `parentNotices.test.jsx`) |
+| 13 | `parent/ptmBooking.jsx` | `/parent-dashboard/ptm-booking` | `GET /v1/parent/overview`, `POST /v1/parents/ptm-slot` | REAL (3/3 tests passing in `ptmBooking.test.jsx`) |
+| 14 | `parent/leaveRequests.jsx` | `/parent-dashboard/leave-requests` | `GET /v1/leave/requests`, `POST /v1/parents/hostel-outing-leave` | REAL (3/3 tests passing in `parentLeaveRequests.test.jsx`) |
+| 15 | `parent/marksProgress.jsx` | `/parent-dashboard/marks-progress` | `GET /v1/parent/overview`, `GET /v1/academics/marks` | REAL (3/3 tests passing in `parentMarksProgress.test.jsx`) |
+| 16 | `parent/healthRecords.jsx` | `/parent-dashboard/health-records` | `GET /v1/parent/overview`, `POST /v1/parents/dispatch-alert` | REAL (3/3 tests passing in `parentHealthRecords.test.jsx`) |
+| 17 | `parent/scholarshipView.jsx` | `/parent-dashboard/scholarship-view` | `GET /v1/scholarships`, `POST /v1/scholarships/apply` | REAL (3/3 tests passing in `parentScholarshipView.test.jsx`) |
+| 18 | `parent/profileSettings.jsx` | `/parent-dashboard/profile-settings` | `GET/PUT /api/user/profile`, `GET /v1/parent/overview` | REAL (3/3 tests passing in `parentProfileSettings.test.jsx`) |
 
 ### 2. Remaining Tier B Candidates
 Pages with existing partial API clients or write capabilities that require additional integration tests or endpoint alignment:

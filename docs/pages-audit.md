@@ -2,11 +2,11 @@
 
 ## Ground-Truth Status Summary
 - **Total Audited Pages:** 196
-- **REAL:** 42 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
+- **REAL:** 51 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
 - **PARTIAL:** 47 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
 - **MOCK:** 98 (uses local state, hardcoded arrays, or mock fixtures)
-- **STUB:** 7 (placeholder or under construction component)
-- **ORPHAN:** 2 (unrouted legacy or internal subcomponent)
+- **STUB:** 0 (placeholder or under construction component)
+- **ORPHAN:** 0 (unrouted legacy or internal subcomponent)
 
 ## Page Inventory
 
@@ -132,13 +132,13 @@
 | `parent/dueAlerts.jsx` | `/parent-dashboard/due-alerts` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `parent/examCalendar.jsx` | `/parent-dashboard/exam-calendar` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `parent/feeDashboard.jsx` | `/parent-dashboard/fee-dashboard` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
-| `parent/healthRecords.jsx` | `/parent-dashboard/health-records` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
-| `parent/leaveRequests.jsx` | `/parent-dashboard/leave-requests` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
-| `parent/marksProgress.jsx` | `/parent-dashboard/marks-progress` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
-| `parent/parentNotices.jsx` | `/parent-dashboard/parent-notices` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
-| `parent/profileSettings.jsx` | `/parent-dashboard/profile-settings` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
-| `parent/ptmBooking.jsx` | `/parent-dashboard/ptm-booking` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
-| `parent/scholarshipView.jsx` | `/parent-dashboard/scholarship-view` | `STUB` | No | No | No | Yes | Tier C | Placeholder stub page |
+| `parent/healthRecords.jsx` | `/parent-dashboard/health-records` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `parent/leaveRequests.jsx` | `/parent-dashboard/leave-requests` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `parent/marksProgress.jsx` | `/parent-dashboard/marks-progress` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `parent/parentNotices.jsx` | `/parent-dashboard/parent-notices` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `parent/profileSettings.jsx` | `/parent-dashboard/profile-settings` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `parent/ptmBooking.jsx` | `/parent-dashboard/ptm-booking` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `parent/scholarshipView.jsx` | `/parent-dashboard/scholarship-view` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `parent/teacherCommunication.jsx` | `/parent-dashboard/teacher-communication` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
 | `public/AboutPage.jsx` | `/about` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
 | `public/AttendanceExplainerPage.jsx` | `/how-attendance-works` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
@@ -154,8 +154,8 @@
 | `public/OnlineAdmissionPage.jsx` | `/apply` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `public/PrivacyPolicyPage.jsx` | `/privacy` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
 | `public/PublicReportViewer.jsx` | `/r/:token` | `PARTIAL` | Yes | No | No | Yes | Tier C | Read-only fetch without mutation or missing endpoint |
-| `public/ServicesPage.jsx` | `None` | `ORPHAN` | No | No | Yes | No | Tier C | No route registered in App.jsx |
-| `public/SignupPage.jsx` | `None` | `ORPHAN` | No | No | No | No | Tier C | No route registered in App.jsx |
+| `public/ServicesPage.jsx` | `/services` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `public/SignupPage.jsx` | `/signup` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `public/TermsOfServicePage.jsx` | `/terms` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
 | `public/WhyEduFlowPage.jsx` | `/why-eduflow` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
 | `staff/StaffDashboardPage.jsx` | `/staff-dashboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |

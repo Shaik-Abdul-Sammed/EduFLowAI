@@ -75,7 +75,11 @@ verified_real = {
     # Tier B Verified Pages
     'BudgetTrackingPage.jsx', 'LibraryManagementPage.jsx', 'LeaveApplicationPage.jsx',
     'HostelWardenPage.jsx', 'ScholarshipManagementPage.jsx', 'PlacementDrivesPage.jsx',
-    'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx'
+    'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx',
+    # Newly Completed Stub & Orphan Pages
+    'ServicesPage.jsx', 'SignupPage.jsx', 'parentNotices.jsx', 'ptmBooking.jsx',
+    'leaveRequests.jsx', 'marksProgress.jsx', 'healthRecords.jsx', 'scholarshipView.jsx',
+    'profileSettings.jsx'
 }
 
 calendar_subcomps = {
@@ -87,7 +91,10 @@ calendar_subcomps = {
 tier_b_verified = {
     'BudgetTrackingPage.jsx', 'LibraryManagementPage.jsx', 'LeaveApplicationPage.jsx',
     'HostelWardenPage.jsx', 'ScholarshipManagementPage.jsx', 'PlacementDrivesPage.jsx',
-    'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx'
+    'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx',
+    'ServicesPage.jsx', 'SignupPage.jsx', 'parentNotices.jsx', 'ptmBooking.jsx',
+    'leaveRequests.jsx', 'marksProgress.jsx', 'healthRecords.jsx', 'scholarshipView.jsx',
+    'profileSettings.jsx'
 }
 
 tier_a_candidates = {
