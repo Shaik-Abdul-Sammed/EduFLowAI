@@ -71,13 +71,23 @@ verified_real = {
     'ForgotPasswordPage.jsx', 'OnboardingPage.jsx', 'studentManagement.jsx',
     'marksEntry.jsx', 'feeStatus.jsx', 'feeDashboard.jsx', 'LeaveApprovalsPage.jsx',
     'PayrollGenerationPage.jsx', 'InstitutionSettingsPage.jsx', 'assignmentCreator.jsx',
-    'assignments.jsx', 'timetable.jsx', 'childAttendance.jsx'
+    'assignments.jsx', 'timetable.jsx', 'childAttendance.jsx',
+    # Tier B Verified Pages
+    'BudgetTrackingPage.jsx', 'LibraryManagementPage.jsx', 'LeaveApplicationPage.jsx',
+    'HostelWardenPage.jsx', 'ScholarshipManagementPage.jsx', 'PlacementDrivesPage.jsx',
+    'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx'
 }
 
 calendar_subcomps = {
     'CalendarActionModals.jsx', 'CalendarAnalyticsChart.jsx', 'CalendarDiagnosisTab.jsx',
     'CalendarGridTab.jsx', 'CalendarPreviewExportModals.jsx', 'CalendarTablesTab.jsx',
     'CalendarVacationBlocks.jsx'
+}
+
+tier_b_verified = {
+    'BudgetTrackingPage.jsx', 'LibraryManagementPage.jsx', 'LeaveApplicationPage.jsx',
+    'HostelWardenPage.jsx', 'ScholarshipManagementPage.jsx', 'PlacementDrivesPage.jsx',
+    'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx'
 }
 
 tier_a_candidates = {
@@ -164,8 +174,12 @@ for pf in page_files:
         act = 'Yes'
         test = 'Yes'
         guard = 'Yes'
-        tier = 'Tier A'
-        block = 'None (Verified in Sprint)'
+        if filename in tier_b_verified:
+            tier = 'Tier B'
+            block = 'None (Verified in Tier B Sprint)'
+        else:
+            tier = 'Tier A'
+            block = 'None (Verified in Sprint)'
     elif not route:
         state = 'ORPHAN'
         api = 'Yes' if has_fetch else 'No'

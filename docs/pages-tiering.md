@@ -48,23 +48,32 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 ---
 
 ## Tier B: Stretch Pages (35 Pages)
+
+### 1. Completed & Verified Tier B Pages (9 Priority Pages Fully Verified)
+| # | Page | Route | Backend Flow | Status & Verification |
+|---|---|---|---|---|
+| 1 | `admin/BudgetTrackingPage.jsx` | `/admin-dashboard/budget` | `GET/POST /api/v1/finance/budgets`, `GET/POST /api/v1/finance/expenses` | REAL (4/4 tests passing in `BudgetTrackingPage.test.jsx`) |
+| 2 | `admin/LibraryManagementPage.jsx` | `/admin-dashboard/library` | `GET /v1/library/books`, `GET /v1/library/issues`, `POST /v1/library/issue`, `POST /v1/library/return` | REAL (4/4 tests passing in `LibraryManagementPage.test.jsx`) |
+| 3 | `student/LeaveApplicationPage.jsx` | `/student-dashboard/leave` | `GET /v1/leave/requests`, `POST /v1/leave/apply` | REAL (4/4 tests passing in `LeaveApplicationPage.test.jsx`) |
+| 4 | `admin/HostelWardenPage.jsx` | `/admin-dashboard/hostel` | `GET /v1/hostel/allocations`, `GET /v1/hostel/gate-logs`, `POST /v1/hostel/allocate`, `POST /v1/hostel/gate-pass` | REAL (4/4 tests passing in `HostelWardenPage.test.jsx`) |
+| 5 | `admin/ScholarshipManagementPage.jsx` | `/admin-dashboard/scholarships` | `GET /v1/scholarships`, `POST /v1/scholarships/apply`, `PATCH /v1/scholarships/:id/verify` | REAL (5/5 tests passing in `ScholarshipManagementPage.test.jsx`) |
+| 6 | `admin/PlacementDrivesPage.jsx` | `/admin-dashboard/placement-drives` | `GET /v1/placement/drives`, `POST /v1/placement/drives`, `POST /v1/placement/drives/:id/apply` | REAL (4/4 tests passing in `PlacementDrivesPage.test.jsx`) |
+| 7 | `student/OnlineExamPage.jsx` | `/student-dashboard/online-exam` | `GET /v1/exams/online`, `POST /v1/exams/online/:id/submit`, `POST /v1/exams/online/:id/violation` | REAL (4/4 tests passing in `OnlineExamPage.test.jsx`) |
+| 8 | `student/StudentMockTestPage.jsx` | `/student-dashboard/mock-tests` | `GET /v1/placement/mock-tests`, `POST /v1/placement/mock-tests/:id/submit` | REAL (3/3 tests passing in `StudentMockTestPage.test.jsx`) |
+| 9 | `admin/SupportTicketsPage.jsx` | `/admin-dashboard/support-tickets` | `GET /v1/support/tickets`, `POST /v1/support/tickets`, `PATCH /v1/support/tickets/:id` | REAL (5/5 tests passing in `SupportTicketsPage.test.jsx`) |
+
+### 2. Remaining Tier B Candidates
 Pages with existing partial API clients or write capabilities that require additional integration tests or endpoint alignment:
-- `admin/BudgetTrackingPage.jsx`
 - `admin/BulkDataImportPage.jsx`
 - `admin/BulkStudentImportPage.jsx`
 - `admin/CompliancePage.jsx`
 - `admin/CurriculumMappingPage.jsx`
 - `admin/FeeReminderPage.jsx`
-- `admin/HostelWardenPage.jsx`
-- `admin/LibraryManagementPage.jsx`
 - `admin/LibraryScannerPage.jsx`
 - `admin/NaacDashboardPage.jsx`
 - `admin/NirfDashboardPage.jsx`
-- `admin/PlacementDrivesPage.jsx`
 - `admin/ProcurementPage.jsx`
-- `admin/ScholarshipManagementPage.jsx`
 - `admin/StaffManagementPage.jsx`
-- `admin/SupportTicketsPage.jsx`
 - `admin/SystemHealthPage.jsx`
 - `admin/UPICollectionPage.jsx`
 - `faculty/AttendanceAnalyticsPage.jsx`
@@ -81,9 +90,6 @@ Pages with existing partial API clients or write capabilities that require addit
 - `student/CertificatePage.jsx`
 - `student/CredentialWalletPage.jsx`
 - `student/DigitalIdCard.jsx`
-- `student/LeaveApplicationPage.jsx`
-- `student/OnlineExamPage.jsx`
-- `student/StudentMockTestPage.jsx`
 
 ---
 
