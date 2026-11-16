@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { sharedAssignments, studentSubmissions, STUDENT } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const BLUE = '#2563EB'
 
@@ -9,8 +9,8 @@ const diffDays = (dateStr) => {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
-const getStatus = (a, subs) => {
-  if (subs[a.id]) return 'submitted'
+const getStatus = (a, subs = {}) => {
+  if (subs && subs[a.id]) return 'submitted'
   if (a.status === 'closed') return 'closed'
   const d = diffDays(a.due)
   if (d < 0) return 'overdue'
@@ -25,38 +25,112 @@ const statusMeta = {
 }
 
 export default function Page() {
-  const [submissions, setSubmissions] = useState(studentSubmissions)
+  const [assignments, setAssignments] = useState([])
+  const [submissions, setSubmissions] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
+  const [submitError, setSubmitError] = useState(null)
+  const [submittingId, setSubmittingId] = useState(null)
+
   const [filter, setFilter] = useState('all')
   const [subjectFilter, setSubjectFilter] = useState('all')
   const [activeId, setActiveId] = useState(null)
   const [note, setNote] = useState('')
   const [toast, setToast] = useState(null)
 
-  const myAssignments = sharedAssignments.filter(a => a.section === STUDENT.section || a.section === 'All')
+  const fetchAssignmentsAndSubmissions = async (isMounted = true) => {
+    try {
+      setLoading(true)
+      setLoadError(null)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/academics/assignments'), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      })
+      if (!res.ok) {
+        throw new Error(`Failed to load assignments (${res.status})`)
+      }
+      const data = await res.json()
+      if (isMounted) {
+        setAssignments(data.assignments || [])
+        setSubmissions(data.submissions || {})
+      }
+    } catch (err) {
+      if (isMounted) {
+        setLoadError(err.message || 'Error fetching assignments')
+      }
+    } finally {
+      if (isMounted) setLoading(false)
+    }
+  }
 
-  const subjects = ['all', ...new Set(myAssignments.map(a => a.subject))]
+  useEffect(() => {
+    let isMounted = true
+    fetchAssignmentsAndSubmissions(isMounted)
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
-  const filtered = myAssignments.filter(a => {
+  const subjects = ['all', ...new Set(assignments.map(a => a.subject))]
+
+  const filtered = assignments.filter(a => {
     const st = getStatus(a, submissions)
     const matchStatus = filter === 'all' || st === filter
     const matchSubject = subjectFilter === 'all' || a.subject === subjectFilter
     return matchStatus && matchSubject
   })
 
-  const counts = { all: myAssignments.length, submitted: 0, pending: 0, overdue: 0 }
-  myAssignments.forEach(a => {
+  const counts = { all: assignments.length, submitted: 0, pending: 0, overdue: 0 }
+  assignments.forEach(a => {
     const st = getStatus(a, submissions)
     if (st === 'submitted') counts.submitted++
     else if (st === 'overdue') counts.overdue++
     else if (st === 'pending') counts.pending++
   })
 
-  function handleSubmit(a) {
-    setSubmissions(prev => ({ ...prev, [a.id]: { submittedOn: new Date().toLocaleDateString('en-IN'), score: null, feedback: null } }))
-    setActiveId(null)
-    setNote('')
-    setToast(`✅ "${a.title}" submitted successfully!`)
-    setTimeout(() => setToast(null), 3500)
+  async function handleSubmit(a) {
+    setSubmittingId(a.id)
+    setSubmitError(null)
+    try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl(`/v1/academics/assignments/${a.id}/submit`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ note })
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to submit assignment')
+      }
+
+      const data = await res.json()
+      const newSubmission = data.submission || {
+        assignmentId: a.id,
+        submittedOn: new Date().toLocaleDateString('en-IN'),
+        score: null,
+        feedback: null
+      }
+
+      setSubmissions(prev => ({
+        ...prev,
+        [a.id]: newSubmission
+      }))
+      setActiveId(null)
+      setNote('')
+      setToast(`✅ "${a.title}" submitted successfully!`)
+      setTimeout(() => setToast(null), 3500)
+    } catch (err) {
+      setSubmitError(err.message || 'Error submitting assignment')
+    } finally {
+      setSubmittingId(null)
+    }
   }
 
   const statTabs = [
@@ -71,8 +145,14 @@ export default function Page() {
       <div style={{ display: 'grid', gap: '1.25rem' }}>
 
         {toast && (
-          <div style={{ padding: '0.875rem 1.25rem', background: '#10B98112', border: '1px solid #10B98135', borderRadius: '0.875rem', color: '#065f46', fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div data-testid="assignment-toast" style={{ padding: '0.875rem 1.25rem', background: '#10B98112', border: '1px solid #10B98135', borderRadius: '0.875rem', color: '#065f46', fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {toast}
+          </div>
+        )}
+
+        {submitError && (
+          <div className="alert alert-danger mb-0" role="alert">
+            ❌ {submitError}
           </div>
         )}
 
@@ -93,15 +173,38 @@ export default function Page() {
           </select>
         </div>
 
-        {/* Assignment Cards */}
-        {filtered.length === 0 && (
+        {/* Loading State */}
+        {loading && (
+          <div className="card border-0 shadow-sm p-5 text-center" data-testid="student-assignments-loading">
+            <div className="spinner-border text-primary mx-auto mb-3" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-muted mb-0">Loading course assignments from faculty portal...</p>
+          </div>
+        )}
+
+        {/* Load Error State */}
+        {loadError && !loading && (
+          <div className="alert alert-danger d-flex justify-content-between align-items-center" role="alert">
+            <div>
+              <strong>Error:</strong> {loadError}
+            </div>
+            <button className="btn btn-sm btn-outline-danger" onClick={() => fetchAssignmentsAndSubmissions(true)}>
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !loadError && filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📭</div>
             <div style={{ fontWeight: 600 }}>No assignments found for this filter.</div>
           </div>
         )}
 
-        {filtered.map(a => {
+        {/* Assignment Cards */}
+        {!loading && !loadError && filtered.map(a => {
           const st = getStatus(a, submissions)
           const meta = statusMeta[st]
           const days = diffDays(a.due)
@@ -157,7 +260,7 @@ export default function Page() {
                 {(st === 'pending' || st === 'overdue') && (
                   <div style={{ marginTop: '1rem' }}>
                     {!isExpanded ? (
-                      <button onClick={() => setActiveId(a.id)} className="btn btn-primary btn-sm">
+                      <button onClick={() => { setActiveId(a.id); setSubmitError(null) }} className="btn btn-primary btn-sm">
                         📤 Submit Assignment
                       </button>
                     ) : (
@@ -165,7 +268,9 @@ export default function Page() {
                         <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Submission Note (Optional)</label>
                         <textarea className="form-control" rows={2} placeholder="Add a note for your faculty..." value={note} onChange={e => setNote(e.target.value)} />
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button onClick={() => handleSubmit(a)} className="btn btn-primary btn-sm">📤 Confirm Submit</button>
+                          <button disabled={submittingId === a.id} onClick={() => handleSubmit(a)} className="btn btn-primary btn-sm">
+                            {submittingId === a.id ? 'Submitting...' : '📤 Confirm Submit'}
+                          </button>
                           <button onClick={() => setActiveId(null)} className="btn btn-outline-secondary btn-sm">Cancel</button>
                         </div>
                       </div>
