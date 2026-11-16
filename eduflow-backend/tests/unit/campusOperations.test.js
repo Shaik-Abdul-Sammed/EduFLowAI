@@ -408,4 +408,17 @@ describe('Campus Operations & Enterprise Portals Unit Tests', () => {
     assert.equal(subsRes.statusCode, 200)
     assert.ok(subsRes.data.submissions[createdId])
   })
+
+  // -------------------------------------------------------------
+  // Phase 9: Class Timetable & Schedule
+  // -------------------------------------------------------------
+  test('Timetable: getTimetable returns weekly schedule and period breakdown', async () => {
+    const res = createMockRes()
+    await CampusOperationsController.getTimetable({ query: { section: 'MPC-A' } }, res)
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.data.section, 'MPC-A')
+    assert.ok(res.data.timetable.periods.length >= 8)
+    assert.ok(res.data.timetable.days.length === 6)
+    assert.ok(res.data.timetable.schedule.length === 6)
+  })
 })

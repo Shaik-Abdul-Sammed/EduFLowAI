@@ -1333,6 +1333,46 @@ export class CampusOperationsController {
       res.status(500).json({ error: err.message })
     }
   }
+
+  static async getTimetable(req, res) {
+    try {
+      const section = req.query.section || 'MPC-A'
+      const data = memoryTimetableStore[section] || memoryTimetableStore['MPC-A']
+      res.json({
+        success: true,
+        section,
+        timetable: data
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  }
+}
+
+let memoryTimetableStore = {
+  'MPC-A': {
+    section: 'MPC-A',
+    periods: ['9:00 - 9:50', '9:50 - 10:40', '10:40 - 11:30', '11:45 - 12:35', '12:35 - 1:25', '2:10 - 3:00', '3:00 - 3:50', '3:50 - 4:40'],
+    days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    subjectColors: {
+      'Physics': '#2563EB',
+      'Chemistry': '#10B981',
+      'Mathematics': '#F59E0B',
+      'English': '#8B5CF6',
+      'Computer Science': '#EC4899',
+      'Lab': '#06B6D4',
+      'Library': '#64748B',
+      'Sports': '#84CC16'
+    },
+    schedule: [
+      ['Mathematics', 'Physics', 'Chemistry', 'English', 'Lab', 'Lab', 'Library', 'Sports'],
+      ['Physics', 'Chemistry', 'Mathematics', 'Computer Science', 'Mathematics', 'Physics', 'English', null],
+      ['Chemistry', 'Mathematics', 'Physics', 'English', 'Computer Science', 'Computer Science', 'Sports', null],
+      ['Mathematics', 'Physics', 'Chemistry', 'English', 'Lab', 'Lab', 'Library', null],
+      ['Physics', 'Chemistry', 'Mathematics', 'Computer Science', 'English', 'Physics', 'Sports', null],
+      ['Mathematics', 'Physics', 'Chemistry', 'Computer Science', 'Library', null, null, null]
+    ]
+  }
 }
 
 let memoryAssignments = [

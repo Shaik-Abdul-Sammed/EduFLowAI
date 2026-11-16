@@ -89,5 +89,9 @@ export function createCampusOperationsRouter() {
   router.post('/assignments/:id/submit', CampusOperationsController.submitAssignment)
   router.get('/assignments/submissions', CampusOperationsController.getAssignmentSubmissions)
 
+  // Phase 9: Class Timetable & Schedule
+  router.get('/academics/timetable', CampusOperationsController.getTimetable)
+  router.get('/timetable', CampusOperationsController.getTimetable)
+
   return router
 }
