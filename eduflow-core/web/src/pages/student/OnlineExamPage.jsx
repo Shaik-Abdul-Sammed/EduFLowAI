@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Clock, AlertTriangle, CheckCircle2, EyeOff, Video, VideoOff } from 'lucide-react'
+import { Clock, AlertTriangle, CheckCircle2, EyeOff, Video, VideoOff, RefreshCw, AlertCircle } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
-import { safeJson } from '../../utils/wakeUpHandler'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 export default function OnlineExamPage() {
-  const [, setExams] = useState([])
+  const [exams, setExams] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [activeExam, setActiveExam] = useState(null)
   const [answers, setAnswers] = useState({})
   const [violationsCount, setViolationsCount] = useState(0)
@@ -23,41 +24,72 @@ export default function OnlineExamPage() {
   const [faceStatus, setFaceStatus] = useState('CHECKING') // 'CHECKING' | 'DETECTED' | 'MISSING'
   const [isLocked, setIsLocked] = useState(false)
 
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const res = await fetch(`${getApiBaseURL()}/v1/exams/online`)
-        if (res.ok) {
-          const data = await safeJson(res)
-          if (data?.exams) {
-            setExams(data.exams)
-            setActiveExam(data.exams[0])
-          }
+  const fetchExams = async (isMounted = true) => {
+    try {
+      setLoading(true)
+      setLoadError(null)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/exams/online'), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
-      } catch (err) {
-        console.debug(err)
+      })
+
+      if (!res.ok) {
+        throw new Error(`Failed to load online examinations (${res.status})`)
       }
+
+      const data = await res.json()
+      if (isMounted) {
+        const examList = data?.exams || []
+        setExams(examList)
+        if (examList.length > 0) {
+          setActiveExam(examList[0])
+        }
+      }
+    } catch (err) {
+      if (isMounted) {
+        setLoadError(err.message || 'Error loading online exam')
+      }
+    } finally {
+      if (isMounted) setLoading(false)
     }
-    fetchExams()
+  }
+
+  useEffect(() => {
+    let isMounted = true
+    fetchExams(isMounted)
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const handleSubmitExam = useCallback(async () => {
     if (!activeExam || submitting) return
     setSubmitting(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/v1/exams/online/${activeExam.id}/submit`, {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl(`/v1/exams/online/${activeExam.id}/submit`), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           answers,
           student_roll: 'SS26',
           student_name: 'Ananya Sharma'
         })
       })
-      if (res.ok) {
-        const data = await safeJson(res)
-        setExamResult(data.submission)
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to submit exam')
       }
+
+      const data = await res.json()
+      setExamResult(data.submission)
     } catch (err) {
       console.debug(err)
     } finally {
@@ -90,9 +122,13 @@ export default function OnlineExamPage() {
     if (!activeExam) return
 
     try {
-      await fetch(`${getApiBaseURL()}/v1/exams/online/${activeExam.id}/violation`, {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      await fetch(getFullApiUrl(`/v1/exams/online/${activeExam.id}/violation`), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           student_roll: 'SS26',
           student_name: 'Ananya Sharma',
@@ -203,8 +239,45 @@ export default function OnlineExamPage() {
     <RolePageTemplate role="student" title="Proctored Online Examination Environment">
       <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
         
+        {/* Loading Skeleton */}
+        {loading && (
+          <div className="card border-0 shadow-sm p-5 text-center" data-testid="exam-loading">
+            <div className="spinner-border text-primary mx-auto mb-3" role="status" />
+            <div className="text-muted small">Loading proctored examination environment...</div>
+          </div>
+        )}
+
+        {/* Load Error State */}
+        {loadError && (
+          <div className="alert alert-danger d-flex align-items-center justify-content-between p-3 mb-0">
+            <div className="d-flex align-items-center gap-2">
+              <AlertCircle size={20} className="text-danger flex-shrink-0" />
+              <div>
+                <strong>Failed to load examination</strong>
+                <div className="small text-muted">{loadError}</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline-danger btn-sm"
+              onClick={() => fetchExams(true)}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !loadError && exams.length === 0 && (
+          <div className="card border-0 shadow-sm p-5 text-center text-muted">
+            <Clock size={36} className="mx-auto text-secondary mb-2 opacity-50" />
+            <h4 style={{ fontSize: 16, fontWeight: 600 }}>No examinations scheduled</h4>
+            <p className="small mb-0">You have no active proctored tests at this time.</p>
+          </div>
+        )}
+
         {/* Webcam Proctoring HUD Header */}
-        {activeExam && !examResult && (
+        {!loading && !loadError && activeExam && !examResult && (
           <div style={{
             background: '#0F172A',
             color: '#FFFFFF',
@@ -278,7 +351,7 @@ export default function OnlineExamPage() {
         )}
 
         {/* Camera Error Alert */}
-        {cameraError && (
+        {!loading && !loadError && cameraError && (
           <div
             role="alert"
             data-testid="camera-error"
@@ -303,7 +376,7 @@ export default function OnlineExamPage() {
         )}
 
         {/* Warning Toast / Banner if any violations occurred */}
-        {violationsCount > 0 && !examResult && (
+        {!loading && !loadError && violationsCount > 0 && !examResult && (
           <div style={{
             background: isLocked ? '#450A0A' : '#FEF2F2',
             border: isLocked ? '2px solid #EF4444' : '1px solid #FCA5A5',
@@ -329,24 +402,24 @@ export default function OnlineExamPage() {
         )}
 
         {/* Active Exam Container */}
-        {activeExam && !examResult && (
+        {!loading && !loadError && activeExam && !examResult && (
           <div style={{
-            background: 'var(--card-bg)',
-            color: 'var(--app-text)',
+            background: 'var(--card-bg, #FFFFFF)',
+            color: 'var(--app-text, #0F172A)',
             borderRadius: 16,
-            border: '1px solid var(--border-color)',
+            border: '1px solid var(--border-color, #E2E8F0)',
             padding: 28,
             boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
             opacity: isLocked ? 0.65 : 1,
             pointerEvents: isLocked ? 'none' : 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: 16, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color, #E2E8F0)', paddingBottom: 16, marginBottom: 20 }}>
               <div>
                 <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(37, 99, 235, 0.12)', color: '#3B82F6', padding: '3px 8px', borderRadius: 4 }}>
                   {activeExam.course_code}
                 </span>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '6px 0 2px 0', color: 'var(--app-text)' }}>{activeExam.title}</h2>
-                <div style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>Total Marks: {activeExam.total_marks} &bull; Duration: {activeExam.duration_mins} Mins &bull; AI Proctored</div>
+                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '6px 0 2px 0', color: 'var(--app-text, #0F172A)' }}>{activeExam.title}</h2>
+                <div style={{ fontSize: 12, color: 'var(--app-text-muted, #64748B)' }}>Total Marks: {activeExam.total_marks} &bull; Duration: {activeExam.duration_mins} Mins &bull; AI Proctored</div>
               </div>
               <div style={{ background: '#FEF3C7', color: '#B45309', padding: '8px 14px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13 }}>
                 <Clock size={16} /> 24:12 Remaining
@@ -356,8 +429,8 @@ export default function OnlineExamPage() {
             {/* Questions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {activeExam.questions.map((q, idx) => (
-                <div key={q.id} style={{ background: 'var(--surface-bg)', padding: 18, borderRadius: 12, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)', marginBottom: 12 }}>
+                <div key={q.id} style={{ background: 'var(--surface-bg, #F8FAFC)', padding: 18, borderRadius: 12, border: '1px solid var(--border-color, #E2E8F0)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text, #0F172A)', marginBottom: 12 }}>
                     Question {idx + 1}: {q.text}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
@@ -373,9 +446,9 @@ export default function OnlineExamPage() {
                             textAlign: 'left',
                             padding: '10px 14px',
                             borderRadius: 8,
-                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-color)',
-                            background: isSelected ? 'rgba(37, 99, 235, 0.18)' : 'var(--card-bg)',
-                            color: isSelected ? '#3B82F6' : 'var(--app-text)',
+                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-color, #CBD5E1)',
+                            background: isSelected ? 'rgba(37, 99, 235, 0.18)' : 'var(--card-bg, #FFFFFF)',
+                            color: isSelected ? '#3B82F6' : 'var(--app-text, #0F172A)',
                             fontWeight: isSelected ? 700 : 500,
                             fontSize: 13,
                             cursor: isLocked ? 'not-allowed' : 'pointer'
@@ -413,19 +486,19 @@ export default function OnlineExamPage() {
 
         {/* Evaluated Result Card */}
         {examResult && (
-          <div style={{ background: 'var(--card-bg)', color: 'var(--app-text)', borderRadius: 16, border: '1px solid var(--border-color)', padding: 36, textAlign: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <div data-testid="exam-result-card" style={{ background: 'var(--card-bg, #FFFFFF)', color: 'var(--app-text, #0F172A)', borderRadius: 16, border: '1px solid var(--border-color, #E2E8F0)', padding: 36, textAlign: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ width: 72, height: 72, borderRadius: 36, background: '#DCFCE7', color: '#16A34A', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <CheckCircle2 size={40} />
             </div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--app-text)' }}>Online Examination Submitted!</h2>
-            <p style={{ margin: '0 0 20px 0', color: 'var(--app-text-muted)', fontSize: 14 }}>{examResult.title} &bull; Roll: {examResult.student_roll}</p>
+            <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--app-text, #0F172A)' }}>Online Examination Submitted!</h2>
+            <p style={{ margin: '0 0 20px 0', color: 'var(--app-text-muted, #64748B)', fontSize: 14 }}>{examResult.title} &bull; Roll: {examResult.student_roll}</p>
 
-            <div style={{ display: 'inline-block', background: 'var(--surface-bg)', padding: '16px 36px', borderRadius: 12, border: '1px solid var(--border-color)', marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: 'var(--app-text-muted)' }}>Score Obtained</div>
+            <div style={{ display: 'inline-block', background: 'var(--surface-bg, #F8FAFC)', padding: '16px 36px', borderRadius: 12, border: '1px solid var(--border-color, #E2E8F0)', marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: 'var(--app-text-muted, #64748B)' }}>Score Obtained</div>
               <div style={{ fontSize: 32, fontWeight: 800, color: '#2563EB' }}>{examResult.score} / {examResult.max_score}</div>
             </div>
 
-            <div style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>
+            <div style={{ fontSize: 12, color: 'var(--app-text-muted, #64748B)' }}>
               Proctoring Audit: {violationsCount === 0 ? 'Zero security infractions detected. Integrity verified.' : `${violationsCount} infraction(s) recorded in audit log.`}
             </div>
           </div>
@@ -434,12 +507,12 @@ export default function OnlineExamPage() {
         {/* Violation Warning Modal */}
         {warningModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}>
-            <div style={{ background: 'var(--card-bg)', color: 'var(--app-text)', border: '1px solid var(--border-color)', borderRadius: 16, maxWidth: 480, width: '100%', padding: 28, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: 'var(--card-bg, #FFFFFF)', color: 'var(--app-text, #0F172A)', border: '1px solid var(--border-color, #E2E8F0)', borderRadius: 16, maxWidth: 480, width: '100%', padding: 28, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
               <div style={{ width: 56, height: 56, borderRadius: 28, background: '#FEE2E2', color: '#DC2626', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                 <EyeOff size={30} />
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: '#EF4444', margin: '0 0 8px 0' }}>Proctoring Violation Flagged!</h3>
-              <p style={{ fontSize: 13, color: 'var(--app-text-muted)', lineHeight: 1.5, margin: '0 0 20px 0' }}>{warningText}</p>
+              <p style={{ fontSize: 13, color: 'var(--app-text-muted, #64748B)', lineHeight: 1.5, margin: '0 0 20px 0' }}>{warningText}</p>
               <button
                 onClick={() => setWarningModal(false)}
                 style={{
