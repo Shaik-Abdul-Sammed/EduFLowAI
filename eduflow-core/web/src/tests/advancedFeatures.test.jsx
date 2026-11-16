@@ -94,17 +94,16 @@ describe('Advanced Learning Technologies (031) - Frontend UI/UX Verification', (
     expect(screen.getByText(/Submit Lab Observation/i)).toBeInTheDocument()
   })
 
-  // 5. AR Scanner Page
-  test('ARScannerPage renders simulated WebAR camera viewfinder and 3D preview', () => {
+  // 5. Dean Escalation Desk (Replaced AR Scanner per requirement)
+  test('ARScannerPage renders Dean & Faculty Escalation Desk interface', () => {
     render(
       <MemoryRouter>
         <ARScannerPage />
       </MemoryRouter>
     )
 
-    expect(screen.getByText(/Augmented Reality \(AR\) Textbook Scanner/i)).toBeInTheDocument()
-    expect(screen.getByText(/AR Camera Viewfinder/i)).toBeInTheDocument()
-    expect(screen.getByText(/Simulate Scanning Textbook QR/i)).toBeInTheDocument()
+    expect(screen.getByText(/Dean & Faculty Escalation Desk/i)).toBeInTheDocument()
+    expect(screen.getByText(/Dean & Faculty Grievance Redressal/i)).toBeInTheDocument()
   })
 
   // 6. Plagiarism Checker Page

@@ -404,22 +404,22 @@ export default function OnlineExamPage() {
         {/* Active Exam Container */}
         {!loading && !loadError && activeExam && !examResult && (
           <div style={{
-            background: 'var(--card-bg, #FFFFFF)',
-            color: 'var(--app-text, #0F172A)',
+            background: 'var(--card-bg)',
+            color: 'var(--app-text)',
             borderRadius: 16,
-            border: '1px solid var(--border-color, #E2E8F0)',
+            border: '1px solid var(--border-color)',
             padding: 28,
             boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
             opacity: isLocked ? 0.65 : 1,
             pointerEvents: isLocked ? 'none' : 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color, #E2E8F0)', paddingBottom: 16, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: 16, marginBottom: 20 }}>
               <div>
                 <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(37, 99, 235, 0.12)', color: '#3B82F6', padding: '3px 8px', borderRadius: 4 }}>
                   {activeExam.course_code}
                 </span>
-                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '6px 0 2px 0', color: 'var(--app-text, #0F172A)' }}>{activeExam.title}</h2>
-                <div style={{ fontSize: 12, color: 'var(--app-text-muted, #64748B)' }}>Total Marks: {activeExam.total_marks} &bull; Duration: {activeExam.duration_mins} Mins &bull; AI Proctored</div>
+                <h2 style={{ fontSize: 20, fontWeight: 700, margin: '6px 0 2px 0', color: 'var(--app-text)' }}>{activeExam.title}</h2>
+                <div style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>Total Marks: {activeExam.total_marks} &bull; Duration: {activeExam.duration_mins} Mins &bull; AI Proctored</div>
               </div>
               <div style={{ background: '#FEF3C7', color: '#B45309', padding: '8px 14px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13 }}>
                 <Clock size={16} /> 24:12 Remaining
@@ -429,8 +429,8 @@ export default function OnlineExamPage() {
             {/* Questions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {activeExam.questions.map((q, idx) => (
-                <div key={q.id} style={{ background: 'var(--surface-bg, #F8FAFC)', padding: 18, borderRadius: 12, border: '1px solid var(--border-color, #E2E8F0)' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text, #0F172A)', marginBottom: 12 }}>
+                <div key={q.id} style={{ background: 'var(--surface-bg)', padding: 18, borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--app-text)', marginBottom: 12 }}>
                     Question {idx + 1}: {q.text}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
@@ -446,9 +446,9 @@ export default function OnlineExamPage() {
                             textAlign: 'left',
                             padding: '10px 14px',
                             borderRadius: 8,
-                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-color, #CBD5E1)',
-                            background: isSelected ? 'rgba(37, 99, 235, 0.18)' : 'var(--card-bg, #FFFFFF)',
-                            color: isSelected ? '#3B82F6' : 'var(--app-text, #0F172A)',
+                            border: isSelected ? '2px solid #2563EB' : '1px solid var(--border-color)',
+                            background: isSelected ? 'rgba(37, 99, 235, 0.18)' : 'var(--card-bg)',
+                            color: isSelected ? '#3B82F6' : 'var(--app-text)',
                             fontWeight: isSelected ? 700 : 500,
                             fontSize: 13,
                             cursor: isLocked ? 'not-allowed' : 'pointer'
@@ -486,19 +486,19 @@ export default function OnlineExamPage() {
 
         {/* Evaluated Result Card */}
         {examResult && (
-          <div data-testid="exam-result-card" style={{ background: 'var(--card-bg, #FFFFFF)', color: 'var(--app-text, #0F172A)', borderRadius: 16, border: '1px solid var(--border-color, #E2E8F0)', padding: 36, textAlign: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <div data-testid="exam-result-card" style={{ background: 'var(--card-bg)', color: 'var(--app-text)', borderRadius: 16, border: '1px solid var(--border-color)', padding: 36, textAlign: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ width: 72, height: 72, borderRadius: 36, background: '#DCFCE7', color: '#16A34A', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <CheckCircle2 size={40} />
             </div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--app-text, #0F172A)' }}>Online Examination Submitted!</h2>
-            <p style={{ margin: '0 0 20px 0', color: 'var(--app-text-muted, #64748B)', fontSize: 14 }}>{examResult.title} &bull; Roll: {examResult.student_roll}</p>
+            <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px 0', color: 'var(--app-text)' }}>Online Examination Submitted!</h2>
+            <p style={{ margin: '0 0 20px 0', color: 'var(--app-text-muted)', fontSize: 14 }}>{examResult.title} &bull; Roll: {examResult.student_roll}</p>
 
-            <div style={{ display: 'inline-block', background: 'var(--surface-bg, #F8FAFC)', padding: '16px 36px', borderRadius: 12, border: '1px solid var(--border-color, #E2E8F0)', marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: 'var(--app-text-muted, #64748B)' }}>Score Obtained</div>
+            <div style={{ display: 'inline-block', background: 'var(--surface-bg)', padding: '16px 36px', borderRadius: 12, border: '1px solid var(--border-color)', marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: 'var(--app-text-muted)' }}>Score Obtained</div>
               <div style={{ fontSize: 32, fontWeight: 800, color: '#2563EB' }}>{examResult.score} / {examResult.max_score}</div>
             </div>
 
-            <div style={{ fontSize: 12, color: 'var(--app-text-muted, #64748B)' }}>
+            <div style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>
               Proctoring Audit: {violationsCount === 0 ? 'Zero security infractions detected. Integrity verified.' : `${violationsCount} infraction(s) recorded in audit log.`}
             </div>
           </div>
@@ -507,7 +507,7 @@ export default function OnlineExamPage() {
         {/* Violation Warning Modal */}
         {warningModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}>
-            <div style={{ background: 'var(--card-bg, #FFFFFF)', color: 'var(--app-text, #0F172A)', border: '1px solid var(--border-color, #E2E8F0)', borderRadius: 16, maxWidth: 480, width: '100%', padding: 28, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: 'var(--card-bg)', color: 'var(--app-text)', border: '1px solid var(--border-color)', borderRadius: 16, maxWidth: 480, width: '100%', padding: 28, textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
               <div style={{ width: 56, height: 56, borderRadius: 28, background: '#FEE2E2', color: '#DC2626', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                 <EyeOff size={30} />
               </div>
