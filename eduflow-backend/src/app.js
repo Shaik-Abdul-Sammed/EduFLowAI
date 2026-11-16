@@ -256,6 +256,8 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/live-data', createLiveDataRouter())
   app.use('/api/v1/payments', createPaymentRouter())
   app.use('/api/v1/payment', createPaymentRouter())
+  app.use('/api/payments', createPaymentRouter())
+  app.use('/api/payment', createPaymentRouter())
   app.use('/api/v1/campus', createCampusRouter())
   app.use('/api/v1/network', createNetworkRouter())
   app.use('/api/v1', createAdvancedTechRouter())

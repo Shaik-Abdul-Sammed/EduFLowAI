@@ -234,5 +234,71 @@ export function createPaymentRouter() {
     }
   })
 
+  const studentFeeLedger = {
+    totalFee: 120000,
+    paidAmount: 80000,
+    pendingAmount: 40000,
+    nextDue: '2026-12-15',
+    nextDueAmount: 40000,
+    transactions: [
+      { id: 'TXN8801', date: '2026-06-15', description: 'Term 1 Tuition Fee', amount: 50000, method: 'Online UPI', status: 'paid', receipt: 'RCP-2026-8801' },
+      { id: 'TXN8802', date: '2026-08-10', description: 'Laboratory & Library Deposit', amount: 30000, method: 'Net Banking', status: 'paid', receipt: 'RCP-2026-8802' },
+      { id: 'TXN8803', date: '2026-12-15', description: 'Term 2 Tuition Fee', amount: 40000, method: 'Pending Payment', status: 'pending', receipt: null }
+    ]
+  }
+
+  /**
+   * GET /api/v1/payments/student-fees
+   * Retrieve fee balance, next due date and transaction history
+   */
+  router.get('/student-fees', async (_req, res) => {
+    try {
+      res.json({
+        success: true,
+        ...studentFeeLedger
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
+
+  /**
+   * POST /api/v1/payments/remit-fee
+   * Remit fee balance and generate digital receipt
+   */
+  router.post('/remit-fee', async (req, res) => {
+    try {
+      const { amount, description = 'Term 2 Tuition Fee Remittance', method = 'Online UPI' } = req.body || {}
+      const remitAmount = Number(amount) || studentFeeLedger.pendingAmount || 40000
+      if (remitAmount <= 0) {
+        return res.status(400).json({ error: 'Valid positive remittance amount is required' })
+      }
+
+      const receiptNo = `RCP-2026-${Math.floor(1000 + Math.random() * 9000)}`
+      const newTxn = {
+        id: `TXN${Date.now().toString().slice(-4)}`,
+        date: new Date().toISOString().split('T')[0],
+        description,
+        amount: remitAmount,
+        method,
+        status: 'paid',
+        receipt: receiptNo
+      }
+
+      studentFeeLedger.paidAmount += remitAmount
+      studentFeeLedger.pendingAmount = Math.max(0, studentFeeLedger.pendingAmount - remitAmount)
+      studentFeeLedger.transactions.unshift(newTxn)
+
+      res.status(201).json({
+        success: true,
+        message: 'Fee payment successfully recorded and reconciled',
+        transaction: newTxn,
+        feeData: { ...studentFeeLedger }
+      })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
+
   return router
 }
