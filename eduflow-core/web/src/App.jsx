@@ -14,6 +14,7 @@ const EntryPage = lazy(() => import('./pages/public/EntryPage'))
 const LoginPage = lazy(() => import('./pages/public/LoginPage'))
 const AboutPage = lazy(() => import('./pages/public/AboutPage'))
 const InstitutionRegister = lazy(() => import('./pages/public/InstitutionRegister'))
+const SignupPage = lazy(() => import('./pages/public/SignupPage'))
 const LeadIntakePage = lazy(() => import('./pages/public/LeadIntakePage'))
 const ServicesPage = lazy(() => import('./pages/public/ServicesPage'))
 const PublicReportViewer = lazy(() => import('./pages/public/PublicReportViewer'))
@@ -542,7 +543,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/register-institution" element={<InstitutionRegister />} />
-            <Route path="/signup" element={<InstitutionRegister />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/services" element={<ServicesPage />} />
             <Route path="/for-colleges" element={<LeadIntakePage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/terms" element={<TermsOfServicePage />} />
