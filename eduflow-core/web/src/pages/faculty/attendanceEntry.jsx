@@ -134,11 +134,36 @@ export default function AttendanceEntryPage() {
     })
     return states
   })
+  const [overrideReasons, setOverrideReasons] = useState({})
   const [autoMarkedCollapsed, setAutoMarkedCollapsed] = useState(true)
 
   const sectionStudents = useMemo(() => {
     return btechStudents.filter(s => s.section === selectedSection)
   }, [selectedSection])
+
+  const sessionHealth = useMemo(() => {
+    const total = sectionStudents.length || 1
+    const needsRev = sectionStudents.filter(s => reviewStates[s.roll]?.state === 'needs_review').length
+    const withCode = sectionStudents.filter(s => reviewStates[s.roll]?.state === 'auto_present').length
+    const needsReviewPct = parseFloat(((needsRev / total) * 100).toFixed(1))
+    const validCodeCoverage = parseFloat(((withCode / total) * 100).toFixed(1))
+    const isDegraded = needsReviewPct > 20.0 || validCodeCoverage < 60.0
+    return {
+      total,
+      needsRev,
+      needsReviewPct,
+      validCodeCoverage,
+      isDegraded
+    }
+  }, [sectionStudents, reviewStates])
+
+  const handleSetReason = (roll, reason) => {
+    setOverrideReasons(prev => ({ ...prev, [roll]: reason }))
+    setReviewStates(prev => ({
+      ...prev,
+      [roll]: { state: 'faculty_override', confidence: 'high', reason }
+    }))
+  }
 
   const filteredStudents = useMemo(() => {
     return sectionStudents.filter(s => {
@@ -403,6 +428,27 @@ export default function AttendanceEntryPage() {
               </div>
             </div>
           )}
+
+          {/* Low-confidence Session Health Banner (P2.2) */}
+          {sessionHealth.isDegraded && (
+            <div data-testid="low-confidence-health-banner" className="alert alert-warning border border-warning d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 mb-0 p-3">
+              <div className="d-flex align-items-center gap-2">
+                <AlertTriangle size={20} className="text-warning flex-shrink-0" />
+                <div>
+                  <strong>Session signal quality degraded:</strong> {sessionHealth.needsReviewPct}% students need review ({sessionHealth.validCodeCoverage}% code coverage). Wi-Fi AP or BLE beacon in this room may be misbehaving. Consider taking full manual attendance.
+                </div>
+              </div>
+              <div className="d-flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => markAll('P')}
+                  className="btn btn-sm btn-outline-dark"
+                >
+                  Mark Whole Class Present
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Real-time Session Metrics */}
@@ -544,39 +590,56 @@ export default function AttendanceEntryPage() {
                             </span>
                           </td>
                           <td className="text-end">
-                            <div className="btn-group btn-group-sm" role="group">
-                              <button
-                                type="button"
-                                onClick={() => handleSetStatus(s.roll, 'P')}
-                                className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
-                                title="Present"
+                            <div className="d-inline-flex align-items-center gap-1">
+                              <div className="btn-group btn-group-sm" role="group">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'P')}
+                                  className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
+                                  title="Present"
+                                >
+                                  Present
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'A')}
+                                  className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
+                                  title="Absent"
+                                >
+                                  Absent
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'OD')}
+                                  className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
+                                  title="On-Duty"
+                                >
+                                  On-Duty
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'L')}
+                                  className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
+                                  title="Late Arrival"
+                                >
+                                  Late
+                                </button>
+                              </div>
+                              <select
+                                aria-label="Override reason"
+                                className="form-select form-select-sm d-inline-block w-auto"
+                                style={{ fontSize: '0.72rem', maxWidth: 125 }}
+                                value={overrideReasons[s.roll] || 'manual_verified'}
+                                onChange={(e) => handleSetReason(s.roll, e.target.value)}
+                                title="Faculty override reason code"
                               >
-                                Present
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSetStatus(s.roll, 'A')}
-                                className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
-                                title="Absent"
-                              >
-                                Absent
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSetStatus(s.roll, 'OD')}
-                                className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
-                                title="On-Duty"
-                              >
-                                On-Duty
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSetStatus(s.roll, 'L')}
-                                className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
-                                title="Late Arrival"
-                              >
-                                Late
-                              </button>
+                                <option value="manual_verified">Manual</option>
+                                <option value="no_device">No Device</option>
+                                <option value="device_dead">Dead Battery</option>
+                                <option value="accessibility">Accessibility</option>
+                                <option value="health">Medical</option>
+                                <option value="other">Other</option>
+                              </select>
                             </div>
                           </td>
                         </tr>
@@ -657,39 +720,56 @@ export default function AttendanceEntryPage() {
                               )}
                             </td>
                             <td className="text-end">
-                              <div className="btn-group btn-group-sm" role="group">
-                                <button
-                                  type="button"
-                                  onClick={() => handleSetStatus(s.roll, 'P')}
-                                  className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
-                                  title="Present"
+                              <div className="d-inline-flex align-items-center gap-1">
+                                <div className="btn-group btn-group-sm" role="group">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetStatus(s.roll, 'P')}
+                                    className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
+                                    title="Present"
+                                  >
+                                    Present
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetStatus(s.roll, 'A')}
+                                    className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
+                                    title="Absent"
+                                  >
+                                    Absent
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetStatus(s.roll, 'OD')}
+                                    className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
+                                    title="On-Duty"
+                                  >
+                                    On-Duty
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetStatus(s.roll, 'L')}
+                                    className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
+                                    title="Late Arrival"
+                                  >
+                                    Late
+                                  </button>
+                                </div>
+                                <select
+                                  aria-label="Override reason"
+                                  className="form-select form-select-sm d-inline-block w-auto"
+                                  style={{ fontSize: '0.72rem', maxWidth: 125 }}
+                                  value={overrideReasons[s.roll] || 'manual_verified'}
+                                  onChange={(e) => handleSetReason(s.roll, e.target.value)}
+                                  title="Faculty override reason code"
                                 >
-                                  Present
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSetStatus(s.roll, 'A')}
-                                  className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
-                                  title="Absent"
-                                >
-                                  Absent
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSetStatus(s.roll, 'OD')}
-                                  className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
-                                  title="On-Duty"
-                                >
-                                  On-Duty
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSetStatus(s.roll, 'L')}
-                                  className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
-                                  title="Late Arrival"
-                                >
-                                  Late
-                                </button>
+                                  <option value="manual_verified">Manual</option>
+                                  <option value="no_device">No Device</option>
+                                  <option value="device_dead">Dead Battery</option>
+                                  <option value="accessibility">Accessibility</option>
+                                  <option value="health">Medical</option>
+                                  <option value="other">Other</option>
+                                </select>
                               </div>
                             </td>
                           </tr>

@@ -89,4 +89,21 @@ describe('Faculty AttendanceEntryPage Component', () => {
       expect(screen.getByText(/All review items resolved/i)).toBeInTheDocument()
     }
   })
+
+  test('renders override reason code dropdowns and low-confidence session health banner', () => {
+    render(
+      <MemoryRouter>
+        <AttendanceEntryPage />
+      </MemoryRouter>
+    )
+
+    // Overrides reason selects are present in rows
+    const reasonSelects = screen.getAllByRole('combobox', { name: /Override reason/i })
+    expect(reasonSelects.length).toBeGreaterThan(0)
+    expect(reasonSelects[0]).toBeInTheDocument()
+
+    // Session health banner is rendered when degraded
+    expect(screen.getByText(/Session signal quality degraded/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Mark Whole Class Present/i })).toBeInTheDocument()
+  })
 })
