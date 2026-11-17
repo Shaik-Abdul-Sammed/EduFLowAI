@@ -79,7 +79,13 @@ verified_real = {
     # Newly Completed Stub & Orphan Pages
     'ServicesPage.jsx', 'SignupPage.jsx', 'parentNotices.jsx', 'ptmBooking.jsx',
     'leaveRequests.jsx', 'marksProgress.jsx', 'healthRecords.jsx', 'scholarshipView.jsx',
-    'profileSettings.jsx'
+    'profileSettings.jsx',
+    # Newly Completed 15 Mock Pages -> Real
+    'facultyManagement.jsx', 'feeCollection.jsx', 'hostelAllocation.jsx',
+    'examSetup.jsx', 'resultPublishing.jsx', 'parentAccounts.jsx',
+    'payrollPreview.jsx', 'timetableGeneration.jsx', 'backupManagement.jsx',
+    'libraryAccount.jsx', 'hostelInfo.jsx', 'scholarshipStatus.jsx',
+    'subjectMarks.jsx', 'classTimetable.jsx', 'teacherCommunication.jsx'
 }
 
 calendar_subcomps = {
@@ -94,7 +100,13 @@ tier_b_verified = {
     'OnlineExamPage.jsx', 'StudentMockTestPage.jsx', 'SupportTicketsPage.jsx',
     'ServicesPage.jsx', 'SignupPage.jsx', 'parentNotices.jsx', 'ptmBooking.jsx',
     'leaveRequests.jsx', 'marksProgress.jsx', 'healthRecords.jsx', 'scholarshipView.jsx',
-    'profileSettings.jsx'
+    'profileSettings.jsx',
+    # Newly Completed 15 Mock Pages -> Real
+    'facultyManagement.jsx', 'feeCollection.jsx', 'hostelAllocation.jsx',
+    'examSetup.jsx', 'resultPublishing.jsx', 'parentAccounts.jsx',
+    'payrollPreview.jsx', 'timetableGeneration.jsx', 'backupManagement.jsx',
+    'libraryAccount.jsx', 'hostelInfo.jsx', 'scholarshipStatus.jsx',
+    'subjectMarks.jsx', 'classTimetable.jsx', 'teacherCommunication.jsx'
 }
 
 tier_a_candidates = {

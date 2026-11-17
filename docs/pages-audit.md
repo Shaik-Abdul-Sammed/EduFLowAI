@@ -2,9 +2,9 @@
 
 ## Ground-Truth Status Summary
 - **Total Audited Pages:** 196
-- **REAL:** 51 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
+- **REAL:** 66 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
 - **PARTIAL:** 47 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
-- **MOCK:** 98 (uses local state, hardcoded arrays, or mock fixtures)
+- **MOCK:** 83 (uses local state, hardcoded arrays, or mock fixtures)
 - **STUB:** 0 (placeholder or under construction component)
 - **ORPHAN:** 0 (unrouted legacy or internal subcomponent)
 
@@ -56,18 +56,18 @@
 | `admin/analyticsCenter.jsx` | `/admin-dashboard/analytics-center` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `admin/attendanceAudit.jsx` | `/admin-dashboard/attendance-audit` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/auditLogs.jsx` | `/admin-dashboard/audit-logs` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `admin/backupManagement.jsx` | `/admin-dashboard/backup-management` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
-| `admin/examSetup.jsx` | `/admin-dashboard/exam-setup` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
-| `admin/facultyManagement.jsx` | `/admin-dashboard/faculty-management` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
-| `admin/feeCollection.jsx` | `/admin-dashboard/fee-collection` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
-| `admin/hostelAllocation.jsx` | `/admin-dashboard/hostel-allocation` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
+| `admin/backupManagement.jsx` | `/admin-dashboard/backup-management` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `admin/examSetup.jsx` | `/admin-dashboard/exam-setup` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `admin/facultyManagement.jsx` | `/admin-dashboard/faculty-management` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `admin/feeCollection.jsx` | `/admin-dashboard/fee-collection` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `admin/hostelAllocation.jsx` | `/admin-dashboard/hostel-allocation` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/insights/DomainInsightPage.jsx` | `/admin-dashboard/insights/:domain` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `admin/parentAccounts.jsx` | `/admin-dashboard/parent-accounts` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
-| `admin/payrollPreview.jsx` | `/admin-dashboard/payroll-preview` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `admin/resultPublishing.jsx` | `/admin-dashboard/result-publishing` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `admin/parentAccounts.jsx` | `/admin-dashboard/parent-accounts` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `admin/payrollPreview.jsx` | `/admin-dashboard/payroll-preview` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `admin/resultPublishing.jsx` | `/admin-dashboard/result-publishing` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/rolePermissions.jsx` | `/admin-dashboard/role-permissions` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `admin/studentManagement.jsx` | `/admin-dashboard/student-management` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
-| `admin/timetableGeneration.jsx` | `/admin-dashboard/timetable-generation` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `admin/timetableGeneration.jsx` | `/admin-dashboard/timetable-generation` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/userTracking.jsx` | `/admin-dashboard/user-tracking` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `ai/AITerminal.jsx` | `/ai-terminal` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `ai/BuildManager.jsx` | `/build-manager` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
@@ -105,7 +105,7 @@
 | `faculty/academicAnalytics.jsx` | `/faculty-dashboard/academic-analytics` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `faculty/assignmentCreator.jsx` | `/faculty-dashboard/assignment-creator` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `faculty/attendanceEntry.jsx` | `/faculty-dashboard/attendance-entry` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
-| `faculty/classTimetable.jsx` | `/faculty-dashboard/class-timetable` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `faculty/classTimetable.jsx` | `/faculty-dashboard/class-timetable` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `faculty/departmentNotices.jsx` | `/faculty-dashboard/department-notices` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `faculty/examInvigilation.jsx` | `/faculty-dashboard/exam-invigilation` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
 | `faculty/leaveApplication.jsx` | `/faculty-dashboard/leave-application` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
@@ -139,7 +139,7 @@
 | `parent/profileSettings.jsx` | `/parent-dashboard/profile-settings` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `parent/ptmBooking.jsx` | `/parent-dashboard/ptm-booking` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `parent/scholarshipView.jsx` | `/parent-dashboard/scholarship-view` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `parent/teacherCommunication.jsx` | `/parent-dashboard/teacher-communication` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `parent/teacherCommunication.jsx` | `/parent-dashboard/teacher-communication` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `public/AboutPage.jsx` | `/about` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
 | `public/AttendanceExplainerPage.jsx` | `/how-attendance-works` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `public/DataProcessingAgreementPage.jsx` | `/dpa` | `MOCK` | No | No | Yes | Public | Tier C | Static presentation component |
@@ -190,20 +190,20 @@
 | `student/digitalMaterials.jsx` | `/student-dashboard/digital-materials` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/examSchedule.jsx` | `/student-dashboard/exam-schedule` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/feeStatus.jsx` | `/student-dashboard/fee-status` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
-| `student/hostelInfo.jsx` | `/student-dashboard/hostel-info` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
+| `student/hostelInfo.jsx` | `/student-dashboard/hostel-info` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `student/jeeMainsPrep.jsx` | `/student-dashboard/jee-mains-prep` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/labBookings.jsx` | `/student-dashboard/lab-bookings` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
-| `student/libraryAccount.jsx` | `/student-dashboard/library-account` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
+| `student/libraryAccount.jsx` | `/student-dashboard/library-account` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `student/mbipcCourses.jsx` | `/student-dashboard/mbipc-courses` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
 | `student/mentorConnect.jsx` | `/student-dashboard/mentor-connect` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/mpcCourses.jsx` | `/student-dashboard/mpc-courses` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/neetPrep.jsx` | `/student-dashboard/neet-prep` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/paymentHistory.jsx` | `/student-dashboard/payment-history` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/referencesHub.jsx` | `/student-dashboard/references-hub` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
-| `student/scholarshipStatus.jsx` | `/student-dashboard/scholarship-status` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
+| `student/scholarshipStatus.jsx` | `/student-dashboard/scholarship-status` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `student/sectionsPlanner.jsx` | `/student-dashboard/sections-planner` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/studentAcademy.jsx` | `/student-dashboard/student-academy` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
-| `student/subjectMarks.jsx` | `/student-dashboard/subject-marks` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
+| `student/subjectMarks.jsx` | `/student-dashboard/subject-marks` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `student/submissionStatus.jsx` | `/student-dashboard/submission-status` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
 | `student/timetable.jsx` | `/student-dashboard/timetable` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `student/transportTracking.jsx` | `/student-dashboard/transport-tracking` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |

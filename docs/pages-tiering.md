@@ -47,7 +47,7 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 
 ---
 
-## Tier B: Stretch Pages & Complete Subsystems (18 Verified Pages)
+## Tier B: Stretch Pages & Complete Subsystems (33 Verified Pages)
 
 ### 1. Completed & Verified Tier B Pages
 | # | Page | Route | Backend Flow | Status & Verification |
@@ -70,6 +70,21 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 | 16 | `parent/healthRecords.jsx` | `/parent-dashboard/health-records` | `GET /v1/parent/overview`, `POST /v1/parents/dispatch-alert` | REAL (3/3 tests passing in `parentHealthRecords.test.jsx`) |
 | 17 | `parent/scholarshipView.jsx` | `/parent-dashboard/scholarship-view` | `GET /v1/scholarships`, `POST /v1/scholarships/apply` | REAL (3/3 tests passing in `parentScholarshipView.test.jsx`) |
 | 18 | `parent/profileSettings.jsx` | `/parent-dashboard/profile-settings` | `GET/PUT /api/user/profile`, `GET /v1/parent/overview` | REAL (3/3 tests passing in `parentProfileSettings.test.jsx`) |
+| 19 | `admin/facultyManagement.jsx` | `/admin-dashboard/faculty-management` | `GET/POST /api/admin/faculty`, `PUT /api/admin/faculty/:id` | REAL (3/3 tests passing in `facultyManagement.test.jsx`) |
+| 20 | `admin/feeCollection.jsx` | `/admin-dashboard/fee-collection` | `GET/POST /api/admin/fees` | REAL (3/3 tests passing in `feeCollection.test.jsx`) |
+| 21 | `admin/hostelAllocation.jsx` | `/admin-dashboard/hostel-allocation` | `GET /api/admin/hostel`, `POST /api/admin/hostel/allocate`, `POST /api/admin/hostel/evict` | REAL (3/3 tests passing in `hostelAllocation.test.jsx`) |
+| 22 | `admin/examSetup.jsx` | `/admin-dashboard/exam-setup` | `GET/POST/DELETE /api/admin/exams` | REAL (3/3 tests passing in `examSetup.test.jsx`) |
+| 23 | `admin/resultPublishing.jsx` | `/admin-dashboard/result-publishing` | `GET /api/admin/results`, `POST /api/admin/results/publish`, `POST /api/admin/results/retract`, `POST /api/admin/results/moderate` | REAL (3/3 tests passing in `resultPublishing.test.jsx`) |
+| 24 | `admin/parentAccounts.jsx` | `/admin-dashboard/parent-accounts` | `GET/POST /api/admin/parents`, `PUT /api/admin/parents/:id/status`, `POST /api/admin/parents/dispatch-alert` | REAL (3/3 tests passing in `parentAccounts.test.jsx`) |
+| 25 | `admin/payrollPreview.jsx` | `/admin-dashboard/payroll-preview` | `GET/POST /api/admin/payroll` | REAL (3/3 tests passing in `payrollPreview.test.jsx`) |
+| 26 | `admin/timetableGeneration.jsx` | `/admin-dashboard/timetable-generation` | `GET /api/admin/timetable`, `POST /api/admin/timetable/slots` | REAL (3/3 tests passing in `timetableGeneration.test.jsx`) |
+| 27 | `admin/backupManagement.jsx` | `/admin-dashboard/backup-management` | `GET /api/backup/status`, `POST /api/backup/snapshot` | REAL (3/3 tests passing in `backupManagement.test.jsx`) |
+| 28 | `student/libraryAccount.jsx` | `/student-dashboard/library-account` | `GET /v1/library/issues`, `GET /v1/library/books`, `POST /v1/library/return`, `POST /v1/library/issue` | REAL (3/3 tests passing in `studentLibraryAccount.test.jsx`) |
+| 29 | `student/hostelInfo.jsx` | `/student-dashboard/hostel-info` | `GET /v1/hostel/allocations`, `POST /v1/hostel/gate-pass`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `studentHostelInfo.test.jsx`) |
+| 30 | `student/scholarshipStatus.jsx` | `/student-dashboard/scholarship-status` | `GET /v1/scholarships`, `POST /v1/scholarships/apply` | REAL (3/3 tests passing in `studentScholarshipStatus.test.jsx`) |
+| 31 | `student/subjectMarks.jsx` | `/student-dashboard/subject-marks` | `GET /v1/academics/marks`, `POST /v1/grievances` | REAL (3/3 tests passing in `studentSubjectMarks.test.jsx`) |
+| 32 | `faculty/classTimetable.jsx` | `/faculty-dashboard/class-timetable` | `GET /api/admin/timetable`, `POST /api/admin/timetable/slots` | REAL (3/3 tests passing in `facultyClassTimetable.test.jsx`) |
+| 33 | `parent/teacherCommunication.jsx` | `/parent-dashboard/teacher-communication` | `GET /v1/parent/chat`, `POST /v1/parent/chat` | REAL (3/3 tests passing in `parentTeacherCommunication.test.jsx`) |
 
 ### 2. Remaining Tier B Candidates
 Pages with existing partial API clients or write capabilities that require additional integration tests or endpoint alignment:

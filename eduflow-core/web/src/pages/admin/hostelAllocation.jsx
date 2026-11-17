@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { STUDENT } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const PURPLE = '#7C3AED'
 const BLUE = '#2563EB'
@@ -8,63 +8,156 @@ const GREEN = '#10B981'
 const AMBER = '#F59E0B'
 const RED = '#EF4444'
 
-const MAX_ROOM_CAPACITY = 4
-
-const initialAllocations = [
-  { id: 'H01', block: 'Block A', room: '101', student: STUDENT.name, roommates: ['Kiran Kumar', 'Vikas Reddy'], floor: 1 },
-  { id: 'H02', block: 'Block A', room: '102', student: 'Priya Singh', roommates: ['Sneha Patel', 'Anusha V.'], floor: 1 },
-  { id: 'H03', block: 'Block B', room: '204', student: 'Kavya Naidu', roommates: ['Deepika M.'], floor: 2 },
-  { id: 'H04', block: 'Block B', room: '205', student: 'Rahul Varma', roommates: ['Sanjay T.'], floor: 2 },
-]
-
 export default function Page() {
-  const [allocations, setAllocations] = useState(initialAllocations)
+  const [rooms, setRooms] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [search, setSearch] = useState('')
   const [blockFilter, setBlockFilter] = useState('ALL')
   const [showForm, setShowForm] = useState(false)
-  const [confirmEvictId, setConfirmEvictId] = useState(null)
+  const [confirmEvictTarget, setConfirmEvictTarget] = useState(null)
   const [formError, setFormError] = useState('')
-  const [form, setForm] = useState({ student: '', block: 'Block A', room: '204', roommates: '', floor: 2 })
+  const [submitting, setSubmitting] = useState(false)
+  const [successToast, setSuccessToast] = useState('')
+  const [form, setForm] = useState({ student: '', roomId: '', block: 'Block A' })
 
-  function handleCreate(e) {
+  const fetchRooms = async (isMounted = true) => {
+    try {
+      if (isMounted) {
+        setLoading(true)
+        setLoadError(null)
+      }
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/admin/hostel'), {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      })
+
+      if (!res.ok) {
+        throw new Error(`Failed to load hostel directory (HTTP ${res.status})`)
+      }
+
+      const data = await res.json()
+      if (isMounted) {
+        const raw = Array.isArray(data?.data) ? data.data : []
+        const mapped = raw.map(r => ({
+          id: r.id || r.roomNo,
+          roomNo: r.roomNo || r.id,
+          block: r.block || 'Block A',
+          capacity: r.capacity || 4,
+          occupants: Array.isArray(r.occupants) ? r.occupants : []
+        }))
+        setRooms(mapped)
+        if (mapped.length > 0 && !form.roomId) {
+          setForm(prev => ({ ...prev, roomId: mapped[0].id }))
+        }
+      }
+    } catch (err) {
+      if (isMounted) {
+        setLoadError(err.message || 'Error fetching hostel allocations')
+      }
+    } finally {
+      if (isMounted) setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let isMounted = true
+    fetchRooms(isMounted)
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  async function handleAllocate(e) {
     e.preventDefault()
     setFormError('')
 
-    const roommatesList = form.roommates.split(',').map(s => s.trim()).filter(Boolean)
-    const totalProposed = 1 + roommatesList.length
-
-    // Broken Rule Fix: Prevent exceeding room max occupancy
-    if (totalProposed > MAX_ROOM_CAPACITY) {
-      setFormError(`Room capacity exceeded! Maximum ${MAX_ROOM_CAPACITY} residents allowed per room (you specified ${totalProposed}).`)
+    if (!form.student.trim()) {
+      setFormError('Resident student name is required.')
       return
     }
 
-    // Check if room is already allocated in that block
-    const existing = allocations.find(a => a.block === form.block && a.room === form.room)
-    if (existing) {
-      setFormError(`Room ${form.room} in ${form.block} is already allocated to ${existing.student}. Vacate or reassign room.`)
+    const selectedRoom = rooms.find(r => r.id === form.roomId || r.roomNo === form.roomId)
+    if (!selectedRoom) {
+      setFormError('Please select a valid hostel room.')
       return
     }
 
-    setAllocations(prev => [...prev, { ...form, roommates: roommatesList, id: `H0${prev.length + 1}` }])
-    setShowForm(false)
-    setForm({ student: '', block: 'Block A', room: '204', roommates: '', floor: 2 })
+    if (selectedRoom.occupants.length >= selectedRoom.capacity) {
+      setFormError(`Room ${selectedRoom.roomNo} in ${selectedRoom.block} has reached maximum capacity (${selectedRoom.capacity} beds).`)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/admin/hostel/allocate'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          roomId: selectedRoom.id,
+          studentName: form.student.trim()
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to allocate bed (HTTP ${res.status})`)
+      }
+
+      setSuccessToast(`Student ${form.student} successfully allocated to Room ${selectedRoom.roomNo} (${selectedRoom.block}).`)
+      setTimeout(() => setSuccessToast(''), 4000)
+      setShowForm(false)
+      setForm(prev => ({ ...prev, student: '' }))
+      await fetchRooms(true)
+    } catch (err) {
+      setFormError(err.message || 'Error allocating hostel bed')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  function handleEvict(id) {
-    setAllocations(prev => prev.filter(a => a.id !== id))
-    setConfirmEvictId(null)
+  async function handleEvict(roomId, studentName) {
+    try {
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/admin/hostel/evict'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ roomId, studentName })
+      })
+
+      if (res.ok) {
+        setSuccessToast(`Resident ${studentName} vacated from room.`)
+        setTimeout(() => setSuccessToast(''), 4000)
+        await fetchRooms(true)
+      }
+    } catch {
+      // Optimistic update
+      setRooms(prev => prev.map(r => r.id === roomId ? { ...r, occupants: r.occupants.filter(s => s !== studentName) } : r))
+    } finally {
+      setConfirmEvictTarget(null)
+    }
   }
 
-  const totalOccupants = allocations.reduce((acc, a) => acc + 1 + a.roommates.length, 0)
-  const blockAOccupants = allocations.filter(a => a.block === 'Block A').reduce((acc, a) => acc + 1 + a.roommates.length, 0)
-  const blockBOccupants = allocations.filter(a => a.block === 'Block B').reduce((acc, a) => acc + 1 + a.roommates.length, 0)
+  const totalOccupants = rooms.reduce((acc, r) => acc + r.occupants.length, 0)
+  const totalBeds = rooms.reduce((acc, r) => acc + r.capacity, 0)
+  const blockAOccupants = rooms.filter(r => r.block === 'Block A').reduce((acc, r) => acc + r.occupants.length, 0)
+  const blockBOccupants = rooms.filter(r => r.block === 'Block B').reduce((acc, r) => acc + r.occupants.length, 0)
 
-  const filtered = allocations.filter(a => {
-    const matchesSearch = a.student.toLowerCase().includes(search.toLowerCase()) ||
-                          a.room.includes(search) ||
-                          a.roommates.some(r => r.toLowerCase().includes(search.toLowerCase()))
-    const matchesBlock = blockFilter === 'ALL' || a.block === blockFilter
+  const filtered = rooms.filter(r => {
+    const matchesSearch = r.roomNo.toLowerCase().includes(search.toLowerCase()) ||
+                          r.block.toLowerCase().includes(search.toLowerCase()) ||
+                          r.occupants.some(o => o.toLowerCase().includes(search.toLowerCase()))
+    const matchesBlock = blockFilter === 'ALL' || r.block === blockFilter
     return matchesSearch && matchesBlock
   })
 
@@ -72,180 +165,214 @@ export default function Page() {
     <RolePageTemplate role="Admin" title="Hostel Allocation & Residency" description="Assign dorm rooms, inspect gender-segregated wings, balance occupancy, and oversee warden logs.">
       <div style={{ display: 'grid', gap: '1.25rem' }}>
 
-        {/* Dynamic counters */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem' }}>
-          {[
-            { label: 'Total Allocated', value: totalOccupants, color: PURPLE, icon: '🛏️' },
-            { label: 'Block A (Boys)', value: blockAOccupants, color: BLUE, icon: '🏢' },
-            { label: 'Block B (Girls)', value: blockBOccupants, color: GREEN, icon: '🏫' },
-            { label: 'Rooms Active', value: allocations.length, color: AMBER, icon: '🚪' },
-          ].map(s => (
-            <div key={s.label} className="card border-0 shadow-sm" style={{ borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.35rem', marginBottom: '0.2rem' }}>{s.icon}</div>
-              <div style={{ fontWeight: 800, fontSize: '1.35rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
+        {/* Success toast */}
+        {successToast && (
+          <div data-testid="hostel-success-toast" className="alert alert-success py-2 px-3 small mb-0 shadow-sm" role="alert">
+            ✅ {successToast}
+          </div>
+        )}
 
-        {/* Directory Controls */}
-        <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
-          <div className="card-body p-3 p-md-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div className="d-flex align-items-center gap-2 flex-grow-1 flex-wrap" style={{ maxWidth: '600px' }}>
-              <div className="input-group input-group-sm flex-grow-1" style={{ minWidth: '220px' }}>
-                <span className="input-group-text bg-transparent border-end-0">🔍</span>
-                <input
-                  className="form-control border-start-0"
-                  placeholder="Search resident, room number..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                {search && (
-                  <button className="btn btn-outline-secondary" type="button" onClick={() => setSearch('')}>
-                    ✕
+        {/* Loading state */}
+        {loading ? (
+          <div data-testid="hostel-loading" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem' }}>
+            {[1, 2, 3, 4].map(n => (
+              <div key={n} className="card border-0 shadow-sm p-4 text-center placeholder-glow" style={{ borderRadius: '1rem' }}>
+                <span className="placeholder col-6 mx-auto mb-2" />
+                <span className="placeholder col-4 mx-auto" />
+              </div>
+            ))}
+          </div>
+        ) : loadError ? (
+          /* Error State */
+          <div data-testid="hostel-error" className="card border-0 shadow-sm p-4 text-center bg-danger-subtle text-danger" style={{ borderRadius: '1.25rem' }}>
+            <h5 className="fw-bold mb-2">Unable to Load Hostel Allocations</h5>
+            <p className="small mb-3">{loadError}</p>
+            <div>
+              <button className="btn btn-sm btn-outline-danger" onClick={() => fetchRooms(true)}>
+                🔄 Retry Connection
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Dynamic counters */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem' }}>
+              {[
+                { label: 'Total Occupancy', value: `${totalOccupants} / ${totalBeds}`, color: PURPLE, icon: '🛏️' },
+                { label: 'Block A (Boys)', value: blockAOccupants, color: BLUE, icon: '🏢' },
+                { label: 'Block B (Girls)', value: blockBOccupants, color: GREEN, icon: '🏫' },
+                { label: 'Active Dorms', value: rooms.length, color: AMBER, icon: '🚪' },
+              ].map(s => (
+                <div key={s.label} className="card border-0 shadow-sm" style={{ borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.35rem', marginBottom: '0.2rem' }}>{s.icon}</div>
+                  <div style={{ fontWeight: 800, fontSize: '1.35rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
+                  <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Directory Controls */}
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
+              <div className="card-body p-3 p-md-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div className="d-flex align-items-center gap-2 flex-grow-1 flex-wrap" style={{ maxWidth: '600px' }}>
+                  <div className="input-group input-group-sm flex-grow-1" style={{ minWidth: '220px' }}>
+                    <span className="input-group-text bg-transparent border-end-0">🔍</span>
+                    <input
+                      className="form-control border-start-0"
+                      placeholder="Search resident, room number..."
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                    />
+                    {search && (
+                      <button className="btn btn-outline-secondary" type="button" onClick={() => setSearch('')}>
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ width: 'auto', minWidth: '130px' }}
+                    value={blockFilter}
+                    onChange={e => setBlockFilter(e.target.value)}
+                  >
+                    <option value="ALL">All Blocks</option>
+                    <option value="Block A">Block A (Boys Wing)</option>
+                    <option value="Block B">Block B (Girls Wing)</option>
+                  </select>
+                </div>
+                {!showForm && (
+                  <button
+                    className="btn btn-sm btn-primary shadow-sm"
+                    data-testid="open-allocate-btn"
+                    onClick={() => setShowForm(true)}
+                    style={{ background: `linear-gradient(135deg, ${PURPLE}, #EF4444)`, border: 'none' }}
+                  >
+                    + Allocate Dorm Bed
                   </button>
                 )}
               </div>
-              <select
-                className="form-select form-select-sm"
-                style={{ width: 'auto', minWidth: '130px' }}
-                value={blockFilter}
-                onChange={e => setBlockFilter(e.target.value)}
-              >
-                <option value="ALL">All Blocks</option>
-                <option value="Block A">Block A (Boys)</option>
-                <option value="Block B">Block B (Girls)</option>
-              </select>
             </div>
-            {!showForm && (
-              <button
-                className="btn btn-sm btn-primary shadow-sm"
-                onClick={() => setShowForm(true)}
-                style={{ background: `linear-gradient(135deg, ${PURPLE}, #EF4444)`, border: 'none' }}
-              >
-                + Allocate Room
-              </button>
+
+            {/* Allocate form */}
+            {showForm && (
+              <form onSubmit={handleAllocate} data-testid="allocate-hostel-form" className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', padding: '1.5rem', display: 'grid', gap: '1rem' }}>
+                <div className="d-flex justify-content-between align-items-center">
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>🛏️ Assign Dormitory Residency</h3>
+                  <button type="button" className="btn-close" onClick={() => { setShowForm(false); setFormError(''); }} aria-label="Close" />
+                </div>
+
+                {formError && (
+                  <div className="alert alert-danger py-2 px-3 small mb-0" role="alert">
+                    ⚠️ {formError}
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.875rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>STUDENT FULL NAME</label>
+                    <input required className="form-control form-control-sm" placeholder="e.g. Kiran Kumar" value={form.student} onChange={e => setForm(p => ({ ...p, student: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>TARGET ROOM</label>
+                    <select className="form-select form-select-sm" value={form.roomId} onChange={e => setForm(p => ({ ...p, roomId: e.target.value }))}>
+                      {rooms.map(r => (
+                        <option key={r.id} value={r.id}>
+                          {r.block} - Room {r.roomNo} ({r.occupants.length}/{r.capacity} beds filled)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                  <button type="submit" disabled={submitting} data-testid="submit-allocate-btn" className="btn btn-sm btn-primary">
+                    {submitting ? 'Allocating...' : 'Allocate Bed'}
+                  </button>
+                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setShowForm(false); setFormError(''); }}>Cancel</button>
+                </div>
+              </form>
             )}
-          </div>
-        </div>
 
-        {/* Allocate form */}
-        {showForm && (
-          <form onSubmit={handleCreate} className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', padding: '1.5rem', display: 'grid', gap: '1rem' }}>
-            <div className="d-flex justify-content-between align-items-center">
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>🛏️ Assign Dormitory Accommodation</h3>
-              <button type="button" className="btn-close" onClick={() => { setShowForm(false); setFormError(''); }} aria-label="Close" />
-            </div>
-
-            {formError && (
-              <div className="alert alert-danger py-2 px-3 small mb-0" role="alert">
-                ⚠️ {formError}
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.875rem' }}>
-              <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>PRIMARY RESIDENT</label>
-                <input required className="form-control form-control-sm" placeholder="e.g. Abhiram V." value={form.student} onChange={e => setForm(p => ({ ...p, student: e.target.value }))} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>HOSTEL BLOCK</label>
-                <select className="form-select form-select-sm" value={form.block} onChange={e => setForm(p => ({ ...p, block: e.target.value }))}>
-                  <option>Block A</option>
-                  <option>Block B</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>ROOM NUMBER</label>
-                <input required className="form-control form-control-sm" placeholder="e.g. 204" value={form.room} onChange={e => setForm(p => ({ ...p, room: e.target.value }))} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '0.3rem' }}>ROOMMATES (MAX 3, COMMA SEPARATED)</label>
-                <input className="form-control form-control-sm" placeholder="e.g. Sai Charan, Amit Kumar" value={form.roommates} onChange={e => setForm(p => ({ ...p, roommates: e.target.value }))} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <button type="submit" className="btn btn-sm btn-primary">Allocate Room</button>
-              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setShowForm(false); setFormError(''); }}>Cancel</button>
-            </div>
-          </form>
-        )}
-
-        {/* Allocations table */}
-        <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
-          <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead>
-                <tr style={{ background: 'var(--surface-bg)' }}>
-                  {['Block', 'Room No', 'Primary Resident', 'Roommates', 'Occupancy', 'Capacity Status', 'Action'].map(h => (
-                    <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-5 text-muted">
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
-                      <div className="fw-semibold">No hostel allocations found</div>
-                      <div className="small">Try adjusting your search query or block filter.</div>
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map(a => {
-                    const count = a.roommates.length + 1
-                    const isFull = count >= MAX_ROOM_CAPACITY
-                    return (
-                      <tr key={a.id}>
-                        <td><span className="badge text-bg-secondary">{a.block}</span></td>
-                        <td style={{ fontWeight: 800, fontSize: '0.875rem' }}>Room {a.room}</td>
-                        <td style={{ fontWeight: 700 }}>{a.student}</td>
-                        <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{a.roommates.join(', ') || 'None (Single Occupancy)'}</td>
-                        <td>
-                          <span className="badge text-bg-light" style={{ border: '1px solid var(--border-color)' }}>
-                            {count} / {MAX_ROOM_CAPACITY} Beds
-                          </span>
-                        </td>
-                        <td>
-                          <span style={{
-                            padding: '0.2rem 0.6rem', borderRadius: '2rem',
-                            background: isFull ? `${RED}12` : `${GREEN}12`,
-                            color: isFull ? RED : GREEN,
-                            fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase'
-                          }}>
-                            {isFull ? '🔴 FULL' : `🟢 ${MAX_ROOM_CAPACITY - count} AVAILABLE`}
-                          </span>
-                        </td>
-                        <td>
-                          {confirmEvictId === a.id ? (
-                            <div className="d-flex align-items-center gap-1">
-                              <button className="btn btn-sm btn-danger px-2 py-0" onClick={() => handleEvict(a.id)} style={{ fontSize: '0.7rem' }}>
-                                Confirm
-                              </button>
-                              <button className="btn btn-sm btn-secondary px-2 py-0" onClick={() => setConfirmEvictId(null)} style={{ fontSize: '0.7rem' }}>
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => setConfirmEvictId(a.id)}
-                              style={{ fontSize: '0.72rem' }}
-                              title="Vacate room allocation"
-                            >
-                              Vacate 🗑️
-                            </button>
-                          )}
+            {/* Room Allocations Table */}
+            <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem' }}>
+              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table className="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr style={{ background: 'var(--surface-bg)' }}>
+                      {['Block', 'Room No', 'Capacity', 'Occupancy', 'Current Residents', 'Action'].map(h => (
+                        <th key={h} style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr data-testid="hostel-empty">
+                        <td colSpan="6" className="text-center py-5 text-muted">
+                          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚪</div>
+                          <div className="fw-semibold">No hostel rooms found</div>
+                          <div className="small">Adjust filter or allocate residents above.</div>
                         </td>
                       </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+                    ) : (
+                      filtered.map(room => {
+                        const isFull = room.occupants.length >= room.capacity
+                        return (
+                          <tr key={room.id}>
+                            <td style={{ fontSize: '0.85rem', fontWeight: 700 }}>{room.block}</td>
+                            <td style={{ fontSize: '0.9rem', fontWeight: 800 }}>Room {room.roomNo}</td>
+                            <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{room.capacity} Beds</td>
+                            <td>
+                              <span style={{
+                                padding: '0.2rem 0.6rem', borderRadius: '2rem',
+                                background: isFull ? `${RED}12` : `${GREEN}12`,
+                                color: isFull ? RED : GREEN,
+                                fontSize: '0.72rem', fontWeight: 700
+                              }}>
+                                {room.occupants.length} / {room.capacity} Filled
+                              </span>
+                            </td>
+                            <td>
+                              {room.occupants.length === 0 ? (
+                                <span className="text-muted small italic">Vacant (0 residents)</span>
+                              ) : (
+                                <div className="d-flex flex-wrap gap-1">
+                                  {room.occupants.map(name => (
+                                    <span key={name} className="badge bg-light text-dark border d-flex align-items-center gap-1">
+                                      👤 {name}
+                                      <button
+                                        type="button"
+                                        className="btn-close ms-1"
+                                        style={{ fontSize: '0.55rem' }}
+                                        onClick={() => handleEvict(room.id, name)}
+                                        aria-label={`Vacate ${name}`}
+                                      />
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-outline-primary px-2 py-0"
+                                style={{ fontSize: '0.7rem' }}
+                                disabled={isFull}
+                                onClick={() => {
+                                  setForm(p => ({ ...p, roomId: room.id }))
+                                  setShowForm(true)
+                                }}
+                              >
+                                {isFull ? 'Full' : '+ Add Resident'}
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </RolePageTemplate>
   )
