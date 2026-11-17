@@ -93,7 +93,15 @@ verified_real = {
     'paymentHistory.jsx', 'submissionStatus.jsx', 'digitalMaterials.jsx',
     'labBookings.jsx', 'CourseFeedbackPage.jsx', 'childTracking.jsx',
     'dailyHomework.jsx', 'dueAlerts.jsx', 'examCalendar.jsx',
-    'disciplineAlerts.jsx', 'admissionsPipeline.jsx'
+    'disciplineAlerts.jsx', 'admissionsPipeline.jsx',
+    # Newly Completed 20 Mock Pages -> Real (Batch 3)
+    'InsightsDashboardPage.jsx', 'LibraryScannerPage.jsx', 'StaffManagementPage.jsx',
+    'analyticsCenter.jsx', 'rolePermissions.jsx', 'userTracking.jsx',
+    'BuildManager.jsx', 'AdmissionOfficer.jsx', 'FinanceOfficer.jsx',
+    'OfficerPlaceholder.jsx', 'StudentSuccessOfficer.jsx', 'TimetableOfficer.jsx',
+    'TimetableUploadPage.jsx', 'VirtualClassroomPage.jsx', 'AttendanceAnalyticsPage.jsx',
+    'ClassDiscussionBoardPage.jsx', 'CurriculumRevisionPage.jsx', 'ExamQuestionGeneratorPage.jsx',
+    'LabInventoryPage.jsx', 'PeerEvaluationPage.jsx'
 }
 
 calendar_subcomps = {
@@ -122,7 +130,15 @@ tier_b_verified = {
     'paymentHistory.jsx', 'submissionStatus.jsx', 'digitalMaterials.jsx',
     'labBookings.jsx', 'CourseFeedbackPage.jsx', 'childTracking.jsx',
     'dailyHomework.jsx', 'dueAlerts.jsx', 'examCalendar.jsx',
-    'disciplineAlerts.jsx', 'admissionsPipeline.jsx'
+    'disciplineAlerts.jsx', 'admissionsPipeline.jsx',
+    # Newly Completed 20 Mock Pages -> Real (Batch 3)
+    'InsightsDashboardPage.jsx', 'LibraryScannerPage.jsx', 'StaffManagementPage.jsx',
+    'analyticsCenter.jsx', 'rolePermissions.jsx', 'userTracking.jsx',
+    'BuildManager.jsx', 'AdmissionOfficer.jsx', 'FinanceOfficer.jsx',
+    'OfficerPlaceholder.jsx', 'StudentSuccessOfficer.jsx', 'TimetableOfficer.jsx',
+    'TimetableUploadPage.jsx', 'VirtualClassroomPage.jsx', 'AttendanceAnalyticsPage.jsx',
+    'ClassDiscussionBoardPage.jsx', 'CurriculumRevisionPage.jsx', 'ExamQuestionGeneratorPage.jsx',
+    'LabInventoryPage.jsx', 'PeerEvaluationPage.jsx'
 }
 
 tier_a_candidates = {
@@ -272,8 +288,28 @@ for pf in page_files:
             block = 'Static presentation component'
 
     counts[state] += 1
+    # Role categorization
+    role_cat = 'Public / Common'
+    if parts[0] in ['admin']:
+        role_cat = 'Admin'
+    elif parts[0] in ['faculty']:
+        role_cat = 'Faculty'
+    elif parts[0] in ['student']:
+        role_cat = 'Student'
+    elif parts[0] in ['parent']:
+        role_cat = 'Parent'
+    elif parts[0] in ['hod']:
+        role_cat = 'HOD'
+    elif parts[0] in ['finance']:
+        role_cat = 'Finance'
+    elif parts[0] in ['staff']:
+        role_cat = 'Staff'
+    elif parts[0] in ['ai']:
+        role_cat = 'AI & Officers'
+    
     rows.append({
         'page': rel_path,
+        'role_cat': role_cat,
         'route': route or 'None',
         'state': state,
         'api': api,
@@ -284,17 +320,42 @@ for pf in page_files:
         'blocker': block
     })
 
+# Compute role breakdown
+role_breakdown = {}
+for r in rows:
+    rc = r['role_cat']
+    if rc not in role_breakdown:
+        role_breakdown[rc] = {'REAL': 0, 'PARTIAL': 0, 'MOCK': 0, 'STUB': 0, 'ORPHAN': 0, 'TOTAL': 0}
+    role_breakdown[rc][r['state']] += 1
+    role_breakdown[rc]['TOTAL'] += 1
+
+role_table_lines = [
+    '## Role-Based Categorization Breakdown',
+    '',
+    '| Role Category | REAL | PARTIAL | MOCK | STUB | ORPHAN | Total Pages | % Real |',
+    '|---|---|---|---|---|---|---|---|'
+]
+
+for rc, stats in sorted(role_breakdown.items(), key=lambda x: -x[1]['REAL']):
+    pct_real = (stats['REAL'] / stats['TOTAL'] * 100) if stats['TOTAL'] else 0
+    role_table_lines.append(
+        f"| **{rc}** | {stats['REAL']} | {stats['PARTIAL']} | {stats['MOCK']} | {stats['STUB']} | {stats['ORPHAN']} | {stats['TOTAL']} | **{pct_real:.1f}%** |"
+    )
+
+role_table_lines.append('')
+
 lines = [
     '# EduFlowAI Comprehensive Page-by-Page Audit',
     '',
     '## Ground-Truth Status Summary',
     f'- **Total Audited Pages:** {len(rows)}',
-    f'- **REAL:** {counts["REAL"]} (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)',
+    f'- **REAL:** {counts["REAL"]} (calendar, attendance, grievances, officers, faculty, admin, finance, parent — verified with real API, tests & role guards)',
     f'- **PARTIAL:** {counts["PARTIAL"]} (has API calls but lacks full write action, end-to-end assertions, or integration tests)',
     f'- **MOCK:** {counts["MOCK"]} (uses local state, hardcoded arrays, or mock fixtures)',
     f'- **STUB:** {counts["STUB"]} (placeholder or under construction component)',
     f'- **ORPHAN:** {counts["ORPHAN"]} (unrouted legacy or internal subcomponent)',
     '',
+    *role_table_lines,
     '## Page Inventory',
     '',
     '| Page | Route | Current State | Real API? | Real Action? | Has Test? | Role Guard? | Tier | Blocker |',

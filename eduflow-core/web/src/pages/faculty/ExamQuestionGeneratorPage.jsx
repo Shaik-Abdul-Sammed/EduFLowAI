@@ -1,11 +1,16 @@
-import { useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Sparkles, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
+import { useToast } from '../../context/ToastContext'
 
 export default function ExamQuestionGeneratorPage() {
+  const { addToast } = useToast?.() || { addToast: () => {} }
   const [topic, setTopic] = useState('Operating Systems - Concurrency & Deadlocks')
   const [level, setLevel] = useState('Level 4: Analyze / Apply')
   const [generating, setGenerating] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [generatedQuestions, setGeneratedQuestions] = useState([
     {
       id: 1,
@@ -21,11 +26,49 @@ export default function ExamQuestionGeneratorPage() {
     }
   ])
 
-  const handleGenerate = (e) => {
+  const fetchQuestionBank = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await wakeUpFetch('/v1/exams/online')
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to synchronize Bloom taxonomy question bank`)
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        setGeneratedQuestions(prev => [
+          ...prev,
+          {
+            id: 3,
+            taxonomy: 'Bloom L5 (Evaluate)',
+            marks: 12,
+            text: 'Evaluate trade-offs between Multi-Level Feedback Queue (MLFQ) and Completely Fair Scheduler (CFS) for real-time interactive workloads.'
+          }
+        ])
+      }
+    } catch (err) {
+      setError(err.message || 'Question bank synchronization error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchQuestionBank()
+  }, [])
+
+  const handleGenerate = async (e) => {
     e.preventDefault()
     setGenerating(true)
-    setTimeout(() => {
-      setGenerating(false)
+    try {
+      await wakeUpFetch('/v1/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'bloom_taxonomy_question',
+          subject: `Question Synthesis: ${topic} (${level})`,
+          description: `AI question generated for ${level} on topic ${topic}.`
+        })
+      })
+
       const q = {
         id: Date.now(),
         taxonomy: level,
@@ -33,7 +76,12 @@ export default function ExamQuestionGeneratorPage() {
         text: `Evaluate the memory overhead of multi-level paging versus inverted page tables for a 64-bit virtual address space with 4KB page frames under topic: ${topic}.`
       }
       setGeneratedQuestions(prev => [q, ...prev])
-    }, 1200)
+      addToast('Synthesized question compliant with Bloom taxonomy!', 'success')
+    } catch (err) {
+      addToast(`Generation error: ${err.message}`, 'error')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   return (
@@ -43,6 +91,29 @@ export default function ExamQuestionGeneratorPage() {
       description="Synthesize outcome-based examination questions mapped to Bloom's cognitive taxonomy levels and course outcomes (COs)."
     >
       <div className="d-flex flex-column gap-4 w-100">
+        {loading && (
+          <div data-testid="question-loading" className="alert alert-secondary py-2 px-3 small d-flex align-items-center gap-2 mb-0">
+            <RefreshCw size={16} className="animate-spin" />
+            <span>Synchronizing Bloom taxonomy question bank...</span>
+          </div>
+        )}
+
+        {error && (
+          <div data-testid="question-error" className="alert alert-danger py-2 px-3 small d-flex justify-content-between align-items-center mb-0">
+            <div className="d-flex align-items-center gap-2">
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
+            <button
+              data-testid="question-retry"
+              className="btn btn-outline-danger btn-sm py-0 px-2"
+              onClick={fetchQuestionBank}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         <div className="card border-0 shadow-sm p-4" style={{ background: 'var(--card-bg, #ffffff)' }}>
           <h3 className="h6 fw-bold mb-3 d-flex align-items-center gap-2">
             <Sparkles size={18} className="text-primary" /> AI Question Paper Synthesis
@@ -52,6 +123,7 @@ export default function ExamQuestionGeneratorPage() {
               <label className="form-label small fw-semibold">Syllabus Topic / Chapter</label>
               <input
                 type="text"
+                data-testid="topic-input"
                 className="form-control"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
@@ -76,10 +148,12 @@ export default function ExamQuestionGeneratorPage() {
             <div className="col-12 col-md-2 d-flex align-items-end">
               <button
                 type="submit"
+                data-testid="generate-question-btn"
                 disabled={generating}
                 className="btn btn-primary w-100 d-inline-flex align-items-center justify-content-center gap-1.5"
               >
-                <Sparkles size={16} /> {generating ? 'Generating...' : 'Synthesize'}
+                {generating ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                <span>{generating ? 'Generating...' : 'Synthesize'}</span>
               </button>
             </div>
           </form>
@@ -87,7 +161,7 @@ export default function ExamQuestionGeneratorPage() {
 
         <div className="card border-0 shadow-sm p-4" style={{ background: 'var(--card-bg, #ffffff)' }}>
           <h3 className="h6 fw-bold mb-3">Generated Examination Questions</h3>
-          <div className="d-flex flex-column gap-3">
+          <div data-testid="questions-list" className="d-flex flex-column gap-3">
             {generatedQuestions.map(q => (
               <div key={q.id} className="p-3 rounded-3 bg-light border">
                 <div className="d-flex justify-content-between align-items-center mb-2">

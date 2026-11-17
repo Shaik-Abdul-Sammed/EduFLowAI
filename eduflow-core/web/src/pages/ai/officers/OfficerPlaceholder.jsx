@@ -1,8 +1,45 @@
-// TODO: OfficerPlaceholder is intentionally unmounted from active routes. It is reserved as a fallback/template for unfinished future AI officers.
+// OfficerPlaceholder: Early access waitlist and phase-2 reservation gateway for upcoming AI officers.
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Bell } from 'lucide-react';
+import { ArrowLeft, Check, Bell, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { wakeUpFetch } from '../../../utils/wakeUpHandler';
+import { useToast } from '../../../context/ToastContext';
 
-export default function OfficerPlaceholder({ officerName, icon, color, desc, features = [] }) {
+export default function OfficerPlaceholder({ officerName = 'Specialized AI Officer', icon = '🤖', color = '#6366F1', desc = 'Specialized autonomous copilot for institutional operations.', features = [] }) {
+  const { addToast } = useToast?.() || { addToast: () => {} };
+  const [submitting, setSubmitting] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleNotifyMe = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await wakeUpFetch('/v1/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'ai_officer_waitlist',
+          priority: 'medium',
+          subject: `Early Access Waitlist: ${officerName}`,
+          description: `User requested phase-2 automated notification and beta deployment for ${officerName}.`
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Failed to register waitlist interest`);
+      }
+
+      setSubscribed(true);
+      addToast(`You are registered on the ${officerName} priority access list!`, 'success');
+    } catch (err) {
+      setError(err.message || 'Unable to register interest. Please try again.');
+      addToast(err.message || 'Waitlist registration failed', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -69,31 +106,73 @@ export default function OfficerPlaceholder({ officerName, icon, color, desc, fea
           {desc}
         </p>
 
-        <div style={{ width: '100%', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '2rem', marginBottom: '2.5rem' }}>
-          <h3 style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.5rem', textAlign: 'center', fontWeight: 'bold' }}>
-            Planned Features
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            {features.map((feature, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                <div style={{ color, marginTop: '0.125rem' }}>
-                  <Check size={16} />
+        {features.length > 0 && (
+          <div style={{ width: '100%', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '2rem', marginBottom: '2.5rem' }}>
+            <h3 style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.5rem', textAlign: 'center', fontWeight: 'bold' }}>
+              Planned Features
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+              {features.map((feature, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <div style={{ color, marginTop: '0.125rem' }}>
+                    <Check size={16} />
+                  </div>
+                  <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)' }}>{feature}</span>
                 </div>
-                <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)' }}>{feature}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <button style={{
-          background: color, color: 'white', border: 'none',
-          padding: '1rem 2rem', borderRadius: '12px', fontSize: '1rem', fontWeight: 600,
-          display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer',
-          transition: 'transform 0.2s, filter 0.2s'
-        }} onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.1)'; }} onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'brightness(1)'; }}>
-          <Bell size={20} />
-          Notify me when available
-        </button>
+        {error && (
+          <div data-testid="placeholder-error" style={{ width: '100%', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fca5a5', fontSize: '0.875rem' }}>
+              <AlertCircle size={18} />
+              <span>{error}</span>
+            </div>
+            <button
+              data-testid="placeholder-retry"
+              onClick={handleNotifyMe}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer' }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {subscribed ? (
+          <div data-testid="placeholder-success" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#34d399', padding: '1rem 2rem', borderRadius: '12px', fontWeight: 600 }}>
+            <CheckCircle2 size={20} />
+            <span>You are on the priority beta waitlist!</span>
+          </div>
+        ) : (
+          <button
+            data-testid="placeholder-notify-btn"
+            disabled={submitting}
+            onClick={handleNotifyMe}
+            style={{
+              background: color, color: 'white', border: 'none',
+              padding: '1rem 2rem', borderRadius: '12px', fontSize: '1rem', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: submitting ? 'not-allowed' : 'pointer',
+              opacity: submitting ? 0.7 : 1,
+              transition: 'transform 0.2s, filter 0.2s'
+            }}
+            onMouseOver={e => { if (!submitting) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.1)'; } }}
+            onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'brightness(1)'; }}
+          >
+            {submitting ? (
+              <>
+                <RefreshCw size={20} className="animate-spin" data-testid="placeholder-loading" />
+                Registering for Early Access...
+              </>
+            ) : (
+              <>
+                <Bell size={20} />
+                Notify me when available
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

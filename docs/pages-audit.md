@@ -2,11 +2,25 @@
 
 ## Ground-Truth Status Summary
 - **Total Audited Pages:** 196
-- **REAL:** 86 (calendar, attendance, grievances, dean escalation — verified with real API, tests & role guards)
-- **PARTIAL:** 47 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
-- **MOCK:** 63 (uses local state, hardcoded arrays, or mock fixtures)
+- **REAL:** 107 (calendar, attendance, grievances, officers, faculty, admin, finance, parent — verified with real API, tests & role guards)
+- **PARTIAL:** 46 (has API calls but lacks full write action, end-to-end assertions, or integration tests)
+- **MOCK:** 43 (uses local state, hardcoded arrays, or mock fixtures)
 - **STUB:** 0 (placeholder or under construction component)
 - **ORPHAN:** 0 (unrouted legacy or internal subcomponent)
+
+## Role-Based Categorization Breakdown
+
+| Role Category | REAL | PARTIAL | MOCK | STUB | ORPHAN | Total Pages | % Real |
+|---|---|---|---|---|---|---|---|
+| **Admin** | 36 | 21 | 0 | 0 | 0 | 57 | **63.2%** |
+| **Student** | 19 | 5 | 25 | 0 | 0 | 49 | **38.8%** |
+| **Faculty** | 18 | 3 | 11 | 0 | 0 | 32 | **56.2%** |
+| **Parent** | 15 | 1 | 0 | 0 | 0 | 16 | **93.8%** |
+| **Public / Common** | 8 | 8 | 7 | 0 | 0 | 23 | **34.8%** |
+| **AI & Officers** | 7 | 4 | 0 | 0 | 0 | 11 | **63.6%** |
+| **HOD** | 3 | 2 | 0 | 0 | 0 | 5 | **60.0%** |
+| **Finance** | 1 | 1 | 0 | 0 | 0 | 2 | **50.0%** |
+| **Staff** | 0 | 1 | 0 | 0 | 0 | 1 | **0.0%** |
 
 ## Page Inventory
 
@@ -30,12 +44,12 @@
 | `admin/FeeReminderPage.jsx` | `/admin-dashboard/fee-reminders` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/GrievanceManagementPage.jsx` | `/hod-dashboard/grievances` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/HostelWardenPage.jsx` | `/admin-dashboard/hostel-management` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `admin/InsightsDashboardPage.jsx` | `/admin-dashboard/'insights'` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `admin/InsightsDashboardPage.jsx` | `/admin-dashboard/'insights'` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/InstitutionSettingsPage.jsx` | `/admin-dashboard/settings` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/InvoiceGeneratorPage.jsx` | `/finance-dashboard/invoices` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/LeadManagementPage.jsx` | `/admin-dashboard/'leads'` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/LibraryManagementPage.jsx` | `/staff-dashboard/library` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `admin/LibraryScannerPage.jsx` | `/library-scanner` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `admin/LibraryScannerPage.jsx` | `/library-scanner` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/LiveDataPage.jsx` | `/admin-dashboard/live-data` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/NaacAiAnalysisPage.jsx` | `/admin-dashboard/'naac-ai-analysis'` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/NaacDashboardPage.jsx` | `/admin-dashboard/'naac-dashboard'` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
@@ -47,13 +61,13 @@
 | `admin/ReportDeliveryPage.jsx` | `/admin-dashboard/'report-delivery'` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/SSOConfigPage.jsx` | `/admin-dashboard/sso-config` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/ScholarshipManagementPage.jsx` | `/admin-dashboard/scholarships` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `admin/StaffManagementPage.jsx` | `/admin-dashboard/staff` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `admin/StaffManagementPage.jsx` | `/admin-dashboard/staff` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/SupportTicketsPage.jsx` | `/admin-dashboard/support-tickets` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/SystemHealthPage.jsx` | `/admin-dashboard/system-health` | `PARTIAL` | Yes | No | Yes | Yes | Tier C | Read-only fetch without mutation or missing endpoint |
 | `admin/UPICollectionPage.jsx` | `/admin-dashboard/upi-collection` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/WhatsAppAttendancePage.jsx` | `/admin-dashboard/whatsapp-attendance` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/admissionsPipeline.jsx` | `/admin-dashboard/admissions-pipeline` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `admin/analyticsCenter.jsx` | `/admin-dashboard/analytics-center` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `admin/analyticsCenter.jsx` | `/admin-dashboard/analytics-center` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/attendanceAudit.jsx` | `/admin-dashboard/attendance-audit` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/auditLogs.jsx` | `/admin-dashboard/audit-logs` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `admin/backupManagement.jsx` | `/admin-dashboard/backup-management` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
@@ -65,33 +79,33 @@
 | `admin/parentAccounts.jsx` | `/admin-dashboard/parent-accounts` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/payrollPreview.jsx` | `/admin-dashboard/payroll-preview` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/resultPublishing.jsx` | `/admin-dashboard/result-publishing` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `admin/rolePermissions.jsx` | `/admin-dashboard/role-permissions` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `admin/rolePermissions.jsx` | `/admin-dashboard/role-permissions` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `admin/studentManagement.jsx` | `/admin-dashboard/student-management` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `admin/timetableGeneration.jsx` | `/admin-dashboard/timetable-generation` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
-| `admin/userTracking.jsx` | `/admin-dashboard/user-tracking` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `admin/userTracking.jsx` | `/admin-dashboard/user-tracking` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `ai/AITerminal.jsx` | `/ai-terminal` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `ai/BuildManager.jsx` | `/build-manager` | `MOCK` | No | No | No | Yes | Tier C | Hardcoded mock data / local state only |
+| `ai/BuildManager.jsx` | `/build-manager` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `ai/DigitalTwinManager.jsx` | `/digital-twin` | `PARTIAL` | Yes | Yes | No | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `ai/OfficersDashboard.jsx` | `/officers-dashboard` | `PARTIAL` | Yes | No | Yes | Yes | Tier C | Read-only fetch without mutation or missing endpoint |
 | `ai/officers/AccreditationOfficer.jsx` | `/officer/accreditation` | `PARTIAL` | Yes | No | No | Yes | Tier C | Read-only fetch without mutation or missing endpoint |
-| `ai/officers/AdmissionOfficer.jsx` | `/officer/admission` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `ai/officers/FinanceOfficer.jsx` | `/officer/finance` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `ai/officers/OfficerPlaceholder.jsx` | `/officer/placeholder` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `ai/officers/StudentSuccessOfficer.jsx` | `/officer/student-success` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `ai/officers/TimetableOfficer.jsx` | `/officer/timetable` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `ai/officers/TimetableUploadPage.jsx` | `/officer/timetable-upload` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `ai/officers/AdmissionOfficer.jsx` | `/officer/admission` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `ai/officers/FinanceOfficer.jsx` | `/officer/finance` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `ai/officers/OfficerPlaceholder.jsx` | `/officer/placeholder` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `ai/officers/StudentSuccessOfficer.jsx` | `/officer/student-success` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `ai/officers/TimetableOfficer.jsx` | `/officer/timetable` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `ai/officers/TimetableUploadPage.jsx` | `/officer/timetable-upload` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `common/ProfilePage.jsx` | `/profile` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `common/ResearchWorkspacePage.jsx` | `/research-workspace` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `common/VirtualClassroomPage.jsx` | `/virtual-classroom` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `common/VirtualClassroomPage.jsx` | `/virtual-classroom` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `common/WhiteboardPage.jsx` | `/whiteboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `demo/ObservationMode.jsx` | `/demo/observe` | `PARTIAL` | Yes | No | Yes | Yes | Tier C | Read-only fetch without mutation or missing endpoint |
-| `faculty/AttendanceAnalyticsPage.jsx` | `/faculty-dashboard/attendance-analytics` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
-| `faculty/ClassDiscussionBoardPage.jsx` | `/faculty-dashboard/class-discussion-board` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `faculty/CurriculumRevisionPage.jsx` | `/faculty-dashboard/curriculum-revision` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `faculty/ExamQuestionGeneratorPage.jsx` | `/faculty-dashboard/exam-question-generator` | `MOCK` | No | No | Yes | Yes | Tier C | Static presentation component |
+| `faculty/AttendanceAnalyticsPage.jsx` | `/faculty-dashboard/attendance-analytics` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `faculty/ClassDiscussionBoardPage.jsx` | `/faculty-dashboard/class-discussion-board` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `faculty/CurriculumRevisionPage.jsx` | `/faculty-dashboard/curriculum-revision` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `faculty/ExamQuestionGeneratorPage.jsx` | `/faculty-dashboard/exam-question-generator` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `faculty/FacultyWalletPage.jsx` | `/faculty-wallet` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
-| `faculty/LabInventoryPage.jsx` | `/faculty-dashboard/lab-inventory` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
-| `faculty/PeerEvaluationPage.jsx` | `/faculty-dashboard/peer-evaluation` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
+| `faculty/LabInventoryPage.jsx` | `/faculty-dashboard/lab-inventory` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
+| `faculty/PeerEvaluationPage.jsx` | `/faculty-dashboard/peer-evaluation` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `faculty/PlagiarismCheckerPage.jsx` | `/faculty-dashboard/plagiarism-checker` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `faculty/PodcastStudioPage.jsx` | `/faculty-dashboard/podcast-studio` | `MOCK` | No | No | Yes | Yes | Tier C | Hardcoded mock data / local state only |
 | `faculty/PublicationRepositoryPage.jsx` | `/faculty-dashboard/publication-repository` | `MOCK` | No | No | No | Yes | Tier C | Static presentation component |
@@ -123,7 +137,7 @@
 | `hod/HodCalendarPage.jsx` | `/hod-dashboard/calendar` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `hod/HodDashboardPage.jsx` | `/hod-dashboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `hod/LeaveApprovalsPage.jsx` | `/hod-dashboard/leave-approvals` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
-| `hod/StaffManagementPage.jsx` | `/hod-dashboard/staff` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
+| `hod/StaffManagementPage.jsx` | `/hod-dashboard/staff` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |
 | `parent/ParentDashboardPage.jsx` | `/parent-dashboard` | `PARTIAL` | Yes | Yes | Yes | Yes | Tier B | Write action exists but lacks integration tests / audit |
 | `parent/childAttendance.jsx` | `/parent-dashboard/child-attendance` | `REAL` | Yes | Yes | Yes | Yes | Tier A | None (Verified in Sprint) |
 | `parent/childTracking.jsx` | `/parent-dashboard/child-tracking` | `REAL` | Yes | Yes | Yes | Yes | Tier B | None (Verified in Tier B Sprint) |

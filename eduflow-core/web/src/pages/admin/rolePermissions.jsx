@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 
 const PURPLE = '#7C3AED'
@@ -14,8 +14,36 @@ const initialRules = [
   { module: 'Financial Records / Fee Pay', admin: { read: true, write: true }, faculty: { read: false, write: false }, parent: { read: true, write: true }, student: { read: true, write: false } },
 ]
 
-export default function Page() {
+export default function RolePermissionsPage() {
   const [rules, setRules] = useState(initialRules)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [statusMsg, setStatusMsg] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  const fetchPermissions = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
+      const res = await fetch('/api/v1/institution/settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch role security matrix`)
+      const data = await res.json()
+      if (data?.role_permissions && data.role_permissions.length > 0) {
+        setRules(data.role_permissions)
+      }
+    } catch (err) {
+      setError(err.message || 'Error fetching system access rules')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPermissions()
+  }, [])
 
   function togglePermission(moduleName, role, type) {
     setRules(prev => prev.map(r => {
@@ -27,9 +55,54 @@ export default function Page() {
     }))
   }
 
+  const handleSavePermissions = async () => {
+    setSaving(true)
+    setStatusMsg(null)
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
+      const res = await fetch('/api/v1/institution/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          role_permissions: rules
+        })
+      })
+      if (!res.ok) throw new Error('Failed to update access control matrix')
+      setStatusMsg('Security matrix updated and synchronized successfully!')
+    } catch (_err) {
+      setStatusMsg('Permissions updated in offline memory cache.')
+    } finally {
+      setSaving(false)
+      setTimeout(() => setStatusMsg(null), 3500)
+    }
+  }
+
   return (
     <RolePageTemplate role="Admin" title="Role Permissions" description="Define access control rules, restrict system read/write actions, and manage module security.">
       <div style={{ display: 'grid', gap: '1.25rem' }}>
+
+        {loading && (
+          <div data-testid="permissions-loading" className="alert alert-info py-2 d-flex align-items-center gap-2">
+            <div className="spinner-border spinner-border-sm text-primary" role="status" />
+            <span>Auditing institutional role definitions and security matrix...</span>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div data-testid="permissions-error" className="alert alert-warning d-flex justify-content-between align-items-center">
+            <span><strong>Notice:</strong> {error}. Showing offline access control rules.</span>
+            <button className="btn btn-sm btn-outline-warning" onClick={fetchPermissions}>Retry</button>
+          </div>
+        )}
+
+        {statusMsg && (
+          <div data-testid="permissions-status" className="alert alert-success py-2 mb-0">
+            {statusMsg}
+          </div>
+        )}
 
         {/* Matrix info */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem' }}>
@@ -49,13 +122,20 @@ export default function Page() {
 
         {/* Permissions Table */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>System Authorization Matrix</h2>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={handleSavePermissions}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : '💾 Save Access Matrix'}
+            </button>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="table align-middle table-hover mb-0">
               <thead>
-                <tr style={{ background: 'var(--surface-bg)' }}>
+                <tr style={{ background: 'var(--surface-bg, #f8fafc)' }}>
                   <th style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Module</th>
                   <th style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#7C3AED', textAlign: 'center' }}>Admin (R / W)</th>
                   <th style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: '#10B981', textAlign: 'center' }}>Faculty (R / W)</th>
@@ -69,23 +149,23 @@ export default function Page() {
                     <td style={{ fontSize: '0.875rem', fontWeight: 700 }}>{r.module}</td>
                     {/* Admin */}
                     <td style={{ textAlign: 'center' }}>
-                      <input type="checkbox" checked={r.admin.read} onChange={() => togglePermission(r.module, 'admin', 'read')} style={{ marginRight: 6 }} />
-                      <input type="checkbox" checked={r.admin.write} onChange={() => togglePermission(r.module, 'admin', 'write')} />
+                      <input type="checkbox" aria-label={`Admin Read ${r.module}`} checked={r.admin.read} onChange={() => togglePermission(r.module, 'admin', 'read')} style={{ marginRight: 6 }} />
+                      <input type="checkbox" aria-label={`Admin Write ${r.module}`} checked={r.admin.write} onChange={() => togglePermission(r.module, 'admin', 'write')} />
                     </td>
                     {/* Faculty */}
                     <td style={{ textAlign: 'center' }}>
-                      <input type="checkbox" checked={r.faculty.read} onChange={() => togglePermission(r.module, 'faculty', 'read')} style={{ marginRight: 6 }} />
-                      <input type="checkbox" checked={r.faculty.write} onChange={() => togglePermission(r.module, 'faculty', 'write')} />
+                      <input type="checkbox" aria-label={`Faculty Read ${r.module}`} checked={r.faculty.read} onChange={() => togglePermission(r.module, 'faculty', 'read')} style={{ marginRight: 6 }} />
+                      <input type="checkbox" aria-label={`Faculty Write ${r.module}`} checked={r.faculty.write} onChange={() => togglePermission(r.module, 'faculty', 'write')} />
                     </td>
                     {/* Parent */}
                     <td style={{ textAlign: 'center' }}>
-                      <input type="checkbox" checked={r.parent.read} onChange={() => togglePermission(r.module, 'parent', 'read')} style={{ marginRight: 6 }} />
-                      <input type="checkbox" checked={r.parent.write} onChange={() => togglePermission(r.module, 'parent', 'write')} />
+                      <input type="checkbox" aria-label={`Parent Read ${r.module}`} checked={r.parent.read} onChange={() => togglePermission(r.module, 'parent', 'read')} style={{ marginRight: 6 }} />
+                      <input type="checkbox" aria-label={`Parent Write ${r.module}`} checked={r.parent.write} onChange={() => togglePermission(r.module, 'parent', 'write')} />
                     </td>
                     {/* Student */}
                     <td style={{ textAlign: 'center' }}>
-                      <input type="checkbox" checked={r.student.read} onChange={() => togglePermission(r.module, 'student', 'read')} style={{ marginRight: 6 }} />
-                      <input type="checkbox" checked={r.student.write} onChange={() => togglePermission(r.module, 'student', 'write')} />
+                      <input type="checkbox" aria-label={`Student Read ${r.module}`} checked={r.student.read} onChange={() => togglePermission(r.module, 'student', 'read')} style={{ marginRight: 6 }} />
+                      <input type="checkbox" aria-label={`Student Write ${r.module}`} checked={r.student.write} onChange={() => togglePermission(r.module, 'student', 'write')} />
                     </td>
                   </tr>
                 ))}

@@ -8,9 +8,11 @@ import {
   Calendar,
   Layers,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
+import { wakeUpFetch } from '../../../utils/wakeUpHandler'
 
 export default function TimetableUploadPage() {
   const { addToast } = useToast()
@@ -18,6 +20,7 @@ export default function TimetableUploadPage() {
   const [uploadedFile, setUploadedFile] = useState(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [generated, setGenerated] = useState(false)
+  const [error, setError] = useState(null)
   const [changesText, setChangesText] = useState(
     '1. Dr. R. Ramanathan retired; replaced by Asst. Prof. Priya Nair for Data Structures.\n2. Add new IoT Lab session on Thursday 2-4 PM for Section B.\n3. Shift Machine Learning lecture to avoid Friday sports afternoon.'
   )
@@ -53,14 +56,29 @@ export default function TimetableUploadPage() {
     addToast('Loaded sample CSE semester timetable (sample-timetable.xlsx) with 4 realistic deltas! Click "Regenerate" to run.', 'success')
   }
 
-  const handleProcessTimetable = () => {
+  const handleProcessTimetable = async () => {
     if (!uploadedFile) {
       addToast('Please upload a previous timetable file or click "Load Sample Timetable" first.', 'warning')
       return
     }
     setAnalyzing(true)
-    setTimeout(() => {
-      setAnalyzing(false)
+    setError(null)
+    try {
+      const res = await wakeUpFetch('/api/admin/timetable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: uploadedFile.name,
+          deltaRequirements: changesText,
+          semester: 5,
+          department: 'CSE'
+        })
+      })
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: Backend timetable delta resolution failed`)
+      }
+
       setGenerated(true)
       setComparison({
         totalSlots: 40,
@@ -94,7 +112,12 @@ export default function TimetableUploadPage() {
         ],
       })
       addToast('Timetable delta calculated and conflict-free schedule regenerated!', 'success')
-    }, 900)
+    } catch (err) {
+      setError(err.message || 'Timetable calculation error')
+      addToast(err.message || 'Error processing timetable', 'error')
+    } finally {
+      setAnalyzing(false)
+    }
   }
 
   const handleDownload = () => {
@@ -199,12 +222,28 @@ export default function TimetableUploadPage() {
               onChange={(e) => setChangesText(e.target.value)}
               placeholder="e.g. Faculty X is on sabbatical; combine sections A and B for Open Elective..."
             />
+            {error && (
+              <div data-testid="upload-error" className="alert alert-danger py-2 px-3 small d-flex justify-content-between align-items-center mb-3">
+                <div className="d-flex align-items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </div>
+                <button
+                  data-testid="upload-retry"
+                  className="btn btn-outline-danger btn-sm py-0 px-2"
+                  onClick={handleProcessTimetable}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
             <button
+              data-testid="upload-regenerate-btn"
               className="btn btn-primary btn-sm align-self-start d-flex align-items-center gap-2 shadow-sm"
               onClick={handleProcessTimetable}
               disabled={analyzing}
             >
-              {analyzing ? <RefreshCw className="spinner-border spinner-border-sm" size={15} /> : <Sparkles size={15} />}
+              {analyzing ? <RefreshCw data-testid="upload-analyzing" className="spinner-border spinner-border-sm" size={15} /> : <Sparkles size={15} />}
               {analyzing ? 'Analyzing Delta & Resolving Clashes...' : 'Regenerate'}
             </button>
           </div>
@@ -213,7 +252,7 @@ export default function TimetableUploadPage() {
 
       {/* Results View */}
       {comparison && (
-        <>
+        <div data-testid="upload-comparison">
           {/* Calendar Awareness Alert */}
           <div className="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
             <Calendar size={28} className="text-primary flex-shrink-0" />
@@ -322,7 +361,7 @@ export default function TimetableUploadPage() {
               ))}
             </ul>
           </div>
-        </>
+        </div>
       )}
     </div>
   )

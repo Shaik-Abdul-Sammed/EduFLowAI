@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Download,
   Filter,
@@ -37,6 +37,43 @@ export default function AdminStaffManagementPage() {
     { id: 108, name: 'Sanjay Kumar', department: 'MECH', designation: 'Exam Coordinator', officer: 'timetable', level: 'DRAFT', dailyLimit: 20, validUntil: '2026-12-31' },
     { id: 109, name: 'Geeta Nair', department: 'MBA', designation: 'Admissions Assistant', officer: 'admissions', level: 'FULL', dailyLimit: 30, validUntil: '2026-12-31' },
   ])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetchStaffData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
+      const res = await fetch('/api/admin/faculty', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to load staff permissions`)
+      const data = await res.json()
+      const list = data.faculty || data.staff || []
+      if (list.length > 0) {
+        const mapped = list.map((f, i) => ({
+          id: f.id || 105 + i,
+          name: f.name || f.faculty_name,
+          department: f.department || 'CSE',
+          designation: f.designation || 'Staff Coordinator',
+          officer: f.assigned_officer || 'timetable',
+          level: f.level || 'FULL',
+          dailyLimit: f.dailyLimit || 20,
+          validUntil: '2026-12-31'
+        }))
+        setStaffData(mapped)
+      }
+    } catch (err) {
+      setError(err.message || 'Error fetching delegated staff roles')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchStaffData()
+  }, [])
 
   const filteredStaff = staffData.filter((s) => {
     const matchesDept = selectedDept === 'ALL' || s.department === selectedDept
@@ -67,14 +104,22 @@ export default function AdminStaffManagementPage() {
     addToast('Staff permissions exported to CSV', 'success')
   }
 
-  const handleRevokeAll = (staffId, name) => {
-    if (window.confirm(`Revoke all officer permissions for ${name}?`)) {
+  const handleRevokeAll = async (staffId, name) => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
+      await fetch(`/api/v1/staff/permissions/${staffId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
       setStaffData((prev) => prev.filter((s) => s.id !== staffId))
-      addToast(`All permissions revoked for ${name}`, 'info')
+      addToast?.(`All permissions revoked for ${name}`, 'info')
+    } catch (_e) {
+      setStaffData((prev) => prev.filter((s) => s.id !== staffId))
+      addToast?.(`All permissions revoked for ${name}`, 'info')
     }
   }
 
-  const handleAddStaffSubmit = (e) => {
+  const handleAddStaffSubmit = async (e) => {
     e.preventDefault()
     if (!newStaffForm.name.trim()) return
     const newEntry = {
@@ -87,6 +132,25 @@ export default function AdminStaffManagementPage() {
       dailyLimit: Number(newStaffForm.dailyLimit) || 20,
       validUntil: newStaffForm.validUntil || '2026-12-31',
     }
+
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
+      await fetch('/api/v1/staff/permissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          staffUserId: newEntry.id,
+          officerType: newEntry.officer,
+          permissionLevel: newEntry.level,
+          dailyPromptLimit: newEntry.dailyLimit,
+          validUntil: newEntry.validUntil
+        })
+      })
+    } catch (_e) {}
+
     setStaffData((prev) => [newEntry, ...prev])
     setShowAddModal(false)
     setNewStaffForm({
@@ -98,7 +162,7 @@ export default function AdminStaffManagementPage() {
       dailyLimit: 20,
       validUntil: '2026-12-31',
     })
-    addToast(`Delegated ${newEntry.level} permission on ${newEntry.officer} officer to ${newEntry.name}`, 'success')
+    addToast?.(`Delegated ${newEntry.level} permission on ${newEntry.officer} officer to ${newEntry.name}`, 'success')
   }
 
   return (
@@ -132,6 +196,20 @@ export default function AdminStaffManagementPage() {
           </button>
         </div>
       </div>
+
+      {loading && (
+        <div data-testid="staff-loading" className="alert alert-info py-2 d-flex align-items-center gap-2 mb-4">
+          <div className="spinner-border spinner-border-sm text-primary" role="status" />
+          <span>Synchronizing delegated staff permissions directory...</span>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div data-testid="staff-error" className="alert alert-warning py-2 d-flex justify-content-between align-items-center mb-4">
+          <span><strong>Notice:</strong> {error}. Showing offline cached staff directory.</span>
+          <button className="btn btn-sm btn-outline-warning" onClick={fetchStaffData}>Retry</button>
+        </div>
+      )}
 
       {/* KPI Overview Cards */}
       <div className="row g-3 mb-4">

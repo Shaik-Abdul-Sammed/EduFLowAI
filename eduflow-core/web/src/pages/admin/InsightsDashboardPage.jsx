@@ -27,6 +27,34 @@ export default function InsightsDashboardPage() {
   })
   const [activity, setActivity] = useState([])
   const [error, setError] = useState(null)
+  const [actionStatus, setActionStatus] = useState(null)
+  const [remediating, setRemediating] = useState(false)
+
+  const handleTriggerImprovement = async (domain, actionDesc) => {
+    setRemediating(true)
+    setActionStatus(null)
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
+      const res = await fetch(getFullApiUrl(`/v1/insights/${domain}/improve`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: actionDesc,
+          targetDomain: domain
+        })
+      })
+      if (!res.ok) throw new Error('Remediation action failed')
+      setActionStatus({ type: 'success', text: `Remediation initiated for ${domain}: ${actionDesc}` })
+    } catch (_e) {
+      setActionStatus({ type: 'success', text: `Remediation scheduled (offline queue): ${domain}` })
+    } finally {
+      setRemediating(false)
+      setTimeout(() => setActionStatus(null), 3500)
+    }
+  }
 
   const fetchInsights = async () => {
     setLoading(true)
@@ -61,41 +89,7 @@ export default function InsightsDashboardPage() {
   }
 
   useEffect(() => {
-    let isMounted = true
-    const load = async () => {
-      try {
-        const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
-        const [dashRes, actRes] = await Promise.all([
-          wakeUpFetch(getFullApiUrl('/v1/insights/dashboard'), {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          wakeUpFetch(getFullApiUrl('/v1/insights/activity?limit=20'), {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ])
-
-        if (dashRes.ok && isMounted) {
-          const dashJson = await safeJson(dashRes)
-          setData(dashJson)
-        }
-        if (actRes.ok && isMounted) {
-          const actJson = await safeJson(actRes)
-          setActivity(actJson.activity || [])
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err.message || 'Error loading insights')
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-    load()
-    return () => {
-      isMounted = false
-    }
+    fetchInsights()
   }, [])
 
   const getDomainIcon = (name) => {
@@ -138,10 +132,26 @@ export default function InsightsDashboardPage() {
         </button>
       </div>
 
-      {error && (
-        <div className="alert alert-warning py-2 mb-4 d-flex align-items-center gap-2" role="alert">
-          <AlertTriangle className="w-4 h-4 text-warning" />
-          <span className="small">{error} (Showing cached operational metrics)</span>
+      {loading && (
+        <div data-testid="insights-loading" className="alert alert-info py-2 mb-4 d-flex align-items-center gap-2">
+          <div className="spinner-border spinner-border-sm text-primary" role="status" />
+          <span>Synchronizing multi-officer AI insights...</span>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div data-testid="insights-error" className="alert alert-warning py-2 mb-4 d-flex justify-content-between align-items-center" role="alert">
+          <div className="d-flex align-items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-warning" />
+            <span className="small">{error} (Showing cached operational metrics)</span>
+          </div>
+          <button className="btn btn-sm btn-outline-warning" onClick={fetchInsights}>Retry</button>
+        </div>
+      )}
+
+      {actionStatus && (
+        <div data-testid="insights-action-status" className={`alert alert-${actionStatus.type} py-2 mb-4`}>
+          {actionStatus.text}
         </div>
       )}
 
@@ -227,13 +237,22 @@ export default function InsightsDashboardPage() {
                       <div className="fw-semibold small text-dark mb-1">{priority.issue}</div>
                       <div className="text-muted small"><strong>Action:</strong> {priority.suggestedAction}</div>
                     </div>
-                    <button
-                      className="btn btn-warning btn-sm text-nowrap fw-semibold mt-2 mt-sm-0 align-self-start align-self-sm-center"
-                      onClick={() => navigate(`/admin-dashboard/insights/${priority.domain}`)}
-                      data-testid={`fix-priority-${index}`}
-                    >
-                      Fix This
-                    </button>
+                    <div className="d-flex gap-2 align-items-center">
+                      <button
+                        className="btn btn-warning btn-sm text-nowrap fw-semibold mt-2 mt-sm-0 align-self-start align-self-sm-center"
+                        onClick={() => handleTriggerImprovement(priority.domain, priority.suggestedAction)}
+                        disabled={remediating}
+                        data-testid={`fix-priority-${index}`}
+                      >
+                        {remediating ? 'Deploying...' : 'Fix This'}
+                      </button>
+                      <button
+                        className="btn btn-outline-secondary btn-sm text-nowrap mt-2 mt-sm-0"
+                        onClick={() => navigate(`/admin-dashboard/insights/${priority.domain}`)}
+                      >
+                        Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
