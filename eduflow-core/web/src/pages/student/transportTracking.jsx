@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { busSchedule, STUDENT } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 import {
   Bus, MapPin, Phone, Clock, AlertTriangle, CheckCircle2,
   Bell, QrCode, Navigation, ShieldCheck, RefreshCw
@@ -31,8 +32,26 @@ export default function Page() {
     return () => clearInterval(interval)
   }, [distanceKm])
 
-  const handleReportIncident = (e) => {
+  const handleReportIncident = async (e) => {
     e.preventDefault()
+    try {
+      const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          subject: `Transit Incident: Bus #${bus.busNo} (${bus.route})`,
+          description: incidentText || 'Transit disruption reported by student',
+          category: 'transport',
+          priority: 'high'
+        })
+      })
+    } catch (err) {
+      console.debug('Failed to transmit transit incident:', err)
+    }
     setIncidentAlert('Incident transmitted to Central Transport Cell & Route Supervisor!')
     setTimeout(() => {
       setIncidentAlert('')

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FileSearch, AlertTriangle, CheckCircle, ShieldAlert, Sparkles, ExternalLink } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function PlagiarismCheckerPage() {
@@ -32,15 +32,47 @@ export default function PlagiarismCheckerPage() {
     ]
   })
 
+  const [pastReports, setPastReports] = useState([])
+
+  useEffect(() => {
+    async function loadPastReports() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/api/v1/plagiarism/reports'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await safeJson(res)
+          const list = data?.reports || (Array.isArray(data) ? data : [])
+          if (list.length > 0) {
+            setPastReports(list)
+            const first = list[0]
+            if (first) {
+              setReport(first)
+              if (first.assignment_title) setSubmissionTitle(first.assignment_title)
+            }
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to fetch past plagiarism reports:', err)
+      }
+    }
+    loadPastReports()
+  }, [])
+
   const handleCheck = async (e) => {
     e.preventDefault()
     if (!inputText.trim()) return
 
     setAnalyzing(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/v1/plagiarism/check`, {
+      const token = localStorage.getItem('token') || ''
+      const res = await fetch(getFullApiUrl('/api/v1/plagiarism/check'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           text: inputText,
           assignmentTitle: submissionTitle,
@@ -50,7 +82,10 @@ export default function PlagiarismCheckerPage() {
 
       if (res.ok) {
         const data = await safeJson(res)
-        if (data?.report) setReport(data.report)
+        if (data?.report) {
+          setReport(data.report)
+          setPastReports(prev => [data.report, ...prev])
+        }
       }
     } catch {
       // Fallback

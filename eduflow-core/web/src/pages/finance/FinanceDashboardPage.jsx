@@ -116,15 +116,28 @@ export default function FinanceDashboardPage() {
     const loadData = async () => {
       try {
         const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('token') || localStorage.getItem('accessToken'))) || ''
-        const res = await fetch(getFullApiUrl('/v1/fee-reminders/pending'), {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        })
-        if (res.ok) {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const [res, expRes] = await Promise.all([
+          fetch(getFullApiUrl('/v1/fee-reminders/pending'), { headers }).catch(() => null),
+          fetch(getFullApiUrl('/v1/finance/expenses'), { headers }).catch(() => null)
+        ])
+        if (res && res.ok && isMounted) {
           const json = await safeJson(res)
-          if (isMounted && json.summary) {
+          if (json.summary) {
             setSnapshot(prev => ({
               ...prev,
               totalOverdue: json.summary.totalOverdueAmount || prev.totalOverdue
+            }))
+          }
+        }
+        if (expRes && expRes.ok && isMounted) {
+          const expData = await safeJson(expRes)
+          const items = expData?.expenses || (Array.isArray(expData) ? expData : [])
+          if (items.length > 0) {
+            const sumExp = items.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+            setSnapshot(prev => ({
+              ...prev,
+              totalWaivedMonth: Math.round(sumExp * 0.1) || prev.totalWaivedMonth
             }))
           }
         }

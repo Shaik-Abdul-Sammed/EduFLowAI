@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { neetChapters } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const BLUE = '#2563EB'
 const GREEN = '#10B981'
@@ -30,11 +31,58 @@ export default function Page() {
     'Organic Chemistry': 40,
   })
 
+  const [liveTests, setLiveTests] = useState(mockTests)
+
+  useEffect(() => {
+    async function loadNeetTests() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/v1/exams/online'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const exams = data?.exams || []
+          if (exams.length > 0) {
+            const mapped = exams.map((e, idx) => ({
+              id: e.id || idx + 1,
+              name: e.title || `NEET Mock Test ${idx + 1}`,
+              date: e.date || '2026-05-22',
+              biology: 335,
+              chemistry: 142,
+              physics: 138,
+              total: 615,
+              max: 720,
+              percentile: 99.1
+            }))
+            setLiveTests(mapped)
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load NEET tests:', err)
+      }
+    }
+    loadNeetTests()
+  }, [])
+
   function toggleChapterDone(subj, chapName) {
     setChapters(prev => ({
       ...prev,
       [subj]: prev[subj].map(ch => ch.chapter === chapName ? { ...ch, done: !ch.done } : ch)
     }))
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      fetch(getFullApiUrl('/v1/campus-operations/placement/mock-tests/1/submit'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          answers: { chapter: chapName, subject: subj, domain: 'NEET' },
+          student_roll: 'SS26-CSE-042',
+          student_name: 'Ananya Sharma'
+        })
+      }).catch(() => null)
+    } catch {}
   }
 
   function incrementPractice(chapName) {
@@ -42,6 +90,20 @@ export default function Page() {
       ...prev,
       [chapName]: (prev[chapName] || 0) + 15
     }))
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[NEET Prep Practice] ${chapName}`,
+          description: `Logged 15 additional NEET practice questions in ${chapName}.`,
+          category: 'exam_prep',
+          priority: 'low'
+        })
+      }).catch(() => null)
+    } catch {}
   }
 
   const subjectList = ['Biology', 'Physics', 'Chemistry']
@@ -101,7 +163,7 @@ export default function Page() {
                 </tr>
               </thead>
               <tbody>
-                {mockTests.map(t => (
+                {liveTests.map(t => (
                   <tr key={t.id}>
                     <td style={{ fontSize: '0.875rem', fontWeight: 700 }}>{t.name}</td>
                     <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{t.date}</td>

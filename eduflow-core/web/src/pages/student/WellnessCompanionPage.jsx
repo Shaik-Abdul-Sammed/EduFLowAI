@@ -1,10 +1,48 @@
 import { useState } from 'react'
-import { Heart, Smile, Meh, Frown, Sparkles, PhoneCall, ShieldCheck } from 'lucide-react'
+import { Heart, Smile, Meh, Frown, Sparkles, PhoneCall, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function WellnessCompanionPage() {
   const [selectedMood, setSelectedMood] = useState('Good')
   const [sessionBooked, setSessionBooked] = useState(false)
+  const [bookingMessage, setBookingMessage] = useState('')
+
+  const handleSelectMood = async (mood) => {
+    setSelectedMood(mood)
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[Wellness Check-in] Student reported mood: ${mood}`,
+          description: `Daily anonymized wellness mood pulse: ${mood}.`,
+          category: 'mental_wellness',
+          priority: mood === 'Overwhelmed' ? 'high' : 'low'
+        })
+      })
+    } catch {}
+  }
+
+  const handleBookCounseling = async () => {
+    setSessionBooked(true)
+    setBookingMessage('Confidential counseling session requested with Campus Psychological Cell.')
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: '[Confidential Counseling Request] Campus Psychologist Session',
+          description: 'Student requested a private 1-on-1 counseling slot for stress management.',
+          category: 'mental_wellness',
+          priority: 'medium'
+        })
+      })
+    } catch {}
+    setTimeout(() => setBookingMessage(''), 5000)
+  }
 
   return (
     <RolePageTemplate
@@ -28,7 +66,7 @@ export default function WellnessCompanionPage() {
               <button
                 key={m.label}
                 type="button"
-                onClick={() => setSelectedMood(m.label)}
+                onClick={() => handleSelectMood(m.label)}
                 className={`btn d-flex align-items-center gap-2 p-3 rounded-3 border ${selectedMood === m.label ? 'border-primary bg-primary bg-opacity-10' : 'bg-light'}`}
               >
                 {m.icon}
@@ -66,7 +104,7 @@ export default function WellnessCompanionPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setSessionBooked(true)}
+                onClick={handleBookCounseling}
                 disabled={sessionBooked}
                 className="btn btn-primary w-100"
               >

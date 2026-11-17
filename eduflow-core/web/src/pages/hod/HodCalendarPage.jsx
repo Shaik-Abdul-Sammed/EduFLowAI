@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Calendar,
   Download,
@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 export default function HodCalendarPage() {
   const { user } = useAuth()
@@ -39,7 +39,7 @@ export default function HodCalendarPage() {
     e.preventDefault()
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
-      await fetch(`${getApiBaseURL()}/v1/calendar/1/adjust`, {
+      await fetch(getFullApiUrl('/api/v1/calendar/1/adjust'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

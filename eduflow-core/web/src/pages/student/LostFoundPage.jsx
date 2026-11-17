@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { MapPin, Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MapPin, Plus, CheckCircle2 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function LostFoundPage() {
   const [items, setItems] = useState([
@@ -11,8 +12,41 @@ export default function LostFoundPage() {
 
   const [newItem, setNewItem] = useState('')
   const [newLocation, setNewLocation] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  const handleReport = (e) => {
+  useEffect(() => {
+    async function loadLostFoundTickets() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/v1/support/tickets'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const tickets = data?.tickets || []
+          const lostFound = tickets.filter(t => t.category === 'lost_found')
+          if (lostFound.length > 0) {
+            const mapped = lostFound.map(t => ({
+              id: t.id,
+              item: t.subject?.replace('[Lost & Found] ', '') || 'Unspecified Item',
+              location: t.description || 'Campus Ground',
+              date: t.created_at ? t.created_at.split('T')[0] : 'Today',
+              status: t.status === 'open' ? 'Reported Unclaimed' : 'Claimed',
+              contact: 'Campus Security Gate 2'
+            }))
+            setItems(prev => [...mapped, ...prev])
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load lost and found tickets:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadLostFoundTickets()
+  }, [])
+
+  const handleReport = async (e) => {
     e.preventDefault()
     if (!newItem.trim() || !newLocation.trim()) return
     const report = {
@@ -24,6 +58,21 @@ export default function LostFoundPage() {
       contact: 'Security Post'
     }
     setItems(prev => [report, ...prev])
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[Lost & Found] ${newItem.trim()}`,
+          description: `Location reported: ${newLocation.trim()}`,
+          category: 'lost_found',
+          priority: 'low'
+        })
+      })
+    } catch {}
+
     setNewItem('')
     setNewLocation('')
   }

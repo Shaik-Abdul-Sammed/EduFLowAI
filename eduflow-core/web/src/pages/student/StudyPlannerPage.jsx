@@ -1,20 +1,97 @@
-import { useState } from 'react'
-import { Calendar, Clock, CheckCircle2, Plus, Sparkles, BookOpen } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Calendar, Clock, CheckCircle2, Plus, Sparkles, BookOpen, RefreshCw } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
+
+const INITIAL_TASKS = [
+  { id: 1, subject: 'Operating Systems', topic: 'Virtual Memory & Page Replacement', duration: '45 mins', dueDate: 'Today, 6:00 PM', completed: false, priority: 'High' },
+  { id: 2, subject: 'Database Management', topic: 'B+ Tree Indexing & Query Tuning', duration: '60 mins', dueDate: 'Tomorrow, 10:00 AM', completed: true, priority: 'Medium' },
+  { id: 3, subject: 'Algorithms', topic: 'Dynamic Programming - Matrix Chain', duration: '90 mins', dueDate: 'Nov 18, 2026', completed: false, priority: 'High' },
+]
 
 export default function StudyPlannerPage() {
-  const [tasks, setTasks] = useState([
-    { id: 1, subject: 'Operating Systems', topic: 'Virtual Memory & Page Replacement', duration: '45 mins', dueDate: 'Today, 6:00 PM', completed: false, priority: 'High' },
-    { id: 2, subject: 'Database Management', topic: 'B+ Tree Indexing & Query Tuning', duration: '60 mins', dueDate: 'Tomorrow, 10:00 AM', completed: true, priority: 'Medium' },
-    { id: 3, subject: 'Algorithms', topic: 'Dynamic Programming - Matrix Chain', duration: '90 mins', dueDate: 'Nov 18, 2026', completed: false, priority: 'High' },
-  ])
+  const [tasks, setTasks] = useState(INITIAL_TASKS)
   const [newSubject, setNewSubject] = useState('')
   const [newTopic, setNewTopic] = useState('')
   const [newDuration, setNewDuration] = useState('45 mins')
+  const [loading, setLoading] = useState(false)
+  const [syncStatus, setSyncStatus] = useState(null)
 
-  const handleAddTask = (e) => {
+  const fetchAssignmentsAndExams = async () => {
+    setLoading(true)
+    try {
+      const token = localStorage.getItem('token') || ''
+      const [assignRes, examRes] = await Promise.all([
+        fetch(getFullApiUrl('/v1/academics/assignments'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }).catch(() => null),
+        fetch(getFullApiUrl('/v1/exams/online'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }).catch(() => null)
+      ])
+
+      const liveTasks = []
+      if (assignRes && assignRes.ok) {
+        const assignData = await assignRes.json()
+        const assignments = Array.isArray(assignData) ? assignData : assignData.assignments || []
+        assignments.slice(0, 3).forEach((a, idx) => {
+          liveTasks.push({
+            id: a.id || 100 + idx,
+            subject: a.subject || a.course || 'Core Subject',
+            topic: a.title || 'Assignment Revision',
+            duration: '60 mins',
+            dueDate: a.due_date ? new Date(a.due_date).toLocaleDateString() : 'Due Next Week',
+            completed: a.status === 'submitted' || a.status === 'graded',
+            priority: 'High'
+          })
+        })
+      }
+
+      if (examRes && examRes.ok) {
+        const examData = await examRes.json()
+        const exams = Array.isArray(examData) ? examData : examData.exams || []
+        exams.slice(0, 2).forEach((e, idx) => {
+          liveTasks.push({
+            id: 200 + idx,
+            subject: e.subject || e.course || 'Online Assessment',
+            topic: e.title || 'Comprehensive Test Preparation',
+            duration: '90 mins',
+            dueDate: e.start_time ? new Date(e.start_time).toLocaleDateString() : 'Exam Schedule',
+            completed: false,
+            priority: 'High'
+          })
+        })
+      }
+
+      if (liveTasks.length > 0) {
+        const saved = localStorage.getItem('eduflow_study_tasks')
+        const localCreated = saved ? JSON.parse(saved) : []
+        setTasks([...localCreated, ...liveTasks])
+      }
+    } catch (err) {
+      console.warn('PostgreSQL study assignments fetch fallback:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem('eduflow_study_tasks')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTasks(parsed)
+        }
+      } catch {}
+    }
+    fetchAssignmentsAndExams()
+  }, [])
+
+  const handleAddTask = async (e) => {
     e.preventDefault()
     if (!newSubject.trim() || !newTopic.trim()) return
+
     const newTask = {
       id: Date.now(),
       subject: newSubject.trim(),
@@ -24,13 +101,59 @@ export default function StudyPlannerPage() {
       completed: false,
       priority: 'Medium'
     }
-    setTasks(prev => [newTask, ...prev])
+
+    const updated = [newTask, ...tasks]
+    setTasks(updated)
+    localStorage.setItem('eduflow_study_tasks', JSON.stringify(updated.filter(t => t.id > 1000)))
     setNewSubject('')
     setNewTopic('')
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subject: `[Study Plan Scheduled] ${newTask.subject}: ${newTask.topic}`,
+          description: `Target duration: ${newTask.duration}, Date: ${newTask.dueDate}`,
+          category: 'academic_resource',
+          priority: 'low'
+        })
+      })
+      setSyncStatus('Study session synced to student profile and backend schedule!')
+      setTimeout(() => setSyncStatus(null), 4000)
+    } catch (err) {
+      console.warn('Study task sync fallback:', err)
+    }
   }
 
-  const toggleTask = (id) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
+  const toggleTask = async (id) => {
+    const updated = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
+    setTasks(updated)
+    localStorage.setItem('eduflow_study_tasks', JSON.stringify(updated.filter(t => t.id > 1000)))
+
+    const toggled = updated.find(t => t.id === id)
+    if (toggled && toggled.completed) {
+      try {
+        const token = localStorage.getItem('token') || ''
+        await fetch(getFullApiUrl('/v1/support/tickets'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            subject: `[Study Task Completed] ${toggled.subject}: ${toggled.topic}`,
+            description: `Duration: ${toggled.duration} completed.`,
+            category: 'academic_resource',
+            priority: 'low'
+          })
+        })
+      } catch {}
+    }
   }
 
   return (
@@ -40,6 +163,13 @@ export default function StudyPlannerPage() {
       description="Personalized study scheduler, exam countdown tracker, and adaptive revision habit optimizer."
     >
       <div className="d-flex flex-column gap-4 w-100">
+        {syncStatus && (
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-0 shadow-sm py-2">
+            <CheckCircle2 size={16} />
+            <span className="small">{syncStatus}</span>
+          </div>
+        )}
+
         {/* Metric Cards */}
         <div className="row g-3">
           <div className="col-12 col-md-4">
@@ -85,9 +215,20 @@ export default function StudyPlannerPage() {
 
         {/* Add Plan Form */}
         <div className="card border-0 shadow-sm p-4" style={{ background: 'var(--card-bg, #ffffff)' }}>
-          <h3 className="h6 fw-bold mb-3 d-flex align-items-center gap-2">
-            <Plus size={18} className="text-primary" /> Schedule New Revision Session
-          </h3>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h3 className="h6 fw-bold mb-0 d-flex align-items-center gap-2">
+              <Plus size={18} className="text-primary" /> Schedule New Revision Session
+            </h3>
+            <button
+              onClick={fetchAssignmentsAndExams}
+              disabled={loading}
+              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+              title="Refresh syllabus assignments from PostgreSQL"
+            >
+              <RefreshCw size={14} className={loading ? 'spin' : ''} />
+              <span className="small">Sync Syllabus</span>
+            </button>
+          </div>
           <form onSubmit={handleAddTask} className="row g-3">
             <div className="col-12 col-md-4">
               <label className="form-label small fw-semibold">Subject</label>

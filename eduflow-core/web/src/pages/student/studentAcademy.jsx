@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { studentDummyIds, courseTracks, referenceLibrary, weeklyExamSchedule, sectionMap } from '../../utils/studentCatalog'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const BLUE = '#2563EB'
 const GREEN = '#10B981'
@@ -9,6 +10,40 @@ const PURPLE = '#8B5CF6'
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState('tracks')
+  const [tracks, setTracks] = useState(courseTracks)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadLiveAcademyTracks() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/api/v1/learning/path/101'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const courses = data?.path?.recommended_courses || []
+          if (courses.length > 0) {
+            setTracks(prev => [
+              {
+                id: 'adaptive-ai',
+                title: 'Adaptive AI Career Track',
+                stream: 'B.Tech CSE',
+                duration: '4 Years',
+                modules: courses.map(c => c.title)
+              },
+              ...prev
+            ])
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load academy tracks from API:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadLiveAcademyTracks()
+  }, [])
 
   return (
     <RolePageTemplate role="Student" title="Student Academy" description="Explore entrance-exam tracks, reference libraries, weekly exams, and section capacity planners.">

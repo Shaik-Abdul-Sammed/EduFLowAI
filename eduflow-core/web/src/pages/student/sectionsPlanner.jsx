@@ -1,22 +1,67 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { STUDENT } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const BLUE = '#2563EB'
 
 export default function Page() {
   const { section_students, section } = STUDENT
+  const [classmates, setClassmates] = useState(section_students)
   const [search, setSearch] = useState('')
   const [showGroup, setShowGroup] = useState(false)
   const [groupName, setGroupName] = useState('')
   const [groupCreated, setGroupCreated] = useState(null)
   const [selected, setSelected] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = section_students.filter(s => s.toLowerCase().includes(search.toLowerCase()))
+  useEffect(() => {
+    async function loadSectionClassmates() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/api/v1/attendance/records'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const records = data?.records || []
+          if (records.length > 0) {
+            const names = [...new Set(records.map(r => r.student_name).filter(Boolean))]
+            if (names.length > 0) {
+              setClassmates(prev => [...new Set([...names, ...prev])])
+            }
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load live classmates:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadSectionClassmates()
+  }, [])
 
-  function createGroup(e) {
+  const filtered = classmates.filter(s => s.toLowerCase().includes(search.toLowerCase()))
+
+  async function createGroup(e) {
     e.preventDefault()
-    setGroupCreated({ name: groupName, members: [STUDENT.name, ...selected] })
+    const newGroup = { name: groupName, members: [STUDENT.name, ...selected] }
+    setGroupCreated(newGroup)
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[Study Group Formed] ${groupName} (${section})`,
+          description: `Formed study group with members: ${newGroup.members.join(', ')}`,
+          category: 'study_group',
+          priority: 'low'
+        })
+      })
+    } catch {}
+
     setShowGroup(false)
     setGroupName('')
     setSelected([])

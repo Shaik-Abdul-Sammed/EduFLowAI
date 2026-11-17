@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Check, CheckCircle2, ChevronLeft, ChevronRight, FileText, MessageSquare, Award, Sparkles, FileCode, Sliders } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 export default function SpeedGraderPage() {
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -111,7 +111,7 @@ class AVLTree:
   const handleSaveGrade = async () => {
     setSaveStatus('saving')
     try {
-      const response = await fetch(`${getApiBaseURL()}/v1/grades/submit`, {
+      const response = await fetch(getFullApiUrl('/api/v1/grades/submit'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

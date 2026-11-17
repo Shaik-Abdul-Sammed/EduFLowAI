@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { getEscalations, createEscalation } from '../../utils/escalationService'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function DeanEscalationPage() {
   const [escalations, setEscalations] = useState([])
@@ -22,8 +23,48 @@ export default function DeanEscalationPage() {
   const [submittedSuccess, setSubmittedSuccess] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const reloadData = () => {
-    setEscalations(getEscalations())
+  const reloadData = async () => {
+    try {
+      const local = getEscalations()
+      const token = localStorage.getItem('token') || ''
+      const res = await fetch(getFullApiUrl('/v1/support/tickets?category=academic'), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const tickets = Array.isArray(data) ? data : data.tickets || []
+        if (tickets.length > 0) {
+          const mapped = tickets.map(t => ({
+            id: `ESC-2026-${t.id}`,
+            recipient: 'Dean of Academic Affairs',
+            category: t.category || 'Academic / Attendance',
+            priority: t.priority ? t.priority.charAt(0).toUpperCase() + t.priority.slice(1) : 'High',
+            subject: t.subject || 'Academic Consultation',
+            roomOrCourse: 'General Academic',
+            description: t.description || '',
+            isAnonymous: false,
+            studentId: '22BCE1044',
+            studentName: 'Ananya Sharma',
+            department: 'Computer Science & Engineering',
+            semester: '6th Semester (Section A)',
+            status: t.status === 'resolved' ? 'Resolved' : t.status === 'in_progress' ? 'Under Dean Review' : 'Submitted',
+            submittedAt: t.created_at || new Date().toISOString(),
+            updatedAt: t.updated_at || new Date().toISOString()
+          }))
+          const combined = [...local]
+          mapped.forEach(m => {
+            if (!combined.some(c => c.id === m.id || c.subject === m.subject)) {
+              combined.unshift(m)
+            }
+          })
+          setEscalations(combined)
+          return
+        }
+      }
+      setEscalations(local)
+    } catch {
+      setEscalations(getEscalations())
+    }
   }
 
   useEffect(() => {
@@ -33,31 +74,48 @@ export default function DeanEscalationPage() {
     return () => window.removeEventListener('eduflow_escalations_updated', handleUpdate)
   }, [])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!subject.trim() || !description.trim()) return
 
     setSubmitting(true)
-    setTimeout(() => {
-      const created = createEscalation({
-        recipient,
-        category,
-        priority,
-        subject,
-        roomOrCourse,
-        description,
-        isAnonymous,
-        studentId: '22BCE1044',
-        studentName: 'Ananya Sharma',
-        department: 'Computer Science & Engineering',
-        semester: '6th Semester (Section A)'
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subject: `[Dean Escalation] ${subject}`,
+          description,
+          category: category.toLowerCase(),
+          priority: priority.toLowerCase()
+        })
       })
-      setSubmitting(false)
-      setSubmittedSuccess(created)
-      setSubject('')
-      setDescription('')
-      reloadData()
-    }, 600)
+    } catch (err) {
+      console.warn('PostgreSQL grievance dispatch fallback:', err)
+    }
+
+    const created = createEscalation({
+      recipient,
+      category,
+      priority,
+      subject,
+      roomOrCourse,
+      description,
+      isAnonymous,
+      studentId: '22BCE1044',
+      studentName: 'Ananya Sharma',
+      department: 'Computer Science & Engineering',
+      semester: '6th Semester (Section A)'
+    })
+    setSubmitting(false)
+    setSubmittedSuccess(created)
+    setSubject('')
+    setDescription('')
+    reloadData()
   }
 
   const filteredEscalations = escalations.filter(item => {

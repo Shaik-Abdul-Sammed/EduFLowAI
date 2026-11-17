@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { wakeUpFetch } from '../../../utils/wakeUpHandler'
+import { getFullApiUrl } from '../../../config/apiConfig'
 
 export default function TimetableUploadPage() {
   const { addToast } = useToast()
@@ -64,7 +65,7 @@ export default function TimetableUploadPage() {
     setAnalyzing(true)
     setError(null)
     try {
-      const res = await wakeUpFetch('/api/admin/timetable', {
+      const res = await wakeUpFetch(getFullApiUrl('/api/v1/admin/timetable'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

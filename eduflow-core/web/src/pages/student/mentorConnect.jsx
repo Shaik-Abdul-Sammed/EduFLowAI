@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { mentorMessages, STUDENT } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const BLUE = '#2563EB'
 
@@ -12,23 +13,79 @@ export default function Page() {
   const [meetingDate, setMeetingDate] = useState('')
   const [meetingTime, setMeetingTime] = useState('14:00')
   const { mentor } = STUDENT
+  const [loading, setLoading] = useState(true)
 
-  function sendMessage(e) {
+  useEffect(() => {
+    async function loadMentorChat() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/v1/parent/chat'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const msgs = data?.messages || []
+          if (msgs.length > 0) {
+            const mapped = msgs.map(m => ({
+              id: m.id,
+              from: m.sender === 'student' ? 'student' : 'mentor',
+              text: m.text,
+              time: m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : '10:30 AM'
+            }))
+            setMessages(prev => [...mapped, ...prev])
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load mentor chat:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMentorChat()
+  }, [])
+
+  async function sendMessage(e) {
     e.preventDefault()
     if (!input.trim()) return
     const now = new Date()
     const timeStr = `${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`
-    setMessages(prev => [...prev, { id: Date.now(), from: 'student', text: input.trim(), time: timeStr }])
+    const newMsg = { id: Date.now(), from: 'student', text: input.trim(), time: timeStr }
+    setMessages(prev => [...prev, newMsg])
+    const sentText = input.trim()
     setInput('')
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/parent/chat'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ text: sentText, sender: 'student' })
+      })
+    } catch {}
+
     setTimeout(() => {
-      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'mentor', text: 'Thank you for your message! I will get back to you soon. Keep up the great work, Arjun! 👍', time: timeStr }])
+      setMessages(prev => [...prev, { id: Date.now() + 1, from: 'mentor', text: 'Thank you for your message! I will get back to you soon. Keep up the great work! 👍', time: timeStr }])
     }, 1200)
   }
 
-  function bookMeeting(e) {
+  async function bookMeeting(e) {
     e.preventDefault()
     setBooked({ date: meetingDate, time: meetingTime })
     setBooking(false)
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[Mentor Session Booked] ${meetingDate} at ${meetingTime}`,
+          description: `Student requested a 1-on-1 guidance appointment with faculty mentor ${mentor.name}.`,
+          category: 'mentor_session',
+          priority: 'medium'
+        })
+      })
+    } catch {}
   }
 
   const timeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']

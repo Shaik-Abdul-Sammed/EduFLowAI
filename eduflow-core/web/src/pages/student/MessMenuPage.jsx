@@ -4,6 +4,7 @@ import {
   Calendar, ShieldCheck, ChevronRight, MessageSquare, AlertCircle
 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const currentDayName = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
@@ -66,8 +67,26 @@ export default function MessMenuPage() {
 
   const activeMenu = WEEKLY_MENUS[selectedDay] || WEEKLY_MENUS.Monday
 
-  const handleSubmitFeedback = (e) => {
+  const handleSubmitFeedback = async (e) => {
     e.preventDefault()
+    try {
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || '') : ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subject: `Mess Meal Quality Feedback: ${feedbackMeal} (${rating}/5 Stars)`,
+          description: feedbackNote || `Feedback submitted for ${feedbackMeal} on ${selectedDay}.`,
+          category: 'hostel_mess',
+          priority: rating <= 2 ? 'high' : 'low'
+        })
+      })
+    } catch (err) {
+      console.debug('Failed to submit mess feedback:', err)
+    }
     setFeedbackSuccess(true)
     setTimeout(() => {
       setFeedbackSuccess(false)
@@ -75,9 +94,27 @@ export default function MessMenuPage() {
     }, 4000)
   }
 
-  const handleApplyRebate = (e) => {
+  const handleApplyRebate = async (e) => {
     e.preventDefault()
     const savings = rebateDays * 140
+    try {
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || '') : ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subject: `Mess Fee Rebate Request (${rebateDays} days)`,
+          description: `Application for mess rebate for ${rebateDays} absent days. Remittance adjustment: ₹${savings}`,
+          category: 'hostel_mess',
+          priority: 'medium'
+        })
+      })
+    } catch (err) {
+      console.debug('Failed to apply mess rebate:', err)
+    }
     setRebateSuccess(`Mess rebate of ₹${savings} approved for ${rebateDays} consecutive absent days! Deducted from next fee cycle.`)
     setTimeout(() => {
       setRebateSuccess('')

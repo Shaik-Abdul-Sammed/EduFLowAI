@@ -16,7 +16,7 @@ import {
   Terminal
 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -169,12 +169,12 @@ export default function Page() {
     setIsRefreshing(true)
     try {
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
-      const url = new URL(getApiBaseURL() + '/v1/admin/audit-logs')
+      const url = new URL(getFullApiUrl('/api/v1/admin/audit-logs'))
       if (filter !== 'All') {
         url.searchParams.append('category', filter)
       }
       
-      const res = await fetch(url, {
+      const res = await fetch(url.toString(), {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       })
       

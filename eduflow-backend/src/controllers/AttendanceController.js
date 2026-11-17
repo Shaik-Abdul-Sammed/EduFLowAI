@@ -403,7 +403,7 @@ export class AttendanceController {
         const hashLower = crypto.createHash('sha256').update(roll.trim().toLowerCase()).digest('hex').toLowerCase()
         const hashRaw = crypto.createHash('sha256').update(roll.trim()).digest('hex').toLowerCase()
 
-        let isBleDetected = detectedSet.has(hashUpper) || detectedSet.has(hashLower) || detectedSet.has(hashRaw)
+        let isBleDetected = detectedSet.has(hashUpper) || detectedSet.has(hashLower) || detectedSet.has(hashRaw) || detectedSet.has(roll.trim().toLowerCase()) || detectedSet.has(roll.trim().toUpperCase())
         let status = isBleDetected ? 'PRESENT' : 'ABSENT'
         let overridden = false
 
@@ -740,7 +740,19 @@ export class AttendanceController {
       const facultyId = req.user?.id || req.user?.userId || 'faculty-01'
 
       if (!sessionAttendanceRecords.has(sessionId)) {
-        return res.status(404).json({ error: 'Session attendance records not found. Load review roster first.' })
+        if (Array.isArray(resolutions) && resolutions.length > 0) {
+          const initRecords = resolutions.map(r => ({
+            studentId: r.studentId || r.rollNumber || 'STU-01',
+            rollNumber: r.rollNumber || 'ROLL-01',
+            status: String(r.status || 'ABSENT').toUpperCase(),
+            reviewState: 'faculty_override',
+            overriddenBy: facultyId,
+            overrideReason: r.reason || 'faculty_manual_review'
+          }))
+          sessionAttendanceRecords.set(sessionId, initRecords)
+        } else {
+          return res.status(404).json({ error: 'Session attendance records not found. Load review roster first.' })
+        }
       }
 
       const records = sessionAttendanceRecords.get(sessionId)

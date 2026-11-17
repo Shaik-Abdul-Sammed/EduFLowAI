@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FlaskConical, Atom, Play, CheckCircle2, Sliders, RefreshCw, Award } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function VirtualLabsPage() {
@@ -28,7 +28,7 @@ export default function VirtualLabsPage() {
     setSubmitting(true)
     const score = electronEmitted || (currentPh >= 6.8 && currentPh <= 7.2) ? 96.0 : 88.0
     try {
-      const res = await fetch(`${getApiBaseURL()}/v1/simulations/submit`, {
+      const res = await fetch(getFullApiUrl('/api/v1/simulations/submit'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

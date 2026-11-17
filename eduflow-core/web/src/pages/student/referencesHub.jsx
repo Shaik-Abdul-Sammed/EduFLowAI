@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { references } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const subjects = ['All', 'Mathematics', 'Physics', 'Chemistry', 'English', 'JEE/NEET']
 const typeColor = { Book: '#2563EB', Online: '#10B981' }
@@ -9,7 +10,42 @@ const typeIcon = { Book: '📗', Online: '🌐' }
 
 export default function Page() {
   const [filter, setFilter] = useState('All')
-  const filtered = filter === 'All' ? references : references.filter(r => r.subject === filter)
+  const [items, setItems] = useState(references)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadLiveBooks() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/v1/campus-operations/library/books'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const books = data?.books || []
+          if (books.length > 0) {
+            const mapped = books.map((b, idx) => ({
+              id: b.id || idx + 1,
+              title: b.title || 'Technical Reference Manual',
+              author: b.author || 'Institutional Academic Press',
+              subject: b.category || 'Computer Science',
+              type: 'Book',
+              link: '#',
+              desc: `Available copies in campus repository: ${b.available_copies || 1} / ${b.total_copies || 1}`
+            }))
+            setItems(prev => [...mapped, ...prev])
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load library books for references hub:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadLiveBooks()
+  }, [])
+
+  const filtered = filter === 'All' ? items : items.filter(r => r.subject === filter)
 
   return (
     <RolePageTemplate role="Student" title="References Hub" description="Curated reference books and online resources for all subjects.">

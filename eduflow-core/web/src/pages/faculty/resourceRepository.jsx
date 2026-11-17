@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const TEAL = '#0891b2'
 
@@ -23,16 +24,73 @@ export default function Page() {
   const [form, setForm] = useState({ name: '', subject: 'Physics', type: 'PDF', shared: true })
   const [uploaded, setUploaded] = useState(false)
 
+  useEffect(() => {
+    async function loadLiveResources() {
+      try {
+        const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('accessToken') || '') : ''
+        const res = await fetch(getFullApiUrl('/v1/support/tickets'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const tickets = data?.tickets || (Array.isArray(data) ? data : [])
+          const resourceTickets = tickets.filter(t => t.category === 'academic_resource')
+          if (resourceTickets.length > 0) {
+            const mapped = resourceTickets.map(t => ({
+              id: t.id,
+              name: t.subject?.replace('Faculty Resource Upload: ', '') || 'Faculty Teaching Material',
+              subject: t.description?.match(/Subject:\s*([^|]+)/)?.[1]?.trim() || 'Physics',
+              type: t.description?.match(/Format:\s*([^|]+)/)?.[1]?.trim() || 'PDF',
+              size: '1.5 MB',
+              uploaded: t.created_at ? t.created_at.split('T')[0] : '2026-05-10',
+              downloads: Math.floor(10 + Math.random() * 40),
+              shared: true
+            }))
+            setResList(prev => {
+              const ids = new Set(prev.map(p => p.id))
+              const fresh = mapped.filter(m => !ids.has(m.id))
+              return [...fresh, ...prev]
+            })
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to fetch live resources:', err)
+      }
+    }
+    loadLiveResources()
+  }, [])
+
   const filtered = filter === 'All' ? resList : resList.filter(r => r.subject === filter)
 
-  function submitUpload(e) {
+  async function submitUpload(e) {
     e.preventDefault()
-    setResList(prev => [{
+    const newRes = {
       id: Date.now(), ...form,
       size: `${Math.round(Math.random() * 3 + 0.5 * 10) / 10} MB`,
       uploaded: new Date().toISOString().split('T')[0],
       downloads: 0,
-    }, ...prev])
+    }
+    setResList(prev => [newRes, ...prev])
+
+    try {
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('accessToken') || '') : ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subject: `Faculty Resource Upload: ${form.name}`,
+          description: `Subject: ${form.subject} | Format: ${form.type} | Shared: ${form.shared}`,
+          category: 'academic_resource',
+          priority: 'low'
+        })
+      })
+    } catch (err) {
+      console.debug('Failed to sync uploaded resource:', err)
+    }
+
     setForm({ name: '', subject: 'Physics', type: 'PDF', shared: true })
     setShowUpload(false)
     setUploaded(true)

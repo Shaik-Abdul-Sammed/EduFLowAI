@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { labSlots as defaultSlots } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 import {
   Cpu, FlaskConical, Calendar, Clock, CheckCircle2, AlertTriangle,
   Search, Filter, Plus, User, Layers, Check
@@ -30,7 +31,7 @@ export default function LabBookingsPage() {
       setLoading(true)
       setError(null)
       const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || ''
-      const res = await fetch('/v1/support/tickets', {
+      const res = await fetch(getFullApiUrl('/v1/support/tickets'), {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch lab bookings`)
@@ -66,7 +67,7 @@ export default function LabBookingsPage() {
 
     try {
       const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || ''
-      await fetch('/v1/support/tickets', {
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

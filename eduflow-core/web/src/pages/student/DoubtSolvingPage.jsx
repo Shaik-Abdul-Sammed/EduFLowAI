@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ThumbsUp, CheckCircle, Send, HelpCircle } from 'lucide-react'
+import { ThumbsUp, CheckCircle, Send, HelpCircle, Sparkles } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function DoubtSolvingPage() {
   const [doubts, setDoubts] = useState([
@@ -26,20 +27,72 @@ export default function DoubtSolvingPage() {
   const [newTitle, setNewTitle] = useState('')
   const [newSubject, setNewSubject] = useState('Computer Networks')
 
-  const handlePost = (e) => {
+  const [isAnswering, setIsAnswering] = useState(false)
+
+  const handlePost = async (e) => {
     e.preventDefault()
     if (!newTitle.trim()) return
+
+    const questionText = newTitle.trim()
+    const tempId = Date.now()
     const item = {
-      id: Date.now(),
-      title: newTitle.trim(),
+      id: tempId,
+      title: questionText,
       subject: newSubject,
       author: 'You (Current Student)',
       upvotes: 0,
       answered: false,
       solution: null
     }
+
     setDoubts(prev => [item, ...prev])
     setNewTitle('')
+    setIsAnswering(true)
+
+    try {
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || '') : ''
+      const res = await fetch(getFullApiUrl('/api/v1/advanced-tech/ai-tutor/ask'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          question: questionText,
+          courseCode: newSubject
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.answer) {
+          setDoubts(prev => prev.map(d => d.id === tempId ? {
+            ...d,
+            answered: true,
+            solution: data.answer
+          } : d))
+        }
+      }
+
+      // Also dispatch to support tickets queue for faculty mentor visibility
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subject: `[Doubt Resolution] ${questionText}`,
+          description: `Course: ${newSubject} | Technical inquiry posted by student`,
+          category: 'academic_doubt',
+          priority: 'medium'
+        })
+      }).catch(() => null)
+    } catch (err) {
+      console.debug('AI Tutor query failed:', err)
+    } finally {
+      setIsAnswering(false)
+    }
   }
 
   const handleUpvote = (id) => {

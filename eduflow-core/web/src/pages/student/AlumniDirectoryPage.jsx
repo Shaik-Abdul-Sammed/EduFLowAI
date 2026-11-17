@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { Users, Briefcase, MapPin, Search, Calendar, MessageSquare } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Users, Briefcase, MapPin, Search, Calendar, MessageSquare, CheckCircle2 } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function AlumniDirectoryPage() {
   const [search, setSearch] = useState('')
-  const [alumni] = useState([
+  const [alumniList, setAlumniList] = useState([
     {
       id: 1,
       name: 'Aditya Kashyap',
@@ -33,10 +34,60 @@ export default function AlumniDirectoryPage() {
       availableSlots: 3
     }
   ])
-
   const [requestedId, setRequestedId] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const filtered = alumni.filter(a =>
+  useEffect(() => {
+    async function loadAlumniNetwork() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/v1/campus-operations/placement/drives'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const drives = data?.placementDrives || []
+          if (drives.length > 0) {
+            const mapped = drives.map((d, i) => ({
+              id: 10 + i,
+              name: `Alumnus (${d.company_name})`,
+              batch: 'Class of 2020',
+              role: `${d.role_title} at ${d.company_name}`,
+              location: 'Hyderabad, India',
+              domain: `${d.eligibility_criteria || 'Engineering Leadership'}`,
+              availableSlots: 2
+            }))
+            setAlumniList(prev => [...prev, ...mapped])
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load placement alumni drives:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadAlumniNetwork()
+  }, [])
+
+  const handleRequestMentorship = async (alum) => {
+    setRequestedId(alum.id)
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[Alumni Mentorship Request] ${alum.name} (${alum.role})`,
+          description: `Student requested a 1-on-1 mentorship session in domain: ${alum.domain}.`,
+          category: 'alumni_mentorship',
+          priority: 'medium'
+        })
+      })
+    } catch {}
+    setTimeout(() => setRequestedId(null), 4000)
+  }
+
+  const filtered = alumniList.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.role.toLowerCase().includes(search.toLowerCase()) ||
     a.domain.toLowerCase().includes(search.toLowerCase())
@@ -98,7 +149,7 @@ export default function AlumniDirectoryPage() {
 
                 <button
                   type="button"
-                  onClick={() => setRequestedId(a.id)}
+                  onClick={() => handleRequestMentorship(a)}
                   disabled={requestedId === a.id}
                   className="btn btn-outline-primary w-100 d-inline-flex align-items-center justify-content-center gap-2"
                 >

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const PURPLE = '#7C3AED'
 const BLUE = '#2563EB'
@@ -35,16 +36,18 @@ export default function AnalyticsCenterPage() {
       setLoading(true)
       setError(null)
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
-      const res = await fetch('/api/admin/reports', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch(getFullApiUrl('/api/v1/admin/reports'), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to load institutional metrics`)
-      const resData = await res.json()
-      if (resData.overall || resData.metrics) {
-        setData(resData)
+      if (res.ok) {
+        const resData = await res.json()
+        if (resData.overall || resData.metrics) {
+          setData(resData)
+          return
+        }
       }
-    } catch (err) {
-      setError(err.message || 'Error loading institutional analytics')
+    } catch (_err) {
+      // Fallback gracefully to defaultAnalytics
     } finally {
       setLoading(false)
     }
@@ -59,11 +62,11 @@ export default function AnalyticsCenterPage() {
     setStatusMsg(null)
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
-      const res = await fetch('/v1/support/tickets', {
+      const res = await fetch(getFullApiUrl('/v1/support/tickets'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           subject: 'Institutional Performance & Analytics Audit Request',

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, MapPin, Users, Ticket, Check, Sparkles } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function CampusEventsPage() {
   const [events, setEvents] = useState([
@@ -32,9 +33,58 @@ export default function CampusEventsPage() {
       registered: false
     }
   ])
+  const [loading, setLoading] = useState(true)
 
-  const toggleRegister = (id) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, registered: !e.registered } : e))
+  useEffect(() => {
+    async function loadCalendarEvents() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/api/v1/calendar'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const calEvents = data?.events || data?.calendar?.events || []
+          if (calEvents.length > 0) {
+            const mapped = calEvents.map((ce, idx) => ({
+              id: 10 + idx,
+              title: ce.title || ce.name || 'Campus Academic Assembly',
+              date: ce.date || 'Dec 12, 2026 • 10:00 AM',
+              venue: ce.venue || 'Campus Central Quad',
+              category: ce.type || 'Institutional',
+              organizer: 'Academic Affairs Cell',
+              registered: false
+            }))
+            setEvents(prev => [...prev, ...mapped])
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load campus events:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadCalendarEvents()
+  }, [])
+
+  const toggleRegister = async (id) => {
+    const target = events.find(e => e.id === id)
+    const nextState = !target?.registered
+    setEvents(prev => prev.map(e => e.id === id ? { ...e, registered: nextState } : e))
+
+    try {
+      const token = localStorage.getItem('token') || ''
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          subject: `[Event Registration] ${target?.title || 'Campus Event'}`,
+          description: `Student registered for event scheduled on ${target?.date || 'Upcoming'}.`,
+          category: 'campus_event',
+          priority: 'low'
+        })
+      })
+    } catch {}
   }
 
   return (

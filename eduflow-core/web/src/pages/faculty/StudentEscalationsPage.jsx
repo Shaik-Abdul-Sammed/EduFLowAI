@@ -7,6 +7,7 @@ import RolePageTemplate from '../../components/RolePageTemplate'
 import {
   getEscalations, updateEscalationStatus, aiDraftDeanResponse, aiSummarizeAll
 } from '../../utils/escalationService'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function StudentEscalationsPage() {
   const [escalations, setEscalations] = useState([])
@@ -19,10 +20,52 @@ export default function StudentEscalationsPage() {
   const [aiSummary, setAiSummary] = useState(null)
   const [isSummarizing, setIsSummarizing] = useState(false)
 
-  const reloadData = () => {
-    const list = getEscalations()
-    setEscalations(list)
-    setAiSummary(aiSummarizeAll(list))
+  const reloadData = async () => {
+    try {
+      const local = getEscalations()
+      const token = localStorage.getItem('token') || ''
+      const res = await fetch(getFullApiUrl('/v1/support/tickets'), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const tickets = Array.isArray(data) ? data : data.tickets || []
+        if (tickets.length > 0) {
+          const mapped = tickets.map(t => ({
+            id: `ESC-2026-${t.id}`,
+            recipient: 'Dean of Academic Affairs',
+            category: t.category || 'Academic / Attendance',
+            priority: t.priority ? t.priority.charAt(0).toUpperCase() + t.priority.slice(1) : 'High',
+            subject: t.subject || 'Student Grievance',
+            roomOrCourse: 'General Academic',
+            description: t.description || '',
+            isAnonymous: false,
+            studentId: '22BCE1044',
+            studentName: 'Ananya Sharma',
+            department: 'Computer Science & Engineering',
+            semester: '6th Semester (Section A)',
+            status: t.status === 'resolved' ? 'Action Taken' : t.status === 'in_progress' ? 'Under Dean Review' : 'Submitted',
+            submittedAt: t.created_at || new Date().toISOString(),
+            updatedAt: t.updated_at || new Date().toISOString()
+          }))
+          const combined = [...local]
+          mapped.forEach(m => {
+            if (!combined.some(c => c.id === m.id || c.subject === m.subject)) {
+              combined.unshift(m)
+            }
+          })
+          setEscalations(combined)
+          setAiSummary(aiSummarizeAll(combined))
+          return
+        }
+      }
+      setEscalations(local)
+      setAiSummary(aiSummarizeAll(local))
+    } catch {
+      const list = getEscalations()
+      setEscalations(list)
+      setAiSummary(aiSummarizeAll(list))
+    }
   }
 
   useEffect(() => {

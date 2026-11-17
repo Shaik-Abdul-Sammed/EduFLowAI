@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Upload, CheckCircle, XCircle, AlertCircle, Users } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 
 /**
@@ -84,7 +84,7 @@ export default function BulkStudentImportPage() {
       const batch = batches[i]
       try {
         const token = localStorage.getItem('token') || ''
-        const res = await fetch(`${getApiBaseURL()}/v1/auth/bulk-student-import`, {
+        const res = await fetch(getFullApiUrl('/api/v1/auth/bulk-student-import'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

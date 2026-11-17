@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
 const GREEN = '#10B981'
 const RED = '#EF4444'
 const PURPLE = '#7C3AED'
 const BLUE = '#2563EB'
 
-const auditData = [
+const initialAuditData = [
   { id: 1, section: 'MPC-A', subject: 'Mathematics I', faculty: 'Dr. K. Srinivas', date: '2026-07-28', present: 58, total: 60, status: 'verified' },
   { id: 2, section: 'MPC-B', subject: 'Physics I', faculty: 'Prof. Ananya Roy', date: '2026-07-28', present: 32, total: 58, status: 'low-attendance-flag' },
   { id: 3, section: 'BIPC-A', subject: 'Biology', faculty: 'Dr. B. Prasad', date: '2026-07-28', present: 52, total: 55, status: 'verified' },
@@ -15,11 +16,51 @@ const auditData = [
 ]
 
 export default function Page() {
+  const [records, setRecords] = useState(initialAuditData)
+  const [stats, setStats] = useState({ overallAttendance: 86.4, totalTracked: 1840, atRiskCount: 42 })
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [alertDispatched, setAlertDispatched] = useState(null)
 
-  const filtered = auditData.filter(d => {
+  useEffect(() => {
+    let mounted = true
+    async function loadAuditTelemetry() {
+      try {
+        const [statsRes, riskRes] = await Promise.all([
+          wakeUpFetch('/api/v1/attendance/stats'),
+          wakeUpFetch('/api/v1/attendance/at-risk')
+        ])
+        if (mounted) {
+          if (statsRes.ok) {
+            const sData = await statsRes.json()
+            if (sData?.success) setStats(sData)
+          }
+          if (riskRes.ok) {
+            const rData = await riskRes.json()
+            if (rData?.students && Array.isArray(rData.students)) {
+              const liveRows = rData.students.map((st, i) => ({
+                id: 100 + i,
+                section: st.department || 'CSE-A',
+                subject: 'Attendance Shortage',
+                faculty: 'Mentor Assigned',
+                date: new Date().toISOString().split('T')[0],
+                present: Math.round((st.percentage / 100) * 60),
+                total: 60,
+                status: 'low-attendance-flag'
+              }))
+              if (liveRows.length > 0) {
+                setRecords(prev => [...liveRows, ...prev])
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+    loadAuditTelemetry()
+    return () => { mounted = false }
+  }, [])
+
+  const filtered = records.filter(d => {
     const matchesFilter = filter === 'all' ? true : filter === 'regular' ? d.status === 'verified' : d.status.includes('low')
     const matchesSearch = d.section.toLowerCase().includes(search.toLowerCase()) ||
                           d.subject.toLowerCase().includes(search.toLowerCase()) ||
@@ -46,12 +87,21 @@ export default function Page() {
     document.body.removeChild(link)
   }
 
-  function handleDispatchNotice(id) {
+  async function handleDispatchNotice(id) {
     setAlertDispatched(id)
+    try {
+      await wakeUpFetch('/api/v1/attendance/notify-parents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alerts: [{ studentId: id, reason: 'Statutory attendance condonation bar (< 75%)' }]
+        })
+      })
+    } catch {}
     setTimeout(() => setAlertDispatched(null), 2500)
   }
 
-  const discrepancyCount = auditData.filter(d => d.status.includes('low')).length
+  const discrepancyCount = records.filter(d => d.status.includes('low')).length
 
   return (
     <RolePageTemplate role="Admin" title="Attendance Audit & Condonation" description="Audit faculty classroom biometric registers, inspect UGC 75% thresholds, and flag proxy submissions.">
@@ -60,10 +110,10 @@ export default function Page() {
         {/* Dynamic counters */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem' }}>
           {[
-            { label: 'Audited Lectures', value: auditData.length, color: PURPLE, icon: '📋' },
-            { label: 'Verified Regular', value: auditData.filter(d => d.status === 'verified').length, color: GREEN, icon: '✅' },
+            { label: 'Audited Lectures', value: records.length, color: PURPLE, icon: '📋' },
+            { label: 'Verified Regular', value: records.filter(d => d.status === 'verified').length, color: GREEN, icon: '✅' },
             { label: 'Shortage Discrepancies', value: discrepancyCount, color: RED, icon: '🚨' },
-            { label: 'UGC Benchmark', value: '75%', color: BLUE, icon: '🏛️' },
+            { label: 'UGC Benchmark', value: `${stats.overallAttendance || 75}%`, color: BLUE, icon: '🏛️' },
           ].map(s => (
             <div key={s.label} className="card border-0 shadow-sm" style={{ borderRadius: '1rem', padding: '1rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.35rem', marginBottom: '0.2rem' }}>{s.icon}</div>

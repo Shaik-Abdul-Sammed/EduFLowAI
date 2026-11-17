@@ -49,6 +49,16 @@ export default function AttendanceAnalyticsPage() {
           description: `Dispatched automated attendance condonation warning SMS to primary guardian of ${roll}.`
         })
       })
+      await wakeUpFetch('/api/v1/attendance/notify-parents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alerts: [{
+            studentRoll: roll,
+            reason: `Automated Parent SMS: Low Attendance Warning for ${roll}`
+          }]
+        })
+      }).catch(() => {})
       setAtRiskStudents(prev => prev.map(s => s.roll === roll ? { ...s, notified: true } : s))
       addToast(`Automated parent notification dispatched for ${roll}`, 'success')
     } catch (err) {

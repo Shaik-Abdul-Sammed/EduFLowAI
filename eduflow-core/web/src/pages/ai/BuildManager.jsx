@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Cpu, CheckCircle, Clock, Play, Download, Circle } from 'lucide-react'
+import { getFullApiUrl } from '../../config/apiConfig'
 
 const PIPELINE_STEPS = [
   'Understanding Request',
@@ -34,7 +35,7 @@ export default function BuildManager() {
       setLoading(true)
       setError(null)
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
-      const res = await fetch('/api/backup/status', {
+      const res = await fetch(getFullApiUrl('/api/v1/backup/status'), {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to reach build infrastructure`)
@@ -69,7 +70,7 @@ export default function BuildManager() {
 
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken') || ''
-      const res = await fetch('/api/backup/snapshot', {
+      const res = await fetch(getFullApiUrl('/api/v1/backup/snapshot'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

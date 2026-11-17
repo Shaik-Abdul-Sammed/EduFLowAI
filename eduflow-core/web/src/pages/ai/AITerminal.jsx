@@ -107,7 +107,7 @@ export default function AITerminal() {
 
     try {
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
-      const res = await fetch(getFullApiUrl('/v1/ai/chat'), {
+      const res = await fetch(getFullApiUrl('/api/v1/ai/chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

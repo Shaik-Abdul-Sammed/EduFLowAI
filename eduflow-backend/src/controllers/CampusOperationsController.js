@@ -511,21 +511,69 @@ export class CampusOperationsController {
 
   static async getParentPortalOverview(req, res) {
     try {
+      let overallAttendance = 88.5
+      let subjectAttendance = [
+        { code: 'CS301', name: 'Design & Analysis of Algorithms', attended: 42, total: 46, percent: 91.3 },
+        { code: 'CS302', name: 'Database Management Systems', attended: 38, total: 44, percent: 86.4 },
+        { code: 'CS303', name: 'Computer Networks', attended: 40, total: 45, percent: 88.9 },
+        { code: 'CS304', name: 'Machine Learning Foundations', attended: 39, total: 44, percent: 88.6 }
+      ]
+
+      try {
+        const { pool } = await import('../db/pool.js')
+        if (pool && typeof pool.query === 'function' && !pool._isMemoryStore) {
+          const result = await pool.query(
+            `SELECT course_code, status FROM attendance_records WHERE (student_id = $1 OR student_id = 'SS26' OR student_id = '1') LIMIT 200`,
+            [req.user?.id || '1']
+          )
+          if (result.rows && result.rows.length > 0) {
+            const total = result.rows.length
+            const present = result.rows.filter(r => r.status === 'PRESENT').length
+            overallAttendance = Math.round((present / total) * 1000) / 10
+            const courseMap = {}
+            for (const r of result.rows) {
+              const c = r.course_code || 'CS301'
+              if (!courseMap[c]) courseMap[c] = { code: c, name: c, attended: 0, total: 0 }
+              courseMap[c].total += 1
+              if (r.status === 'PRESENT') courseMap[c].attended += 1
+            }
+            subjectAttendance = Object.values(courseMap).map(c => ({
+              ...c,
+              percent: c.total > 0 ? Math.round((c.attended / c.total) * 1000) / 10 : 0
+            }))
+          }
+        }
+      } catch {}
+
+      const studentSummary = {
+        studentName: 'Ananya Sharma',
+        studentRoll: 'SS26',
+        branch: 'Computer Science (B.Tech)',
+        cgpa: 8.74,
+        currentSemester: 'Semester 5',
+        completedCredits: 112,
+        overallAttendance
+      }
+
+      const subjectMarks = [
+        { id: 1, subjectCode: 'CS501', subjectName: 'Design & Analysis of Algorithms', internalMarks: 28, internalMax: 30, midTermMarks: 36, midTermMax: 40, practicalMarks: 28, practicalMax: 30, grade: 'A+' },
+        { id: 2, subjectCode: 'CS502', subjectName: 'Database Management Systems', internalMarks: 26, internalMax: 30, midTermMarks: 34, midTermMax: 40, practicalMarks: 27, practicalMax: 30, grade: 'A' },
+        { id: 3, subjectCode: 'CS503', subjectName: 'Computer Networks', internalMarks: 27, internalMax: 30, midTermMarks: 35, midTermMax: 40, practicalMarks: 26, practicalMax: 30, grade: 'A' },
+        { id: 4, subjectCode: 'CS504', subjectName: 'Machine Learning Foundations', internalMarks: 29, internalMax: 30, midTermMarks: 38, midTermMax: 40, practicalMarks: 29, practicalMax: 30, grade: 'A+' }
+      ]
+
       res.json({
         success: true,
+        studentSummary,
+        subjectMarks,
         child: {
           name: 'Ananya Sharma',
           roll: 'SS26',
           branch: 'Computer Science (B.Tech)',
           semester: 'Semester 5',
-          overallAttendance: 88.5,
-          attendanceStatus: 'EXEMPLARY (Eligible for all examinations)',
-          subjectAttendance: [
-            { code: 'CS301', name: 'Design & Analysis of Algorithms', attended: 42, total: 46, percent: 91.3 },
-            { code: 'CS302', name: 'Database Management Systems', attended: 38, total: 44, percent: 86.4 },
-            { code: 'CS303', name: 'Computer Networks', attended: 40, total: 45, percent: 88.9 },
-            { code: 'CS304', name: 'Machine Learning Foundations', attended: 39, total: 44, percent: 88.6 }
-          ]
+          overallAttendance,
+          attendanceStatus: overallAttendance >= 75 ? 'EXEMPLARY (Eligible for all examinations)' : 'ATTENDANCE SHORTAGE (< 75%)',
+          subjectAttendance
         },
         fees: {
           totalBilled: 125000,
@@ -581,14 +629,29 @@ export class CampusOperationsController {
     try {
       const { isbn, title, author, category = 'General', total_copies = 5, shelf_location = 'Main' } = req.body || {}
       if (!title || !author) return res.status(400).json({ error: 'Title and author are required' })
+      const genIsbn = isbn || `978-${Math.floor(1000000000 + Math.random() * 9000000000)}`
+      const numCopies = Number(total_copies) || 1
+
+      try {
+        const query = `
+          INSERT INTO library_books (institution_id, isbn, title, author, category, total_copies, available_copies, shelf_location)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, genIsbn, title, author, category, numCopies, numCopies, shelf_location])
+        if (dbRes?.rows?.[0]) {
+          memoryLibraryBooks.push(dbRes.rows[0])
+          return res.status(201).json({ success: true, book: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const book = {
         id: memoryLibraryBooks.length + 1,
-        isbn: isbn || `978-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        isbn: genIsbn,
         title,
         author,
         category,
-        total_copies: Number(total_copies),
-        available_copies: Number(total_copies),
+        total_copies: numCopies,
+        available_copies: numCopies,
         shelf_location
       }
       memoryLibraryBooks.push(book)
@@ -601,22 +664,48 @@ export class CampusOperationsController {
   static async issueLibraryBook(req, res) {
     try {
       const { book_id, student_roll = 'SS26', student_name = 'Ananya Sharma', days = 14 } = req.body || {}
+      const issueDate = new Date()
+      const dueDate = new Date(issueDate.getTime() + days * 86400000)
+      const issueDateStr = issueDate.toISOString().split('T')[0]
+      const dueDateStr = dueDate.toISOString().split('T')[0]
+
+      try {
+        const bookRes = await pool.query('SELECT * FROM library_books WHERE id = $1', [book_id])
+        if (bookRes?.rows?.[0]) {
+          const book = bookRes.rows[0]
+          if (book.available_copies <= 0) {
+            return res.status(400).json({ error: 'No copies available for issue' })
+          }
+          const issueRes = await pool.query(
+            `INSERT INTO book_issues (institution_id, book_id, book_title, student_roll, student_name, issue_date, due_date, fine_amount, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 0.00, 'ISSUED')
+             RETURNING *`,
+            [1, book.id, book.title, student_roll, student_name, issueDateStr, dueDateStr]
+          )
+          const updatedBookRes = await pool.query(
+            `UPDATE library_books SET available_copies = GREATEST(0, available_copies - 1) WHERE id = $1 RETURNING *`,
+            [book.id]
+          )
+          const issue = issueRes.rows[0]
+          const updatedBook = updatedBookRes.rows[0] || book
+          memoryBookIssues.unshift(issue)
+          return res.status(201).json({ success: true, issue, book: updatedBook })
+        }
+      } catch (_err) {}
+
       const book = memoryLibraryBooks.find((b) => Number(b.id) === Number(book_id))
       if (!book) return res.status(404).json({ error: 'Book not found' })
       if (book.available_copies <= 0) return res.status(400).json({ error: 'No copies available for issue' })
 
       book.available_copies -= 1
-      const issueDate = new Date()
-      const dueDate = new Date(issueDate.getTime() + days * 86400000)
-
       const issue = {
         id: memoryBookIssues.length + 1,
         book_id: book.id,
         book_title: book.title,
         student_roll,
         student_name,
-        issue_date: issueDate.toISOString().split('T')[0],
-        due_date: dueDate.toISOString().split('T')[0],
+        issue_date: issueDateStr,
+        due_date: dueDateStr,
         return_date: null,
         fine_amount: 0.00,
         status: 'ISSUED'
@@ -631,17 +720,47 @@ export class CampusOperationsController {
   static async returnLibraryBook(req, res) {
     try {
       const { issue_id } = req.body || {}
+      const returnDate = new Date()
+      const returnDateStr = returnDate.toISOString().split('T')[0]
+
+      try {
+        const issueRes = await pool.query('SELECT * FROM book_issues WHERE id = $1', [issue_id])
+        if (issueRes?.rows?.[0]) {
+          const issueRow = issueRes.rows[0]
+          const dueDate = new Date(issueRow.due_date)
+          const diffTime = returnDate.getTime() - dueDate.getTime()
+          const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
+          const finePerDay = 5.00
+          const fineAmount = diffDays * finePerDay
+
+          const updatedIssueRes = await pool.query(
+            `UPDATE book_issues SET return_date = $1, fine_amount = $2, status = 'RETURNED' WHERE id = $3 RETURNING *`,
+            [returnDateStr, fineAmount, issue_id]
+          )
+          await pool.query(
+            `UPDATE library_books SET available_copies = LEAST(total_copies, available_copies + 1) WHERE id = $1`,
+            [issueRow.book_id]
+          )
+          const updatedIssue = updatedIssueRes.rows[0]
+          return res.json({
+            success: true,
+            issue: updatedIssue,
+            fineAmount,
+            message: fineAmount > 0 ? `Late return by ${diffDays} days. Fine calculated: ₹${fineAmount}` : 'Book returned on time. Zero fine.'
+          })
+        }
+      } catch (_err) {}
+
       const issue = memoryBookIssues.find((i) => Number(i.id) === Number(issue_id))
       if (!issue) return res.status(404).json({ error: 'Book issue record not found' })
 
-      const returnDate = new Date()
       const dueDate = new Date(issue.due_date)
       const diffTime = returnDate.getTime() - dueDate.getTime()
       const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
       const finePerDay = 5.00 // Rs. 5 per day standard UGC norm
       const fineAmount = diffDays * finePerDay
 
-      issue.return_date = returnDate.toISOString().split('T')[0]
+      issue.return_date = returnDateStr
       issue.fine_amount = fineAmount
       issue.status = 'RETURNED'
 
@@ -655,12 +774,28 @@ export class CampusOperationsController {
   }
 
   static async getLibraryIssues(req, res) {
-    res.json({ success: true, issues: memoryBookIssues })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM book_issues ORDER BY issue_date DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, issues: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, issues: memoryBookIssues })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   // Hostel Management
   static async getHostelAllocations(req, res) {
-    res.json({ success: true, allocations: memoryHostelAllocations })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM hostel_allocations ORDER BY created_at DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, allocations: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, allocations: memoryHostelAllocations })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async allocateHostelRoom(req, res) {
@@ -669,6 +804,20 @@ export class CampusOperationsController {
       if (!hostel_name || !room_number || !student_roll) {
         return res.status(400).json({ error: 'hostel_name, room_number, and student_roll are required' })
       }
+      const allocDate = new Date().toISOString().split('T')[0]
+
+      try {
+        const query = `
+          INSERT INTO hostel_allocations (institution_id, hostel_name, room_number, student_roll, student_name, bed_number, allocation_date, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE')
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, hostel_name, room_number, student_roll, student_name || 'Student', bed_number, allocDate])
+        if (dbRes?.rows?.[0]) {
+          memoryHostelAllocations.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, allocation: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const alloc = {
         id: memoryHostelAllocations.length + 1,
         hostel_name,
@@ -676,7 +825,7 @@ export class CampusOperationsController {
         student_roll,
         student_name: student_name || 'Student',
         bed_number,
-        allocation_date: new Date().toISOString().split('T')[0],
+        allocation_date: allocDate,
         status: 'ACTIVE'
       }
       memoryHostelAllocations.unshift(alloc)
@@ -687,13 +836,35 @@ export class CampusOperationsController {
   }
 
   static async getHostelGateLogs(req, res) {
-    res.json({ success: true, logs: memoryHostelGateLogs })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM hostel_gate_logs ORDER BY timestamp DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, logs: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, logs: memoryHostelGateLogs })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async logHostelGatePass(req, res) {
     try {
       const { student_roll, student_name, direction, reason } = req.body || {}
       if (!student_roll || !direction) return res.status(400).json({ error: 'student_roll and direction are required' })
+      const approvedBy = req.user?.name || 'Warden Gate Turnstile'
+
+      try {
+        const query = `
+          INSERT INTO hostel_gate_logs (institution_id, student_roll, student_name, direction, reason, approved_by)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, student_roll, student_name || 'Student', direction.toUpperCase(), reason || 'Standard gate check', approvedBy])
+        if (dbRes?.rows?.[0]) {
+          memoryHostelGateLogs.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, log: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const log = {
         id: memoryHostelGateLogs.length + 1,
         student_roll,
@@ -701,7 +872,7 @@ export class CampusOperationsController {
         direction: direction.toUpperCase(),
         reason: reason || 'Standard gate check',
         timestamp: new Date().toISOString(),
-        approved_by: req.user?.name || 'Warden Gate Turnstile'
+        approved_by: approvedBy
       }
       memoryHostelGateLogs.unshift(log)
       res.status(201).json({ success: true, log })
@@ -715,16 +886,31 @@ export class CampusOperationsController {
     try {
       const { student_roll = 'SS26', student_name = 'Ananya Sharma', department = 'Computer Science', leave_type, from_date, to_date, reason, parent_consent = true } = req.body || {}
       if (!from_date || !to_date || !reason) return res.status(400).json({ error: 'from_date, to_date, and reason are required' })
+      const lType = leave_type || 'Personal'
+      const pConsent = Boolean(parent_consent)
+
+      try {
+        const query = `
+          INSERT INTO leave_requests (institution_id, student_roll, student_name, department, leave_type, from_date, to_date, reason, parent_consent, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PENDING')
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, student_roll, student_name, department, lType, from_date, to_date, reason, pConsent])
+        if (dbRes?.rows?.[0]) {
+          memoryLeaveRequests.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, leave: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const leave = {
         id: memoryLeaveRequests.length + 1,
         student_roll,
         student_name,
         department,
-        leave_type: leave_type || 'Personal',
+        leave_type: lType,
         from_date,
         to_date,
         reason,
-        parent_consent: Boolean(parent_consent),
+        parent_consent: pConsent,
         status: 'PENDING',
         reviewed_by: null,
         review_comment: null,
@@ -738,7 +924,15 @@ export class CampusOperationsController {
   }
 
   static async getLeaveRequests(req, res) {
-    res.json({ success: true, requests: memoryLeaveRequests })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM leave_requests ORDER BY created_at DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, requests: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, requests: memoryLeaveRequests })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async updateLeaveStatus(req, res) {
@@ -748,10 +942,24 @@ export class CampusOperationsController {
       if (!['APPROVED', 'REJECTED'].includes(status)) {
         return res.status(400).json({ error: 'Status must be APPROVED or REJECTED' })
       }
+      const reviewedBy = req.user?.name || 'Dr. Ramesh Kumar (HOD)'
+
+      try {
+        const query = `
+          UPDATE leave_requests
+          SET status = $1, reviewed_by = $2, review_comment = $3
+          WHERE id = $4
+          RETURNING *`
+        const dbRes = await pool.query(query, [status, reviewedBy, review_comment, id])
+        if (dbRes?.rows?.[0]) {
+          return res.json({ success: true, leave: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const item = memoryLeaveRequests.find((l) => Number(l.id) === Number(id))
       if (!item) return res.status(404).json({ error: 'Leave request not found' })
       item.status = status
-      item.reviewed_by = req.user?.name || 'Dr. Ramesh Kumar (HOD)'
+      item.reviewed_by = reviewedBy
       item.review_comment = review_comment
       res.json({ success: true, leave: item })
     } catch (err) {
@@ -763,7 +971,15 @@ export class CampusOperationsController {
   // PHASE 3: Budget Tracking, Scholarship & Admissions
   // -------------------------------------------------------------
   static async getBudgets(req, res) {
-    res.json({ success: true, budgets: memoryBudgets })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM department_budgets ORDER BY department ASC, category ASC')
+        if (dbRes?.rows?.length) return res.json({ success: true, budgets: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, budgets: memoryBudgets })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async setBudget(req, res) {
@@ -772,9 +988,32 @@ export class CampusOperationsController {
       if (!department || !category || !allocated_amount) {
         return res.status(400).json({ error: 'department, category, and allocated_amount are required' })
       }
+      const numAllocated = Number(allocated_amount)
+
+      try {
+        const existing = await pool.query('SELECT * FROM department_budgets WHERE department = $1 AND category = $2', [department, category])
+        if (existing?.rows?.[0]) {
+          const updateRes = await pool.query(
+            'UPDATE department_budgets SET allocated_amount = $1, fiscal_year = $2 WHERE id = $3 RETURNING *',
+            [numAllocated, fiscal_year, existing.rows[0].id]
+          )
+          if (updateRes?.rows?.[0]) {
+            return res.json({ success: true, budget: updateRes.rows[0] })
+          }
+        } else {
+          const insertRes = await pool.query(
+            'INSERT INTO department_budgets (institution_id, department, category, fiscal_year, allocated_amount, spent_amount) VALUES ($1, $2, $3, $4, $5, 0.00) RETURNING *',
+            [1, department, category, fiscal_year, numAllocated]
+          )
+          if (insertRes?.rows?.[0]) {
+            return res.status(201).json({ success: true, budget: insertRes.rows[0] })
+          }
+        }
+      } catch (_err) {}
+
       const existing = memoryBudgets.find((b) => b.department === department && b.category === category)
       if (existing) {
-        existing.allocated_amount = Number(allocated_amount)
+        existing.allocated_amount = numAllocated
         return res.json({ success: true, budget: existing })
       }
       const b = {
@@ -782,7 +1021,7 @@ export class CampusOperationsController {
         department,
         category,
         fiscal_year,
-        allocated_amount: Number(allocated_amount),
+        allocated_amount: numAllocated,
         spent_amount: 0.00
       }
       memoryBudgets.push(b)
@@ -793,24 +1032,55 @@ export class CampusOperationsController {
   }
 
   static async getExpenses(req, res) {
-    res.json({ success: true, expenses: memoryExpenses })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM budget_expenses ORDER BY expense_date DESC, id DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, expenses: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, expenses: memoryExpenses })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async recordExpense(req, res) {
     try {
       const { budget_id, department, category, amount, vendor_name, invoice_number, description } = req.body || {}
       if (!department || !amount) return res.status(400).json({ error: 'department and amount are required' })
+      const numAmount = Number(amount)
+      const bId = Number(budget_id) || 1
+      const cat = category || 'Operations'
+      const vName = vendor_name || 'Authorized Institutional Vendor'
+      const invNo = invoice_number || `INV-${Date.now()}`
+      const expDate = new Date().toISOString().split('T')[0]
+      const desc = description || 'Institutional operational expense'
+      const approvedBy = req.user?.name || 'Finance Officer'
+
+      try {
+        const query = `
+          INSERT INTO budget_expenses (budget_id, department, category, amount, vendor_name, invoice_number, expense_date, description, approved_by)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING *`
+        const dbRes = await pool.query(query, [bId, department, cat, numAmount, vName, invNo, expDate, desc, approvedBy])
+        if (dbRes?.rows?.[0]) {
+          await pool.query('UPDATE department_budgets SET spent_amount = spent_amount + $1 WHERE id = $2', [numAmount, bId])
+          const exp = dbRes.rows[0]
+          memoryExpenses.unshift(exp)
+          return res.status(201).json({ success: true, expense: exp })
+        }
+      } catch (_err) {}
+
       const exp = {
         id: memoryExpenses.length + 1,
-        budget_id: Number(budget_id) || 1,
+        budget_id: bId,
         department,
-        category: category || 'Operations',
-        amount: Number(amount),
-        vendor_name: vendor_name || 'Authorized Institutional Vendor',
-        invoice_number: invoice_number || `INV-${Date.now()}`,
-        expense_date: new Date().toISOString().split('T')[0],
-        description: description || 'Institutional operational expense',
-        approved_by: req.user?.name || 'Finance Officer'
+        category: cat,
+        amount: numAmount,
+        vendor_name: vName,
+        invoice_number: invNo,
+        expense_date: expDate,
+        description: desc,
+        approved_by: approvedBy
       }
       memoryExpenses.unshift(exp)
       const b = memoryBudgets.find((bg) => bg.id === exp.budget_id)
@@ -825,15 +1095,31 @@ export class CampusOperationsController {
     try {
       const { student_roll = 'SS26', student_name = 'Ananya Sharma', scholarship_name, category = 'Merit', amount = 25000, gpa = 9.0, annual_family_income = 250000 } = req.body || {}
       if (!scholarship_name) return res.status(400).json({ error: 'scholarship_name is required' })
+      const numAmount = Number(amount)
+      const numGpa = Number(gpa)
+      const numIncome = Number(annual_family_income)
+
+      try {
+        const query = `
+          INSERT INTO scholarship_applications (institution_id, student_roll, student_name, scholarship_name, category, amount, gpa, annual_family_income, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'APPLIED')
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, student_roll, student_name, scholarship_name, category, numAmount, numGpa, numIncome])
+        if (dbRes?.rows?.[0]) {
+          memoryScholarships.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, scholarship: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const s = {
         id: memoryScholarships.length + 1,
         student_roll,
         student_name,
         scholarship_name,
         category,
-        amount: Number(amount),
-        gpa: Number(gpa),
-        annual_family_income: Number(annual_family_income),
+        amount: numAmount,
+        gpa: numGpa,
+        annual_family_income: numIncome,
         status: 'APPLIED',
         verified_by: null,
         invoice_deduction_id: null,
@@ -847,17 +1133,41 @@ export class CampusOperationsController {
   }
 
   static async getScholarships(req, res) {
-    res.json({ success: true, scholarships: memoryScholarships })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM scholarship_applications ORDER BY created_at DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, scholarships: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, scholarships: memoryScholarships })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async verifyScholarship(req, res) {
     try {
       const { id } = req.params
+      const verifiedBy = req.user?.name || 'Finance Officer'
+      const deductionId = `AUTO-DED-${Date.now()}`
+
+      try {
+        const query = `
+          UPDATE scholarship_applications
+          SET status = 'VERIFIED', verified_by = $1, invoice_deduction_id = $2
+          WHERE id = $3
+          RETURNING *`
+        const dbRes = await pool.query(query, [verifiedBy, deductionId, id])
+        if (dbRes?.rows?.[0]) {
+          const row = dbRes.rows[0]
+          return res.json({ success: true, scholarship: row, message: `Scholarship ₹${row.amount} verified and applied to student invoice deduction credit.` })
+        }
+      } catch (_err) {}
+
       const item = memoryScholarships.find((s) => Number(s.id) === Number(id))
       if (!item) return res.status(404).json({ error: 'Scholarship not found' })
       item.status = 'VERIFIED'
-      item.verified_by = req.user?.name || 'Finance Officer'
-      item.invoice_deduction_id = `AUTO-DED-${Date.now()}`
+      item.verified_by = verifiedBy
+      item.invoice_deduction_id = deductionId
       res.json({ success: true, scholarship: item, message: `Scholarship ₹${item.amount} verified and applied to student invoice deduction credit.` })
     } catch (err) {
       res.status(500).json({ error: err.message })
@@ -871,17 +1181,36 @@ export class CampusOperationsController {
         return res.status(400).json({ error: 'full_name, email, and desired_program are required' })
       }
       const appNo = `EDU-ADM-2026-${Math.floor(1000 + Math.random() * 9000)}`
+      const phoneVal = phone || '+91 98000 00000'
+      const dobVal = date_of_birth || '2008-01-01'
+      const genderVal = gender || 'Other'
+      const qualVal = qualification || '12th Standard / Pre-University'
+      const cgpaVal = Number(percentage_or_cgpa) || 85.0
+      const docsJson = JSON.stringify([{ name: 'Marksheet_12th.pdf', status: 'Uploaded' }])
+
+      try {
+        const query = `
+          INSERT INTO admission_applications (application_number, full_name, email, phone, date_of_birth, gender, desired_program, qualification, percentage_or_cgpa, application_fee, payment_status, payment_utr, status, documents)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1000.00, 'PAID', $10, 'SUBMITTED', $11)
+          RETURNING *`
+        const dbRes = await pool.query(query, [appNo, full_name, email, phoneVal, dobVal, genderVal, desired_program, qualVal, cgpaVal, payment_utr, docsJson])
+        if (dbRes?.rows?.[0]) {
+          memoryAdmissions.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, application: dbRes.rows[0], message: `Application ${appNo} received with UPI fee receipt.` })
+        }
+      } catch (_err) {}
+
       const adm = {
         id: memoryAdmissions.length + 1,
         application_number: appNo,
         full_name,
         email,
-        phone: phone || '+91 98000 00000',
-        date_of_birth: date_of_birth || '2008-01-01',
-        gender: gender || 'Other',
+        phone: phoneVal,
+        date_of_birth: dobVal,
+        gender: genderVal,
         desired_program,
-        qualification: qualification || '12th Standard / Pre-University',
-        percentage_or_cgpa: Number(percentage_or_cgpa) || 85.0,
+        qualification: qualVal,
+        percentage_or_cgpa: cgpaVal,
         application_fee: 1000.00,
         payment_status: 'PAID',
         payment_utr,
@@ -899,6 +1228,11 @@ export class CampusOperationsController {
   static async getAdmissionStatus(req, res) {
     try {
       const { appNo } = req.params
+      try {
+        const dbRes = await pool.query('SELECT * FROM admission_applications WHERE LOWER(application_number) = LOWER($1)', [appNo])
+        if (dbRes?.rows?.[0]) return res.json({ success: true, application: dbRes.rows[0] })
+      } catch (_err) {}
+
       const adm = memoryAdmissions.find((a) => a.application_number.toLowerCase() === appNo.toLowerCase())
       if (!adm) return res.status(404).json({ error: 'Application number not found' })
       res.json({ success: true, application: adm })
@@ -908,14 +1242,30 @@ export class CampusOperationsController {
   }
 
   static async getAdmissionsList(req, res) {
-    res.json({ success: true, admissions: memoryAdmissions })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM admission_applications ORDER BY created_at DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, admissions: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, admissions: memoryAdmissions })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   // -------------------------------------------------------------
   // PHASE 4: Placement Readiness & Mock Tests
   // -------------------------------------------------------------
   static async getPlacementDrives(req, res) {
-    res.json({ success: true, drives: memoryPlacementDrives })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM placement_drives ORDER BY drive_date ASC')
+        if (dbRes?.rows?.length) return res.json({ success: true, drives: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, drives: memoryPlacementDrives })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async createPlacementDrive(req, res) {
@@ -924,16 +1274,33 @@ export class CampusOperationsController {
       if (!company_name || !role_title || !ctc_lpa) {
         return res.status(400).json({ error: 'company_name, role_title, and ctc_lpa are required' })
       }
+      const branchesArr = Array.isArray(eligible_branches) ? eligible_branches : [eligible_branches]
+      const dDate = drive_date || '2026-12-15'
+      const regDead = registration_deadline || '2026-12-01'
+      const desc = job_description || 'Campus recruitment drive'
+
+      try {
+        const query = `
+          INSERT INTO placement_drives (institution_id, company_name, role_title, ctc_lpa, eligibility_cgpa, eligible_branches, drive_date, registration_deadline, job_description, status, applicants_count)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'ACTIVE', 0)
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, company_name, role_title, Number(ctc_lpa), Number(eligibility_cgpa), branchesArr, dDate, regDead, desc])
+        if (dbRes?.rows?.[0]) {
+          memoryPlacementDrives.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, drive: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const drive = {
         id: memoryPlacementDrives.length + 1,
         company_name,
         role_title,
         ctc_lpa: Number(ctc_lpa),
         eligibility_cgpa: Number(eligibility_cgpa),
-        eligible_branches: Array.isArray(eligible_branches) ? eligible_branches : [eligible_branches],
-        drive_date: drive_date || '2026-12-15',
-        registration_deadline: registration_deadline || '2026-12-01',
-        job_description: job_description || 'Campus recruitment drive',
+        eligible_branches: branchesArr,
+        drive_date: dDate,
+        registration_deadline: regDead,
+        job_description: desc,
         status: 'ACTIVE',
         applicants_count: 0
       }
@@ -947,6 +1314,24 @@ export class CampusOperationsController {
   static async applyPlacementDrive(req, res) {
     try {
       const { id } = req.params
+      const { student_roll = 'SS26', student_name = 'Ananya Sharma', student_cgpa = 8.5, branch = 'CSE', resume_url = '' } = req.body || {}
+
+      try {
+        const updateRes = await pool.query(
+          'UPDATE placement_drives SET applicants_count = applicants_count + 1 WHERE id = $1 RETURNING *',
+          [id]
+        )
+        if (updateRes?.rows?.[0]) {
+          await pool.query(
+            `INSERT INTO placement_applications (drive_id, student_roll, student_name, student_cgpa, branch, resume_url, status)
+             VALUES ($1, $2, $3, $4, $5, $6, 'APPLIED')`,
+            [id, student_roll, student_name, Number(student_cgpa), branch, resume_url]
+          )
+          const drive = updateRes.rows[0]
+          return res.json({ success: true, message: `Successfully registered for ${drive.company_name} campus drive.` })
+        }
+      } catch (_err) {}
+
       const drive = memoryPlacementDrives.find((d) => Number(d.id) === Number(id))
       if (!drive) return res.status(404).json({ error: 'Drive not found' })
       drive.applicants_count += 1
@@ -957,7 +1342,28 @@ export class CampusOperationsController {
   }
 
   static async getMockTests(req, res) {
-    res.json({ success: true, mockTests: memoryMockTests })
+    try {
+      const category = req.query.category
+      try {
+        let query = 'SELECT * FROM mock_tests ORDER BY id ASC'
+        const params = []
+        if (category) {
+          query = 'SELECT * FROM mock_tests WHERE LOWER(category) = LOWER($1) ORDER BY id ASC'
+          params.push(category)
+        }
+        const dbRes = await pool.query(query, params)
+        if (dbRes?.rows?.length > 0) {
+          return res.json({ success: true, mockTests: dbRes.rows })
+        }
+      } catch (_err) {}
+
+      const filtered = category 
+        ? memoryMockTests.filter(t => t.category?.toLowerCase() === category.toLowerCase())
+        : memoryMockTests
+      res.json({ success: true, mockTests: filtered })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async submitMockTest(req, res) {
@@ -985,6 +1391,19 @@ export class CampusOperationsController {
         percentage,
         submitted_at: new Date().toISOString()
       }
+
+      try {
+        const query = `
+          INSERT INTO mock_test_submissions (test_id, student_roll, student_name, score, max_score, percentage, answers)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING *`
+        const dbRes = await pool.query(query, [test.id, student_roll, student_name, score, test.questions.length, percentage, JSON.stringify(answers)])
+        if (dbRes?.rows?.[0]) {
+          memoryMockSubmissions.unshift(dbRes.rows[0])
+          return res.json({ success: true, submission: dbRes.rows[0], feedback: percentage >= 70 ? 'Excellent aptitude readiness!' : 'Review quantitative principles and retry.' })
+        }
+      } catch (_err) {}
+
       memoryMockSubmissions.unshift(sub)
       res.json({ success: true, submission: sub, feedback: percentage >= 70 ? 'Excellent aptitude readiness!' : 'Review quantitative principles and retry.' })
     } catch (err) {
@@ -993,14 +1412,33 @@ export class CampusOperationsController {
   }
 
   static async getMockTestSubmissions(req, res) {
-    res.json({ success: true, submissions: memoryMockSubmissions })
+    try {
+      const studentRoll = req.query.student_roll || 'SS26'
+      try {
+        const dbRes = await pool.query('SELECT * FROM mock_test_submissions WHERE student_roll = $1 ORDER BY submitted_at DESC', [studentRoll])
+        if (dbRes?.rows?.length > 0) {
+          return res.json({ success: true, submissions: dbRes.rows })
+        }
+      } catch (_err) {}
+      res.json({ success: true, submissions: memoryMockSubmissions })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   // -------------------------------------------------------------
   // PHASE 5: Faculty Appraisal & Payroll Generation
   // -------------------------------------------------------------
   static async getFacultyAppraisals(req, res) {
-    res.json({ success: true, appraisals: memoryFacultyAppraisals })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM faculty_appraisals ORDER BY created_at DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, appraisals: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, appraisals: memoryFacultyAppraisals })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async submitFacultyAppraisal(req, res) {
@@ -1018,6 +1456,21 @@ export class CampusOperationsController {
       else if (total >= 80) band = 'Exceeds Expectations'
       else if (total < 60) band = 'Needs Improvement'
 
+      const evaluatedBy = req.user?.name || 'Dr. K. Srinivas (HOD)'
+      const remarksVal = remarks || 'Annual institutional evaluation'
+
+      try {
+        const query = `
+          INSERT INTO faculty_appraisals (institution_id, faculty_id, faculty_name, department, academic_year, research_score, teaching_score, admin_score, total_score, performance_band, remarks, evaluated_by)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, 70, faculty_name, department, academic_year, r, t, a, total, band, remarksVal, evaluatedBy])
+        if (dbRes?.rows?.[0]) {
+          memoryFacultyAppraisals.unshift(dbRes.rows[0])
+          return res.status(201).json({ success: true, appraisal: dbRes.rows[0] })
+        }
+      } catch (_err) {}
+
       const appraisal = {
         id: memoryFacultyAppraisals.length + 1,
         faculty_id: 70,
@@ -1029,8 +1482,8 @@ export class CampusOperationsController {
         admin_score: a,
         total_score: total,
         performance_band: band,
-        remarks: remarks || 'Annual institutional evaluation',
-        evaluated_by: req.user?.name || 'Dr. K. Srinivas (HOD)',
+        remarks: remarksVal,
+        evaluated_by: evaluatedBy,
         created_at: new Date().toISOString()
       }
       memoryFacultyAppraisals.unshift(appraisal)
@@ -1041,7 +1494,15 @@ export class CampusOperationsController {
   }
 
   static async getPayslips(req, res) {
-    res.json({ success: true, payslips: memoryPayslips })
+    try {
+      try {
+        const dbRes = await pool.query('SELECT * FROM payslips ORDER BY generated_at DESC, id DESC')
+        if (dbRes?.rows?.length) return res.json({ success: true, payslips: dbRes.rows })
+      } catch (_err) {}
+      res.json({ success: true, payslips: memoryPayslips })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
   }
 
   static async generatePayslip(req, res) {
@@ -1056,6 +1517,22 @@ export class CampusOperationsController {
       const pf = Math.round(bp * 0.12) // 12% PF
       const tax = Math.round(bp * 0.10) // 10% TDS
       const net = (bp + da + hra + allowances) - (pf + tax)
+      const numYear = Number(year)
+
+      try {
+        const query = `
+          INSERT INTO payslips (institution_id, faculty_id, faculty_name, designation, month, year, basic_pay, da, hra, allowances, pf_deduction, tax_deduction, net_salary, payment_status, pdf_url)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'PAID', $14)
+          RETURNING *`
+        const dbRes = await pool.query(query, [1, 70, faculty_name, designation, month, numYear, bp, da, hra, allowances, pf, tax, net, `/api/v1/finance/payslips/latest/pdf`])
+        if (dbRes?.rows?.[0]) {
+          const row = dbRes.rows[0]
+          row.pdf_url = `/api/v1/finance/payslips/${row.id}/pdf`
+          await pool.query('UPDATE payslips SET pdf_url = $1 WHERE id = $2', [row.pdf_url, row.id]).catch(() => {})
+          memoryPayslips.unshift(row)
+          return res.status(201).json({ success: true, payslip: row })
+        }
+      } catch (_err) {}
 
       const pId = memoryPayslips.length + 1
       const slip = {
@@ -1064,7 +1541,7 @@ export class CampusOperationsController {
         faculty_name,
         designation,
         month,
-        year: Number(year),
+        year: numYear,
         basic_pay: bp,
         da,
         hra,
@@ -1337,6 +1814,32 @@ export class CampusOperationsController {
   static async getTimetable(req, res) {
     try {
       const section = req.query.section || 'MPC-A'
+      try {
+        const dbRes = await pool.query(
+          'SELECT day, time, room, course, faculty FROM timetable_slots WHERE section = $1 OR section = $2 ORDER BY id ASC',
+          [section, 'General']
+        )
+        if (dbRes?.rows?.length > 0) {
+          const grid = {}
+          for (const row of dbRes.rows) {
+            if (!grid[row.day]) grid[row.day] = []
+            grid[row.day].push({ subject: row.course, faculty: row.faculty, room: row.room, time: row.time })
+          }
+          const baseData = memoryTimetableStore[section] || memoryTimetableStore['MPC-A']
+          return res.json({
+            success: true,
+            section,
+            timetable: {
+              ...baseData,
+              section,
+              schedule: Object.keys(grid).length > 0 ? grid : baseData.schedule
+            }
+          })
+        }
+      } catch (_dbErr) {
+        // graceful memory fallback
+      }
+
       const data = memoryTimetableStore[section] || memoryTimetableStore['MPC-A']
       res.json({
         success: true,

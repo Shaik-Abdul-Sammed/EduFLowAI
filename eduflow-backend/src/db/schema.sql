@@ -120,6 +120,21 @@ CREATE TABLE grievances (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS support_tickets (
+    id SERIAL PRIMARY KEY,
+    institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    category VARCHAR(100) DEFAULT 'general',
+    priority VARCHAR(50) DEFAULT 'medium',
+    status VARCHAR(50) DEFAULT 'open',
+    response TEXT,
+    resolved_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE library_books (
     id SERIAL PRIMARY KEY,
     institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
@@ -488,6 +503,30 @@ CREATE TABLE translation_logs (
     translated_text TEXT NOT NULL,
     language_code VARCHAR(16) NOT NULL,
     module VARCHAR(64) DEFAULT 'General',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS timetable_slots (
+    id SERIAL PRIMARY KEY,
+    institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
+    day VARCHAR(20) NOT NULL,
+    time VARCHAR(50) NOT NULL,
+    room VARCHAR(50) NOT NULL,
+    course VARCHAR(100) NOT NULL,
+    faculty VARCHAR(100) NOT NULL,
+    section VARCHAR(50) DEFAULT 'General',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS student_fee_payments (
+    id SERIAL PRIMARY KEY,
+    student_roll VARCHAR(50) DEFAULT '1ST21CS001',
+    student_name VARCHAR(255) DEFAULT 'Aarav Sharma',
+    term VARCHAR(100) DEFAULT 'Term 1 Tuition Fee',
+    amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    method VARCHAR(50) DEFAULT 'Online UPI',
+    status VARCHAR(20) DEFAULT 'paid',
+    receipt_no VARCHAR(50) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

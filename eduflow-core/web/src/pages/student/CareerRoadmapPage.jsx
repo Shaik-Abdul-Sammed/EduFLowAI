@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Compass, Briefcase, Award, TrendingUp, CheckCircle2, ChevronRight } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function CareerRoadmapPage() {
   const [selectedTrack, setSelectedTrack] = useState('Full Stack AI Systems')
+  const [readinessScore, setReadinessScore] = useState(86)
+  const [loading, setLoading] = useState(false)
 
-  const tracks = {
+  const [tracks, setTracks] = useState({
     'Full Stack AI Systems': [
       { step: 1, title: 'Data Structures & Algorithmic Complexity', status: 'Completed', score: '94%' },
       { step: 2, title: 'Distributed Systems & Microservices Architecture', status: 'In Progress', score: '78%' },
@@ -17,7 +20,42 @@ export default function CareerRoadmapPage() {
       { step: 2, title: 'IAM, Zero Trust & OIDC/OAuth2 Standards', status: 'In Progress', score: '82%' },
       { step: 3, title: 'Cloud Infrastructure Penetration Testing', status: 'Pending', score: '—' },
     ]
-  }
+  })
+
+  useEffect(() => {
+    async function loadLiveRoadmap() {
+      setLoading(true)
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/api/v1/learning/path/101'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const courses = data?.path?.recommended_courses || []
+          if (courses.length > 0) {
+            setTracks(prev => ({
+              ...prev,
+              'Adaptive AI Career Pathway': courses.map((c, i) => ({
+                step: i + 1,
+                title: `${c.courseCode}: ${c.title}`,
+                status: i === 0 ? 'In Progress' : 'Pending',
+                score: `${c.difficulty} • ${c.estimatedWeeks}w`
+              }))
+            }))
+            if (data?.path?.mastery_score) {
+              setReadinessScore(Math.round(data.path.mastery_score))
+            }
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load career roadmap path:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadLiveRoadmap()
+  }, [])
 
   return (
     <RolePageTemplate
@@ -52,7 +90,7 @@ export default function CareerRoadmapPage() {
             <div className="col-12 col-md-4">
               <div className="p-3 rounded-3 bg-light border">
                 <div className="text-muted small">Campus Placement Readiness</div>
-                <div className="h3 fw-bold text-success mb-0">86 / 100</div>
+                <div className="h3 fw-bold text-success mb-0">{readinessScore} / 100</div>
               </div>
             </div>
             <div className="col-12 col-md-4">

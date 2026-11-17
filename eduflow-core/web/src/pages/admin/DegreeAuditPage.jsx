@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { GraduationCap, Search, CheckCircle2, AlertCircle, Clock, BookOpen, Award } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getFullApiUrl } from '../../config/apiConfig'
 import { safeJson } from '../../utils/wakeUpHandler'
 
 export default function DegreeAuditPage() {
@@ -25,7 +25,7 @@ export default function DegreeAuditPage() {
     if (!roll) return
     setLoading(true)
     try {
-      const res = await fetch(`${getApiBaseURL()}/v1/students/${roll}/degree-audit`)
+      const res = await fetch(getFullApiUrl(`/api/v1/students/${roll}/degree-audit`))
       if (res.ok) {
         const data = await safeJson(res)
         if (data && data.genEd) {

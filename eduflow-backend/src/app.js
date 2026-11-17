@@ -189,6 +189,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/search', createSearchRouter(db))
   app.use('/api/v1/auth', createAuthRouter())
   app.use('/api/auth', createAuthRouter())
+  app.use('/v1/auth', createAuthRouter())
   app.use('/auth', createAuthRouter())
   app.get(['/api/v1/default-institution', '/api/default-institution', '/default-institution'], (req, res) => {
     res.json({ id: 1, name: 'EduFlow Campus' })
@@ -199,6 +200,8 @@ export function createApp({ db } = {}) {
   app.use('/api/backup', backupRouter)
   app.use('/api/v1/translate', createTranslateRouter())
   app.use('/api/v1/ai', createAIRouter())
+  app.use('/api/ai', createAIRouter())
+  app.use('/v1/ai', createAIRouter())
 
   app.use('/api/v1/officers', requestTimeout(45000))
   app.use('/api/v1/officers', (req, res, next) => {
@@ -213,12 +216,15 @@ export function createApp({ db } = {}) {
   })
 
   app.use('/api/v1/officers', createOfficerRouter())
+  app.use('/v1/officers', createOfficerRouter())
+  app.use('/api/officers', createOfficerRouter())
   app.use('/api/v1/admin', createAdminRouter())
   app.use('/api/admin', createAdminRouter())
+  app.use('/v1/admin', createAdminRouter())
   app.use('/api/v1/student', createStudentRouter())
   app.use('/api/v1/career', createCareerRouter())
   app.use('/api/v1/guardianwatch', createGuardianWatchRouter())
-  app.use('/api/v1/digital-twin', createDigitalTwinRouter())
+  app.use(['/api/v1/digital-twin', '/v1/digital-twin', '/api/digital-twin'], createDigitalTwinRouter())
   app.use('/api/v1/user', createUserRouter())
   app.use('/api/v1/users', createUserRouter())
   app.use('/api/user', createUserRouter())
@@ -238,6 +244,8 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/staff', staffRouter)
   app.use('/api/v1/approvals', approvalRouter)
   app.use('/api/v1/calendar', calendarRouter)
+  app.use('/v1/calendar', calendarRouter)
+  app.use('/api/calendar', calendarRouter)
   app.use('/api/v1/attendance', attendanceRouter)
   app.use('/api/v1/consent', createConsentRouter())
   app.use('/api/v1/portal', portalRouter)
@@ -263,6 +271,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/campus', createCampusRouter())
   app.use('/api/v1/network', createNetworkRouter())
   app.use('/api/v1', createAdvancedTechRouter())
+  app.use('/v1', createAdvancedTechRouter())
   app.use('/api/v1/institution-operations', createInstitutionalNeedsRouter())
   app.use('/api/v1', createCampusOperationsRouter())
   app.use('/api', createCampusOperationsRouter())
@@ -272,6 +281,7 @@ export function createApp({ db } = {}) {
   // Degree Audit Engine Endpoint (International Benchmark)
   app.get('/api/v1/students/:rollNumber/degree-audit', DegreeAuditController.getDegreeAudit)
   app.get('/api/students/:rollNumber/degree-audit', DegreeAuditController.getDegreeAudit)
+  app.get('/v1/students/:rollNumber/degree-audit', DegreeAuditController.getDegreeAudit)
 
   // Proctoring Violation Endpoints (Phase 1)
   app.post('/api/v1/exams/:id/violation', ProctoringController.recordViolation)
@@ -284,7 +294,7 @@ export function createApp({ db } = {}) {
   app.get('/api/v1/procurement/history', ProcurementController.getHistory)
 
   // SpeedGrader Rubric Submission Endpoint
-  app.post('/api/v1/grades/submit', (req, res) => {
+  app.post(['/api/v1/grades/submit', '/v1/grades/submit', '/api/grades/submit'], (req, res) => {
     const { rollNumber, assignmentId, grades, totalScore, feedback } = req.body || {}
     res.status(200).json({
       success: true,
@@ -322,8 +332,8 @@ export function createApp({ db } = {}) {
   app.post('/api/v1/courses/bulk-import', BulkImportController.bulkImportCourses)
 
   // Bonafide Certificate Generator & Trust Gateway (Feature 45)
-  app.post('/api/v1/certificates/generate', CertificateController.generateCertificate)
-  app.get('/api/v1/certificates/verify/:certId', CertificateController.verifyCertificate)
+  app.post(['/api/v1/certificates/generate', '/v1/certificates/generate'], CertificateController.generateCertificate)
+  app.get(['/api/v1/certificates/verify/:certId', '/v1/certificates/verify/:certId'], CertificateController.verifyCertificate)
 
   // Public Report Viewer and Download endpoints
   app.get('/r/:token/pdf', ReportDeliveryController.downloadPublicReportPdf)

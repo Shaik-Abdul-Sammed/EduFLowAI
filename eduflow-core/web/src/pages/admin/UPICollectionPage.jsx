@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { getFullApiUrl } from '../../config/apiConfig'
 import {
   QrCode,
@@ -6,18 +6,58 @@ import {
   Check,
   Send,
   Share2,
-  CheckCircle
+  CheckCircle,
+  RefreshCw,
+  Receipt
 } from 'lucide-react'
 
 export default function UPICollectionPage() {
   const [upiId] = useState('ssit@icici')
   const [institutionName] = useState('Sri Siddhartha Institute of Technology')
+  const [invoices, setInvoices] = useState([])
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState('1')
   const [invoiceRef, setInvoiceRef] = useState('EDU-2026-0001')
   const [amount, setAmount] = useState('59000')
   const [copied, setCopied] = useState(false)
   const [manualRef, setManualRef] = useState('')
   const [manualStatus, setManualStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fetchingInvoices, setFetchingInvoices] = useState(false)
+
+  const fetchLiveInvoices = async () => {
+    try {
+      setFetchingInvoices(true)
+      const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
+      const res = await fetch(getFullApiUrl('/v1/invoices?limit=20'), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const list = data?.data || data?.invoices || (Array.isArray(data) ? data : [])
+        if (list.length > 0) {
+          setInvoices(list)
+          const first = list[0]
+          setSelectedInvoiceId(String(first.id))
+          setInvoiceRef(first.invoice_number || `INV-${first.id}`)
+          setAmount(String(Math.round(first.total_amount || first.amount || 59000)))
+        }
+      }
+    } catch (err) {
+      console.debug('Failed to load live invoices for UPI collection:', err)
+    } finally {
+      setFetchingInvoices(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLiveInvoices()
+  }, [])
+
+  const handleSelectInvoice = (inv) => {
+    setSelectedInvoiceId(String(inv.id))
+    setInvoiceRef(inv.invoice_number || `INV-${inv.id}`)
+    setAmount(String(Math.round(inv.total_amount || inv.amount || 59000)))
+  }
 
   const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(institutionName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Fee Payment Ref ' + invoiceRef)}`
   
@@ -43,7 +83,7 @@ export default function UPICollectionPage() {
 
     try {
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
-      const res = await fetch(getFullApiUrl('/v1/invoices/1/mark-paid-manual'), {
+      const res = await fetch(getFullApiUrl(`/v1/invoices/${selectedInvoiceId}/mark-paid-manual`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,6 +97,7 @@ export default function UPICollectionPage() {
       if (res.ok) {
         setManualStatus(`Payment verified and marked as PAID with Ref #${manualRef}`)
         setManualRef('')
+        fetchLiveInvoices()
       } else {
         setManualStatus(`Manual payment recorded successfully for Ref #${manualRef}`)
       }

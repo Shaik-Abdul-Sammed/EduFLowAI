@@ -197,7 +197,7 @@ export default function UserTracking() {
     setStatusMsg(null)
     try {
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
-      const res = await fetch('/v1/support/tickets', {
+      const res = await fetch(`${getApiBaseURL()}/v1/support/tickets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

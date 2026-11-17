@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 export default function CertificatePage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ export default function CertificatePage() {
     setError('')
 
     try {
-      const response = await fetch('/api/v1/certificates/generate', {
+      const response = await fetch(getFullApiUrl('/api/v1/certificates/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

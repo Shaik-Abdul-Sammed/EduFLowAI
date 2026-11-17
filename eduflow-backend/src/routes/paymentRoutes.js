@@ -249,10 +249,42 @@ export function createPaymentRouter() {
 
   /**
    * GET /api/v1/payments/student-fees
-   * Retrieve fee balance, next due date and transaction history
+   * Retrieve fee balance, next due date and transaction history from DB or fallback
    */
-  router.get('/student-fees', async (_req, res) => {
+  router.get('/student-fees', optionalAuth, async (req, res) => {
     try {
+      const studentRoll = req.user?.roll_number || req.query.studentRoll || '1ST21CS001'
+      
+      // Query PostgreSQL student_fee_payments if available
+      try {
+        const dbRes = await pool.query(
+          `SELECT id, term as description, amount, method, status, receipt_no as receipt, created_at as date 
+           FROM student_fee_payments 
+           WHERE student_roll = $1 
+           ORDER BY created_at DESC`,
+          [studentRoll]
+        )
+        if (dbRes.rows && dbRes.rows.length > 0) {
+          const paidTotal = dbRes.rows
+            .filter(r => r.status === 'paid')
+            .reduce((sum, r) => sum + Number(r.amount || 0), 0)
+          const totalFee = 120000
+          const pending = Math.max(0, totalFee - paidTotal)
+          return res.json({
+            success: true,
+            totalFee,
+            paidAmount: paidTotal,
+            pendingAmount: pending,
+            nextDue: '2026-12-15',
+            nextDueAmount: pending,
+            transactions: dbRes.rows
+          })
+        }
+      } catch (dbErr) {
+        // Table not initialized or DB offline, gracefully fallback to ledger
+        logger.debug?.('Fee DB query fallback:', dbErr.message)
+      }
+
       res.json({
         success: true,
         ...studentFeeLedger
@@ -264,11 +296,11 @@ export function createPaymentRouter() {
 
   /**
    * POST /api/v1/payments/remit-fee
-   * Remit fee balance and generate digital receipt
+   * Remit fee balance and generate digital receipt, persisting to PostgreSQL
    */
-  router.post('/remit-fee', async (req, res) => {
+  router.post('/remit-fee', optionalAuth, async (req, res) => {
     try {
-      const { amount, description = 'Term 2 Tuition Fee Remittance', method = 'Online UPI' } = req.body || {}
+      const { amount, description = 'Term 2 Tuition Fee Remittance', method = 'Online UPI', studentRoll = '1ST21CS001', studentName = 'Aarav Sharma' } = req.body || {}
       const remitAmount = Number(amount) || studentFeeLedger.pendingAmount || 40000
       if (remitAmount <= 0) {
         return res.status(400).json({ error: 'Valid positive remittance amount is required' })
@@ -283,6 +315,17 @@ export function createPaymentRouter() {
         method,
         status: 'paid',
         receipt: receiptNo
+      }
+
+      // Try inserting into PostgreSQL student_fee_payments & invoices
+      try {
+        await pool.query(
+          `INSERT INTO student_fee_payments (student_roll, student_name, term, amount, method, status, receipt_no)
+           VALUES ($1, $2, $3, $4, $5, 'paid', $6)`,
+          [studentRoll, studentName, description, remitAmount, method, receiptNo]
+        )
+      } catch (dbErr) {
+        logger.debug?.('Fee DB insert fallback:', dbErr.message)
       }
 
       studentFeeLedger.paidAmount += remitAmount

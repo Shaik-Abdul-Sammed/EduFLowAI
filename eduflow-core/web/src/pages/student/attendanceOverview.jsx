@@ -13,11 +13,37 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5']
 
 export default function Page() {
-  const { overall, subjects, heatmap } = attendanceData
+  const [overall, setOverall] = useState(attendanceData.overall)
+  const [subjects, setSubjects] = useState(attendanceData.subjects)
+  const { heatmap } = attendanceData
+  const [dbRecords, setDbRecords] = useState([])
   const pctColor = (p) => p >= 85 ? GREEN : p >= 75 ? BLUE : p >= 65 ? AMBER : RED
 
   const [presenceConsented, setPresenceConsented] = useState(true)
   const [updatingConsent, setUpdatingConsent] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    async function loadLiveAttendance() {
+      try {
+        const studentId = (typeof localStorage !== 'undefined' && (localStorage.getItem('studentId') || localStorage.getItem('userId'))) || '1'
+        const res = await wakeUpFetch(`/api/v1/attendance/student/${studentId}`)
+        if (res.ok && mounted) {
+          const data = await res.json()
+          if (data && data.success) {
+            if (typeof data.attendancePercentage === 'number') {
+              setOverall(data.attendancePercentage)
+            }
+            if (Array.isArray(data.records) && data.records.length > 0) {
+              setDbRecords(data.records)
+            }
+          }
+        }
+      } catch {}
+    }
+    loadLiveAttendance()
+    return () => { mounted = false }
+  }, [])
 
   const handleToggleConsent = async (e) => {
     const nextConsented = e.target.checked
@@ -156,6 +182,48 @@ export default function Page() {
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span className="badge bg-secondary bg-opacity-25 text-dark border">Marked by faculty</span></span>
           </div>
         </div>
+
+        {/* Live Verified Classroom Sessions from Database */}
+        {dbRecords.length > 0 && (
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden' }}>
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Live Verified Classroom Sessions</h2>
+              <span className="badge bg-light text-dark border">{dbRecords.length} sessions logged</span>
+            </div>
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Course Code</th>
+                    <th>Status</th>
+                    <th>Audit & Verification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dbRecords.map((r, idx) => (
+                    <tr key={idx}>
+                      <td className="fw-semibold">{r.date}</td>
+                      <td className="fw-bold text-primary">{r.course_code || 'CS301'}</td>
+                      <td>
+                        <span className={`badge ${r.status === 'PRESENT' ? 'bg-success' : 'bg-danger'}`}>
+                          {r.status}
+                        </span>
+                      </td>
+                      <td>
+                        {r.badge || r.review_state === 'faculty_override' ? (
+                          <span className="badge bg-secondary bg-opacity-25 text-dark border">Marked by faculty</span>
+                        ) : (
+                          <span className="text-muted small">Auto-verified by BLE/AP</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* DPDP Act 2023 Privacy & Tracking Card (P1.3) */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', padding: '1.25rem 1.5rem', background: 'var(--card-bg)' }}>

@@ -13,6 +13,7 @@ import {
   Paperclip
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getFullApiUrl } from '../../utils/apiConfig';
 
 const INITIAL_ESCALATIONS = [
   {
@@ -55,6 +56,44 @@ export default function DeanEscalationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [aiAnalysisPreview, setAiAnalysisPreview] = useState(null);
+
+  // Load live submitted escalations from backend
+  useEffect(() => {
+    async function loadLiveEscalations() {
+      try {
+        const token = localStorage.getItem('token') || '';
+        const res = await fetch(getFullApiUrl('/v1/campus-operations/grievances'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const items = data?.grievances || data?.data || (Array.isArray(data) ? data : []);
+          if (items.length > 0) {
+            const mapped = items.map(g => ({
+              id: `ESC-2026-${String(g.id).padStart(3, '0')}`,
+              category: g.category?.toLowerCase() || 'academic',
+              subject: g.subject || 'Student escalation',
+              description: g.description || '',
+              priority: (g.priority || 'normal').toLowerCase(),
+              status: g.status === 'RESOLVED' ? 'resolved' : 'dean_review',
+              submittedAt: g.created_at || new Date().toISOString(),
+              aiSummary: `AI Summary: ${g.subject} — Priority ${g.priority}. Auto-routed for Dean attention.`,
+              assignedTo: 'Dean of Academics Office',
+              attachmentUrl: ''
+            }));
+            setEscalations(prev => {
+              const ids = new Set(prev.map(p => p.id));
+              const fresh = mapped.filter(m => !ids.has(m.id));
+              return [...fresh, ...prev];
+            });
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to fetch live grievances:', err);
+      }
+    }
+    loadLiveEscalations();
+  }, []);
 
   // Real-time AI preview when description changes
   useEffect(() => {
@@ -101,14 +140,37 @@ export default function DeanEscalationPage() {
     };
 
     try {
-      // Attempt backend persistence if available
-      await fetch('/api/v1/escalations/raise', {
+      const token = localStorage.getItem('token') || '';
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // Persist to Campus Operations grievances (backed by PostgreSQL)
+      await fetch(getFullApiUrl('/v1/campus-operations/grievances'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEscalation)
+        headers,
+        body: JSON.stringify({
+          category: formData.category,
+          subject: formData.subject.trim(),
+          description: formData.description.trim(),
+          priority: (aiAnalysisPreview?.priority || formData.priority).toUpperCase(),
+          student_name: user?.name || 'Aarav Sharma',
+          student_roll: user?.rollNumber || '1ST21CS001'
+        })
+      }).catch(() => null);
+
+      // Also persist to support tickets queue
+      await fetch(getFullApiUrl('/v1/support/tickets'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          subject: `[Dean Escalation] ${formData.subject.trim()}`,
+          description: formData.description.trim(),
+          category: formData.category,
+          priority: aiAnalysisPreview?.priority || formData.priority
+        })
       }).catch(() => null);
     } catch {
-      // Graceful fallback to memory state
+      // Graceful fallback to state
     }
 
     setEscalations([newEscalation, ...escalations]);

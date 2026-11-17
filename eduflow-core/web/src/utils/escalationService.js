@@ -3,6 +3,8 @@
  * Shared persistent service connecting Student Escalation Desk and Dean/Faculty AI Console.
  */
 
+import { getFullApiUrl } from './apiConfig'
+
 const STORAGE_KEY = 'eduflow_dean_escalations'
 
 export const INITIAL_ESCALATIONS = [
@@ -205,6 +207,40 @@ export function createEscalation(data) {
 
   const updated = [newIssue, ...all]
   saveEscalations(updated)
+
+  // Asynchronously synchronize to PostgreSQL support tickets & campus grievances
+  try {
+    const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || '') : ''
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    fetch(getFullApiUrl('/v1/support/tickets'), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        subject: `[Student Escalation] ${data.subject}`,
+        description: data.description,
+        category: (data.category || aiAnalysis.category || 'general').toLowerCase(),
+        priority: (data.priority || aiAnalysis.suggestedPriority || 'medium').toLowerCase()
+      })
+    }).catch(() => null)
+
+    fetch(getFullApiUrl('/v1/campus-operations/grievances'), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        category: data.category || aiAnalysis.category,
+        subject: data.subject,
+        description: data.description,
+        priority: (data.priority || aiAnalysis.suggestedPriority || 'MEDIUM').toUpperCase(),
+        student_name: data.studentName || 'Ananya Sharma',
+        student_roll: data.studentId || '22BCE1044'
+      })
+    }).catch(() => null)
+  } catch (err) {
+    console.debug('Background escalation sync error:', err)
+  }
+
   return newIssue
 }
 
@@ -222,6 +258,25 @@ export function updateEscalationStatus(id, newStatus, deanRemarks = null) {
     return item
   })
   saveEscalations(updated)
+
+  // Dual-dispatch status update to PostgreSQL support tickets
+  try {
+    const numericId = parseInt(id.replace(/\D/g, ''), 10) || 1
+    const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('token') || '') : ''
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    fetch(getFullApiUrl(`/v1/support/tickets/${numericId}/resolve`), {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        response: deanRemarks || `Status marked as ${newStatus}`
+      })
+    }).catch(() => null)
+  } catch {
+    // Graceful fallback
+  }
+
   return updated.find(i => i.id === id)
 }
 

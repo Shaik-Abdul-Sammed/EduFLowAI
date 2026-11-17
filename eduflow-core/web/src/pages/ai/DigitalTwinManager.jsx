@@ -62,7 +62,7 @@ export default function DigitalTwinManager() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const res = await fetch(getFullApiUrl('/v1/digital-twin/ingest'), {
+      const res = await fetch(getFullApiUrl('/api/v1/digital-twin/ingest'), {
         method: 'POST',
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})

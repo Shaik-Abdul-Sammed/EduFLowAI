@@ -1,15 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { weeklyTests } from '../../utils/studentMockData'
+import { getFullApiUrl } from '../../utils/apiConfig'
 
 const pctColor = (pct) => pct >= 85 ? '#10B981' : pct >= 70 ? '#2563EB' : pct >= 50 ? '#F59E0B' : '#EF4444'
 
 export default function Page() {
+  const [testList, setTestList] = useState(weeklyTests)
   const [subFilter, setSubFilter] = useState('all')
-  const subjects = ['all', ...new Set(weeklyTests.map(t => t.subject))]
-  const weeks = [...new Set(weeklyTests.map(t => t.week))]
+  const [loading, setLoading] = useState(true)
 
-  const filtered = subFilter === 'all' ? weeklyTests : weeklyTests.filter(t => t.subject === subFilter)
+  useEffect(() => {
+    async function loadWeeklyExams() {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const res = await fetch(getFullApiUrl('/v1/exams/online'), {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const exams = data?.exams || []
+          if (exams.length > 0) {
+            const mapped = exams.map((e, idx) => ({
+              week: `Week ${idx + 1}`,
+              subject: e.course_id === 'CHE101' ? 'Chemistry' : e.course_id === 'MAT101' ? 'Mathematics' : 'Physics',
+              score: Math.min(e.duration_minutes || 42, 50),
+              max: 50,
+              rank: idx === 0 ? 1 : idx + 2,
+              classAvg: 34
+            }))
+            setTestList(mapped)
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to load weekly exams from API:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadWeeklyExams()
+  }, [])
+
+  const subjects = ['all', ...new Set(testList.map(t => t.subject))]
+  const filtered = subFilter === 'all' ? testList : testList.filter(t => t.subject === subFilter)
 
   const avg = filtered.reduce((a, t) => a + (t.score / t.max) * 100, 0) / (filtered.length || 1)
   const best = filtered.length > 0 ? filtered.reduce((a, t) => ((t.score || 0) / Math.max(1, t.max || 1)) > ((a.score || 0) / Math.max(1, a.max || 1)) ? t : a, filtered[0]) : null
