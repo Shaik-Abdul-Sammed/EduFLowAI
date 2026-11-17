@@ -63,7 +63,7 @@ if (isProduction && !databaseUrl && !allowMemoryFallback) {
 
 const useMemoryOnly = (!databaseUrl || dbMode === 'memory' || isTest) && !forcePostgres
 
-if (useMemoryOnly) {
+if (useMemoryOnly && !isTest && process.env.NODE_ENV !== 'test') {
   console.warn('⚠️ RUNNING IN MEMORY MODE — DATA WILL NOT PERSIST')
 }
 
@@ -97,7 +97,7 @@ if (realPool) {
 }
 
 function logMemoryFallbackWarningOnce() {
-  if (!hasLoggedMemoryWarning) {
+  if (!hasLoggedMemoryWarning && !isTest && process.env.NODE_ENV !== 'test') {
     console.warn('⚠️ RUNNING IN MEMORY MODE — DATA WILL NOT PERSIST')
     hasLoggedMemoryWarning = true
   }
@@ -123,6 +123,11 @@ function isConnectionFailure(error) {
 }
 
 export const pool = {
+  setSessionInstitution(instId, bypass = false) {
+    if (memoryPool?.setSessionInstitution) {
+      memoryPool.setSessionInstitution(instId, bypass)
+    }
+  },
   get isMemoryMode() {
     return useMemoryOnly || hasLoggedMemoryWarning || (pool.getDbStatus && pool.getDbStatus().mode === 'memory')
   },

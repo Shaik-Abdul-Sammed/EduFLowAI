@@ -41,7 +41,7 @@ export async function resetDemoData(targetPool = null) {
   const activePool = targetPool || appPool || new Pool(poolConfig)
 
   // Detect memory pool (used in unit tests and memory mode)
-  if (activePool && typeof activePool.setSessionInstitution === 'function') {
+  if (activePool && (typeof activePool.setSessionInstitution === 'function' || activePool.isMemoryMode)) {
     console.log('ℹ️ [ResetDemoData] Memory pool detected. In-memory demo data store ready.')
     return {
       success: true,
