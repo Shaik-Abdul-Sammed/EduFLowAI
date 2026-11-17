@@ -26,29 +26,95 @@ export class NetworkWebhookController {
         return res.status(401).json({ error: 'Unauthorized: Invalid network webhook secret' })
       }
 
-      const { macAddress, apBssid, ipAddress, timestamp } = req.body || {}
+      const { macAddress, deviceInstallId, apBssid, ipAddress, timestamp } = req.body || {}
 
-      if (!macAddress || !apBssid) {
-        return res.status(400).json({ error: 'Missing required fields: macAddress and apBssid are required' })
+      if (!apBssid) {
+        return res.status(400).json({ error: 'Missing required fields: apBssid is required' })
+      }
+      if (!deviceInstallId && !macAddress) {
+        return res.status(400).json({ error: 'Missing identity: deviceInstallId or macAddress is required' })
       }
 
-      const macHash = NetworkWebhookController.hashMac(macAddress)
       const normalizedBssid = apBssid.toUpperCase().trim()
-
       let device = null
       let zone = null
       let session = null
+      let registration = null
 
-      // Check PostgreSQL first
-      try {
-        const deviceRes = await pool.query(
-          `SELECT * FROM student_devices WHERE mac_address_hash = $1 AND is_active = true LIMIT 1`,
-          [macHash]
-        )
-        if (deviceRes.rows?.length > 0) {
-          device = deviceRes.rows[0]
+      // Canonical Identity Resolution via deviceInstallId (P0.1)
+      if (deviceInstallId) {
+        try {
+          const regRes = await pool.query(
+            `SELECT * FROM device_registrations WHERE device_install_id = $1 LIMIT 1`,
+            [deviceInstallId]
+          )
+          if (regRes.rows?.length > 0) {
+            registration = regRes.rows[0]
+          }
+        } catch {
+          // Handled via memoryPresenceStore fallback
         }
 
+        if (!registration && memoryPresenceStore.deviceRegistrations) {
+          registration = memoryPresenceStore.deviceRegistrations.find(
+            r => r.device_install_id === deviceInstallId
+          )
+        }
+
+        if (!registration) {
+          return res.status(403).json({
+            error: 'Unregistered deviceInstallId',
+            code: 'UNREGISTERED_DEVICE',
+            deviceInstallId
+          })
+        }
+
+        if (registration.revoked_at) {
+          return res.status(403).json({
+            error: 'Revoked device registration cannot mark attendance',
+            code: 'DEVICE_REVOKED',
+            deviceInstallId
+          })
+        }
+
+        device = {
+          id: registration.id,
+          student_id: registration.student_id,
+          student_roll: registration.student_roll || '2024-CSE-042',
+          student_name: registration.student_name || 'Registered Student',
+          is_active: true,
+          last_seen_at: new Date(timestamp || Date.now())
+        }
+
+        registration.last_seen_at = new Date(timestamp || Date.now())
+      } else {
+        // Fallback for legacy flows using MAC address
+        const macHash = NetworkWebhookController.hashMac(macAddress)
+        try {
+          const deviceRes = await pool.query(
+            `SELECT * FROM student_devices WHERE mac_address_hash = $1 AND is_active = true LIMIT 1`,
+            [macHash]
+          )
+          if (deviceRes.rows?.length > 0) {
+            device = deviceRes.rows[0]
+          }
+        } catch {}
+
+        if (!device) {
+          device = memoryPresenceStore.devices.find(d => d.mac_address_hash === macHash && d.is_active)
+        }
+
+        if (!device) {
+          return res.status(404).json({
+            success: false,
+            message: 'Device not registered in EduFlow Student Network Directory',
+            macHash
+          })
+        }
+      }
+
+      // Resolve Zone
+      try {
         const zoneRes = await pool.query(
           `SELECT * FROM network_zones WHERE ap_bssid = $1 LIMIT 1`,
           [normalizedBssid]
@@ -56,24 +122,10 @@ export class NetworkWebhookController {
         if (zoneRes.rows?.length > 0) {
           zone = zoneRes.rows[0]
         }
-      } catch {
-        // Handled below via fallback
-      }
+      } catch {}
 
-      // Memory-store fallback
-      if (!device) {
-        device = memoryPresenceStore.devices.find(d => d.mac_address_hash === macHash && d.is_active)
-      }
       if (!zone) {
         zone = memoryPresenceStore.zones.find(z => z.ap_bssid.toUpperCase() === normalizedBssid)
-      }
-
-      if (!device) {
-        return res.status(404).json({
-          success: false,
-          message: 'Device not registered in EduFlow Student Network Directory',
-          macHash
-        })
       }
 
       const zoneId = zone ? zone.id : null
@@ -439,24 +491,43 @@ export class NetworkWebhookController {
 
   /**
    * POST /api/v1/network/devices/register
-   * Registers student device without storing raw MAC (DPDP Act compliance)
+   * Registers student device with canonical deviceInstallId (DPDP Act compliance)
    */
   static async registerDevice(req, res) {
     try {
-      const { studentId, studentRoll, studentName, collegeEmail, macAddress, deviceName } = req.body || {}
+      const { studentId, studentRoll, studentName, collegeEmail, macAddress, deviceName, deviceInstallId } = req.body || {}
 
-      if (!macAddress || !studentRoll) {
-        return res.status(400).json({ error: 'MAC address and Student Roll are required' })
+      if (!studentRoll) {
+        return res.status(400).json({ error: 'Student Roll is required' })
+      }
+      if (!macAddress && !deviceInstallId) {
+        return res.status(400).json({ error: 'deviceInstallId or MAC address is required' })
       }
 
-      const macHash = NetworkWebhookController.hashMac(macAddress)
+      const macHash = macAddress ? NetworkWebhookController.hashMac(macAddress) : null
+      const installId = deviceInstallId || crypto.randomUUID()
+
+      const newRegistration = {
+        id: crypto.randomUUID(),
+        device_install_id: installId,
+        student_id: studentId || 104,
+        student_roll: studentRoll,
+        student_name: studentName || 'Registered Student',
+        mac_hash: macHash,
+        registered_at: new Date(),
+        last_seen_at: new Date(),
+        revoked_at: null
+      }
+
+      memoryPresenceStore.deviceRegistrations = memoryPresenceStore.deviceRegistrations || []
+      memoryPresenceStore.deviceRegistrations.push(newRegistration)
 
       const newDevice = {
         id: memoryPresenceStore.devices.length + 1,
         student_id: studentId || 104,
         student_roll: studentRoll,
         student_name: studentName || 'Registered Student',
-        mac_address_hash: macHash,
+        mac_address_hash: macHash || NetworkWebhookController.hashMac(installId),
         college_email: collegeEmail || `${studentRoll.toLowerCase()}@eduflow.edu`,
         device_name: deviceName || 'Personal Laptop / Phone',
         is_active: true,
@@ -465,14 +536,12 @@ export class NetworkWebhookController {
 
       try {
         await pool.query(
-          `INSERT INTO student_devices (student_id, student_roll, mac_address_hash, college_email, device_name, is_active)
-           VALUES ($1, $2, $3, $4, $5, true)
-           ON CONFLICT (mac_address_hash) DO UPDATE SET is_active = true, last_seen_at = NOW()`,
-          [newDevice.student_id, newDevice.student_roll, macHash, newDevice.college_email, newDevice.device_name]
+          `INSERT INTO device_registrations (id, device_install_id, student_id, student_roll, student_name, mac_hash, registered_at, last_seen_at)
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+           ON CONFLICT (device_install_id) DO UPDATE SET revoked_at = NULL, last_seen_at = NOW()`,
+          [newRegistration.id, installId, newRegistration.student_id, studentRoll, newRegistration.student_name, macHash]
         )
-      } catch {
-        // Fallback
-      }
+      } catch {}
 
       memoryPresenceStore.devices.push(newDevice)
 
@@ -481,13 +550,47 @@ export class NetworkWebhookController {
         message: 'Device securely registered for invisible presence tracking',
         device: {
           id: newDevice.id,
+          deviceInstallId: installId,
           studentRoll: newDevice.student_roll,
           deviceName: newDevice.device_name,
-          macHashPreview: `${macHash.substring(0, 8)}...${macHash.substring(macHash.length - 8)}`
+          macHashPreview: macHash ? `${macHash.substring(0, 8)}...${macHash.substring(macHash.length - 8)}` : null
         }
       })
     } catch (err) {
       return res.status(500).json({ error: 'Error registering device', details: err.message })
+    }
+  }
+
+  /**
+   * POST /api/v1/network/devices/revoke
+   * Revokes a registered deviceInstallId from marking presence
+   */
+  static async revokeDevice(req, res) {
+    try {
+      const { deviceInstallId } = req.body || {}
+      if (!deviceInstallId) {
+        return res.status(400).json({ error: 'deviceInstallId is required to revoke device' })
+      }
+
+      const reg = memoryPresenceStore.deviceRegistrations?.find(r => r.device_install_id === deviceInstallId)
+      if (reg) {
+        reg.revoked_at = new Date()
+      }
+
+      try {
+        await pool.query(
+          `UPDATE device_registrations SET revoked_at = NOW() WHERE device_install_id = $1`,
+          [deviceInstallId]
+        )
+      } catch {}
+
+      return res.status(200).json({
+        success: true,
+        message: 'Device registration revoked successfully',
+        deviceInstallId
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to revoke device', details: err.message })
     }
   }
 

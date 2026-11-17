@@ -31,8 +31,9 @@ export function createNetworkRouter() {
   router.get('/presence/disputes', NetworkWebhookController.getDisputes)
   router.patch('/presence/disputes/:id', NetworkWebhookController.resolveDispute)
 
-  // Device Registration (stores SHA-256 hash only)
+  // Device Registration & Revocation (Canonical deviceInstallId)
   router.post('/devices/register', NetworkWebhookController.registerDevice)
+  router.post('/devices/revoke', NetworkWebhookController.revokeDevice)
 
   // Network AP Zones
   router.get('/zones', NetworkWebhookController.getZones)

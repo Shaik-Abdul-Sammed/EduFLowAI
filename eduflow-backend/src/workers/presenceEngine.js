@@ -62,6 +62,30 @@ export const memoryPresenceStore = {
       last_seen_at: new Date()
     }
   ],
+  deviceRegistrations: [
+    {
+      id: 'd1010000-0000-0000-0000-000000000001',
+      device_install_id: 'install-uuid-student-101',
+      student_id: 101,
+      student_roll: '2024-CSE-042',
+      student_name: 'Aarav Sharma',
+      mac_hash: 'a9b2ad6f4919c2ddcc2e04825227372ce079c0fe392d636d293d9f048a2c7926',
+      registered_at: new Date(),
+      last_seen_at: new Date(),
+      revoked_at: null
+    },
+    {
+      id: 'd1020000-0000-0000-0000-000000000002',
+      device_install_id: 'install-uuid-student-102',
+      student_id: 102,
+      student_roll: '2024-CSE-088',
+      student_name: 'Riya Patel',
+      mac_hash: '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+      registered_at: new Date(),
+      last_seen_at: new Date(),
+      revoked_at: null
+    }
+  ],
   sessions: [
     {
       id: 1,
