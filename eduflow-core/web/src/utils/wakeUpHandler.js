@@ -118,12 +118,23 @@ export async function safeJson(response, fallback = {}) {
  */
 export async function wakeUpFetch(url, options = {}) {
   const mergedOptions = { ...options }
-  if (typeof localStorage !== 'undefined') {
+  const urlStr = String(url || '').toLowerCase()
+  const isAuthEndpoint = urlStr.includes('/auth/login') ||
+    urlStr.includes('/auth/student-login') ||
+    urlStr.includes('/auth/register') ||
+    urlStr.includes('/auth/default-institution') ||
+    urlStr.includes('/auth/emergency-seed') ||
+    Boolean(options.skipAuth)
+
+  if (isAuthEndpoint && mergedOptions.headers) {
+    delete mergedOptions.headers.Authorization
+    delete mergedOptions.headers.authorization
+  } else if (!isAuthEndpoint && typeof localStorage !== 'undefined') {
     const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
-    if (token) {
+    if (token && !mergedOptions.headers?.Authorization && !mergedOptions.headers?.authorization) {
       mergedOptions.headers = {
-        Authorization: `Bearer ${token}`,
-        ...(mergedOptions.headers || {})
+        ...(mergedOptions.headers || {}),
+        Authorization: `Bearer ${token}`
       }
     }
   }

@@ -96,6 +96,13 @@ export async function loginWithRole({ role, username, email, password, instituti
       }
     }
 
+    // Clear any stale tokens before initiating login
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('token')
+    }
+
     // 2. Perform actual login
     const requestBody = {
       username: effectiveUsername,
@@ -110,7 +117,8 @@ export async function loginWithRole({ role, username, email, password, instituti
     const loginResponse = await wakeUpFetch(getFullApiUrl('/v1/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      skipAuth: true
     })
 
     if (!loginResponse.ok) {
