@@ -11,6 +11,8 @@ router.use(authMiddleware)
 
 // Session-bound rotating code to prevent proxy attendance (Faculty-only)
 router.post('/session/:sessionId/code', requireRole('faculty', 'admin', 'hod', 'teacher'), AttendanceController.generateSessionCode)
+router.get('/session/:sessionId/review-roster', AttendanceController.getSessionReviewRoster)
+router.post('/session/:sessionId/finalize', AttendanceController.finalizeAttendanceSession)
 
 router.get('/stats', AttendanceController.getStats)
 router.get('/at-risk', AttendanceController.getAtRisk)

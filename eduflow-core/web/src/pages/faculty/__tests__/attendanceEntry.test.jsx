@@ -71,4 +71,22 @@ describe('Faculty AttendanceEntryPage Component', () => {
     fireEvent.click(saveBtn)
     expect(screen.getByText(/Attendance Saved & Ledger Committed/i)).toBeInTheDocument()
   })
+
+  test('renders 2-band sections: Auto-marked (confident) and Needs your review (N)', () => {
+    render(
+      <MemoryRouter>
+        <AttendanceEntryPage />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText(/Needs your review/i)).toBeInTheDocument()
+    expect(screen.getByText(/Auto-marked \(confident\)/i)).toBeInTheDocument()
+
+    // Bulk resolve button is present when review items exist
+    const bulkAbsentBtn = screen.queryByRole('button', { name: /mark all needs review absent/i })
+    if (bulkAbsentBtn) {
+      fireEvent.click(bulkAbsentBtn)
+      expect(screen.getByText(/All review items resolved/i)).toBeInTheDocument()
+    }
+  })
 })

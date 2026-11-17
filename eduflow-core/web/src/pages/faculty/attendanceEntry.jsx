@@ -103,6 +103,20 @@ export default function AttendanceEntryPage() {
     return map
   })
 
+  // Review states: 'auto_present' | 'needs_review' | 'auto_absent' | 'faculty_override'
+  const [reviewStates, setReviewStates] = useState(() => {
+    const states = {}
+    btechStudents.forEach(s => {
+      if (s.historicalAttendance >= 80) {
+        states[s.roll] = { state: 'auto_present', confidence: 'high', reason: 'dwell_ok' }
+      } else {
+        states[s.roll] = { state: 'needs_review', confidence: 'medium', reason: 'partial_dwell' }
+      }
+    })
+    return states
+  })
+  const [autoMarkedCollapsed, setAutoMarkedCollapsed] = useState(true)
+
   const sectionStudents = useMemo(() => {
     return btechStudents.filter(s => s.section === selectedSection)
   }, [selectedSection])
@@ -115,6 +129,14 @@ export default function AttendanceEntryPage() {
     })
   }, [sectionStudents, searchQuery, filterRiskOnly])
 
+  const needsReviewStudents = useMemo(() => {
+    return filteredStudents.filter(s => reviewStates[s.roll]?.state === 'needs_review')
+  }, [filteredStudents, reviewStates])
+
+  const autoMarkedStudents = useMemo(() => {
+    return filteredStudents.filter(s => reviewStates[s.roll]?.state !== 'needs_review')
+  }, [filteredStudents, reviewStates])
+
   const presentCount = sectionStudents.filter(s => attendance[s.roll] === 'P' || attendance[s.roll] === 'L').length
   const absentCount = sectionStudents.filter(s => attendance[s.roll] === 'A').length
   const odCount = sectionStudents.filter(s => attendance[s.roll] === 'OD').length
@@ -123,6 +145,32 @@ export default function AttendanceEntryPage() {
   const handleSetStatus = (roll, status) => {
     setSaved(false)
     setAttendance(prev => ({ ...prev, [roll]: status }))
+    setReviewStates(prev => ({
+      ...prev,
+      [roll]: { state: 'faculty_override', confidence: 'high', reason: 'faculty_manual_review' }
+    }))
+  }
+
+  const markAllNeedsReviewAbsent = () => {
+    setSaved(false)
+    setAttendance(prev => {
+      const copy = { ...prev }
+      filteredStudents.forEach(s => {
+        if (reviewStates[s.roll]?.state === 'needs_review') {
+          copy[s.roll] = 'A'
+        }
+      })
+      return copy
+    })
+    setReviewStates(prev => {
+      const copy = { ...prev }
+      filteredStudents.forEach(s => {
+        if (copy[s.roll]?.state === 'needs_review') {
+          copy[s.roll] = { state: 'faculty_override', confidence: 'high', reason: 'bulk_unresolved_absent' }
+        }
+      })
+      return copy
+    })
   }
 
   const markAll = (status) => {
@@ -131,6 +179,13 @@ export default function AttendanceEntryPage() {
       const copy = { ...prev }
       sectionStudents.forEach(s => {
         copy[s.roll] = status
+      })
+      return copy
+    })
+    setReviewStates(prev => {
+      const copy = { ...prev }
+      sectionStudents.forEach(s => {
+        copy[s.roll] = { state: 'faculty_override', confidence: 'high', reason: 'faculty_mark_all' }
       })
       return copy
     })
@@ -392,96 +447,229 @@ export default function AttendanceEntryPage() {
             </div>
           </div>
 
-          {/* Roster Table */}
-          <div className="table-responsive" style={{ overflowX: 'auto' }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th style={{ width: 45 }}>#</th>
-                  <th>Roll Number</th>
-                  <th>Student Name</th>
-                  <th>Academic Term %</th>
-                  <th>Threshold Status</th>
-                  <th className="text-end">Mark Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.length === 0 ? (
+          {/* Section 1: Needs your review (N) */}
+          <div className="mb-4 border rounded p-3 bg-light bg-opacity-25">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div className="d-flex align-items-center gap-2">
+                <span className="badge bg-warning text-dark px-2 py-1 fs-6">
+                  Needs your review ({needsReviewStudents.length})
+                </span>
+                <span className="small text-muted">
+                  Low or partial dwell detected. Faculty review required before submission.
+                </span>
+              </div>
+              {needsReviewStudents.length > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllNeedsReviewAbsent}
+                  className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1"
+                >
+                  <XCircle size={14} /> Mark All Needs Review Absent
+                </button>
+              )}
+            </div>
+
+            <div className="table-responsive" style={{ overflowX: 'auto' }}>
+              <table className="table table-hover align-middle mb-0">
+                <thead className="table-light">
                   <tr>
-                    <td colSpan={6} className="text-center py-4 text-muted">
-                      No engineering students matching filter criteria.
-                    </td>
+                    <th style={{ width: 45 }}>#</th>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Academic Term %</th>
+                    <th>Confidence / Reason</th>
+                    <th className="text-end">Resolve Action</th>
                   </tr>
-                ) : (
-                  filteredStudents.map((s, idx) => {
-                    const currentStatus = attendance[s.roll] || 'P'
-                    const isRisk = s.historicalAttendance < 75
-                    return (
-                      <tr key={s.roll}>
-                        <td className="text-muted small">{idx + 1}</td>
-                        <td className="fw-bold font-monospace text-primary">{s.roll}</td>
-                        <td className="fw-semibold">
-                          <div>{s.name}</div>
-                          <div className="small text-muted font-monospace">{s.email}</div>
-                        </td>
-                        <td>
-                          <span className={`fw-bold ${isRisk ? 'text-danger' : 'text-success'}`}>
-                            {s.historicalAttendance}%
-                          </span>
-                        </td>
-                        <td>
-                          {isRisk ? (
-                            <span className="badge bg-danger bg-opacity-10 text-danger border border-danger d-inline-flex align-items-center gap-1">
-                              <ShieldAlert size={12} /> Condonation Risk (&lt;75%)
+                </thead>
+                <tbody>
+                  {needsReviewStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-3 text-success fw-semibold">
+                        ✓ All review items resolved. Ready to finalize!
+                      </td>
+                    </tr>
+                  ) : (
+                    needsReviewStudents.map((s, idx) => {
+                      const currentStatus = attendance[s.roll] || 'P'
+                      const isRisk = s.historicalAttendance < 75
+                      const revInfo = reviewStates[s.roll] || {}
+                      return (
+                        <tr key={s.roll} className="table-warning bg-opacity-10">
+                          <td className="text-muted small">{idx + 1}</td>
+                          <td className="fw-bold font-monospace text-primary">{s.roll}</td>
+                          <td className="fw-semibold">
+                            <div>{s.name}</div>
+                            <div className="small text-muted font-monospace">{s.email}</div>
+                          </td>
+                          <td>
+                            <span className={`fw-bold ${isRisk ? 'text-danger' : 'text-success'}`}>
+                              {s.historicalAttendance}%
                             </span>
-                          ) : (
-                            <span className="badge bg-success bg-opacity-10 text-success">
-                              Good Standing (Eligible)
+                          </td>
+                          <td>
+                            <span className="badge bg-warning text-dark border me-1">
+                              {revInfo.confidence || 'medium'} confidence
                             </span>
-                          )}
-                        </td>
-                        <td className="text-end">
-                          <div className="btn-group btn-group-sm" role="group">
-                            <button
-                              type="button"
-                              onClick={() => handleSetStatus(s.roll, 'P')}
-                              className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
-                              title="Present"
-                            >
-                              Present
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSetStatus(s.roll, 'A')}
-                              className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
-                              title="Absent"
-                            >
-                              Absent
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSetStatus(s.roll, 'OD')}
-                              className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
-                              title="On-Duty (Official Hackathon / IEEE Fest / Sports)"
-                            >
-                              On-Duty
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSetStatus(s.roll, 'L')}
-                              className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
-                              title="Late Arrival (+0.5 credit)"
-                            >
-                              Late
-                            </button>
-                          </div>
+                            <span className="small text-muted font-monospace">
+                              {revInfo.reason || 'partial_dwell'}
+                            </span>
+                          </td>
+                          <td className="text-end">
+                            <div className="btn-group btn-group-sm" role="group">
+                              <button
+                                type="button"
+                                onClick={() => handleSetStatus(s.roll, 'P')}
+                                className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
+                                title="Present"
+                              >
+                                Present
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetStatus(s.roll, 'A')}
+                                className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
+                                title="Absent"
+                              >
+                                Absent
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetStatus(s.roll, 'OD')}
+                                className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
+                                title="On-Duty"
+                              >
+                                On-Duty
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetStatus(s.roll, 'L')}
+                                className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
+                                title="Late Arrival"
+                              >
+                                Late
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 2: Auto-marked (confident) */}
+          <div className="mb-4 border rounded p-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center gap-2">
+                <span className="badge bg-success bg-opacity-10 text-success border border-success d-inline-flex align-items-center gap-1 px-2 py-1 fs-6">
+                  <CheckCircle2 size={16} /> Auto-marked (confident) ({autoMarkedStudents.length})
+                </span>
+                <span className="small text-muted">
+                  High dwell (&ge;80%) & valid session code verified.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAutoMarkedCollapsed(prev => !prev)}
+                className="btn btn-sm btn-outline-secondary"
+              >
+                {autoMarkedCollapsed ? 'Expand Confident List' : 'Collapse List'}
+              </button>
+            </div>
+
+            <div className="table-responsive mt-3" style={{ overflowX: 'auto', display: autoMarkedCollapsed ? 'none' : 'block' }}>
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th style={{ width: 45 }}>#</th>
+                      <th>Roll Number</th>
+                      <th>Student Name</th>
+                      <th>Academic Term %</th>
+                      <th>Threshold Status</th>
+                      <th className="text-end">Mark Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {autoMarkedStudents.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-4 text-muted">
+                          No auto-marked confident students.
                         </td>
                       </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
+                    ) : (
+                      autoMarkedStudents.map((s, idx) => {
+                        const currentStatus = attendance[s.roll] || 'P'
+                        const isRisk = s.historicalAttendance < 75
+                        const revState = reviewStates[s.roll]?.state || 'auto_present'
+                        return (
+                          <tr key={s.roll}>
+                            <td className="text-muted small">{idx + 1}</td>
+                            <td className="fw-bold font-monospace text-primary">{s.roll}</td>
+                            <td className="fw-semibold">
+                              <div>{s.name}</div>
+                              <div className="small text-muted font-monospace">{s.email}</div>
+                            </td>
+                            <td>
+                              <span className={`fw-bold ${isRisk ? 'text-danger' : 'text-success'}`}>
+                                {s.historicalAttendance}%
+                              </span>
+                            </td>
+                            <td>
+                              {isRisk ? (
+                                <span className="badge bg-danger bg-opacity-10 text-danger border border-danger d-inline-flex align-items-center gap-1">
+                                  <ShieldAlert size={12} /> Condonation Risk (&lt;75%)
+                                </span>
+                              ) : (
+                                <span className="badge bg-success bg-opacity-10 text-success">
+                                  Good Standing (Eligible)
+                                </span>
+                              )}
+                            </td>
+                            <td className="text-end">
+                              <div className="btn-group btn-group-sm" role="group">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'P')}
+                                  className={`btn ${currentStatus === 'P' ? 'btn-success fw-bold' : 'btn-outline-secondary'}`}
+                                  title="Present"
+                                >
+                                  Present
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'A')}
+                                  className={`btn ${currentStatus === 'A' ? 'btn-danger fw-bold' : 'btn-outline-secondary'}`}
+                                  title="Absent"
+                                >
+                                  Absent
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'OD')}
+                                  className={`btn ${currentStatus === 'OD' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
+                                  title="On-Duty"
+                                >
+                                  On-Duty
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetStatus(s.roll, 'L')}
+                                  className={`btn ${currentStatus === 'L' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
+                                  title="Late Arrival"
+                                >
+                                  Late
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
           </div>
 
           <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
@@ -490,10 +678,19 @@ export default function AttendanceEntryPage() {
             </span>
             <button
               type="button"
-              onClick={() => setSaved(true)}
+              onClick={() => {
+                if (needsReviewStudents.length > 0) {
+                  markAllNeedsReviewAbsent()
+                }
+                setSaved(true)
+              }}
               className="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2"
+              title={needsReviewStudents.length > 0 ? `${needsReviewStudents.length} students in Needs Review will be finalized as absent` : 'Save and commit attendance'}
             >
-              <Save size={16} /> {saved ? 'Attendance Saved & Ledger Committed ✓' : 'Save & Publish Attendance'}
+              <Save size={16} />{' '}
+              {saved
+                ? 'Attendance Saved & Ledger Committed ✓'
+                : 'Save & Publish Attendance'}
             </button>
           </div>
         </div>
