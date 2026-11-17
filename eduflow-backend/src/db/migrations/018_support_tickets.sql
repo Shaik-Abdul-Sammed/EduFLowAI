@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS support_tickets (
   id SERIAL PRIMARY KEY,
-  institution_id INTEGER REFERENCES institutions(id),
-  user_id INTEGER REFERENCES users(id),
+  institution_id TEXT,
+  user_id TEXT,
   subject VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
   category VARCHAR(50) DEFAULT 'general',

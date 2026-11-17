@@ -85,11 +85,12 @@ const realPoolConfig = {
   connectionTimeoutMillis: 10000,
   maxUses: 7500,
 };
+const isInternalRender = normalizedDatabaseUrl.includes('dpg-') && !normalizedDatabaseUrl.includes('.render.com');
 const needsSsl = (
   normalizedDatabaseUrl.includes('.render.com') ||
   normalizedDatabaseUrl.includes('sslmode=require') ||
-  (isRemote && !normalizedDatabaseUrl.includes('localhost') && !normalizedDatabaseUrl.includes('127.0.0.1'))
-) && !normalizedDatabaseUrl.includes('sslmode=disable');
+  (isRemote && !normalizedDatabaseUrl.includes('localhost') && !normalizedDatabaseUrl.includes('127.0.0.1') && !isInternalRender)
+) && !normalizedDatabaseUrl.includes('sslmode=disable') && !isInternalRender;
 
 if (needsSsl) {
   realPoolConfig.ssl = { rejectUnauthorized: false };

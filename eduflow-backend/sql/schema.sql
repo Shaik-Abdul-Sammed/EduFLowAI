@@ -253,8 +253,8 @@ CREATE INDEX IF NOT EXISTS recent_searches_role_created_idx ON recent_searches (
 
 CREATE TABLE IF NOT EXISTS support_tickets (
   id SERIAL PRIMARY KEY,
-  institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
-  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  institution_id TEXT,
+  user_id TEXT,
   subject VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
   category VARCHAR(100) DEFAULT 'general',
@@ -350,7 +350,7 @@ CREATE SEQUENCE IF NOT EXISTS invoice_number_seq START 1;
 
 CREATE TABLE IF NOT EXISTS timetable_slots (
     id SERIAL PRIMARY KEY,
-    institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
+    institution_id TEXT,
     day VARCHAR(20) NOT NULL,
     time VARCHAR(50) NOT NULL,
     room VARCHAR(50) NOT NULL,

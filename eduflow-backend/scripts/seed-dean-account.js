@@ -17,11 +17,16 @@ if (!isTestOrMemory) {
   console.log('🌱 Starting Dean Account Seeder...')
   console.log(`📡 Connecting to PostgreSQL: ${databaseUrl.replace(/:[^:@]*@/, ':****@')}`)
 
-  const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''));
-  const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl };
-  if (isRemote) {
-    poolConfig.ssl = { rejectUnauthorized: false };
-  }
+  const isInternalRender = databaseUrl.includes('dpg-') && !databaseUrl.includes('.render.com');
+  const needsSsl = (databaseUrl.includes('.render.com') || databaseUrl.includes('sslmode=require')) &&
+    !databaseUrl.includes('sslmode=disable') &&
+    !isInternalRender;
+
+  const poolConfig = { 
+    connectionString: process.env.DATABASE_URL || databaseUrl,
+    connectionTimeoutMillis: 10000,
+    ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {})
+  };
   pool = new Pool(poolConfig);
 }
 

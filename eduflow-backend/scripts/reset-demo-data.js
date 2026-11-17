@@ -21,11 +21,16 @@ dotenv.config({ path: path.join(__dirname, '../.env') })
 const { Pool } = pg
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/eduflow'
 
-const isRemote = /render\.com|dpg-/.test(String(process.env.DATABASE_URL || ''))
-const poolConfig = { connectionString: process.env.DATABASE_URL || databaseUrl }
-if (isRemote) {
-  poolConfig.ssl = { rejectUnauthorized: false }
-}
+const isInternalRender = databaseUrl.includes('dpg-') && !databaseUrl.includes('.render.com');
+const needsSsl = (databaseUrl.includes('.render.com') || databaseUrl.includes('sslmode=require')) &&
+  !databaseUrl.includes('sslmode=disable') &&
+  !isInternalRender;
+
+const poolConfig = { 
+  connectionString: process.env.DATABASE_URL || databaseUrl,
+  connectionTimeoutMillis: 10000,
+  ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {})
+};
 
 export async function resetDemoData(targetPool = null) {
   console.log('🔄 [ResetDemoData] Starting complete demo database wipe and re-seed...')
