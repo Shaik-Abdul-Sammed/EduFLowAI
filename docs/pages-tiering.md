@@ -85,6 +85,26 @@ This document categorizes all 196 pages in EduFlowAI into three explicit tiers a
 | 31 | `student/subjectMarks.jsx` | `/student-dashboard/subject-marks` | `GET /v1/academics/marks`, `POST /v1/grievances` | REAL (3/3 tests passing in `studentSubjectMarks.test.jsx`) |
 | 32 | `faculty/classTimetable.jsx` | `/faculty-dashboard/class-timetable` | `GET /api/admin/timetable`, `POST /api/admin/timetable/slots` | REAL (3/3 tests passing in `facultyClassTimetable.test.jsx`) |
 | 33 | `parent/teacherCommunication.jsx` | `/parent-dashboard/teacher-communication` | `GET /v1/parent/chat`, `POST /v1/parent/chat` | REAL (3/3 tests passing in `parentTeacherCommunication.test.jsx`) |
+| 34 | `faculty/leaveApplication.jsx` | `/faculty-dashboard/leave-application` | `GET /v1/leave/requests`, `POST /v1/leave/apply` | REAL (3/3 tests passing in `facultyLeaveApplication.test.jsx`) |
+| 35 | `faculty/lessonPlanner.jsx` | `/faculty-dashboard/lesson-planner` | `GET/POST /v1/academics/assignments` | REAL (3/3 tests passing in `facultyLessonPlanner.test.jsx`) |
+| 36 | `faculty/syllabusTracker.jsx` | `/faculty-dashboard/syllabus-tracker` | `GET /v1/academics/marks`, `POST /v1/academics/assignments` | REAL (3/3 tests passing in `facultySyllabusTracker.test.jsx`) |
+| 37 | `faculty/mentoringLog.jsx` | `/faculty-dashboard/mentoring-log` | `GET/POST /v1/parent/chat` | REAL (3/3 tests passing in `facultyMentoringLog.test.jsx`) |
+| 38 | `faculty/departmentNotices.jsx` | `/faculty-dashboard/department-notices` | `GET /v1/parent/overview`, `POST /v1/parents/multilingual-notice` | REAL (3/3 tests passing in `facultyDepartmentNotices.test.jsx`) |
+| 39 | `faculty/examInvigilation.jsx` | `/faculty-dashboard/exam-invigilation` | `GET /api/admin/exams`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `facultyExamInvigilation.test.jsx`) |
+| 40 | `faculty/parentMessaging.jsx` | `/faculty-dashboard/parent-messaging` | `GET/POST /v1/parent/chat` | REAL (3/3 tests passing in `facultyParentMessaging.test.jsx`) |
+| 41 | `faculty/questionBankUpload.jsx` | `/faculty-dashboard/question-bank-upload` | `GET /v1/exams/online`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `facultyQuestionBankUpload.test.jsx`) |
+| 42 | `student/examSchedule.jsx` | `/student-dashboard/exam-schedule` | `GET /api/admin/exams`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `studentExamSchedule.test.jsx`) |
+| 43 | `student/paymentHistory.jsx` | `/student-dashboard/payment-history` | `GET /api/admin/fees`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `studentPaymentHistory.test.jsx`) |
+| 44 | `student/submissionStatus.jsx` | `/student-dashboard/submission-status` | `GET/POST /v1/academics/assignments/*` | REAL (3/3 tests passing in `studentSubmissionStatus.test.jsx`) |
+| 45 | `student/digitalMaterials.jsx` | `/student-dashboard/digital-materials` | `GET /v1/library/books`, `POST /v1/library/issue` | REAL (3/3 tests passing in `studentDigitalMaterials.test.jsx`) |
+| 46 | `student/labBookings.jsx` | `/student-dashboard/lab-bookings` | `GET/POST /v1/support/tickets` | REAL (3/3 tests passing in `studentLabBookings.test.jsx`) |
+| 47 | `student/CourseFeedbackPage.jsx` | `/student-dashboard/course-feedback` | `GET /v1/academics/marks`, `POST /v1/grievances` | REAL (3/3 tests passing in `studentCourseFeedback.test.jsx`) |
+| 48 | `parent/childTracking.jsx` | `/parent-dashboard/child-tracking` | `GET /api/v1/network/presence/student`, `GET/POST /v1/parent/*` | REAL (3/3 tests passing in `parentChildTracking.test.jsx`) |
+| 49 | `parent/dailyHomework.jsx` | `/parent-dashboard/daily-homework` | `GET /v1/academics/assignments`, `POST /v1/parent/chat` | REAL (3/3 tests passing in `parentDailyHomework.test.jsx`) |
+| 50 | `parent/dueAlerts.jsx` | `/parent-dashboard/due-alerts` | `GET /api/admin/fees`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `parentDueAlerts.test.jsx`) |
+| 51 | `parent/examCalendar.jsx` | `/parent-dashboard/exam-calendar` | `GET /api/admin/exams`, `POST /v1/support/tickets` | REAL (3/3 tests passing in `parentExamCalendar.test.jsx`) |
+| 52 | `parent/disciplineAlerts.jsx` | `/parent-dashboard/discipline-alerts` | `GET /v1/parent/overview`, `POST /v1/parent/chat` | REAL (3/3 tests passing in `parentDisciplineAlerts.test.jsx`) |
+| 53 | `admin/admissionsPipeline.jsx` | `/admin-dashboard/admissions-pipeline` | `GET /v1/admissions`, `POST /v1/admissions/apply` | REAL (3/3 tests passing in `adminAdmissionsPipeline.test.jsx`) |
 
 ### 2. Remaining Tier B Candidates
 Pages with existing partial API clients or write capabilities that require additional integration tests or endpoint alignment:

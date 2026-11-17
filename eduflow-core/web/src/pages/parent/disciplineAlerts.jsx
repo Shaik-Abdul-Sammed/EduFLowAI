@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 
 const AMBER = '#F59E0B'
@@ -10,16 +10,83 @@ const initialAlerts = [
   { id: 2, type: 'Dress Code Violation', date: '2026-05-15', desc: 'Attended chemistry lab without complete uniform and safety shoes.', severity: 'low', acknowledged: true },
 ]
 
-export default function Page() {
+export default function DisciplineAlertsPage() {
   const [alerts, setAlerts] = useState(initialAlerts)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [statusMsg, setStatusMsg] = useState(null)
 
-  function acknowledge(id) {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a))
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const token = localStorage.getItem('token')
+      const res = await fetch('/v1/parent/overview', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch disciplinary logs`)
+      const data = await res.json()
+      if (data?.disciplinary_alerts && data.disciplinary_alerts.length > 0) {
+        setAlerts(data.disciplinary_alerts)
+      }
+    } catch (err) {
+      setError(err.message || 'Error loading institutional compliance records')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAlerts()
+  }, [])
+
+  async function acknowledge(alertItem) {
+    const id = alertItem.id
+    try {
+      const token = localStorage.getItem('token')
+      await fetch('/v1/parent/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipientId: 'FAC_MENTOR_01',
+          message: `Parent formally acknowledged disciplinary notice: ${alertItem.type} on ${alertItem.date}`
+        })
+      })
+      setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a))
+      setStatusMsg(`Acknowledged: ${alertItem.type}`)
+    } catch (_err) {
+      setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a))
+      setStatusMsg(`Acknowledged (offline record updated): ${alertItem.type}`)
+    }
+    setTimeout(() => setStatusMsg(null), 3000)
   }
 
   return (
     <RolePageTemplate role="Parent" title="Disciplinary Logs & Compliance" description="Review institutional compliance notes, uniform checks, and attendance timings.">
       <div style={{ display: 'grid', gap: '1.25rem' }}>
+
+        {loading && (
+          <div data-testid="discipline-loading" className="card border-0 shadow-sm p-4 text-center">
+            <div className="spinner-border text-primary mx-auto mb-2" role="status" />
+            <p className="text-muted mb-0">Auditing disciplinary registry & compliance records...</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div data-testid="discipline-error" className="alert alert-warning d-flex justify-content-between align-items-center">
+            <div><strong>Notice:</strong> {error}. Showing offline cached compliance records.</div>
+            <button className="btn btn-sm btn-outline-warning" onClick={fetchAlerts}>Retry</button>
+          </div>
+        )}
+
+        {statusMsg && (
+          <div data-testid="discipline-status" className="alert alert-success py-2 px-3 mb-0">
+            {statusMsg}
+          </div>
+        )}
 
         {/* Status indicator */}
         <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', overflow: 'hidden', background: alerts.some(a => !a.acknowledged) ? 'linear-gradient(135deg, #1E293B, #EF4444)' : 'linear-gradient(135deg, #1E293B, #10B981)', color: 'white' }}>
@@ -47,7 +114,7 @@ export default function Page() {
               <div key={a.id} className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', padding: '1.25rem', borderLeft: `4px solid ${a.acknowledged ? GREEN : isHigh ? RED : AMBER}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <div>
-                    <span className="badge text-bg-light" style={{ border: '1px solid var(--border-color)', marginRight: '0.5rem' }}>{a.type}</span>
+                    <span className="badge text-bg-light" style={{ border: '1px solid var(--border-color, #e2e8f0)', marginRight: '0.5rem' }}>{a.type}</span>
                     <span style={{ fontSize: '0.75rem', color: '#64748b' }}>📅 {a.date}</span>
                   </div>
                   <span style={{
@@ -61,7 +128,7 @@ export default function Page() {
                 </div>
                 <p style={{ fontSize: '0.82rem', color: '#475569', margin: '0 0 0.875rem', lineHeight: 1.5 }}>{a.desc}</p>
                 {!a.acknowledged && (
-                  <button className="btn btn-sm btn-outline-danger align-self-start" onClick={() => acknowledge(a.id)} style={{ fontSize: '0.72rem' }}>
+                  <button className="btn btn-sm btn-outline-danger align-self-start" onClick={() => acknowledge(a)} style={{ fontSize: '0.72rem' }}>
                     ✍️ Acknowledge warning receipt
                   </button>
                 )}

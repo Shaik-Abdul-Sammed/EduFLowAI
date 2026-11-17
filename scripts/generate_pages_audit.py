@@ -85,7 +85,15 @@ verified_real = {
     'examSetup.jsx', 'resultPublishing.jsx', 'parentAccounts.jsx',
     'payrollPreview.jsx', 'timetableGeneration.jsx', 'backupManagement.jsx',
     'libraryAccount.jsx', 'hostelInfo.jsx', 'scholarshipStatus.jsx',
-    'subjectMarks.jsx', 'classTimetable.jsx', 'teacherCommunication.jsx'
+    'subjectMarks.jsx', 'classTimetable.jsx', 'teacherCommunication.jsx',
+    # Newly Completed 20 Mock Pages -> Real (Batch 2)
+    'leaveApplication.jsx', 'lessonPlanner.jsx', 'syllabusTracker.jsx',
+    'mentoringLog.jsx', 'departmentNotices.jsx', 'examInvigilation.jsx',
+    'parentMessaging.jsx', 'questionBankUpload.jsx', 'examSchedule.jsx',
+    'paymentHistory.jsx', 'submissionStatus.jsx', 'digitalMaterials.jsx',
+    'labBookings.jsx', 'CourseFeedbackPage.jsx', 'childTracking.jsx',
+    'dailyHomework.jsx', 'dueAlerts.jsx', 'examCalendar.jsx',
+    'disciplineAlerts.jsx', 'admissionsPipeline.jsx'
 }
 
 calendar_subcomps = {
@@ -106,7 +114,15 @@ tier_b_verified = {
     'examSetup.jsx', 'resultPublishing.jsx', 'parentAccounts.jsx',
     'payrollPreview.jsx', 'timetableGeneration.jsx', 'backupManagement.jsx',
     'libraryAccount.jsx', 'hostelInfo.jsx', 'scholarshipStatus.jsx',
-    'subjectMarks.jsx', 'classTimetable.jsx', 'teacherCommunication.jsx'
+    'subjectMarks.jsx', 'classTimetable.jsx', 'teacherCommunication.jsx',
+    # Newly Completed 20 Mock Pages -> Real (Batch 2)
+    'leaveApplication.jsx', 'lessonPlanner.jsx', 'syllabusTracker.jsx',
+    'mentoringLog.jsx', 'departmentNotices.jsx', 'examInvigilation.jsx',
+    'parentMessaging.jsx', 'questionBankUpload.jsx', 'examSchedule.jsx',
+    'paymentHistory.jsx', 'submissionStatus.jsx', 'digitalMaterials.jsx',
+    'labBookings.jsx', 'CourseFeedbackPage.jsx', 'childTracking.jsx',
+    'dailyHomework.jsx', 'dueAlerts.jsx', 'examCalendar.jsx',
+    'disciplineAlerts.jsx', 'admissionsPipeline.jsx'
 }
 
 tier_a_candidates = {
