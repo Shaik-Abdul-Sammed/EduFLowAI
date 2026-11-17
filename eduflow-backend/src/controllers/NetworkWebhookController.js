@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { pool } from '../db/pool.js'
 import { memoryPresenceStore, calculateDwellTimes, dispatchSilentFacultyPresenceUpdate } from '../workers/presenceEngine.js'
+import { verifyWebhookAuth } from '../services/webhookAuth.js'
 
 export class NetworkWebhookController {
   /**
@@ -18,12 +19,20 @@ export class NetworkWebhookController {
    */
   static async handleAssociation(req, res) {
     try {
-      // Secret validation
+      // Secret validation with dual-secret rotation support (P1.4)
       const secretHeader = req.headers['x-network-secret']
-      const expectedSecret = process.env.NETWORK_WEBHOOK_SECRET || 'eduflow-mesh-secret-2026'
+      const signatureHeader = req.headers['x-network-signature'] || req.headers['x-hub-signature-256']
+      const authResult = verifyWebhookAuth({
+        payload: req.body,
+        signature: signatureHeader,
+        secretHeader
+      })
 
-      if (!secretHeader || secretHeader !== expectedSecret) {
-        return res.status(401).json({ error: 'Unauthorized: Invalid network webhook secret' })
+      if (!authResult.valid) {
+        return res.status(401).json({
+          error: 'Unauthorized: Invalid or stale network webhook secret',
+          code: authResult.code || 'STALE_WEBHOOK_SECRET'
+        })
       }
 
       const { macAddress, deviceInstallId, apBssid, ipAddress, timestamp } = req.body || {}

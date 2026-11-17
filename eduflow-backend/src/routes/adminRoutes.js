@@ -7,6 +7,7 @@ import { pool } from '../db/pool.js'
 import { logger } from '../utils/logger.js'
 import { resetDemoData } from '../../scripts/reset-demo-data.js'
 import { cacheService } from '../services/CacheService.js'
+import { rotateApSecret, apSecretStore } from '../services/webhookAuth.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'eduflow-secure-secret-key-123'
 
@@ -635,6 +636,23 @@ export function createAdminRouter() {
     }
     adminTimetableSlots.push(newSlot)
     res.status(201).json({ success: true, slot: newSlot })
+  })
+
+  // AP Webhook Secret Rotation (P1.4)
+  router.post('/ap-secret/rotate', (req, res) => {
+    const rotatedBy = req.user?.id || req.user?.userId || 'admin-01'
+    const result = rotateApSecret(rotatedBy)
+    return res.status(200).json(result)
+  })
+
+  router.get('/ap-secret/status', (req, res) => {
+    return res.status(200).json({
+      success: true,
+      hasCurrent: Boolean(apSecretStore.current),
+      hasPrevious: Boolean(apSecretStore.previous),
+      rotatedAt: apSecretStore.rotatedAt,
+      rotationHistory: apSecretStore.rotationHistory
+    })
   })
 
   return router
