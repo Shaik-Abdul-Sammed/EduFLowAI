@@ -10,7 +10,9 @@ import {
   matchApToSessionRoom,
   hasPrivacyConsent,
   setPrivacyConsent,
-  studentPrivacyConsents
+  studentPrivacyConsents,
+  sanitizeOverrideReason,
+  VALID_OVERRIDE_REASONS
 } from '../services/presence.js'
 import { logger } from '../utils/logger.js'
 import crypto from 'crypto'
@@ -267,13 +269,17 @@ export class AttendanceController {
           const total = result.rows.length
           const present = result.rows.filter(r => r.status === 'PRESENT').length
           const percentage = total > 0 ? Math.round((present / total) * 100 * 10) / 10 : 0
+          const recordsWithBadge = result.rows.map(r => ({
+            ...r,
+            badge: r.review_state === 'faculty_override' ? 'Marked by faculty' : null
+          }))
           return res.status(200).json({
             success: true,
             studentId,
             totalClasses: total,
             presentClasses: present,
             attendancePercentage: percentage,
-            records: result.rows
+            records: recordsWithBadge
           })
         }
       } catch {}
@@ -285,10 +291,10 @@ export class AttendanceController {
         presentClasses: 51,
         attendancePercentage: 85.0,
         records: [
-          { date: '2026-11-01', status: 'PRESENT', course_code: 'CS501' },
-          { date: '2026-11-02', status: 'PRESENT', course_code: 'CS502' },
-          { date: '2026-11-03', status: 'ABSENT', course_code: 'CS503' },
-          { date: '2026-11-04', status: 'PRESENT', course_code: 'CS504' }
+          { date: '2026-11-01', status: 'PRESENT', course_code: 'CS501', review_state: 'faculty_override', badge: 'Marked by faculty' },
+          { date: '2026-11-02', status: 'PRESENT', course_code: 'CS502', review_state: 'auto_present', badge: null },
+          { date: '2026-11-03', status: 'ABSENT', course_code: 'CS503', review_state: 'auto_absent', badge: null },
+          { date: '2026-11-04', status: 'PRESENT', course_code: 'CS504', review_state: 'faculty_override', badge: 'Marked by faculty' }
         ]
       })
     } catch {
@@ -747,7 +753,7 @@ export class AttendanceController {
             target.status = String(resItem.status).toUpperCase()
             target.reviewState = 'faculty_override'
             target.overriddenBy = facultyId
-            target.overrideReason = resItem.reason || 'faculty_manual_review'
+            target.overrideReason = sanitizeOverrideReason(resItem.reason, logger)
           }
         }
       }

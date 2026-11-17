@@ -8,6 +8,27 @@ export const roomCalibrations = new Map()
 export const apRoomMap = new Map()
 export const studentPrivacyConsents = new Map()
 
+export const VALID_OVERRIDE_REASONS = [
+  'no_device',
+  'device_dead',
+  'accessibility',
+  'health',
+  'manual_verified',
+  'other'
+]
+
+export function sanitizeOverrideReason(reason, logger = null) {
+  if (!reason || typeof reason !== 'string') return 'manual_verified'
+  const normalized = reason.trim().toLowerCase()
+  if (VALID_OVERRIDE_REASONS.includes(normalized)) {
+    return normalized
+  }
+  const warnMsg = `Invalid override reason "${reason}". Falling back to "manual_verified".`
+  if (logger?.warn) logger.warn(warnMsg)
+  else console.warn(`[WARN] ${warnMsg}`)
+  return 'manual_verified'
+}
+
 export function setPrivacyConsent({ studentId, consented = false, optOutReason = '', policyVersion = '2026.1' } = {}) {
   if (!studentId) {
     throw new Error('studentId is required')
@@ -69,6 +90,26 @@ export function matchApToSessionRoom({ apBssid, sessionRoomId } = {}) {
     reason: 'ap_belongs_to_different_room',
     mappedRoomId: mapping.roomId,
     sessionRoomId
+  }
+}
+
+export function computeSessionHealth({ totalStudents = 1, needsReviewCount = 0, validCodeCount = 0 } = {}) {
+  const total = totalStudents > 0 ? totalStudents : 1
+  const needsReviewPct = parseFloat(((needsReviewCount / total) * 100).toFixed(1))
+  const validCodeCoverage = parseFloat(((validCodeCount / total) * 100).toFixed(1))
+
+  const isDegraded = needsReviewPct > 20.0 || validCodeCoverage < 60.0
+
+  return {
+    totalStudents: total,
+    needsReviewCount,
+    validCodeCount,
+    needsReviewPct,
+    validCodeCoverage,
+    isDegraded,
+    reason: isDegraded
+      ? `Session signal quality degraded: ${needsReviewPct}% students need review (${validCodeCoverage}% code coverage). Wi-Fi AP or BLE beacon in this room may be misbehaving.`
+      : 'Session signal quality healthy'
   }
 }
 
