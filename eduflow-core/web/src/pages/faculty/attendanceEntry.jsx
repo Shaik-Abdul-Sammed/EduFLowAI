@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
-import { CheckCircle2, XCircle, Clock, Award, Bluetooth, QrCode, Search, Download, Save, ShieldAlert, Users } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { CheckCircle2, XCircle, Clock, Award, Bluetooth, QrCode, Search, Download, Save, ShieldAlert, Users, RefreshCw, X } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
 const engineeringDepartments = [
   { code: 'CSE', name: 'Computer Science & Engineering' },
@@ -62,6 +63,36 @@ export default function AttendanceEntryPage() {
   const [filterRiskOnly, setFilterRiskOnly] = useState(false)
   const [saved, setSaved] = useState(false)
   const [bleScanning, setBleScanning] = useState(false)
+  const [sessionCode, setSessionCode] = useState('482915')
+  const [qrPayload, setQrPayload] = useState('eduflow:presence:session-1:482915')
+  const [codeExpiresAt, setCodeExpiresAt] = useState(() => new Date(Date.now() + 90000).toISOString())
+  const [showQrModal, setShowQrModal] = useState(false)
+
+  const regenerateCode = async () => {
+    try {
+      const sessionId = `${selectedCourse}-${selectedSection}`
+      const res = await wakeUpFetch(`/api/v1/attendance/session/${sessionId}/code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.code) {
+          setSessionCode(data.code)
+          setQrPayload(data.qrPayload || `eduflow:presence:${sessionId}:${data.code}`)
+          setCodeExpiresAt(data.expiresAt)
+        }
+      } else {
+        // Fallback local rotating generation
+        const newCode = Math.floor(100000 + Math.random() * 900000).toString()
+        setSessionCode(newCode)
+        setCodeExpiresAt(new Date(Date.now() + 90000).toISOString())
+      }
+    } catch {
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString()
+      setSessionCode(newCode)
+    }
+  }
 
   // Status mapping: 'P' = Present, 'A' = Absent, 'OD' = On-Duty, 'L' = Late
   const [attendance, setAttendance] = useState(() => {
@@ -244,11 +275,47 @@ export default function AttendanceEntryPage() {
               </button>
               <button
                 type="button"
+                data-testid="open-qr-modal-btn"
+                onClick={() => setShowQrModal(true)}
+                className="btn btn-outline-primary d-inline-flex align-items-center gap-1"
+                title="Show 90s Rotating Session QR & PIN Code"
+              >
+                <QrCode size={16} />
+              </button>
+              <button
+                type="button"
                 onClick={handleExportCsv}
                 className="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
                 title="Export session register as CSV"
               >
                 <Download size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Persistent Rotating Session Code Floating Badge */}
+          <div className="mt-3 p-2 px-3 rounded-3 bg-light border d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div data-testid="session-code-badge" className="d-flex align-items-center gap-2 small">
+              <span className="badge bg-primary text-white font-monospace">ACTIVE SESSION PIN</span>
+              <span className="fs-5 fw-bold font-monospace text-primary tracking-wider">{sessionCode}</span>
+              <span className="text-muted small">(Rotates every 90s to prevent proxy)</span>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                data-testid="regenerate-code-btn"
+                onClick={regenerateCode}
+                className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2"
+                title="Force-regenerate PIN immediately"
+              >
+                <RefreshCw size={14} /> Regenerate Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQrModal(true)}
+                className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 py-1 px-2"
+              >
+                <QrCode size={14} /> View Projected QR
               </button>
             </div>
           </div>

@@ -3,6 +3,10 @@ import { AttendanceAnalysis } from '../services/attendance/AttendanceAnalysis.js
 import { logger } from '../utils/logger.js'
 import crypto from 'crypto'
 
+export const activeSessionCodes = new Map()
+export const sessionReportedDevices = new Map()
+export const sessionPulses = new Map()
+
 export class AttendanceController {
   static async ingestSample(req, res) {
     try {
@@ -441,6 +445,135 @@ export class AttendanceController {
     } catch (err) {
       logger.error(`Error in bleSync: ${err.message}`)
       return res.status(500).json({ error: 'Failed to synchronize BLE attendance' })
+    }
+  }
+
+  /**
+   * POST /api/v1/attendance/session/:sessionId/code
+   * Generates or regenerates a 90-second rotating code + signed QR payload for faculty
+   */
+  static async generateSessionCode(req, res) {
+    try {
+      const { sessionId } = req.params
+      if (!sessionId) {
+        return res.status(400).json({ error: 'sessionId is required' })
+      }
+
+      // Generate 6-digit random code
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const now = new Date()
+      const expiresAt = new Date(now.getTime() + 90 * 1000) // 90 seconds
+      const secret = process.env.NETWORK_WEBHOOK_SECRET || 'eduflow-mesh-secret-2026'
+      const qrPayload = crypto.createHmac('sha256', secret)
+        .update(`${sessionId}:${code}:${expiresAt.getTime()}`)
+        .digest('hex')
+
+      const sessionData = {
+        sessionId,
+        code,
+        qrPayload,
+        facultyId: req.user?.id || req.user?.userId || 'faculty-1',
+        createdAt: now,
+        expiresAt
+      }
+
+      activeSessionCodes.set(sessionId, sessionData)
+
+      return res.status(200).json({
+        success: true,
+        sessionId,
+        code,
+        qrPayload,
+        expiresAt: expiresAt.toISOString(),
+        expiresInSeconds: 90
+      })
+    } catch (err) {
+      logger.error(`Error in generateSessionCode: ${err.message}`)
+      return res.status(500).json({ error: 'Failed to generate session code' })
+    }
+  }
+
+  /**
+   * POST /api/v1/attendance/presence/report
+   * Ingests student device presence pulse validated against active rotating session code
+   */
+  static async reportPresence(req, res) {
+    try {
+      const { deviceInstallId, sessionId, code, rssi, apBssid, bleBeaconId, studentRoll, studentId, timestamp } = req.body || {}
+
+      if (!sessionId || !deviceInstallId) {
+        return res.status(400).json({ error: 'sessionId and deviceInstallId are required' })
+      }
+
+      if (!code) {
+        return res.status(400).json({ error: 'Presence report without a valid session code is rejected (400)' })
+      }
+
+      const activeCode = activeSessionCodes.get(sessionId)
+      if (!activeCode || activeCode.code !== String(code).trim()) {
+        return res.status(400).json({ error: 'Invalid or missing session code for this active session' })
+      }
+
+      const now = new Date()
+      if (now > new Date(activeCode.expiresAt)) {
+        return res.status(400).json({ error: 'Session code has expired. Ask faculty to regenerate code.' })
+      }
+
+      // Check duplicate device reporting across multiple students
+      if (!sessionReportedDevices.has(sessionId)) {
+        sessionReportedDevices.set(sessionId, new Map())
+      }
+      const reportedMap = sessionReportedDevices.get(sessionId)
+      const studentIdentifier = studentRoll || studentId || req.user?.rollNumber || req.user?.id || 'default_student'
+
+      if (reportedMap.has(deviceInstallId)) {
+        const previousStudent = reportedMap.get(deviceInstallId)
+        if (previousStudent !== studentIdentifier) {
+          return res.status(400).json({
+            error: 'Duplicate deviceInstallId detected across multiple students. Proxy attempt flagged.',
+            code: 'DUPLICATE_DEVICE_INSTALL_ID'
+          })
+        }
+      } else {
+        reportedMap.set(deviceInstallId, studentIdentifier)
+      }
+
+      // Record presence pulse (NOT final attendance mark yet)
+      if (!sessionPulses.has(sessionId)) {
+        sessionPulses.set(sessionId, new Map())
+      }
+      const pulsesMap = sessionPulses.get(sessionId)
+      const currentPulse = pulsesMap.get(deviceInstallId) || {
+        deviceInstallId,
+        studentIdentifier,
+        pulseCount: 0,
+        validCodeCount: 0,
+        rssiSamples: [],
+        firstSeenAt: now,
+        lastSeenAt: now
+      }
+
+      currentPulse.pulseCount += 1
+      currentPulse.validCodeCount += 1
+      if (rssi !== undefined) currentPulse.rssiSamples.push(rssi)
+      currentPulse.lastSeenAt = now
+      currentPulse.apBssid = apBssid
+      currentPulse.bleBeaconId = bleBeaconId
+      pulsesMap.set(deviceInstallId, currentPulse)
+
+      return res.status(200).json({
+        success: true,
+        message: 'Presence pulse verified and recorded',
+        status: 'pulse_recorded',
+        finalAttendanceMarked: false,
+        sessionId,
+        deviceInstallId,
+        pulseCount: currentPulse.pulseCount,
+        validCodeCount: currentPulse.validCodeCount
+      })
+    } catch (err) {
+      logger.error(`Error in reportPresence: ${err.message}`)
+      return res.status(500).json({ error: 'Failed to record presence report' })
     }
   }
 }

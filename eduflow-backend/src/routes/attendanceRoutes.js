@@ -4,7 +4,13 @@ import { AttendanceController } from '../controllers/AttendanceController.js'
 
 const router = express.Router()
 
+// Presence Pulse Report (Callable by student app / background beacon pulse with session code)
+router.post('/presence/report', AttendanceController.reportPresence)
+
 router.use(authMiddleware)
+
+// Session-bound rotating code to prevent proxy attendance (Faculty-only)
+router.post('/session/:sessionId/code', requireRole('faculty', 'admin', 'hod', 'teacher'), AttendanceController.generateSessionCode)
 
 router.get('/stats', AttendanceController.getStats)
 router.get('/at-risk', AttendanceController.getAtRisk)
