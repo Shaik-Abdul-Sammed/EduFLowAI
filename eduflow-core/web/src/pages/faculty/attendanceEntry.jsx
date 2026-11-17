@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { CheckCircle2, XCircle, Clock, Award, Bluetooth, QrCode, Search, Download, Save, ShieldAlert, Users, RefreshCw, X } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, Award, Bluetooth, QrCode, Search, Download, Save, ShieldAlert, Users, RefreshCw, X, AlertTriangle } from 'lucide-react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
@@ -67,6 +67,25 @@ export default function AttendanceEntryPage() {
   const [qrPayload, setQrPayload] = useState('eduflow:presence:session-1:482915')
   const [codeExpiresAt, setCodeExpiresAt] = useState(() => new Date(Date.now() + 90000).toISOString())
   const [showQrModal, setShowQrModal] = useState(false)
+  const [isRoomCalibrated, setIsRoomCalibrated] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    const roomId = `ROOM-${selectedSection}`
+    wakeUpFetch(`/api/v1/attendance/rooms/${roomId}/calibration`)
+      .then(res => res.json())
+      .then(data => {
+        if (mounted && data?.calibrated) {
+          setIsRoomCalibrated(true)
+        } else if (mounted) {
+          setIsRoomCalibrated(false)
+        }
+      })
+      .catch(() => {
+        if (mounted) setIsRoomCalibrated(false)
+      })
+    return () => { mounted = false }
+  }, [selectedSection])
 
   const regenerateCode = async () => {
     try {
@@ -374,6 +393,16 @@ export default function AttendanceEntryPage() {
               </button>
             </div>
           </div>
+
+          {/* Uncalibrated Room Warning Banner (P1.1) */}
+          {!isRoomCalibrated && (
+            <div data-testid="uncalibrated-room-banner" className="alert alert-warning d-flex align-items-center gap-2 mt-3 mb-0 py-2 px-3 border border-warning">
+              <AlertTriangle size={18} className="text-warning flex-shrink-0" />
+              <div className="small">
+                <strong>Calibration Warning:</strong> This room isn't calibrated — presence accuracy may be low. Ask admin to calibrate.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Real-time Session Metrics */}

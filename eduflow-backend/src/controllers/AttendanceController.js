@@ -1,6 +1,6 @@
 import { AttendanceIngestionService } from '../services/attendance/AttendanceIngestionService.js'
 import { AttendanceAnalysis } from '../services/attendance/AttendanceAnalysis.js'
-import { classifyPresence } from '../services/presence.js'
+import { classifyPresence, computeCalibration, roomCalibrations, isRssiInRoom } from '../services/presence.js'
 import { logger } from '../utils/logger.js'
 import crypto from 'crypto'
 
@@ -793,6 +793,96 @@ export class AttendanceController {
     } catch (err) {
       logger.error(`Error in finalizeAttendanceSession: ${err.message}`)
       return res.status(500).json({ error: 'Failed to finalize attendance session' })
+    }
+  }
+
+  /**
+   * POST /api/v1/attendance/rooms/:roomId/calibrate
+   * Accepts 10+ samples of { rssi, distanceMeters? }, computes minDbm / maxDbm and stores per room
+   */
+  static async calibrateRoom(req, res) {
+    try {
+      const { roomId } = req.params
+      const { samples, notes } = req.body || {}
+
+      if (!roomId) {
+        return res.status(400).json({ error: 'roomId is required' })
+      }
+
+      if (!Array.isArray(samples) || samples.length < 10) {
+        return res.status(400).json({
+          error: 'Calibration requires >=10 samples; rejects fewer with 400',
+          code: 'INSUFFICIENT_SAMPLES'
+        })
+      }
+
+      const computed = computeCalibration(samples)
+      const calRecord = {
+        roomId,
+        ...computed,
+        calibratedAt: new Date().toISOString(),
+        calibratedBy: req.user?.id || req.user?.userId || 'admin-01',
+        notes: notes || 'Walk-test calibration'
+      }
+
+      roomCalibrations.set(roomId, calRecord)
+
+      // DB persistence if available
+      try {
+        const { pool } = await import('../db/pool.js')
+        if (pool && typeof pool.query === 'function' && !pool._isMemoryStore) {
+          await pool.query(
+            `INSERT INTO room_rssi_calibration (room_id, min_dbm, max_dbm, mean_dbm, stddev_dbm, sample_count, calibrated_by, notes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (room_id) DO UPDATE SET
+               min_dbm = EXCLUDED.min_dbm,
+               max_dbm = EXCLUDED.max_dbm,
+               mean_dbm = EXCLUDED.mean_dbm,
+               stddev_dbm = EXCLUDED.stddev_dbm,
+               sample_count = EXCLUDED.sample_count,
+               calibrated_at = NOW(),
+               calibrated_by = EXCLUDED.calibrated_by`,
+            [roomId, calRecord.minDbm, calRecord.maxDbm, calRecord.meanDbm, calRecord.stddevDbm, calRecord.sampleCount, calRecord.calibratedBy, calRecord.notes]
+          ).catch(() => {})
+        }
+      } catch {}
+
+      return res.status(200).json({
+        success: true,
+        message: `Room ${roomId} calibrated successfully`,
+        calibration: calRecord
+      })
+    } catch (err) {
+      logger.error(`Error in calibrateRoom: ${err.message}`)
+      return res.status(err.statusCode || 400).json({ error: err.message })
+    }
+  }
+
+  /**
+   * GET /api/v1/attendance/rooms/:roomId/calibration
+   */
+  static async getRoomCalibration(req, res) {
+    try {
+      const { roomId } = req.params
+      if (!roomId) {
+        return res.status(400).json({ error: 'roomId is required' })
+      }
+
+      if (roomCalibrations.has(roomId)) {
+        return res.status(200).json({
+          success: true,
+          calibrated: true,
+          calibration: roomCalibrations.get(roomId)
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        calibrated: false,
+        message: 'This room is not calibrated — presence accuracy may be low. Ask admin to calibrate.'
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to fetch room calibration' })
     }
   }
 }

@@ -14,6 +14,10 @@ router.post('/session/:sessionId/code', requireRole('faculty', 'admin', 'hod', '
 router.get('/session/:sessionId/review-roster', AttendanceController.getSessionReviewRoster)
 router.post('/session/:sessionId/finalize', AttendanceController.finalizeAttendanceSession)
 
+// Per-room RSSI calibration
+router.post('/rooms/:roomId/calibrate', requireRole('admin', 'hod', 'staff'), AttendanceController.calibrateRoom)
+router.get('/rooms/:roomId/calibration', AttendanceController.getRoomCalibration)
+
 router.get('/stats', AttendanceController.getStats)
 router.get('/at-risk', AttendanceController.getAtRisk)
 router.get('/student/:studentId', AttendanceController.getStudentAttendance)

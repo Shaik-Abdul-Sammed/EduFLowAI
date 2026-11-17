@@ -79,4 +79,18 @@ describe('AttendanceIntegrationPage Component', () => {
       expect(screen.getByRole('button', { name: /Notify Parents/i })).toBeInTheDocument()
     })
   })
+
+  test('Switches to Room Calibration wizard tab and displays walk test controls', async () => {
+    render(
+      <MemoryRouter>
+        <AttendanceIntegrationPage />
+      </MemoryRouter>
+    )
+
+    const calibTabBtn = screen.getByRole('button', { name: /Room Calibration/i })
+    fireEvent.click(calibTabBtn)
+
+    expect(screen.getByText(/Room RSSI Calibration Wizard/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Start Walk Test/i })).toBeInTheDocument()
+  })
 })

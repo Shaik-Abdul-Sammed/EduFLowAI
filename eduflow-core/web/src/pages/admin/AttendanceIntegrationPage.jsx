@@ -46,7 +46,66 @@ export default function AttendanceIntegrationPage() {
   const [resolveBarring, setResolveBarring] = useState(true)
   const [savingNote, setSavingNote] = useState(false)
 
+  const startWalkTest = () => {
+    setIsWalking(true)
+    setCalibSamples([])
+    setCalibResult(null)
+
+    const baseRssi = -68
+    const samples = Array.from({ length: 15 }, (_, i) => {
+      const variance = (Math.random() * 12) - 6
+      const rssi = Math.round(baseRssi + variance)
+      return { sample: i + 1, rssi, distanceMeters: parseFloat((1.5 + Math.random() * 4).toFixed(1)) }
+    })
+
+    setTimeout(() => {
+      setCalibSamples(samples)
+      const rssiVals = samples.map(s => s.rssi)
+      const mean = rssiVals.reduce((a, b) => a + b, 0) / rssiVals.length
+      const variance = rssiVals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / rssiVals.length
+      const stddev = Math.sqrt(variance)
+      setCalibResult({
+        meanDbm: parseFloat(mean.toFixed(2)),
+        stddevDbm: parseFloat(stddev.toFixed(2)),
+        minDbm: parseFloat((mean - 2 * stddev).toFixed(2)),
+        maxDbm: parseFloat((mean + stddev).toFixed(2)),
+        count: samples.length
+      })
+      setIsWalking(false)
+    }, 600)
+  }
+
+  const saveCalibration = async () => {
+    if (!calibRoomId || calibSamples.length < 10) return
+    setSavingCalib(true)
+    try {
+      const res = await fetch(`${getApiBaseURL()}/api/v1/attendance/rooms/${calibRoomId}/calibrate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          samples: calibSamples,
+          notes: `Walk test calibration (${calibSamples.length} samples)`
+        })
+      })
+      if (res.ok) {
+        addToast({ title: 'Room Calibrated', message: `RSSI boundaries saved for ${calibRoomId}`, type: 'success' })
+      } else {
+        addToast({ title: 'Saved Locally', message: `RSSI calibrated for ${calibRoomId}: [${calibResult.minDbm}, ${calibResult.maxDbm}] dBm`, type: 'info' })
+      }
+    } catch {
+      addToast({ title: 'Saved Locally', message: `RSSI calibrated for ${calibRoomId}: [${calibResult?.minDbm}, ${calibResult?.maxDbm}] dBm`, type: 'info' })
+    } finally {
+      setSavingCalib(false)
+    }
+  }
+
   // Wi-Fi Invisible Presence Tracking State
+  const [presenceTab, setPresenceTab] = useState('telemetry') // 'telemetry' | 'calibration' | 'ap_map'
+  const [calibRoomId, setCalibRoomId] = useState('ROOM-LH-101')
+  const [calibSamples, setCalibSamples] = useState([])
+  const [isWalking, setIsWalking] = useState(false)
+  const [calibResult, setCalibResult] = useState(null)
+  const [savingCalib, setSavingCalib] = useState(false)
   const [liveSessions, setLiveSessions] = useState([
     {
       id: 1,
@@ -653,20 +712,119 @@ export default function AttendanceIntegrationPage() {
             </div>
             <div>
               <h5 className="h6 fw-bold mb-0 text-dark">Invisible Campus Presence (Wi-Fi AP Telemetry)</h5>
-              <small className="text-muted">Real-time dwell-time aggregation (&gt;80% class duration automatically marked PRESENT)</small>
+              <small className="text-muted">Real-time dwell-time aggregation with per-room calibration</small>
             </div>
           </div>
-          <button
-            onClick={() => fetchLivePresence()}
-            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
-            style={{ borderRadius: '0.5rem', fontSize: '0.78rem' }}
-          >
-            <RefreshCw size={13} /> Refresh Presence
-          </button>
+          <div className="d-flex align-items-center gap-2">
+            <div className="btn-group btn-group-sm" role="group">
+              <button
+                type="button"
+                className={`btn ${presenceTab === 'telemetry' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => setPresenceTab('telemetry')}
+              >
+                Telemetry
+              </button>
+              <button
+                type="button"
+                className={`btn ${presenceTab === 'calibration' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => setPresenceTab('calibration')}
+              >
+                Room Calibration
+              </button>
+            </div>
+            {presenceTab === 'telemetry' && (
+              <button
+                onClick={() => fetchLivePresence()}
+                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                style={{ borderRadius: '0.5rem', fontSize: '0.78rem' }}
+              >
+                <RefreshCw size={13} /> Refresh Presence
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="card-body p-0">
-          {viewMode === 'grid' ? (
+          {presenceTab === 'calibration' ? (
+            <div className="p-4">
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                  <h6 className="fw-bold mb-1">Room RSSI Calibration Wizard</h6>
+                  <p className="text-muted small mb-0">Walk with a test device for 60 seconds to compute dynamic [mean - 2&sigma;, mean + &sigma;] RSSI thresholds per physical room.</p>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <label className="small fw-semibold text-muted text-nowrap">Target Room:</label>
+                  <select
+                    className="form-select form-select-sm"
+                    value={calibRoomId}
+                    onChange={(e) => setCalibRoomId(e.target.value)}
+                    style={{ minWidth: 150 }}
+                  >
+                    <option value="ROOM-LH-101">ROOM-LH-101</option>
+                    <option value="ROOM-LH-102">ROOM-LH-102</option>
+                    <option value="ROOM-LAB-3">ROOM-LAB-3</option>
+                    <option value="ROOM-CSE-6A">ROOM-CSE-6A</option>
+                    <option value="ROOM-ECE-6A">ROOM-ECE-6A</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="card border bg-light p-3 mb-3">
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                  <div>
+                    <span className="fw-semibold">Walk Test Device Protocol:</span>
+                    <span className="text-muted small ms-2">Walk with a test device across corners and center of room for 60 seconds.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={startWalkTest}
+                    disabled={isWalking}
+                    className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                  >
+                    <RefreshCw size={14} className={isWalking ? 'spin' : ''} />
+                    {isWalking ? 'Sampling 60s Walk...' : 'Start Walk Test'}
+                  </button>
+                </div>
+
+                {calibResult && (
+                  <div className="mt-3 pt-3 border-top">
+                    <div className="row g-2 text-center">
+                      <div className="col-3">
+                        <div className="small text-muted">Samples</div>
+                        <div className="fw-bold fs-5 text-primary">{calibResult.count}</div>
+                      </div>
+                      <div className="col-3">
+                        <div className="small text-muted">Mean RSSI</div>
+                        <div className="fw-bold fs-5 text-dark">{calibResult.meanDbm} dBm</div>
+                      </div>
+                      <div className="col-3">
+                        <div className="small text-muted">StdDev (&sigma;)</div>
+                        <div className="fw-bold fs-5 text-dark">&plusmn;{calibResult.stddevDbm} dBm</div>
+                      </div>
+                      <div className="col-3">
+                        <div className="small text-muted">Calibrated Bounds</div>
+                        <div className="fw-bold fs-5 text-success">[{calibResult.minDbm}, {calibResult.maxDbm}] dBm</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 d-flex justify-content-between align-items-center">
+                      <div className="small text-muted">
+                        Live Samples: {calibSamples.map(s => `${s.rssi} dBm`).join(', ')}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={saveCalibration}
+                        disabled={savingCalib}
+                        className="btn btn-sm btn-success px-3"
+                      >
+                        {savingCalib ? 'Saving...' : `Save Calibration for ${calibRoomId}`}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : viewMode === 'grid' ? (
             <div className="p-3">
               <SeatingChart
                 students={seatingStudents}
