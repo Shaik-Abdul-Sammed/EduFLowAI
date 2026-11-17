@@ -16,7 +16,7 @@ services:
     rootDir: eduflow-backend
     branch: main
     buildCommand: npm ci
-    startCommand: bash scripts/migrate-and-seed.sh && node src/server.js
+    startCommand: (bash scripts/migrate-and-seed.sh || true) && node src/server.js
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
@@ -44,7 +44,7 @@ services:
       - key: AI_PROVIDER
         value: gemini
       - key: AI_MODEL
-        value: gemini-3.5-flash
+        value: gemini-2.5-flash
       - key: AI_API_KEY
         sync: false
 

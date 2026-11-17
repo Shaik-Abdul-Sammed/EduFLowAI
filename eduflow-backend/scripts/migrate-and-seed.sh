@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-set -e
-
 # ==============================================================================
 # EduFlow AI OS — Render Pre-Deploy Database Migration & Seeding Script
 # Idempotently provisions tables, applies migrations, and seeds demo records.
+# Resilient to transient database spin-up delays and never halts server boot.
 # Usage: bash scripts/migrate-and-seed.sh
 # ==============================================================================
 
@@ -45,7 +44,7 @@ if command -v psql >/dev/null 2>&1; then
   fi
 
 else
-  echo "📡 [EduFlow Migration] psql binary not in PATH; using Node.js pg client..."
+  echo "📡 [EduFlow Migration] psql binary not in PATH; using Node.js pg client with auto-retry..."
 
   node -e '
     import pg from "pg";
@@ -53,18 +52,51 @@ else
     import path from "path";
 
     const databaseUrl = process.env.DATABASE_URL;
-    const client = new pg.Client({ 
-      connectionString: databaseUrl, 
-      ssl: databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1") || databaseUrl.includes("172.17.") 
-        ? false 
-        : { rejectUnauthorized: false } 
-    });
+
+    async function tryConnect(sslOption) {
+      const client = new pg.Client({
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 8000,
+        ssl: sslOption
+      });
+      await client.connect();
+      return client;
+    }
 
     async function runMigrations() {
-      try {
-        await client.connect();
-        console.log("Connected to PostgreSQL for migration.");
+      let client = null;
+      const maxRetries = 4;
 
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[Migration] Connecting to DB (attempt ${attempt}/${maxRetries})...`);
+          // Try with SSL first if remote, or without SSL for internal Render hostnames
+          const useSsl = databaseUrl.includes(".render.com") ? { rejectUnauthorized: false } : false;
+          try {
+            client = await tryConnect(useSsl);
+          } catch (sslErr) {
+            if (useSsl && sslErr.message && sslErr.message.includes("does not support SSL")) {
+              console.log("[Migration] Server does not support SSL. Retrying without SSL...");
+              client = await tryConnect(false);
+            } else {
+              throw sslErr;
+            }
+          }
+          break;
+        } catch (connErr) {
+          console.warn(`[Migration] Attempt ${attempt} failed: ${connErr.message}`);
+          if (attempt === maxRetries) {
+            console.warn("⚠️ [Migration] Could not connect to database in pre-deploy script; server will connect in background pool.");
+            return;
+          }
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+
+      if (!client) return;
+
+      try {
+        console.log("Connected to PostgreSQL for migration.");
         const backendDir = process.cwd();
         
         // 1. Base schema
@@ -98,13 +130,12 @@ else
       } catch (err) {
         console.warn("Schema query note:", err.message);
       } finally {
-        await client.end();
+        await client.end().catch(() => {});
       }
     }
 
     runMigrations().catch((err) => {
-      console.error("Migration error:", err.message);
-      process.exit(1);
+      console.warn("Migration warning:", err.message);
     });
   '
 fi
@@ -115,5 +146,5 @@ node scripts/seed-demo.js || {
   echo "⚠️ [EduFlow Migration] seed-demo.js completed with note."
 }
 
-echo "✅ [EduFlow Migration] All migrations and seeding completed successfully."
+echo "✅ [EduFlow Migration] Pre-deploy preparation complete. Starting main server..."
 exit 0

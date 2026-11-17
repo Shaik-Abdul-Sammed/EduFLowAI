@@ -74,7 +74,8 @@ function setupGracefulShutdown(server) {
 }
 
 async function startServer() {
-  const maxAttempts = 5
+  const isCloudDeploy = Boolean(process.env.PORT || process.env.RENDER)
+  const maxAttempts = isCloudDeploy ? 1 : 5
 
   for (let offset = 0; offset < maxAttempts; offset += 1) {
     const port = BASE_PORT + offset

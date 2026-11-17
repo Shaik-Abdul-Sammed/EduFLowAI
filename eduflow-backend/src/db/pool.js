@@ -85,7 +85,13 @@ const realPoolConfig = {
   connectionTimeoutMillis: 10000,
   maxUses: 7500,
 };
-if (isRemote) {
+const needsSsl = (
+  normalizedDatabaseUrl.includes('.render.com') ||
+  normalizedDatabaseUrl.includes('sslmode=require') ||
+  (isRemote && !normalizedDatabaseUrl.includes('localhost') && !normalizedDatabaseUrl.includes('127.0.0.1'))
+) && !normalizedDatabaseUrl.includes('sslmode=disable');
+
+if (needsSsl) {
   realPoolConfig.ssl = { rejectUnauthorized: false };
 }
 const realPool = useMemoryOnly ? null : new Pool(realPoolConfig);
@@ -119,6 +125,8 @@ function isConnectionFailure(error) {
     'ETIMEDOUT',
     'password authentication failed',
     'no pg_hba.conf entry',
+    'server does not support SSL',
+    'does not support SSL',
   ].some((token) => message.includes(token) || error?.code === token)
 }
 
