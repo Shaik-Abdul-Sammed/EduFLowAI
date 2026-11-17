@@ -6,6 +6,7 @@ import {
   sessionReportedDevices,
   sessionPulses
 } from '../../src/controllers/AttendanceController.js'
+import { setPrivacyConsent } from '../../src/services/presence.js'
 
 function createMockRes() {
   const mock = {
@@ -30,6 +31,9 @@ describe('P0.2 — Rotating Session Code Proxy Guard', () => {
     activeSessionCodes.clear()
     sessionReportedDevices.clear()
     sessionPulses.clear()
+    setPrivacyConsent({ studentId: 'R190001', consented: true })
+    setPrivacyConsent({ studentId: 'R190002', consented: true })
+    setPrivacyConsent({ studentId: 'default_student', consented: true })
   })
 
   test('presence report without a valid session code is rejected (400)', async () => {

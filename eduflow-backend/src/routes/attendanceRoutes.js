@@ -23,6 +23,10 @@ router.post('/ap-room-map', requireRole('admin', 'hod', 'staff'), AttendanceCont
 router.post('/ap-room-map/bulk', requireRole('admin', 'hod', 'staff'), AttendanceController.bulkUploadApRoomMap)
 router.get('/ap-room-map', AttendanceController.getApRoomMappings)
 
+// DPDP Privacy Consent Routes
+router.post('/consent/presence-tracking', AttendanceController.updatePrivacyConsent)
+router.get('/consent/presence-tracking', AttendanceController.getPrivacyConsent)
+
 router.get('/stats', AttendanceController.getStats)
 router.get('/at-risk', AttendanceController.getAtRisk)
 router.get('/student/:studentId', AttendanceController.getStudentAttendance)

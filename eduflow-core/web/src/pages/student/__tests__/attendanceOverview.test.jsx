@@ -37,4 +37,17 @@ describe('Student AttendanceOverviewPage Component', () => {
     expect(screen.getByText(/Subject-wise Attendance/i)).toBeInTheDocument()
     expect(screen.getByText(/Monthly Attendance Heatmap/i)).toBeInTheDocument()
   })
+
+  test('renders DPDP Act 2023 Privacy & Tracking card with presence toggle', () => {
+    render(
+      <MemoryRouter>
+        <AttendanceOverviewPage />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText(/Privacy & Tracking/i)).toBeInTheDocument()
+    expect(screen.getByText(/Campus Automatic Presence \(BLE\/Wi-Fi\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/Data Retention Split/i)).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: /Enabled/i })).toBeInTheDocument()
+  })
 })

@@ -193,19 +193,39 @@ export async function calculateDwellTimes(classDurationMinutes = 60) {
 /**
  * DPDP Act 2023 Data Minimization: Delete presence records older than 90 days.
  */
-export async function runDataRetentionCleanup(retentionDays = 90) {
+export async function runDataRetentionCleanup(opts = 90) {
+  let telemetryRetentionDays = 90
+  let attendanceRetentionDays = 365
+  let now = new Date()
+
+  if (typeof opts === 'number') {
+    telemetryRetentionDays = opts
+  } else if (typeof opts === 'object' && opts !== null) {
+    if (opts.telemetryRetentionDays !== undefined) telemetryRetentionDays = opts.telemetryRetentionDays
+    if (opts.retentionDays !== undefined) telemetryRetentionDays = opts.retentionDays
+    if (opts.attendanceRetentionDays !== undefined) attendanceRetentionDays = opts.attendanceRetentionDays
+    if (opts.now) now = new Date(opts.now)
+  }
+
   const result = {
     purgedCount: 0,
     purgedSessions: 0,
     purgedDisputes: 0,
-    cutoffDate: new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString(),
+    purgedTelemetry: 0,
+    preservedAttendanceRecords: 0,
+    cutoffDate: new Date(now.getTime() - telemetryRetentionDays * 24 * 60 * 60 * 1000).toISOString(),
+    attendanceCutoffDate: new Date(now.getTime() - attendanceRetentionDays * 24 * 60 * 60 * 1000).toISOString(),
     status: 'SUCCESS'
   }
 
   try {
-    const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000)
+    const cutoffDate = new Date(now.getTime() - telemetryRetentionDays * 24 * 60 * 60 * 1000)
+    const attendanceCutoffDate = new Date(now.getTime() - attendanceRetentionDays * 24 * 60 * 60 * 1000)
 
     if (pool.isMemoryMode) {
+      if (!memoryPresenceStore.rawTelemetry) memoryPresenceStore.rawTelemetry = []
+      if (!memoryPresenceStore.attendanceRecords) memoryPresenceStore.attendanceRecords = []
+
       const initialSessionCount = memoryPresenceStore.sessions.length
       memoryPresenceStore.sessions = memoryPresenceStore.sessions.filter(s => new Date(s.created_at) >= cutoffDate)
       result.purgedSessions = initialSessionCount - memoryPresenceStore.sessions.length
@@ -213,8 +233,16 @@ export async function runDataRetentionCleanup(retentionDays = 90) {
       const initialDisputeCount = memoryPresenceStore.disputes.length
       memoryPresenceStore.disputes = memoryPresenceStore.disputes.filter(d => new Date(d.created_at) >= cutoffDate)
       result.purgedDisputes = initialDisputeCount - memoryPresenceStore.disputes.length
-      result.purgedCount = result.purgedSessions + result.purgedDisputes
 
+      const initialTelemetryCount = memoryPresenceStore.rawTelemetry.length
+      memoryPresenceStore.rawTelemetry = memoryPresenceStore.rawTelemetry.filter(t => new Date(t.created_at) >= cutoffDate)
+      result.purgedTelemetry = initialTelemetryCount - memoryPresenceStore.rawTelemetry.length
+
+      // Final attendance marks (Present/Absent in attendance_records) preserved for 1 academic year (365 days)
+      memoryPresenceStore.attendanceRecords = memoryPresenceStore.attendanceRecords.filter(r => new Date(r.created_at || r.date) >= attendanceCutoffDate)
+      result.preservedAttendanceRecords = memoryPresenceStore.attendanceRecords.length
+
+      result.purgedCount = result.purgedSessions + result.purgedDisputes + result.purgedTelemetry
       return result
     }
 

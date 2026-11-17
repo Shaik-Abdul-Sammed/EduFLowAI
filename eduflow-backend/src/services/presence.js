@@ -6,6 +6,34 @@
 
 export const roomCalibrations = new Map()
 export const apRoomMap = new Map()
+export const studentPrivacyConsents = new Map()
+
+export function setPrivacyConsent({ studentId, consented = false, optOutReason = '', policyVersion = '2026.1' } = {}) {
+  if (!studentId) {
+    throw new Error('studentId is required')
+  }
+  const now = new Date()
+  const normalizedId = String(studentId).trim()
+  const record = {
+    studentId: normalizedId,
+    consented: Boolean(consented),
+    consentedAt: consented ? now.toISOString() : null,
+    revokedAt: consented ? null : now.toISOString(),
+    policyVersion,
+    optOutReason: consented ? '' : optOutReason,
+    updatedAt: now.toISOString()
+  }
+  studentPrivacyConsents.set(normalizedId, record)
+  return record
+}
+
+export function hasPrivacyConsent(studentId) {
+  if (!studentId) return false
+  const normalizedId = String(studentId).trim()
+  const record = studentPrivacyConsents.get(normalizedId)
+  if (!record) return false
+  return record.consented === true && !record.revokedAt
+}
 
 export function registerApRoomMapping(apBssid, roomId, defaultTxPower = 20.0, notes = '') {
   if (!apBssid || !roomId) {

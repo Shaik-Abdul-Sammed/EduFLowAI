@@ -31,6 +31,7 @@ import staffRouter from './routes/staffRoutes.js'
 import approvalRouter from './routes/approvalRoutes.js'
 import calendarRouter from './routes/calendarRoutes.js'
 import attendanceRouter from './routes/attendanceRoutes.js'
+import { createConsentRouter } from './routes/consentRoutes.js'
 import portalRouter from './routes/portalRoutes.js'
 import { createNotificationRouter } from './routes/notificationRoutes.js'
 import { createOnboardingRouter } from './routes/onboardingRoutes.js'
@@ -238,6 +239,7 @@ export function createApp({ db } = {}) {
   app.use('/api/v1/approvals', approvalRouter)
   app.use('/api/v1/calendar', calendarRouter)
   app.use('/api/v1/attendance', attendanceRouter)
+  app.use('/api/v1/consent', createConsentRouter())
   app.use('/api/v1/portal', portalRouter)
   app.use('/api/v1/notifications', createNotificationRouter(db))
   app.use('/api/v1/onboarding', createOnboardingRouter())

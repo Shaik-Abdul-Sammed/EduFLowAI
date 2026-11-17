@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { attendanceData } from '../../utils/studentMockData'
+import { ShieldCheck, Wifi, Info } from 'lucide-react'
+import { wakeUpFetch } from '../../utils/wakeUpHandler'
 
 const BLUE = '#2563EB'
 const GREEN = '#10B981'
@@ -13,6 +15,27 @@ const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5']
 export default function Page() {
   const { overall, subjects, heatmap } = attendanceData
   const pctColor = (p) => p >= 85 ? GREEN : p >= 75 ? BLUE : p >= 65 ? AMBER : RED
+
+  const [presenceConsented, setPresenceConsented] = useState(true)
+  const [updatingConsent, setUpdatingConsent] = useState(false)
+
+  const handleToggleConsent = async (e) => {
+    const nextConsented = e.target.checked
+    setPresenceConsented(nextConsented)
+    setUpdatingConsent(true)
+    try {
+      await wakeUpFetch('/api/v1/consent/presence-tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          consented: nextConsented,
+          optOutReason: nextConsented ? '' : 'Student opt-out via Overview'
+        })
+      })
+    } catch {} finally {
+      setUpdatingConsent(false)
+    }
+  }
 
   // Donut chart — CSS conic-gradient
   const donutGradient = `conic-gradient(${overall >= 75 ? GREEN : RED} 0% ${overall}%, #e2e8f0 ${overall}% 100%)`
@@ -130,6 +153,58 @@ export default function Page() {
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 12, height: 12, background: GREEN, borderRadius: 3, display: 'inline-block' }} /> Present</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 12, height: 12, background: '#FEE2E2', borderRadius: 3, display: 'inline-block', border: '1px solid #FCA5A5' }} /> Absent</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 12, height: 12, background: '#f1f5f9', borderRadius: 3, display: 'inline-block', border: '1px dashed #cbd5e1' }} /> Holiday</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span className="badge bg-secondary bg-opacity-25 text-dark border">Marked by faculty</span></span>
+          </div>
+        </div>
+
+        {/* DPDP Act 2023 Privacy & Tracking Card (P1.3) */}
+        <div className="card border-0 shadow-sm" style={{ borderRadius: '1.25rem', padding: '1.25rem 1.5rem', background: 'var(--card-bg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ padding: '0.4rem', borderRadius: '0.5rem', background: '#3b82f615', color: '#2563eb' }}>
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Privacy & Tracking</h2>
+                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Digital Personal Data Protection (DPDP) Act 2023 Controls</div>
+              </div>
+            </div>
+
+            <div className="form-check form-switch d-flex align-items-center gap-2 m-0">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="presenceTrackingToggle"
+                checked={presenceConsented}
+                disabled={updatingConsent}
+                onChange={handleToggleConsent}
+                style={{ width: '2.5rem', height: '1.25rem', cursor: 'pointer' }}
+              />
+              <label className="form-check-label small fw-semibold" htmlFor="presenceTrackingToggle">
+                {presenceConsented ? 'Enabled' : 'Opted Out'}
+              </label>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+            <div style={{ padding: '0.85rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#1e293b', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Wifi size={14} className="text-primary" /> Campus Automatic Presence (BLE/Wi-Fi)
+              </div>
+              <p style={{ fontSize: '0.74rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                Detects enrollment in classroom sessions automatically via AP association and BLE beacons. If disabled, attendance is taken manually by faculty without penalty.
+              </p>
+            </div>
+
+            <div style={{ padding: '0.85rem', borderRadius: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#1e293b', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Info size={14} className="text-secondary" /> Data Retention Split
+              </div>
+              <p style={{ fontSize: '0.74rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                Raw signal telemetry is purged after <strong>90 days</strong> under DPDP data minimization (§8). Final course attendance marks are retained for <strong>1 academic year</strong> for UGC statutory audit.
+              </p>
+            </div>
           </div>
         </div>
       </div>

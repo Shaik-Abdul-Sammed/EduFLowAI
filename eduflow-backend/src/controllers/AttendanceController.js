@@ -7,7 +7,10 @@ import {
   isRssiInRoom,
   apRoomMap,
   registerApRoomMapping,
-  matchApToSessionRoom
+  matchApToSessionRoom,
+  hasPrivacyConsent,
+  setPrivacyConsent,
+  studentPrivacyConsents
 } from '../services/presence.js'
 import { logger } from '../utils/logger.js'
 import crypto from 'crypto'
@@ -548,6 +551,16 @@ export class AttendanceController {
         reportedMap.set(deviceInstallId, studentIdentifier)
       }
 
+      // DPDP Act 2023 Consent Gate: Drop telemetry if student has not given explicit consent
+      if (!hasPrivacyConsent(studentIdentifier)) {
+        return res.status(403).json({
+          error: 'DPDP consent not granted for presence tracking. Telemetry dropped.',
+          code: 'CONSENT_REQUIRED',
+          dropped: true,
+          studentIdentifier
+        })
+      }
+
       // Record presence pulse (NOT final attendance mark yet)
       if (!sessionPulses.has(sessionId)) {
         sessionPulses.set(sessionId, new Map())
@@ -992,6 +1005,80 @@ export class AttendanceController {
       })
     } catch (err) {
       return res.status(500).json({ error: 'Failed to fetch AP room mappings' })
+    }
+  }
+
+  /**
+   * POST /api/v1/consent/presence-tracking
+   * Ingests student DPDP Act 2023 consent or opt-out
+   */
+  static async updatePrivacyConsent(req, res) {
+    try {
+      const studentId = req.body?.studentId || req.user?.id || req.user?.rollNumber || 'student-101'
+      const { consented, optOutReason, policyVersion = '2026.1' } = req.body || {}
+
+      if (consented === undefined) {
+        return res.status(400).json({ error: 'consented boolean is required' })
+      }
+
+      const record = setPrivacyConsent({
+        studentId,
+        consented: Boolean(consented),
+        optOutReason: optOutReason || '',
+        policyVersion
+      })
+
+      // DB insert if pool available
+      try {
+        const { pool } = await import('../db/pool.js')
+        if (pool && typeof pool.query === 'function' && !pool._isMemoryStore) {
+          await pool.query(
+            `INSERT INTO student_privacy_consents (student_id, consented, consented_at, revoked_at, policy_version, opt_out_reason, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (student_id) DO UPDATE SET
+               consented = EXCLUDED.consented,
+               consented_at = EXCLUDED.consented_at,
+               revoked_at = EXCLUDED.revoked_at,
+               policy_version = EXCLUDED.policy_version,
+               opt_out_reason = EXCLUDED.opt_out_reason,
+               updated_at = NOW()`,
+            [record.studentId, record.consented, record.consentedAt, record.revokedAt, record.policyVersion, record.optOutReason]
+          ).catch(() => {})
+        }
+      } catch {}
+
+      return res.status(200).json({
+        success: true,
+        message: consented ? 'DPDP presence tracking consent recorded' : 'DPDP presence tracking consent revoked',
+        consent: record
+      })
+    } catch (err) {
+      logger.error(`Error in updatePrivacyConsent: ${err.message}`)
+      return res.status(500).json({ error: 'Failed to record privacy consent' })
+    }
+  }
+
+  /**
+   * GET /api/v1/consent/presence-tracking
+   */
+  static async getPrivacyConsent(req, res) {
+    try {
+      const studentId = req.query?.studentId || req.user?.id || req.user?.rollNumber || 'student-101'
+      const record = studentPrivacyConsents.get(String(studentId).trim()) || {
+        studentId,
+        consented: false,
+        consentedAt: null,
+        revokedAt: null,
+        policyVersion: '2026.1',
+        optOutReason: ''
+      }
+      return res.status(200).json({
+        success: true,
+        consent: record,
+        consented: record.consented && !record.revokedAt
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to fetch privacy consent' })
     }
   }
 }
