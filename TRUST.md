@@ -19,6 +19,7 @@ We do **not** claim 100% production readiness across all 150+ pages. The system 
 |---|---|---|---|---|---|
 | **Academic Calendar Lifecycle** | `tests/unit/calendar.service.test.js`<br>`tests/integration/calendar.flow.test.js`<br>`src/tests/AcademicCalendarPage.test.jsx` | 9 | 100% | > 80% (service)<br>100% (component) | **VERIFIED** |
 | **Attendance Linkage (Teacher ↔ Student ↔ Admin)** | `tests/unit/attendance.service.test.js`<br>`tests/integration/attendance.flow.test.js`<br>`src/pages/faculty/__tests__/attendanceEntry.test.jsx`<br>`src/pages/student/__tests__/attendanceOverview.test.jsx` | 9 | 100% | > 75% (service)<br>100% (components) | **VERIFIED** |
+| **BLE/Wi-Fi Presence Hardening (P0/P1/P2)** | `tests/integration/attendance.identity.test.js`<br>`tests/integration/attendance.proxy-guard.test.js`<br>`tests/unit/presence.classify.test.js`<br>`tests/integration/attendance.review-flow.test.js`<br>`tests/unit/presence.rssi.test.js`<br>`tests/unit/presence.ap-mapping.test.js`<br>`tests/integration/consent.presence.test.js`<br>`tests/unit/ap-webhook.auth.test.js`<br>`tests/integration/attendance.manual-override.test.js`<br>`tests/unit/presence.session-health.test.js` | 39 | 100% | 100% (presence service, controller & workers) | **VERIFIED** |
 | **Student Grievance & Escalation Portal** | `tests/unit/grievance.service.test.js`<br>`tests/integration/grievance.flow.test.js`<br>`src/pages/student/__tests__/GrievancePage.test.jsx`<br>`src/pages/admin/__tests__/GrievanceManagementPage.test.jsx` | 9 | 100% | > 85% (service)<br>100% (components) | **VERIFIED** |
 | **Dean & Faculty Escalation Desk** | `src/pages/student/__tests__/DeanEscalationPage.test.jsx`<br>`tests/unit/academicEscalation.test.js` | 9 | 100% | 100% (component)<br>100% (service) | **VERIFIED** |
 
@@ -26,7 +27,8 @@ We do **not** claim 100% production readiness across all 150+ pages. The system 
 1. **Academic Calendar**: Correctly generates working days and holidays, validates AP/Telangana Second Saturday gazette rules, applies holiday extensions with audit notes, and enforces admin-only creation/update guards.
 2. **Attendance Linkage**: Enforces role scoping (students get 403 Forbidden when attempting to mark attendance), maintains ledger consistency across student and faculty views, flags students below statutory UGC/AICTE 75% condonation threshold.
 3. **Grievance Lifecycle**: Classifies urgency via keyword heuristic (auto-escalating harassment and safety complaints to CRITICAL), supports two-way student-to-admin resolution queue.
-4. **Test Database Isolation**: Hard-guarded against remote PostgreSQL leakage. 509 backend unit and integration tests run entirely against in-memory emulators (`PASS: no remote DB access`).
+4. **Presence Invariants (BLE/Wi-Fi)**: Uses app-installed UUIDv4 `deviceInstallId` instead of hardware MACs to prevent iOS/Android randomization breakage. Requires 90-second rotating PIN/QR codes to block proxy attacks. Uses a 3-band classifier (`auto_present`, `needs_review`, `auto_absent`) requiring explicit faculty review. Employs per-room Gaussian RSSI boundaries and physical AP-to-Room mapping. Enforces DPDP Act 2023 opt-in consent and 90-day raw telemetry retention split (with 1-year preservation for audit marks). Replaced static webhook secrets with dual-secret rotation.
+5. **Test Database Isolation**: Hard-guarded against remote PostgreSQL leakage. Backend unit and integration tests run entirely against in-memory emulators (`PASS: no remote DB access`).
 
 ---
 
