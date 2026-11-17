@@ -39,3 +39,9 @@ export function getFullApiUrl(path) {
   const cleanPath = path.startsWith('/') ? path : '/' + path
   return base + cleanPath
 }
+
+export default {
+  getApiBaseURL,
+  getFullApiUrl,
+  resetApiBaseURL
+}

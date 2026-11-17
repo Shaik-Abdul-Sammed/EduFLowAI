@@ -4,4 +4,5 @@
  */
 
 export * from '../config/apiConfig.js'
-export { default } from '../config/apiConfig.js'
+import defaultExport from '../config/apiConfig.js'
+export default defaultExport

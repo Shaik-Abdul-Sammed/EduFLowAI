@@ -267,7 +267,7 @@ export default function Page() {
                       <div className="mb-3">
                         <label className="form-label small fw-bold">Incident Category</label>
                         <select className="form-select form-select-sm">
-                          <option>Bus Delayed (>15 minutes)</option>
+                          <option>Bus Delayed (&gt;15 minutes)</option>
                           <option>Mechanical Breakdown / Puncture</option>
                           <option>Route Diverted due to Roadwork</option>
                           <option>Overcrowding / Driver Assist</option>
