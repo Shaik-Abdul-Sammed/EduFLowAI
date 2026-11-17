@@ -62,10 +62,18 @@ const FinanceOfficer = lazy(() => import('./pages/ai/officers/FinanceOfficer'))
 const DomainInsightPage = lazy(() => import('./pages/admin/insights/DomainInsightPage'))
 const InvoiceGeneratorPage = lazy(() => import('./pages/admin/InvoiceGeneratorPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'))
+const AuditLogsPage = lazy(() => import('./pages/admin/auditLogs'))
+const LeadManagementPage = lazy(() => import('./pages/admin/LeadManagementPage'))
+const NirfDashboardPage = lazy(() => import('./pages/admin/NirfDashboardPage'))
+const InsightsDashboardPage = lazy(() => import('./pages/admin/InsightsDashboardPage'))
 
 // Institutional Needs Portals & Modules
 const OnlineAdmissionPage = lazy(() => import('./pages/public/OnlineAdmissionPage'))
 const ParentDashboardPage = lazy(() => import('./pages/parent/ParentDashboardPage'))
+const ChildAttendancePage = lazy(() => import('./pages/parent/childAttendance'))
+const MarksProgressPage = lazy(() => import('./pages/parent/marksProgress'))
+const FeeDashboardPage = lazy(() => import('./pages/parent/feeDashboard'))
+const LeaveRequestsPage = lazy(() => import('./pages/parent/leaveRequests'))
 const GrievancePage = lazy(() => import('./pages/student/GrievancePage'))
 const GrievanceManagementPage = lazy(() => import('./pages/admin/GrievanceManagementPage'))
 const DigitalIdCard = lazy(() => import('./pages/student/DigitalIdCard'))
@@ -212,10 +220,26 @@ const slugOverrides = {
 
   // Finance
   PayrollGenerationPage: 'payroll',
+
+  // Parent Aliases
+  marksProgress: 'child-marks',
+  feeDashboard: 'fee-status',
+  leaveRequests: 'leave-status',
 }
 
 const explicitRoutePaths = new Set([
   '/admin-dashboard',
+  '/admin-dashboard/leads',
+  '/admin-dashboard/nirf',
+  '/admin-dashboard/insights',
+  '/admin-dashboard/audit-logs',
+  '/parent-dashboard/child-attendance',
+  '/parent-dashboard/child-marks',
+  '/parent-dashboard/marks-progress',
+  '/parent-dashboard/fee-status',
+  '/parent-dashboard/fee-dashboard',
+  '/parent-dashboard/leave-status',
+  '/parent-dashboard/leave-requests',
   '/admin-dashboard/onboarding',
   '/admin-dashboard/settings',
   '/admin-dashboard/system-health',
@@ -624,6 +648,13 @@ function App() {
             path="/parent-dashboard"
             element={<ParentDashboardPage />}
           />
+          <Route path="/parent-dashboard/child-attendance" element={<ChildAttendancePage />} />
+          <Route path="/parent-dashboard/child-marks" element={<MarksProgressPage />} />
+          <Route path="/parent-dashboard/marks-progress" element={<MarksProgressPage />} />
+          <Route path="/parent-dashboard/fee-status" element={<FeeDashboardPage />} />
+          <Route path="/parent-dashboard/fee-dashboard" element={<FeeDashboardPage />} />
+          <Route path="/parent-dashboard/leave-status" element={<LeaveRequestsPage />} />
+          <Route path="/parent-dashboard/leave-requests" element={<LeaveRequestsPage />} />
         </Route>
 
         <Route element={<ProtectedRoute role="admin" />}>
@@ -631,6 +662,10 @@ function App() {
             path="/admin-dashboard"
             element={<DashboardHome role="admin" routes={groupedRoutes.admin || []} />}
           />
+          <Route path="/admin-dashboard/audit-logs" element={<AuditLogsPage />} />
+          <Route path="/admin-dashboard/leads" element={<LeadManagementPage />} />
+          <Route path="/admin-dashboard/nirf" element={<NirfDashboardPage />} />
+          <Route path="/admin-dashboard/insights" element={<InsightsDashboardPage />} />
           <Route
             path="/admin-dashboard/onboarding"
             element={<OnboardingWizardPage />}

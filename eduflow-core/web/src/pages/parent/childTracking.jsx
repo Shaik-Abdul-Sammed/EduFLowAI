@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import RolePageTemplate from '../../components/RolePageTemplate'
 import { io } from 'socket.io-client'
-import { getApiBaseURL } from '../../config/apiConfig'
+import { getApiBaseURL, getFullApiUrl } from '../../config/apiConfig'
 import {
   MapPin, Shield, Bus, Radio, Phone, AlertTriangle, CheckCircle2,
   Clock, Navigation, RefreshCw, Send, User, ChevronRight, Compass
@@ -38,7 +38,7 @@ export default function ChildTracking() {
       setError(null)
       const token = (typeof localStorage !== 'undefined' && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) || ''
       
-      const overviewRes = await fetch('/v1/parent/overview', {
+      const overviewRes = await fetch(getFullApiUrl('/v1/parent/overview'), {
         headers: { Authorization: `Bearer ${token}` }
       })
       let childName = selectedWard.name
@@ -49,7 +49,7 @@ export default function ChildTracking() {
         if (ovData?.child?.roll) childRoll = ovData.child.roll
       }
 
-      const presenceRes = await fetch(`/api/v1/network/presence/student?roll=${encodeURIComponent(childRoll)}`, {
+      const presenceRes = await fetch(getFullApiUrl(`/api/v1/network/presence/student?roll=${encodeURIComponent(childRoll)}`), {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (presenceRes.ok) {
