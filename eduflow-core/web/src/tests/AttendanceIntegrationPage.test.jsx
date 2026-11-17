@@ -93,4 +93,20 @@ describe('AttendanceIntegrationPage Component', () => {
     expect(screen.getByText(/Room RSSI Calibration Wizard/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Start Walk Test/i })).toBeInTheDocument()
   })
+
+  test('Switches to AP-to-Room Map tab and displays physical mapping table and bulk upload', async () => {
+    render(
+      <MemoryRouter>
+        <AttendanceIntegrationPage />
+      </MemoryRouter>
+    )
+
+    const apMapTabBtn = screen.getByRole('button', { name: /AP-to-Room Map/i })
+    fireEvent.click(apMapTabBtn)
+
+    expect(screen.getByText(/AP-to-Physical Room Map/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Bulk CSV Upload/i })).toBeInTheDocument()
+    expect(screen.getByText(/00:14:22:01:23:45/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/ROOM-LH-101/i).length).toBeGreaterThan(0)
+  })
 })

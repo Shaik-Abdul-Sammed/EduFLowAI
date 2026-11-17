@@ -106,6 +106,77 @@ export default function AttendanceIntegrationPage() {
   const [isWalking, setIsWalking] = useState(false)
   const [calibResult, setCalibResult] = useState(null)
   const [savingCalib, setSavingCalib] = useState(false)
+  const [apMappings, setApMappings] = useState([
+    { id: 1, apBssid: '00:14:22:01:23:45', roomId: 'ROOM-LH-101', defaultTxPower: 20.0, notes: 'Cisco Catalyst 2.4GHz' },
+    { id: 2, apBssid: '00:14:22:01:23:46', roomId: 'ROOM-LH-101', defaultTxPower: 23.0, notes: 'Cisco Catalyst 5GHz' },
+    { id: 3, apBssid: '00:14:22:99:88:77', roomId: 'ROOM-LH-102', defaultTxPower: 20.0, notes: 'Aruba AP-505' },
+    { id: 4, apBssid: '00:14:22:44:55:66', roomId: 'ROOM-CSE-6A', defaultTxPower: 20.0, notes: 'Ruckus R750' }
+  ])
+  const [newApBssid, setNewApBssid] = useState('')
+  const [newApRoomId, setNewApRoomId] = useState('ROOM-LH-101')
+  const [newApTxPower, setNewApTxPower] = useState('20.0')
+  const [newApNotes, setNewApNotes] = useState('')
+  const [bulkCsvText, setBulkCsvText] = useState('')
+  const [showBulkModal, setShowBulkModal] = useState(false)
+
+  const handleAddApMapping = async (e) => {
+    e.preventDefault()
+    if (!newApBssid || !newApRoomId) return
+    const newEntry = {
+      id: Date.now(),
+      apBssid: newApBssid.trim().toLowerCase(),
+      roomId: newApRoomId.trim(),
+      defaultTxPower: parseFloat(newApTxPower) || 20.0,
+      notes: newApNotes.trim()
+    }
+    setApMappings(prev => [...prev.filter(m => m.apBssid !== newEntry.apBssid), newEntry])
+    setNewApBssid('')
+    setNewApNotes('')
+    try {
+      await fetch(`${getApiBaseURL()}/api/v1/attendance/ap-room-map`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEntry)
+      })
+    } catch {}
+    addToast({ title: 'AP Mapped', message: `BSSID ${newEntry.apBssid} mapped to ${newEntry.roomId}`, type: 'success' })
+  }
+
+  const handleBulkUploadCsv = async () => {
+    if (!bulkCsvText.trim()) return
+    const lines = bulkCsvText.split('\n').map(l => l.trim()).filter(Boolean)
+    const newEntries = []
+    for (const line of lines) {
+      if (line.toLowerCase().startsWith('ap_bssid') || line.toLowerCase().startsWith('bssid')) continue
+      const [apBssid, roomId, defaultTxPower, notes] = line.split(',').map(s => s?.trim())
+      if (apBssid && roomId) {
+        newEntries.push({
+          id: Date.now() + Math.random(),
+          apBssid: apBssid.toLowerCase(),
+          roomId,
+          defaultTxPower: parseFloat(defaultTxPower) || 20.0,
+          notes: notes || ''
+        })
+      }
+    }
+    if (newEntries.length > 0) {
+      setApMappings(prev => {
+        const setMap = new Map(prev.map(p => [p.apBssid, p]))
+        newEntries.forEach(ne => setMap.set(ne.apBssid, ne))
+        return Array.from(setMap.values())
+      })
+      setShowBulkModal(false)
+      setBulkCsvText('')
+      try {
+        await fetch(`${getApiBaseURL()}/api/v1/attendance/ap-room-map/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mappings: newEntries })
+        })
+      } catch {}
+      addToast({ title: 'Bulk AP Import', message: `Imported ${newEntries.length} AP-to-Room mappings`, type: 'success' })
+    }
+  }
   const [liveSessions, setLiveSessions] = useState([
     {
       id: 1,
@@ -731,6 +802,13 @@ export default function AttendanceIntegrationPage() {
               >
                 Room Calibration
               </button>
+              <button
+                type="button"
+                className={`btn ${presenceTab === 'ap_map' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => setPresenceTab('ap_map')}
+              >
+                AP-to-Room Map
+              </button>
             </div>
             {presenceTab === 'telemetry' && (
               <button
@@ -823,6 +901,133 @@ export default function AttendanceIntegrationPage() {
                   </div>
                 )}
               </div>
+            </div>
+          ) : presenceTab === 'ap_map' ? (
+            <div className="p-4">
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                  <h6 className="fw-bold mb-1">AP-to-Physical Room Map</h6>
+                  <p className="text-muted small mb-0">Replaces zone blacklists. Connects physical BSSIDs to specific classrooms for authoritative presence resolution.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkModal(true)}
+                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                >
+                  <UploadCloud size={14} /> Bulk CSV Upload
+                </button>
+              </div>
+
+              {/* Add Single AP Mapping Form */}
+              <form onSubmit={handleAddApMapping} className="card border bg-light p-3 mb-4">
+                <div className="row g-2 align-items-end">
+                  <div className="col-12 col-md-3">
+                    <label className="form-label small fw-semibold text-muted mb-1">AP BSSID / MAC</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm font-monospace"
+                      placeholder="AA:BB:CC:DD:EE:FF"
+                      value={newApBssid}
+                      onChange={(e) => setNewApBssid(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="col-12 col-md-3">
+                    <label className="form-label small fw-semibold text-muted mb-1">Target Room ID</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm font-monospace"
+                      placeholder="ROOM-LH-101"
+                      value={newApRoomId}
+                      onChange={(e) => setNewApRoomId(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="col-12 col-md-2">
+                    <label className="form-label small fw-semibold text-muted mb-1">Tx Power (dBm)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      className="form-control form-control-sm"
+                      value={newApTxPower}
+                      onChange={(e) => setNewApTxPower(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-12 col-md-3">
+                    <label className="form-label small fw-semibold text-muted mb-1">Hardware / Notes</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="e.g. Cisco Dual-Band AP"
+                      value={newApNotes}
+                      onChange={(e) => setNewApNotes(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-12 col-md-1">
+                    <button type="submit" className="btn btn-sm btn-primary w-100">
+                      Map
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Table of AP-to-Room Mappings */}
+              <div className="table-responsive border rounded">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="table-light small text-uppercase">
+                    <tr>
+                      <th className="px-3">#</th>
+                      <th>AP BSSID</th>
+                      <th>Mapped Room ID</th>
+                      <th>Default Tx Power</th>
+                      <th>Hardware / Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="small">
+                    {apMappings.map((ap, idx) => (
+                      <tr key={ap.id || ap.apBssid}>
+                        <td className="px-3 text-muted">{idx + 1}</td>
+                        <td className="font-monospace fw-bold text-primary">{ap.apBssid}</td>
+                        <td className="fw-semibold">
+                          <span className="badge bg-light text-dark border font-monospace">
+                            {ap.roomId}
+                          </span>
+                        </td>
+                        <td>{ap.defaultTxPower} dBm</td>
+                        <td className="text-muted">{ap.notes || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bulk CSV Modal */}
+              {showBulkModal && (
+                <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                  <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h6 className="modal-title fw-bold">Bulk CSV Upload: AP-to-Room Map</h6>
+                        <button type="button" className="btn-close" onClick={() => setShowBulkModal(false)} />
+                      </div>
+                      <div className="modal-body">
+                        <p className="small text-muted mb-2">Paste CSV rows in format: <code>ap_bssid,roomId,defaultTxPower,notes</code></p>
+                        <textarea
+                          rows={6}
+                          className="form-control font-monospace small"
+                          placeholder="00:14:22:01:23:45,ROOM-LH-101,20.0,Cisco 2.4GHz&#10;00:14:22:01:23:46,ROOM-LH-101,23.0,Cisco 5GHz"
+                          value={bulkCsvText}
+                          onChange={(e) => setBulkCsvText(e.target.value)}
+                        />
+                      </div>
+                      <div className="modal-footer">
+                        <button type="button" className="btn btn-sm btn-secondary" onClick={() => setShowBulkModal(false)}>Cancel</button>
+                        <button type="button" className="btn btn-sm btn-primary" onClick={handleBulkUploadCsv}>Import CSV Mappings</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : viewMode === 'grid' ? (
             <div className="p-3">

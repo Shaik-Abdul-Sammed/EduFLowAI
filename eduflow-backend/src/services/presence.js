@@ -1,9 +1,48 @@
 /**
  * Presence Classifier Service
- * Replaces binary >=80% dwell with 3-band confidence classification and per-room RSSI calibration.
+ * Replaces binary >=80% dwell with 3-band confidence classification,
+ * per-room RSSI calibration, and AP-to-Room physical mapping.
  */
 
 export const roomCalibrations = new Map()
+export const apRoomMap = new Map()
+
+export function registerApRoomMapping(apBssid, roomId, defaultTxPower = 20.0, notes = '') {
+  if (!apBssid || !roomId) {
+    throw new Error('apBssid and roomId are required')
+  }
+  const normalizedBssid = String(apBssid).trim().toLowerCase()
+  const mapping = {
+    apBssid: normalizedBssid,
+    roomId: String(roomId).trim(),
+    defaultTxPower: Number(defaultTxPower) || 20.0,
+    notes: notes || '',
+    updatedAt: new Date().toISOString()
+  }
+  apRoomMap.set(normalizedBssid, mapping)
+  return mapping
+}
+
+export function matchApToSessionRoom({ apBssid, sessionRoomId } = {}) {
+  if (!apBssid) {
+    return { status: 'unknown_ap', confidence: 'low', reason: 'missing_ap_bssid' }
+  }
+  const normalizedBssid = String(apBssid).trim().toLowerCase()
+  const mapping = apRoomMap.get(normalizedBssid)
+  if (!mapping) {
+    return { status: 'unknown_ap', confidence: 'low', reason: 'unmapped_ap', apBssid }
+  }
+  if (mapping.roomId === sessionRoomId) {
+    return { status: 'accepted', confidence: 'high', reason: 'room_matched', roomId: mapping.roomId }
+  }
+  return {
+    status: 'wrong_room',
+    confidence: 'low',
+    reason: 'ap_belongs_to_different_room',
+    mappedRoomId: mapping.roomId,
+    sessionRoomId
+  }
+}
 
 export function computeCalibration(samples) {
   if (!Array.isArray(samples) || samples.length < 10) {
@@ -93,6 +132,9 @@ export function classifyPresence({ dwellSeconds = 0, sessionSeconds = 3600, inRo
 
 export default {
   roomCalibrations,
+  apRoomMap,
+  registerApRoomMapping,
+  matchApToSessionRoom,
   computeCalibration,
   isRssiInRoom,
   classifyPresence

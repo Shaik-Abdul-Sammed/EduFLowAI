@@ -18,6 +18,11 @@ router.post('/session/:sessionId/finalize', AttendanceController.finalizeAttenda
 router.post('/rooms/:roomId/calibrate', requireRole('admin', 'hod', 'staff'), AttendanceController.calibrateRoom)
 router.get('/rooms/:roomId/calibration', AttendanceController.getRoomCalibration)
 
+// AP-to-Room Physical Mapping (replaces zone blacklist)
+router.post('/ap-room-map', requireRole('admin', 'hod', 'staff'), AttendanceController.upsertApRoomMap)
+router.post('/ap-room-map/bulk', requireRole('admin', 'hod', 'staff'), AttendanceController.bulkUploadApRoomMap)
+router.get('/ap-room-map', AttendanceController.getApRoomMappings)
+
 router.get('/stats', AttendanceController.getStats)
 router.get('/at-risk', AttendanceController.getAtRisk)
 router.get('/student/:studentId', AttendanceController.getStudentAttendance)

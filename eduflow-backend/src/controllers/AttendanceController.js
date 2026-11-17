@@ -1,6 +1,14 @@
 import { AttendanceIngestionService } from '../services/attendance/AttendanceIngestionService.js'
 import { AttendanceAnalysis } from '../services/attendance/AttendanceAnalysis.js'
-import { classifyPresence, computeCalibration, roomCalibrations, isRssiInRoom } from '../services/presence.js'
+import {
+  classifyPresence,
+  computeCalibration,
+  roomCalibrations,
+  isRssiInRoom,
+  apRoomMap,
+  registerApRoomMapping,
+  matchApToSessionRoom
+} from '../services/presence.js'
 import { logger } from '../utils/logger.js'
 import crypto from 'crypto'
 
@@ -883,6 +891,107 @@ export class AttendanceController {
       })
     } catch (err) {
       return res.status(500).json({ error: 'Failed to fetch room calibration' })
+    }
+  }
+
+  /**
+   * POST /api/v1/attendance/ap-room-map
+   */
+  static async upsertApRoomMap(req, res) {
+    try {
+      const { apBssid, roomId, defaultTxPower = 20.0, notes } = req.body || {}
+      if (!apBssid || !roomId) {
+        return res.status(400).json({ error: 'apBssid and roomId are required' })
+      }
+
+      const mapping = registerApRoomMapping(apBssid, roomId, defaultTxPower, notes)
+
+      // DB insert if available
+      try {
+        const { pool } = await import('../db/pool.js')
+        if (pool && typeof pool.query === 'function' && !pool._isMemoryStore) {
+          await pool.query(
+            `INSERT INTO ap_room_map (ap_bssid, room_id, default_tx_power, notes, updated_at)
+             VALUES ($1, $2, $3, $4, NOW())
+             ON CONFLICT (ap_bssid) DO UPDATE SET
+               room_id = EXCLUDED.room_id,
+               default_tx_power = EXCLUDED.default_tx_power,
+               notes = EXCLUDED.notes,
+               updated_at = NOW()`,
+            [mapping.apBssid, mapping.roomId, mapping.defaultTxPower, mapping.notes]
+          ).catch(() => {})
+        }
+      } catch {}
+
+      return res.status(200).json({
+        success: true,
+        message: 'AP-to-Room mapping saved successfully',
+        mapping
+      })
+    } catch (err) {
+      logger.error(`Error in upsertApRoomMap: ${err.message}`)
+      return res.status(400).json({ error: err.message })
+    }
+  }
+
+  /**
+   * POST /api/v1/attendance/ap-room-map/bulk
+   * Bulk CSV or array upload of AP-to-Room mappings
+   */
+  static async bulkUploadApRoomMap(req, res) {
+    try {
+      let mappings = req.body?.mappings
+      const csvText = req.body?.csvText
+
+      if (!mappings && typeof csvText === 'string') {
+        const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean)
+        mappings = []
+        for (const line of lines) {
+          if (line.toLowerCase().startsWith('ap_bssid') || line.toLowerCase().startsWith('bssid')) continue
+          const [apBssid, roomId, defaultTxPower, notes] = line.split(',').map(c => c?.trim())
+          if (apBssid && roomId) {
+            mappings.push({ apBssid, roomId, defaultTxPower: Number(defaultTxPower) || 20.0, notes })
+          }
+        }
+      }
+
+      if (!Array.isArray(mappings) || mappings.length === 0) {
+        return res.status(400).json({ error: 'mappings array or valid csvText is required' })
+      }
+
+      const saved = []
+      for (const m of mappings) {
+        if (m.apBssid && m.roomId) {
+          const registered = registerApRoomMapping(m.apBssid, m.roomId, m.defaultTxPower, m.notes)
+          saved.push(registered)
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Imported ${saved.length} AP-to-Room mappings`,
+        count: saved.length,
+        mappings: saved
+      })
+    } catch (err) {
+      logger.error(`Error in bulkUploadApRoomMap: ${err.message}`)
+      return res.status(500).json({ error: 'Failed to process bulk AP mappings' })
+    }
+  }
+
+  /**
+   * GET /api/v1/attendance/ap-room-map
+   */
+  static async getApRoomMappings(req, res) {
+    try {
+      const mappings = Array.from(apRoomMap.values())
+      return res.status(200).json({
+        success: true,
+        total: mappings.length,
+        mappings
+      })
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to fetch AP room mappings' })
     }
   }
 }
