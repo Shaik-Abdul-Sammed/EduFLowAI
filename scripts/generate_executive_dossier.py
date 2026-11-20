@@ -545,14 +545,14 @@ def build_pdf():
     ))
 
     # Embed Live Screenshots
-    live_img_path = "/home/rgukt/.gemini/antigravity/brain/485cec2e-6fb5-44a7-8b28-b2980d838b01/.user_uploaded/media_1794931461535_4c62a90b.jpg"
+    live_img_path = "/home/rgukt/Github/EduFLowAI/docs/pristine_ui_assets/ui_overview_dashboard.png"
     if os.path.exists(live_img_path):
         try:
-            # Scale image proportionally
+            # Scale image proportionally (1300x720 aspect ratio)
             img = Image(live_img_path, width=470, height=260)
             elements.append(img)
             elements.append(Spacer(1, 4))
-            elements.append(Paragraph("<b>Figure 7.1:</b> Live Cloud Production Console — Institutional Persona Sandbox & Real-Time Authentication Verifier (Render Cloud)", ParagraphStyle('Caption', fontName='Helvetica-Oblique', fontSize=8, textColor=muted_slate, alignment=1)))
+            elements.append(Paragraph("<b>Figure 7.1:</b> Live Institutional Executive Intelligence Command Center & Multi-Officer AI Dashboard (EduFlow AI OS Production)", ParagraphStyle('Caption', fontName='Helvetica-Oblique', fontSize=8, textColor=muted_slate, alignment=1)))
         except Exception as e:
             elements.append(Paragraph(f"Screenshot loaded (Path: {live_img_path})", body_style))
     elements.append(Spacer(1, 8))
