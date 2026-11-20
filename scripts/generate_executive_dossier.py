@@ -72,14 +72,7 @@ def build_pdf():
     output_dir = "/home/rgukt/Downloads/PDFS"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Delete existing PDFs in the directory as instructed
-    for f in glob.glob(os.path.join(output_dir, "*.pdf")):
-        try:
-            os.remove(f)
-            print(f"Deleted existing PDF: {f}")
-        except Exception as e:
-            print(f"Warning deleting {f}: {e}")
-
+    # Safe write: Do NOT delete any existing files in output_dir
     pdf_filename = os.path.join(output_dir, "EduFlow_AI_OS_Executive_Dossier.pdf")
     doc = SimpleDocTemplate(
         pdf_filename,
@@ -641,6 +634,14 @@ def build_pdf():
     # Build document with NumberedCanvas
     doc.build(elements, canvasmaker=NumberedCanvas)
     print(f"✅ Successfully compiled 8-page PDF: {pdf_filename}")
+
+    # Also keep a safe persistent backup in the project docs
+    import shutil
+    docs_dir = "/home/rgukt/Github/EduFLowAI/docs"
+    os.makedirs(docs_dir, exist_ok=True)
+    backup_path = os.path.join(docs_dir, "EduFlow_AI_OS_Executive_Dossier.pdf")
+    shutil.copyfile(pdf_filename, backup_path)
+    print(f"✅ Persistent backup preserved at: {backup_path}")
 
 if __name__ == "__main__":
     build_pdf()
