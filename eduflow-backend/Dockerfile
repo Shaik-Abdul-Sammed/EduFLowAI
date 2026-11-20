@@ -1,17 +1,18 @@
 FROM node:20-alpine
 
-WORKDIR /app/backend
+WORKDIR /app
 
-# Copy package files
-COPY backend/package*.json ./
+# Copy package and npmrc configuration
+COPY package*.json .npmrc* ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install production dependencies with legacy peer deps resolution
+RUN npm ci --legacy-peer-deps --only=production || npm install --legacy-peer-deps --only=production
 
-# Copy source code
-COPY backend/src ./src
-COPY backend/sql ./sql
-COPY backend/.env.example ./.env
+# Copy source code and database migrations
+COPY src ./src
+COPY sql ./sql
+COPY scripts ./scripts
+COPY .env.example ./.env
 
 EXPOSE 4000
 
