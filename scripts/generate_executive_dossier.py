@@ -318,61 +318,65 @@ def build_pdf():
     # =========================================================================
     # PAGE 3: DEPTH ANALYSIS OF FACULTY WI-FI & BLUETOOTH ATTENDANCE
     # =========================================================================
-    elements.append(Paragraph("3. Depth Engineering: Faculty Wi-Fi & Bluetooth Attendance", h1_style))
+    elements.append(Paragraph("3. Depth Engineering: Faculty Wi-Fi, BLE & Student Data Acquisition", h1_style))
     elements.append(Paragraph(
-        "Passive radio-frequency (RF) attendance in collegiate environments is notoriously challenging due to radio wave physics. "
-        "Unlike controlled office settings, academic classrooms feature open doorways, thin partition walls, multi-device density (70–120 phones per room), "
-        "and adjacent hallways crowded with students between classes. This section details how EduFlow AI overcomes RF leakage.",
+        "Passive radio-frequency (RF) attendance in university lecture halls must overcome the physics of RF signal leakage: "
+        "radio waves at 2.4 GHz penetrate standard drywall partitions (3–5 dB attenuation). Consequently, naive scanners detect students in hallways "
+        "or adjacent classrooms. EduFlow AI unifies physical RF boundary containment with multi-channel student data acquisition.",
         body_style
     ))
 
-    elements.append(Paragraph("The Physics of Cross-Room Signal Leakage:", h2_style))
-    elements.append(Paragraph(
-        "Radio signals at 2.4 GHz and 5.0 GHz follow the <i>Log-Distance Path Loss Model</i>: "
-        "<code>PL(d) = PL(d0) + 10·n·log10(d/d0) + X_sigma</code>. "
-        "In typical university construction, dry-wall and acoustic ceiling tiles provide less than 4 dB of attenuation. Consequently, an Access Point or BLE beacon "
-        "installed in Classroom 101 frequently detects student devices located in Classroom 102 or standing in the adjacent corridor. "
-        "<b>A naive attendance system marks these external students as present</b>, corrupting the institutional attendance ledger.",
-        body_style
-    ))
+    elements.append(Paragraph("1. The 4 Student Data Acquisition Channels (How Student Data is Gathered):", h2_style))
+    channels_data = [
+        [Paragraph("Acquisition Channel", table_header_style), Paragraph("Hardware / Transport", table_header_style), Paragraph("Payload Ingested from Student", table_header_style), Paragraph("Anti-Fraud Mechanism", table_header_style)],
+        [Paragraph("<b>Channel 1: Background BLE</b>", table_cell_bold), Paragraph("Web BLE / Mobile App Peripheral", table_cell_style), Paragraph("Rolling cryptographic hash: <code>SHA256(Roll + DailySalt)</code>", table_cell_style), Paragraph("Zero PII broadcast; immune to packet sniffing.", table_cell_style)],
+        [Paragraph("<b>Channel 2: Campus Wi-Fi AP</b>", table_cell_bold), Paragraph("802.11 Enterprise (Aruba/Cisco/Ubiquiti)", table_cell_style), Paragraph("AP BSSID association + RSSI telemetry pulse via AP webhook", table_cell_style), Paragraph("Cross-room BSSID mapping locks device to active room.", table_cell_style)],
+        [Paragraph("<b>Channel 3: Presence Pulse API</b>", table_cell_bold), Paragraph("HTTPS POST /presence/report (Student App)", table_cell_style), Paragraph("<code>deviceInstallId</code>, <code>sessionId</code>, <code>rssi</code>, <code>code</code>", table_cell_style), Paragraph("Flags duplicate device installations (buddy-punching).", table_cell_style)],
+        [Paragraph("<b>Channel 4: Rotating 90s PIN</b>", table_cell_bold), Paragraph("Dynamic Classroom Display / QR Scan", table_cell_style), Paragraph("6-digit ephemeral salt regenerated every 90 seconds", table_cell_style), Paragraph("Requires physical eye-contact with classroom board.", table_cell_style)]
+    ]
+    channels_table = Table(channels_data, colWidths=[110, 110, 154, 130])
+    channels_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), primary_color),
+        ('GRID', (0,0), (-1,-1), 0.5, border_color),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, card_bg]),
+    ]))
+    elements.append(channels_table)
+    elements.append(Spacer(1, 6))
 
-    elements.append(Paragraph("The 3-Layer EduFlow Boundary Defense Solution:", h2_style))
-    elements.append(Paragraph(
-        "EduFlow AI OS enforces a triple-redundant verification filter to guarantee 100% boundary isolation:",
-        body_style
-    ))
-
+    elements.append(Paragraph("2. The 3-Layer EduFlow Boundary Defense Solution:", h2_style))
     defense_data = [
         [Paragraph("Defense Layer", table_header_style), Paragraph("Detection Mechanism", table_header_style), Paragraph("Operational Function & Anti-Contamination Action", table_header_style)],
-        [Paragraph("<b>Layer 1: Enrolled Roster Intersect</b>", table_cell_bold), Paragraph("Strict SQL course/section whitelist filter", table_cell_style), Paragraph("When Faculty takes attendance for Course CS301 (Section 6A), the engine queries ONLY enrolled students. Any detected device from Section B, other departments, or unregistered guests is isolated into a separate quarantine pool. <b>They can never enter the attendance register.</b>", table_cell_style)],
-        [Paragraph("<b>Layer 2: Calibrated In-Room RSSI</b>", table_cell_bold), Paragraph("Gaussian signal containment (-75 dBm to -30 dBm)", table_cell_style), Paragraph("Rooms are calibrated with min/max RSSI bounds. Signals below -75 dBm (representing corridor leakage through concrete) are classified as <code>out_of_zone</code> and automatically downgraded to absent or flagged for manual review.", table_cell_style)],
-        [Paragraph("<b>Layer 3: Human Proximity Proof</b>", table_cell_bold), Paragraph("90-Second Rotating PIN & Signed QR Nonce", table_cell_style), Paragraph("To prevent 'ghost presence' where a student leaves their phone in a friend's backpack, students must confirm attendance via an ephemeral 6-digit PIN projected on the classroom board that rotates every 90 seconds. Telemetry without an active valid code is rejected.", table_cell_style)]
+        [Paragraph("<b>Layer 1: Enrolled Roster Intersect</b>", table_cell_bold), Paragraph("Strict SQL course/section whitelist filter", table_cell_style), Paragraph("Engine queries ONLY students enrolled in active section (e.g. CSE-6A). Non-enrolled devices (Section B, other branches, visitors) are quarantined. <b>Zero leakage into register.</b>", table_cell_style)],
+        [Paragraph("<b>Layer 2: Calibrated In-Room RSSI</b>", table_cell_bold), Paragraph("Gaussian signal containment (-75 to -30 dBm)", table_cell_style), Paragraph("Log-distance path attenuation: <code>PL(d)=PL(d0)+10n·log10(d)+Xσ</code>. Signals < -75 dBm (hallway leakage through concrete) are marked <code>out_of_zone</code>.", table_cell_style)],
+        [Paragraph("<b>Layer 3: Human Proximity Proof</b>", table_cell_bold), Paragraph("90s Rotating PIN & Signed QR Nonce", table_cell_style), Paragraph("Prevents ghost presence (leaving phone in friend's bag). Telemetry without active rotating PIN is rejected with HTTP 400.", table_cell_style)]
     ]
     defense_table = Table(defense_data, colWidths=[110, 134, 260])
     defense_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), primary_color),
         ('GRID', (0,0), (-1,-1), 0.5, border_color),
-        ('TOPPADDING', (0,0), (-1,-1), 5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, card_bg]),
     ]))
     elements.append(defense_table)
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 6))
 
-    elements.append(Paragraph("Comparative Architectural Analysis:", h2_style))
+    elements.append(Paragraph("3. Architectural Trade-Off Analysis:", h2_style))
     comp_data = [
-        [Paragraph("Technology", table_header_style), Paragraph("Capture Speed", table_header_style), Paragraph("Proxy Vulnerability", table_header_style), Paragraph("Hardware Cost", table_header_style), Paragraph("Cross-Room Contamination", table_header_style)],
-        [Paragraph("<b>Fingerprint Biometrics</b>", table_cell_bold), Paragraph("15–20 mins (slow queues)", table_cell_style), Paragraph("Silicone fake-finger spoofing", table_cell_style), Paragraph("High (Dedicated readers per room)", table_cell_style), Paragraph("None (Physical touch required)", table_cell_style)],
-        [Paragraph("<b>Paper Roll-Call</b>", table_cell_bold), Paragraph("12–15 mins/lecture", table_cell_style), Paragraph("Extreme (Buddy signatures)", table_cell_style), Paragraph("Zero", table_cell_style), Paragraph("High (Students sign for friends)", table_cell_style)],
-        [Paragraph("<b>Generic Wi-Fi Tracking</b>", table_cell_bold), Paragraph("Instantaneous", table_cell_style), Paragraph("High (Leaves phone in room)", table_cell_style), Paragraph("Zero (Uses existing APs)", table_cell_style), Paragraph("<b>Severe (Picks up corridor/adjacent rooms)</b>", table_cell_style)],
-        [Paragraph("<b>EduFlow AI Hybrid Engine</b>", table_cell_bold), Paragraph("<b>< 3 seconds</b>", table_cell_style), Paragraph("<b>Near Zero (Dual-factor nonce)</b>", table_cell_style), Paragraph("<b>Zero (Existing APs + Mobiles)</b>", table_cell_style), Paragraph("<b>Zero (Strict Roster Whitelisting)</b>", table_cell_style)]
+        [Paragraph("Technology", table_header_style), Paragraph("Capture Speed", table_header_style), Paragraph("Proxy Vulnerability", table_header_style), Paragraph("Cross-Room Contamination", table_header_style)],
+        [Paragraph("<b>Fingerprint Biometrics</b>", table_cell_bold), Paragraph("15–20 mins (slow queues)", table_cell_style), Paragraph("Silicone fake-finger spoofing", table_cell_style), Paragraph("None (Physical touch required)", table_cell_style)],
+        [Paragraph("<b>Paper Roll-Call</b>", table_cell_bold), Paragraph("12–15 mins/lecture", table_cell_style), Paragraph("Extreme (Buddy signatures)", table_cell_style), Paragraph("High (Students sign for friends)", table_cell_style)],
+        [Paragraph("<b>Generic Wi-Fi Tracking</b>", table_cell_bold), Paragraph("Instantaneous", table_cell_style), Paragraph("High (Leaves phone in room)", table_cell_style), Paragraph("<b>Severe (Picks up corridor/adjacent rooms)</b>", table_cell_style)],
+        [Paragraph("<b>EduFlow AI Hybrid Engine</b>", table_cell_bold), Paragraph("<b>< 3 seconds</b>", table_cell_style), Paragraph("<b>Near Zero (Dual-factor nonce)</b>", table_cell_style), Paragraph("<b>Zero (Strict Roster Whitelisting)</b>", table_cell_style)]
     ]
-    comp_table = Table(comp_data, colWidths=[110, 84, 110, 100, 100])
+    comp_table = Table(comp_data, colWidths=[110, 100, 144, 150])
     comp_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), primary_color),
         ('GRID', (0,0), (-1,-1), 0.5, border_color),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, card_bg]),
     ]))
     elements.append(comp_table)
@@ -382,21 +386,35 @@ def build_pdf():
     # =========================================================================
     # PAGE 4: FOREIGN DEVICE QUARANTINE & ANTI-PROXY GUARD
     # =========================================================================
-    elements.append(Paragraph("4. Foreign Device Quarantine & Anti-Proxy Security", h1_style))
+    elements.append(Paragraph("4. Student Data Security, Foreign Device Quarantine & Privacy", h1_style))
     elements.append(Paragraph(
-        "A critical requirement for institutional credibility is guaranteeing that only enrolled students of the scheduled class are marked present. "
-        "The system must demonstrate complete mathematical immunity to extraneous radio signals present in the environment.",
+        "To guarantee institutional credibility and statutory compliance under the DPDP Act 2023, student telemetry undergoes multi-tier validation. "
+        "The system mathematically separates enrolled students from external radio noise while enforcing zero buddy-punching.",
         body_style
     ))
 
-    elements.append(Paragraph("Real-World Execution Telemetry Analysis:", h2_style))
-    elements.append(Paragraph(
-        "During live class execution in Room 101 (Course CS301, Section CSE-6A), an RF scan detects 11 distinct wireless signals: "
-        "8 enrolled students, 2 students enrolled in Section B standing in the corridor, and 1 unregistered visitor smartphone. "
-        "The diagram and data below trace the exact isolation workflow executed in <code>AttendanceController.bleSync</code>:",
-        body_style
-    ))
+    elements.append(Paragraph("1. Ingested Student Telemetry Fields & Server-Side Security Gates:", h2_style))
+    payload_data = [
+        [Paragraph("Data Field Ingested", table_header_style), Paragraph("Client Source", table_header_style), Paragraph("Operational Purpose", table_header_style), Paragraph("Automated Security / Anti-Proxy Gate", table_header_style)],
+        [Paragraph("<code>studentRoll</code>", table_cell_bold), Paragraph("Student Identity", table_cell_style), Paragraph("Maps student to enrolled database roster", table_cell_style), Paragraph("Validated against active section roster whitelist.", table_cell_style)],
+        [Paragraph("<code>deviceInstallId</code>", table_cell_bold), Paragraph("Hardware Keystore", table_cell_style), Paragraph("Cryptographic UUID of student install", table_cell_style), Paragraph("Flags duplicate device ID across multiple rolls (buddy-punching).", table_cell_style)],
+        [Paragraph("<code>code / sessionNonce</code>", table_cell_bold), Paragraph("Classroom Display", table_cell_style), Paragraph("Proves real-time physical attendance", table_cell_style), Paragraph("Rejected with HTTP 400 if older than 90 seconds.", table_cell_style)],
+        [Paragraph("<code>rssi</code> (dBm)", table_cell_bold), Paragraph("Radio Subsystem", table_cell_style), Paragraph("Determines physical in-room proximity", table_cell_style), Paragraph("Must be within calibrated [-75, -30 dBm] bounds.", table_cell_style)],
+        [Paragraph("<code>apBssid</code>", table_cell_bold), Paragraph("Wi-Fi Interface", table_cell_style), Paragraph("Identifies physical classroom router MAC", table_cell_style), Paragraph("Enforces AP-to-Room topology matching (no remote login).", table_cell_style)],
+        [Paragraph("<code>pulseCount / dwell</code>", table_cell_bold), Paragraph("Session Accumulator", table_cell_style), Paragraph("Integrates cumulative presence time", table_cell_style), Paragraph("Requires dwell-time >= 75% of scheduled lecture duration.", table_cell_style)]
+    ]
+    payload_table = Table(payload_data, colWidths=[105, 95, 144, 160])
+    payload_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), primary_color),
+        ('GRID', (0,0), (-1,-1), 0.5, border_color),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, card_bg]),
+    ]))
+    elements.append(payload_table)
+    elements.append(Spacer(1, 5))
 
+    elements.append(Paragraph("2. Live RF Execution Trace: 11-Device Ingestion & Isolation Telemetry:", h2_style))
     scan_data = [
         [Paragraph("Detected Identifier", table_header_style), Paragraph("Device Owner", table_header_style), Paragraph("Enrollment Status", table_header_style), Paragraph("Filter Action", table_header_style), Paragraph("Final Attendance Record", table_header_style)],
         [Paragraph("<code>2023CSE001</code>", table_cell_style), Paragraph("Aarav Patel", table_cell_style), Paragraph("Enrolled (CSE-6A)", table_cell_style), Paragraph("<font color='#059669'><b>ACCEPTED</b></font>", table_cell_style), Paragraph("<font color='#059669'><b>PRESENT (In-Room)</b></font>", table_cell_style)],
@@ -415,23 +433,17 @@ def build_pdf():
     scan_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), primary_color),
         ('GRID', (0,0), (-1,-1), 0.5, border_color),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('TOPPADDING', (0,0), (-1,-1), 2.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, card_bg]),
     ]))
     elements.append(scan_table)
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 5))
 
-    elements.append(Paragraph("Cryptographic Anti-Proxy Verification:", h2_style))
+    elements.append(Paragraph("3. DPDP Act 2023 Statutory Privacy & Data Minimization Lifecycle:", h2_style))
     elements.append(Paragraph(
-        "<b>1. Duplicate Device Install Guard:</b> "
-        "If a student attempts to carry two phones or run parallel emulators to mark attendance for an absent friend, "
-        "the ingestion gateway inspects <code>deviceInstallId</code>. If the same install ID reports for more than one student roll number within a 12-hour session, "
-        "both records are flagged with code <code>DUPLICATE_DEVICE_INSTALL_ID</code> and routed to the faculty disciplinary queue.<br/>"
-        "<b>2. DPDP Act 2023 Privacy Minimization:</b> "
-        "Raw MAC addresses are permanently hashed via SHA-256 with an institution-specific salt (<code>sha256(mac + salt)</code>). "
-        "Presence telemetry older than 90 days is automatically purged via scheduled Cron worker, while statutory academic percentages (aggregates) "
-        "are retained for the requisite 7-year UGC regulatory period.",
+        "<b>• Explicit Consent Gate:</b> Students can toggle presence tracking in <code>/student/attendance-overview</code>. If consent is revoked, incoming telemetry is immediately dropped with <code>403 CONSENT_REQUIRED</code>, and faculty take roll manually without penalty.<br/>"
+        "<b>• 90-Day Telemetry Purging:</b> Raw radio signals (RSSI, AP BSSIDs, signal timestamps) are purged after 90 days under DPDP Act §8. Final academic attendance percentages are retained for 1 year for UGC statutory audit.",
         body_style
     ))
 
